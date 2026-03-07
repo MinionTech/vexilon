@@ -542,8 +542,23 @@ All answers come directly from the selected document.
     return demo
 
 
+# ─── Pre-indexer ──────────────────────────────────────────────────────────────
+def preindex_agreements() -> None:
+    """
+    Index every agreement into Chroma at startup so the first UI load is instant.
+    Skips agreements already present in the vector store.
+    Runs synchronously before the Gradio server starts.
+    """
+    for name in AGREEMENT_NAMES:
+        print(f"[preindex] Checking '{name}'…")
+        _, status = get_query_engine(name)
+        print(f"[preindex] {status}")
+
+
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    configure_llm()
+    preindex_agreements()
     app = build_ui()
     app.launch(
         server_name="0.0.0.0",
