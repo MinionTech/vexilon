@@ -65,23 +65,11 @@ PDF_CACHE_DIR.mkdir(exist_ok=True)
 
 # ─── Agreement Registry ──────────────────────────────────────────────────────
 # Display names shown in the dropdown → PDF source URL + Chroma collection name.
-# Update URLs if agreements.bcgeu.ca document IDs change.
+# Prefer public direct-PDF URLs (www2.gov.bc.ca); bundled fallbacks live in pdf_cache/.
 AGREEMENTS: dict[str, dict] = {
-    "20th Main Public Service Agreement": {
-        "url": "https://agreements.bcgeu.ca/document/OE9JK2hONExtTFE9",
-        "collection": "main_public_service_20th",
-    },
-    "ETO Component Agreement": {
-        "url": "https://agreements.bcgeu.ca/document/c0R3WVpuOSs4SDQ9",
-        "collection": "eto_component",
-    },
-    "Health Services Agreement": {
-        "url": "https://agreements.bcgeu.ca/document/NFlYalQ1QmlEbWM9",
-        "collection": "health_services",
-    },
-    "Community Living Services Agreement": {
-        "url": "https://agreements.bcgeu.ca/document/Vy9VTUpISGkvQ1k9",
-        "collection": "community_living",
+    "19th Main Public Service Agreement (Social, Information & Health)": {
+        "url": "https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/bcgeu_19th_main_agreement_38fa.pdf",
+        "collection": "main_public_service_19th",
     },
 }
 

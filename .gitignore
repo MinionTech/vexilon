@@ -22,7 +22,8 @@ build/
 
 # ─── App runtime data (do NOT commit) ────────────────────────────────────────
 chroma_db/          # Local Chroma vector store (rebuilt from PDFs)
-pdf_cache/          # Cached downloaded PDFs
+pdf_cache/          # Cached downloaded PDFs — add negation below for bundled PDFs
+!pdf_cache/main_public_service_19th.pdf
 gradio_cached_examples/
 flagged/
 
