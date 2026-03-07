@@ -33,6 +33,14 @@ Open <http://localhost:7860> in your browser.
 > `nomic-embed-text` (~274 MB) into the `ollama_data` volume. This only happens
 > once; subsequent starts are fast.
 
+### Troubleshooting
+
+**Port 11434 already in use** — a previous failed start left stale containers. Clean up and retry:
+```bash
+podman-compose down && podman rm -f ollama model-puller blabot
+podman-compose up
+```
+
 ## Usage
 
 1. Select an agreement from the dropdown
