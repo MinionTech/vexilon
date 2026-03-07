@@ -18,7 +18,7 @@ services:
   # Verify with: rocminfo | grep "Agent"
   # If ROCm is unavailable or the GPU is unsupported, Ollama falls back to CPU automatically.
   ollama:
-    image: docker.io/ollama/ollama:rocm    # AMD ROCm GPU support (use :latest for CPU-only)
+    image: docker.io/ollama/ollama:0.17.7-rocm  # Pinned; AMD ROCm GPU (use 0.17.7 for CPU-only)
     container_name: ollama
     devices:
       - /dev/kfd                           # AMD GPU compute device
@@ -28,7 +28,7 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"           # Loopback only — Ollama has no auth; don't expose to LAN
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -41,7 +41,7 @@ services:
   # blabot waits for this to complete successfully before starting.
   # Note: OLLAMA_HOST (not OLLAMA_BASE_URL) is the env var the ollama CLI uses.
   model-puller:
-    image: docker.io/ollama/ollama:rocm    # Must match ollama service image
+    image: docker.io/ollama/ollama:0.17.7-rocm  # Must match ollama service image
     container_name: model-puller
     environment:
       OLLAMA_HOST: *ollama-url
