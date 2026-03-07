@@ -39,11 +39,14 @@ services:
   # ── Model puller (one-shot) ──────────────────────────────────────────────────
   # Pulls required models on first run; exits 0 when done.
   # blabot waits for this to complete successfully before starting.
+  # Note: OLLAMA_HOST (not OLLAMA_BASE_URL) is the env var the ollama CLI uses.
   model-puller:
     image: docker.io/ollama/ollama:rocm    # Must match ollama service image
     container_name: model-puller
     environment:
-      <<: *ollama-env
+      OLLAMA_HOST: *ollama-url
+      OLLAMA_MODEL: *ollama-llm-model
+      EMBED_MODEL: *ollama-embed-model
     entrypoint: >
       sh -c "
         ollama pull $${OLLAMA_MODEL} &&

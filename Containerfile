@@ -1,9 +1,10 @@
 # ─── Build stage ──────────────────────────────────────────────────────────────
 FROM python:3.12-slim AS base
 
-# Install only what's needed for pypdf (no extra fluff)
+# Install system deps: libgomp1 for pypdf, curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
