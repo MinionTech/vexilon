@@ -2,7 +2,7 @@
 app.py — BCGEU Collective Agreement RAG Chatbot
 ------------------------------------------------
 Tech stack:
-  - LlamaIndex  : PDF → chunk → vector index (1 000 char chunks, 200 overlap)
+  - LlamaIndex  : PDF → chunk → vector index (512 token chunks, 50 overlap)
   - Chroma DB   : local persistent vector store  (./chroma_db)
   - Ollama      : Llama 3.1:8b LLM + nomic-embed-text embeddings (local)
   - Gradio      : Web UI at http://localhost:7860
@@ -50,8 +50,8 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 # ─── Configuration ───────────────────────────────────────────────────────────
 CHROMA_DIR = Path("./chroma_db")      # Persistent Chroma vector store
 PDF_CACHE_DIR = Path("./pdf_cache")   # Cached downloaded PDFs
-CHUNK_SIZE = 1000                     # Characters per chunk
-CHUNK_OVERLAP = 200                   # Overlap between chunks
+CHUNK_SIZE = 512                      # Tokens per chunk (nomic-embed-text context limit: 2048)
+CHUNK_OVERLAP = 50                    # Overlap between chunks
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")      # Ollama LLM model name
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")    # Ollama embedding model name
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
