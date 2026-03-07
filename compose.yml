@@ -13,18 +13,11 @@ x-ollama-env: &ollama-env
 services:
 
   # ── Ollama LLM server ────────────────────────────────────────────────────────
-  # GPU passthrough for AMD Radeon 680M (ROCm).
-  # Requires ROCm installed on the host: sudo dnf install rocm-hip rocminfo
-  # Verify with: rocminfo | grep "Agent"
-  # If ROCm is unavailable or the GPU is unsupported, Ollama falls back to CPU automatically.
+  # CPU-only image — ROCm (rocm tag) crashes on the Radeon 680M (gfx1035 APU)
+  # because rocblas has no native kernel for that GPU variant.
   ollama:
-    image: docker.io/ollama/ollama:0.17.7-rocm  # Pinned; AMD ROCm GPU (use 0.17.7 for CPU-only)
+    image: docker.io/ollama/ollama:0.17.7  # Pinned; CPU-only (no ROCm)
     container_name: ollama
-    devices:
-      - /dev/kfd                           # AMD GPU compute device
-      - /dev/dri                           # AMD DRI render nodes
-    group_add:
-      - video                              # Container user needs video group for DRI access
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -41,7 +34,7 @@ services:
   # blabot waits for this to complete successfully before starting.
   # Note: OLLAMA_HOST (not OLLAMA_BASE_URL) is the env var the ollama CLI uses.
   model-puller:
-    image: docker.io/ollama/ollama:0.17.7-rocm  # Must match ollama service image
+    image: docker.io/ollama/ollama:0.17.7  # Must match ollama service image
     container_name: model-puller
     environment:
       OLLAMA_HOST: *ollama-url
