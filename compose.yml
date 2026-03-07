@@ -14,8 +14,13 @@ services:
 
   # ── Ollama LLM server ────────────────────────────────────────────────────────
   ollama:
-    image: docker.io/ollama/ollama:latest
+    image: docker.io/ollama/ollama:rocm    # AMD ROCm GPU support
     container_name: ollama
+    devices:
+      - /dev/kfd                           # AMD GPU compute
+      - /dev/dri                           # AMD DRI render nodes
+    group_add:
+      - video                              # Required for DRI access
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -31,7 +36,7 @@ services:
   # Pulls required models on first run; exits 0 when done.
   # blabot waits for this to complete successfully before starting.
   model-puller:
-    image: docker.io/ollama/ollama:latest
+    image: docker.io/ollama/ollama:rocm    # Must match ollama service image
     container_name: model-puller
     environment:
       <<: *ollama-env
