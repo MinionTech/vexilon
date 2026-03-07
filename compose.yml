@@ -18,6 +18,11 @@ services:
   ollama:
     image: docker.io/ollama/ollama:0.17.7  # Pinned; CPU-only (no ROCm)
     container_name: ollama
+    environment:
+      # llama3.1:8b defaults to 131k context → ~20 GiB KV cache.
+      # Cap to 4096 tokens (sufficient for RAG: 5 chunks × 512 tokens = 2560 max)
+      # so the model fits comfortably in available system memory (~5-6 GiB total).
+      OLLAMA_NUM_CTX: "4096"
     volumes:
       - ollama_data:/root/.ollama
     ports:
