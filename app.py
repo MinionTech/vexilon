@@ -174,6 +174,10 @@ def configure_llm() -> None:
         model=OLLAMA_MODEL,
         base_url=OLLAMA_BASE_URL,
         request_timeout=120.0,
+        # num_ctx caps the KV-cache allocation at model-load time.
+        # llama3.1:8b defaults to 131k context → 16 GiB KV cache → OOM.
+        # 4096 is sufficient for RAG (5 chunks × 512 tokens = 2560 max input).
+        additional_kwargs={"num_ctx": 4096},
     )
     Settings.embed_model = OllamaEmbedding(
         model_name=EMBED_MODEL,
