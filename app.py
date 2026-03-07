@@ -539,6 +539,14 @@ All answers come directly from the selected document.
 
         clear_btn.click(fn=lambda: [], outputs=[chatbot])
 
+        # Auto-load the default agreement when a new session opens.
+        # Hits the Chroma cache populated by preindex_agreements() — completes in ~1s.
+        demo.load(
+            fn=on_load_agreement,
+            inputs=[agreement_dd, pdf_upload],
+            outputs=[status_box, engine_state, chatbot],
+        )
+
     return demo
 
 
