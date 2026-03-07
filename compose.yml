@@ -76,9 +76,9 @@ services:
       - chroma_db:/app/chroma_db
     cap_drop:
       - ALL
-    read_only: true
     tmpfs:
-      - /tmp
+      - /tmp                  # Writable tmp for Gradio and other runtime files
+      - /home/blabot          # NLTK punkt tokenizer data (written on first LlamaIndex use)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
