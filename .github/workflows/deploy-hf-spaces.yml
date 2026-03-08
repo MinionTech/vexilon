@@ -1,0 +1,37 @@
+name: Deploy to Hugging Face Spaces
+
+# Deploys to https://huggingface.co/spaces/DerekRoberts/vexilon
+# on every published GitHub release.
+#
+# Required secret: HF_TOKEN
+#   GitHub → Settings → Secrets and variables → Actions → New repository secret
+#   Value: a Hugging Face token with WRITE access to the Space
+#   https://huggingface.co/settings/tokens
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Push to Hugging Face Space
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # full history so git push works correctly
+          lfs: false            # no LFS — pdf_cache/ files are regular git objects
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git remote add hf "https://DerekRoberts:${HF_TOKEN}@huggingface.co/spaces/DerekRoberts/vexilon"
+          git push hf HEAD:main --force
