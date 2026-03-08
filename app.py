@@ -26,6 +26,10 @@ import time
 from collections.abc import Iterator
 from pathlib import Path
 
+# Ensure the HuggingFace model cache is writable by the non-root container user.
+# The Containerfile sets this too, but HF Spaces and other runtimes may not inherit it.
+os.environ.setdefault("HF_HOME", "/tmp/hf_cache")
+
 # ─── Third-party: PDF ────────────────────────────────────────────────────────
 from pypdf import PdfReader
 
