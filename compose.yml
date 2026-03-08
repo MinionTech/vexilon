@@ -1,55 +1,4 @@
-# Reusable vars
-x-var:
-  - &ollama-url http://ollama:11434
-  - &ollama-llm-model llama3.2:3b
-  - &ollama-embed-model nomic-embed-text
-
-# Reusable Ollama environment block
-x-ollama-env: &ollama-env
-  OLLAMA_BASE_URL: *ollama-url
-  OLLAMA_MODEL: *ollama-llm-model
-  EMBED_MODEL: *ollama-embed-model
-
 services:
-
-  # ── Ollama LLM server ────────────────────────────────────────────────────────
-  # CPU-only image — ROCm (rocm tag) crashes on the Radeon 680M (gfx1035 APU)
-  # because rocblas has no native kernel for that GPU variant.
-  ollama:
-    image: docker.io/ollama/ollama:0.17.7  # Pinned; CPU-only (no ROCm)
-    container_name: ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    ports:
-      - "127.0.0.1:11434:11434"           # Loopback only — Ollama has no auth; don't expose to LAN
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 30s
-
-  # ── Model puller (one-shot) ──────────────────────────────────────────────────
-  # Pulls required models on first run; exits 0 when done.
-  # Vexilon waits for this to complete successfully before starting.
-  # Note: OLLAMA_HOST (not OLLAMA_BASE_URL) is the env var the ollama CLI uses.
-  model-puller:
-    image: docker.io/ollama/ollama:0.17.7  # Must match ollama service image
-    container_name: model-puller
-    environment:
-      OLLAMA_HOST: *ollama-url
-      OLLAMA_MODEL: *ollama-llm-model
-      EMBED_MODEL: *ollama-embed-model
-    entrypoint: >
-      sh -c "
-        ollama pull $${OLLAMA_MODEL} &&
-        ollama pull $${EMBED_MODEL}
-      "
-    depends_on:
-      ollama:
-        condition: service_healthy
-    volumes:
-      - ollama_data:/root/.ollama
 
   # ── Vexilon app ───────────────────────────────────────────────────────────────
   vexilon:
@@ -58,27 +7,20 @@ services:
       dockerfile: Containerfile
     container_name: vexilon
     environment:
-      <<: *ollama-env
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-3-5-haiku-20241022}
+      EMBED_MODEL: ${EMBED_MODEL:-text-embedding-3-small}
       PORT: "7860"
     ports:
       - "7860:7860"
-    depends_on:
-      model-puller:
-        condition: service_completed_successfully
-    volumes:
-      - chroma_db:/app/chroma_db
     cap_drop:
       - ALL
     tmpfs:
       - /tmp                  # Writable tmp for Gradio and other runtime files
-      - /home/vexilon         # NLTK punkt tokenizer data (written on first LlamaIndex use)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
-
-volumes:
-  ollama_data:   # Ollama model storage (~5 GB on first pull)
-  chroma_db:     # Chroma vector index (rebuilt from pdf_cache/ on first query)
+      start_period: 30s

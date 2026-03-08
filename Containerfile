@@ -1,7 +1,7 @@
 # ─── Build stage ──────────────────────────────────────────────────────────────
 FROM python:3.12-slim AS base
 
-# Install system deps: libgomp1 for pypdf, curl for healthcheck
+# Install system deps: libgomp1 for FAISS, curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     curl \

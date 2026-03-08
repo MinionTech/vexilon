@@ -1,581 +1,472 @@
 """
-app.py — BCGEU Collective Agreement RAG Chatbot
-------------------------------------------------
+app.py — Vexilon: BCGEU Agreement Assistant
+--------------------------------------------
 Tech stack:
-  - LlamaIndex  : PDF → chunk → vector index (512 token chunks, 100 overlap)
-  - Chroma DB   : local persistent vector store  (./chroma_db)
-  - Ollama      : Llama 3.2:3b LLM + nomic-embed-text embeddings (local)
-  - Gradio      : Web UI at http://localhost:7860
+  - pypdf     : PDF → pages with page number preservation
+  - tiktoken  : Token counting for chunking
+  - OpenAI    : text-embedding-3-small embeddings
+  - FAISS     : In-memory vector index (no server process)
+  - Anthropic : Claude (claude-3-5-haiku-20241022) for responses
+  - Gradio 5  : Web UI at http://localhost:7860
 
 Quick start:
-  1. Install Ollama and pull the required models:
-       ollama pull llama3.2:3b
-       ollama pull nomic-embed-text
+  1. export ANTHROPIC_API_KEY=sk-ant-...
+     export OPENAI_API_KEY=sk-...
   2. pip install -r requirements.txt
   3. python app.py
-
-Hugging Face Spaces: set OLLAMA_BASE_URL to an external Ollama endpoint or
-swap the LLM / embedding provider for an HF-hosted model.
 """
 
 # ─── Standard Library ────────────────────────────────────────────────────────
 import os
-import re
-import json
 from pathlib import Path
-from typing import Optional
-from urllib.parse import urljoin
 
-# ─── Third-party: HTTP ───────────────────────────────────────────────────────
-import requests
+# ─── Third-party: PDF ────────────────────────────────────────────────────────
+from pypdf import PdfReader
+
+# ─── Third-party: Tokenizer ──────────────────────────────────────────────────
+import tiktoken
+
+# ─── Third-party: Embeddings (OpenAI) ───────────────────────────────────────
+from openai import OpenAI
+
+# ─── Third-party: Vector Store (FAISS) ──────────────────────────────────────
+import faiss
+import numpy as np
+
+# ─── Third-party: LLM (Anthropic) ───────────────────────────────────────────
+import anthropic
 
 # ─── Third-party: Gradio UI ──────────────────────────────────────────────────
 import gradio as gr
 
-# ─── Third-party: Vector Store ───────────────────────────────────────────────
-import chromadb
-
-# ─── Third-party: LlamaIndex (v0.10+) ────────────────────────────────────────
-from llama_index.core import (
-    VectorStoreIndex,
-    SimpleDirectoryReader,
-    Settings,
-    StorageContext,
-)
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.llms.ollama import Ollama
-from llama_index.embeddings.ollama import OllamaEmbedding
-from llama_index.vector_stores.chroma import ChromaVectorStore
-
 # ─── Configuration ───────────────────────────────────────────────────────────
-CHROMA_DIR = Path("./chroma_db")      # Persistent Chroma vector store
-PDF_CACHE_DIR = Path("./pdf_cache")   # Cached downloaded PDFs
-CHUNK_SIZE = 512                      # Tokens per chunk (nomic-embed-text context limit: 2048)
-CHUNK_OVERLAP = 100                   # Overlap between chunks (~20% of chunk size)
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")      # Ollama LLM model name
-EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")    # Ollama embedding model name
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-RESPONSE_PREFIX = "From document only—not legal advice.\n\n"
-REQUEST_TIMEOUT = 30                  # HTTP download timeout in seconds
-SIMILARITY_TOP_K = 5                  # Number of chunks to retrieve per query
+PDF_CACHE_DIR = Path("./pdf_cache")
+PDF_PATH = PDF_CACHE_DIR / "main_public_service_19th.pdf"
 
-# Ensure storage directories exist at startup
-CHROMA_DIR.mkdir(exist_ok=True)
-PDF_CACHE_DIR.mkdir(exist_ok=True)
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-haiku-20241022")
+EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 512))       # tokens per chunk
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100)) # token overlap
+SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 5))
 
-# ─── Agreement Registry ──────────────────────────────────────────────────────
-# Display names shown in the dropdown → PDF source URL + Chroma collection name.
-# Prefer public direct-PDF URLs (www2.gov.bc.ca); bundled fallbacks live in pdf_cache/.
-AGREEMENTS: dict[str, dict] = {
-    "19th Main Public Service Agreement (Social, Information & Health)": {
-        "url": "https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/bcgeu_19th_main_agreement_38fa.pdf",
-        "collection": "main_public_service_19th",
-    },
-}
+# Embedding dimension for text-embedding-3-small
+EMBED_DIM = 1536
 
-AGREEMENT_NAMES = list(AGREEMENTS.keys())
-
-# ─── BC Contacts (hardcoded) ─────────────────────────────────────────────────
-# Keys are lowercase search terms; values are contact info dicts.
-# Supports partial substring matching (see lookup_contacts).
-BC_CONTACTS: dict[str, dict] = {
-    # Health Authorities — HR / Labour Relations
-    "health island": {
-        "name": "Island Health (VIHA) — Human Resources",
-        "phone": "250-519-3500",
-        "email": "hr@viha.ca",
-        "website": "https://www.islandhealth.ca",
-    },
-    # "health victoria" is an alias for Island Health (Victoria is on Vancouver Island)
-    "health victoria": {
-        "name": "Island Health (VIHA) — Human Resources",
-        "phone": "250-519-3500",
-        "email": "hr@viha.ca",
-        "website": "https://www.islandhealth.ca",
-    },
-    "health northern": {
-        "name": "Northern Health — Human Resources",
-        "phone": "250-565-2000",
-        "email": "hr@northernhealth.ca",
-        "website": "https://www.northernhealth.ca",
-    },
-    "health interior": {
-        "name": "Interior Health — Human Resources",
-        "phone": "1-800-707-8550",
-        "email": "hr@interiorhealth.ca",
-        "website": "https://www.interiorhealth.ca",
-    },
-    "health fraser": {
-        "name": "Fraser Health — Human Resources",
-        "phone": "604-587-4600",
-        "email": "hr@fraserhealth.ca",
-        "website": "https://www.fraserhealth.ca",
-    },
-    "health coastal": {
-        "name": "Vancouver Coastal Health — Human Resources",
-        "phone": "604-875-4111",
-        "website": "https://www.vch.ca",
-    },
-    "health vancouver coastal": {
-        "name": "Vancouver Coastal Health — Human Resources",
-        "phone": "604-875-4111",
-        "website": "https://www.vch.ca",
-    },
-    "health providence": {
-        "name": "Providence Health Care — Human Resources",
-        "phone": "604-682-2344",
-        "website": "https://www.providencehealthcare.org",
-    },
-    "health phsa": {
-        "name": "PHSA (Provincial Health Services Authority) — Human Resources",
-        "phone": "604-875-2000",
-        "website": "https://www.phsa.ca",
-    },
-    "health first nations": {
-        "name": "First Nations Health Authority",
-        "phone": "604-693-6500",
-        "website": "https://www.fnha.ca",
-    },
-    # Public Service / Provincial Government
-    "bcgeu": {
-        "name": "BCGEU — Provincial Office",
-        "phone": "604-291-9611",
-        "toll_free": "1-800-663-1674",
-        "website": "https://www.bcgeu.ca",
-    },
-    "psc": {
-        "name": "BC Public Service Commission",
-        "phone": "250-387-5082",
-        "website": "https://www2.gov.bc.ca/gov/content/careers-myhr",
-    },
-    "myhr": {
-        "name": "BC Government MyHR (Employee Self-Service)",
-        "phone": "250-952-6000",
-        "website": "https://www2.gov.bc.ca/gov/content/careers-myhr",
-    },
-    # Corrections / Justice
-    "corrections": {
-        "name": "BC Corrections — Labour Relations",
-        "phone": "250-387-5041",
-        "website": "https://www2.gov.bc.ca/gov/content/justice/criminal-justice/corrections",
-    },
-    # Community Social Services
-    "cssea": {
-        "name": "Community Social Services Employers' Association (CSSEA)",
-        "phone": "604-942-0505",
-        "website": "https://www.cssea.bc.ca",
-    },
-}
-
-# ─── LlamaIndex Global Settings ──────────────────────────────────────────────
-def configure_llm() -> None:
-    """Configure LlamaIndex to use local Ollama LLM and embedding model."""
-    Settings.llm = Ollama(
-        model=OLLAMA_MODEL,
-        base_url=OLLAMA_BASE_URL,
-        # CPU inference: model load (~30 s) + generation (~2 min) for llama3.1:8b.
-        # 600 s gives comfortable headroom; tune down if GPU is added later.
-        request_timeout=600.0,
-        # num_ctx caps the KV-cache allocation at model-load time.
-        # llama3.1:8b defaults to 131k context → 16 GiB KV cache → OOM.
-        # 4096 is sufficient for RAG (5 chunks × 512 tokens = 2560 max input).
-        # num_predict caps output length; prevents 8-min responses on CPU.
-        additional_kwargs={"num_ctx": 4096, "num_predict": 512},
-    )
-    Settings.embed_model = OllamaEmbedding(
-        model_name=EMBED_MODEL,
-        base_url=OLLAMA_BASE_URL,
-    )
-    Settings.node_parser = SentenceSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-    )
+# ─── Clients ─────────────────────────────────────────────────────────────────
+_openai_client: OpenAI | None = None
+_anthropic_client: anthropic.Anthropic | None = None
 
 
-# ─── Contact Lookup ──────────────────────────────────────────────────────────
-def lookup_contacts(query: str) -> Optional[str]:
+def get_openai() -> OpenAI:
+    global _openai_client
+    if _openai_client is None:
+        # Reads OPENAI_API_KEY from environment automatically; raises AuthenticationError if missing
+        _openai_client = OpenAI()
+    return _openai_client
+
+
+def get_anthropic() -> anthropic.Anthropic:
+    global _anthropic_client
+    if _anthropic_client is None:
+        # Reads ANTHROPIC_API_KEY from environment automatically; raises AuthenticationError if missing
+        _anthropic_client = anthropic.Anthropic()
+    return _anthropic_client
+
+
+# ─── System Prompt ───────────────────────────────────────────────────────────
+SYSTEM_PROMPT = """You are Vexilon, an assistant for BCGEU union stewards. \
+You help stewards understand the 19th Main Public Service Agreement (Social, Information & Health).
+
+Rules you must follow without exception:
+
+1. You may only answer using the provided agreement excerpts. Do not draw on outside knowledge.
+2. Every claim must be supported by a verbatim quote from the provided excerpts, formatted as a \
+markdown blockquote (> "...") followed by its citation: — Article [X], [Title], p. [N]
+3. Plain-language explanation comes BEFORE the verbatim quote, not after.
+4. If the excerpts do not address the question, say so clearly: \
+"The collective agreement does not appear to address this question in the excerpts I was given."
+5. Do not predict outcomes, advise on strategy, or offer legal opinions.
+6. Tone: plain language. Your audience is new stewards with no legal background.
+7. If multiple clauses are relevant, quote each one separately with its own citation.
+
+Response format:
+
+[Plain-language explanation]
+
+> "[Verbatim quote from the agreement]"
+> — Article [X], [Title], p. [N]
+
+[Optional: "This may also be relevant:" + follow-up suggestion]
+"""
+
+# ─── Chunking ─────────────────────────────────────────────────────────────────
+# cl100k_base is used by text-embedding-3-small.
+# Lazy init: tiktoken downloads the BPE vocab (~1 MB) on first call if not cached;
+# we init inside startup() where we already have print() context.
+_ENCODER: tiktoken.Encoding | None = None
+
+
+def _get_encoder() -> tiktoken.Encoding:
+    global _ENCODER
+    if _ENCODER is None:
+        _ENCODER = tiktoken.get_encoding("cl100k_base")
+    return _ENCODER
+
+
+def chunk_text(text: str, page_num: int) -> list[dict]:
     """
-    Return formatted BC contact info if the query matches any known key.
-    Checks whether any BC_CONTACTS key appears as a substring of the query.
-    Returns a markdown-formatted string if found, else None.
-
-    Example: 'health victoria' → Island Health HR: 250-519-3500
+    Split *text* into overlapping token-based chunks.
+    Returns list of dicts: {text, page, chunk_index}.
     """
-    q = query.lower().strip()
-    for key, contact in BC_CONTACTS.items():
-        if key in q:
-            lines = [f"📞 **{contact['name']}**"]
-            if "phone" in contact:
-                lines.append(f"  Phone: {contact['phone']}")
-            if "toll_free" in contact:
-                lines.append(f"  Toll-free: {contact['toll_free']}")
-            if "email" in contact:
-                lines.append(f"  Email: {contact['email']}")
-            if "website" in contact:
-                lines.append(f"  Web: {contact['website']}")
-            return "\n".join(lines)
-    return None
+    enc = _get_encoder()
+    tokens = enc.encode(text)
+    chunks = []
+    start = 0
+    idx = 0
+    while start < len(tokens):
+        end = min(start + CHUNK_SIZE, len(tokens))
+        chunk_tokens = tokens[start:end]
+        chunk_text_str = enc.decode(chunk_tokens)
+        chunks.append({
+            "text": chunk_text_str,
+            "page": page_num,
+            "chunk_index": idx,
+        })
+        idx += 1
+        start += CHUNK_SIZE - CHUNK_OVERLAP
+    return chunks
 
 
-# ─── PDF Downloader ───────────────────────────────────────────────────────────
-def download_pdf(url: str, dest_path: Path) -> bool:
+# ─── PDF Loader ───────────────────────────────────────────────────────────────
+def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     """
-    Download a PDF from *url* to *dest_path*.
-    Handles both direct PDF links and HTML pages containing an embedded PDF link.
-    Returns True on success, False on any failure.
+    Parse the PDF at *pdf_path* and return all chunks with page metadata.
+    Page numbers are 1-based (matching the printed page numbers in the PDF).
     """
-    try:
-        resp = requests.get(
-            url,
-            timeout=REQUEST_TIMEOUT,
-            stream=True,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; vexilon/1.0)"},
+    reader = PdfReader(str(pdf_path))
+    all_chunks = []
+    for page_idx, page in enumerate(reader.pages):
+        page_num = page_idx + 1  # 1-based
+        text = page.extract_text() or ""
+        if text.strip():
+            all_chunks.extend(chunk_text(text, page_num))
+    return all_chunks
+
+
+# ─── FAISS Index ──────────────────────────────────────────────────────────────
+def embed_texts(texts: list[str]) -> np.ndarray:
+    """Embed a list of texts using text-embedding-3-small. Returns (N, EMBED_DIM) float32 array."""
+    client = get_openai()
+    # OpenAI allows up to 2048 inputs per call; batch to be safe
+    batch_size = 512
+    all_embeddings = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        response = client.embeddings.create(model=EMBED_MODEL, input=batch)
+        batch_embeddings = [item.embedding for item in response.data]
+        all_embeddings.extend(batch_embeddings)
+    return np.array(all_embeddings, dtype=np.float32)
+
+
+def build_index(chunks: list[dict]) -> faiss.IndexFlatIP:
+    """
+    Embed all chunks and build a FAISS inner-product index.
+    Vectors are L2-normalised so inner product == cosine similarity.
+    """
+    import time
+    texts = [c["text"] for c in chunks]
+    print(f"[index] Embedding {len(texts)} chunks via OpenAI API (may take 15–60 s)…")
+    t0 = time.time()
+    vectors = embed_texts(texts)
+    print(f"[index] Embeddings received in {time.time()-t0:.1f}s")
+    # L2-normalise for cosine similarity via inner product
+    faiss.normalize_L2(vectors)
+    index = faiss.IndexFlatIP(EMBED_DIM)
+    index.add(vectors)
+    print(f"[index] FAISS index built — {index.ntotal} vectors")
+    return index
+
+
+def search_index(
+    index: faiss.IndexFlatIP,
+    chunks: list[dict],
+    query: str,
+    top_k: int = SIMILARITY_TOP_K,
+) -> list[dict]:
+    """Return the top-k most similar chunks for *query*."""
+    query_vec = embed_texts([query])  # (1, EMBED_DIM)
+    faiss.normalize_L2(query_vec)
+    _scores, indices = index.search(query_vec, top_k)
+    return [chunks[i] for i in indices[0] if i < len(chunks)]
+
+
+# ─── RAG App State (module-level, built at startup) ──────────────────────────
+_chunks: list[dict] = []
+_index: faiss.IndexFlatIP | None = None
+
+
+def startup() -> None:
+    """Load PDF, chunk, embed, and build FAISS index. Called once before Gradio starts."""
+    global _chunks, _index
+    print("[startup] Initialising tokeniser (downloads BPE vocab on first run)…")
+    _get_encoder()
+    print("[startup] Tokeniser ready.")
+    print(f"[startup] Loading PDF from {PDF_PATH}…")
+    _chunks = load_pdf_chunks(PDF_PATH)
+    print(f"[startup] {len(_chunks)} chunks loaded from {PDF_PATH.name}")
+    _index = build_index(_chunks)
+    print("[startup] Ready.")
+
+
+# ─── RAG Query ────────────────────────────────────────────────────────────────
+def rag_query(message: str, history: list[dict]) -> str:
+    """
+    Retrieve relevant chunks, build the prompt, and stream a response from Claude.
+    *history* is a list of {"role": ..., "content": ...} dicts (Gradio messages format).
+    Returns the complete assistant response as a string.
+    """
+    if _index is None:
+        return "⚠️ The index is not ready yet. Please wait for startup to complete."
+
+    relevant_chunks = search_index(_index, _chunks, message)
+
+    # Build context block from retrieved chunks
+    context_parts = []
+    for chunk in relevant_chunks:
+        context_parts.append(
+            f"[Page {chunk['page']}]\n{chunk['text']}"
         )
-        resp.raise_for_status()
+    context = "\n\n---\n\n".join(context_parts)
 
-        content_type = resp.headers.get("content-type", "")
-
-        if "application/pdf" in content_type:
-            # Direct PDF — stream to disk
-            with open(dest_path, "wb") as fh:
-                for chunk in resp.iter_content(chunk_size=8192):
-                    fh.write(chunk)
-            return True
-
-        # HTML page — search for an embedded PDF link
-        html = resp.text
-        patterns = [
-            r'href=["\']([^"\']+\.pdf[^"\']*)["\']',
-            r'src=["\']([^"\']+\.pdf[^"\']*)["\']',
-            r'"url"\s*:\s*"([^"]+\.pdf[^"]*)"',
-        ]
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
-            if match:
-                pdf_url = match.group(1)
-                if not pdf_url.startswith("http"):
-                    pdf_url = urljoin(url, pdf_url)
-                # Recurse once to download the discovered PDF link
-                return download_pdf(pdf_url, dest_path)
-
-        return False  # No PDF found in the page
-
-    except Exception as exc:
-        print(f"[download_pdf] Error fetching {url}: {exc}")
-        return False
-
-
-# ─── Index Builder / Loader ──────────────────────────────────────────────────
-# In-memory cache: collection_name → query_engine (avoids reloading on every query)
-_index_cache: dict[str, object] = {}
-
-
-def get_query_engine(
-    agreement_name: str,
-    pdf_path: Optional[Path] = None,
-) -> tuple[Optional[object], str]:
-    """
-    Return (query_engine, status_message) for *agreement_name*.
-
-    Load order:
-      1. In-memory cache (fastest)
-      2. Existing Chroma collection (fast — ~1 s)
-      3. Build from PDF (slow — ~10 s on first load)
-
-    *pdf_path*: path to a manually uploaded PDF; bypasses URL download and
-                forces a full re-index of the collection.
-    """
-    config = AGREEMENTS[agreement_name]
-    collection_name = config["collection"]
-
-    # Track whether the caller supplied a manual upload
-    is_manual_upload = pdf_path is not None
-
-    # Return from memory cache when no new upload is provided
-    if collection_name in _index_cache and not is_manual_upload:
-        return _index_cache[collection_name], "✅ Index already loaded — ready to chat"
-
-    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-
-    # Load from existing persisted Chroma collection (skip re-indexing)
-    if not is_manual_upload:
-        try:
-            collection = chroma_client.get_collection(collection_name)
-            if collection.count() > 0:
-                vector_store = ChromaVectorStore(chroma_collection=collection)
-                storage_ctx = StorageContext.from_defaults(vector_store=vector_store)
-                index = VectorStoreIndex.from_vector_store(
-                    vector_store,
-                    storage_context=storage_ctx,
-                )
-                engine = index.as_query_engine(similarity_top_k=SIMILARITY_TOP_K)
-                _index_cache[collection_name] = engine
-                return engine, "✅ Loaded from saved index — ready to chat"
-        except Exception:
-            pass  # Collection doesn't exist yet — fall through to build
-
-    # Resolve PDF path: use upload, cached file, or download fresh
-    if pdf_path is None:
-        cached_pdf = PDF_CACHE_DIR / f"{collection_name}.pdf"
-        if not cached_pdf.exists():
-            status_msg = f"⏳ Downloading PDF for '{agreement_name}'…"
-            print(status_msg)
-            success = download_pdf(config["url"], cached_pdf)
-            if not success:
-                return None, (
-                    "❌ Could not download the PDF automatically.\n"
-                    "Please upload the PDF manually using the 'Upload PDF' button below."
-                )
-        pdf_path = cached_pdf
-
-    # Read and chunk the PDF
-    try:
-        reader = SimpleDirectoryReader(input_files=[str(pdf_path)])
-        documents = reader.load_data()
-    except Exception as exc:
-        return None, f"❌ Error reading PDF: {exc}"
-
-    splitter = SentenceSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
-    nodes = splitter.get_nodes_from_documents(documents)
-
-    # Build (or rebuild) the Chroma collection.
-    # Delete the existing collection when re-indexing from a manual upload so
-    # stale vectors from the previous PDF are not mixed in.
-    try:
-        if is_manual_upload:
-            try:
-                chroma_client.delete_collection(collection_name)
-            except Exception:
-                pass
-        collection = chroma_client.get_or_create_collection(collection_name)
-    except Exception as exc:
-        return None, f"❌ Chroma error: {exc}"
-
-    vector_store = ChromaVectorStore(chroma_collection=collection)
-    storage_ctx = StorageContext.from_defaults(vector_store=vector_store)
-    index = VectorStoreIndex(nodes, storage_context=storage_ctx)
-    engine = index.as_query_engine(similarity_top_k=SIMILARITY_TOP_K)
-    _index_cache[collection_name] = engine
-
-    return engine, (
-        f"✅ Indexed {len(nodes)} chunks from {len(documents)} page(s). "
-        "Ready — ask about the agreement."
+    full_system = (
+        SYSTEM_PROMPT
+        + "\n\n--- AGREEMENT EXCERPTS ---\n\n"
+        + context
+        + "\n\n--- END EXCERPTS ---"
     )
 
+    # Build message list for Claude: prior history + new user message
+    messages = []
+    for turn in history:
+        if turn["role"] in ("user", "assistant"):
+            messages.append({"role": turn["role"], "content": turn["content"]})
+    messages.append({"role": "user", "content": message})
 
-# ─── Citation Formatter ───────────────────────────────────────────────────────
-def format_citations(source_nodes) -> str:
-    """
-    Format LlamaIndex source nodes as readable page-citation footnotes.
-    Each unique (filename, page) pair is listed once.
-    """
-    if not source_nodes:
-        return ""
-
-    seen: set[tuple] = set()
-    lines = ["\n\n---\n📄 **Sources:**"]
-
-    for node_with_score in source_nodes:
-        meta = node_with_score.node.metadata
-        page = meta.get("page_label") or meta.get("page") or "?"
-        fname = meta.get("file_name", "document")
-        key = (fname, page)
-        if key not in seen:
-            seen.add(key)
-            page_label = f"p.{page}" if page != "?" else "unknown page"
-            lines.append(f"  - {fname} — {page_label}")
-
-    return "\n".join(lines)
-
-
-# ─── Gradio Event Handlers ────────────────────────────────────────────────────
-def on_load_agreement(
-    agreement_name: str,
-    upload,
-) -> tuple[str, dict, list]:
-    """
-    Called when the user clicks 'Load Agreement'.
-    Returns (status_text, engine_state_dict, cleared_chat_history).
-    """
-    pdf_path = Path(upload.name) if upload is not None else None
-    engine, status = get_query_engine(agreement_name, pdf_path)
-    return status, {"engine": engine}, []
-
-
-def on_submit(
-    message: str,
-    history: list,
-    agreement_name: str,
-    engine_state: dict,
-) -> tuple[list, dict, str]:
-    """
-    Called when the user sends a message.
-    Returns (updated_history, unchanged_engine_state, cleared_input).
-    """
-    if not message.strip():
-        return history, engine_state, ""
-
-    engine = engine_state.get("engine")
-
-    # ── 1. BC Contacts lookup (fast, no LLM needed) ────────────────────────
-    contact_result = lookup_contacts(message)
-    if contact_result:
-        response = RESPONSE_PREFIX + "**BC Contacts:**\n" + contact_result
-        return history + [(message, response)], engine_state, ""
-
-    # ── 2. Guard: agreement not yet loaded ─────────────────────────────────
-    if engine is None:
-        response = (
-            RESPONSE_PREFIX
-            + "⚠️ No agreement loaded yet.\n"
-            "Please select an agreement and click **📥 Load Agreement** first."
-        )
-        return history + [(message, response)], engine_state, ""
-
-    # ── 3. RAG query via LlamaIndex ────────────────────────────────────────
-    try:
-        result = engine.query(message)
-        answer = str(result.response)
-        citations = format_citations(result.source_nodes)
-        response = RESPONSE_PREFIX + answer + citations
-    except Exception as exc:
-        response = RESPONSE_PREFIX + f"⚠️ Error querying the document: {exc}"
-
-    return history + [(message, response)], engine_state, ""
+    client = get_anthropic()
+    response = client.messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=1024,
+        system=full_system,
+        messages=messages,
+    )
+    return response.content[0].text
 
 
 # ─── Gradio UI ────────────────────────────────────────────────────────────────
+EXAMPLE_QUESTIONS = [
+    "What are my overtime rights?",
+    "What is the probationary period?",
+    "Can my employer change my schedule without notice?",
+    "What is my vacation entitlement as a new employee?",
+    "What does the agreement say about sick leave?",
+]
+
+DISCLAIMER = (
+    "⚠️ **This tool references the collective agreement text only. "
+    "It is not legal advice. "
+    "Consult your BCGEU staff representative for complex matters.**"
+)
+
+WELCOME_MESSAGE = """**Welcome to Vexilon — BCGEU Agreement Assistant**
+
+I help BCGEU union stewards look up the 19th Main Public Service Agreement \
+(Social, Information & Health). Ask me any question about the agreement and I'll \
+give you a plain-language explanation with verbatim quotes and citations.
+
+I can only tell you what the agreement says — I cannot give legal advice or predict \
+how a grievance will be decided."""
+
+BCGEU_CSS = """
+:root {
+    --primary: #005691;
+    --primary-dark: #003366;
+    --accent: #008542;
+    --bg: #f5f7fa;
+    --border: #cdd5e0;
+}
+
+/* App background */
+.gradio-container {
+    background-color: var(--bg) !important;
+    max-width: 900px !important;
+    margin: 0 auto !important;
+}
+
+/* Header */
+#app-header {
+    background-color: var(--primary-dark);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+#app-header h1 {
+    color: white !important;
+    font-size: 1.4rem;
+    margin: 0;
+}
+#app-header p {
+    color: #c8d8e8 !important;
+    font-size: 0.85rem;
+    margin: 4px 0 0;
+}
+
+/* Disclaimer bar */
+#disclaimer {
+    background-color: #fff8e1;
+    border-left: 4px solid #f59e0b;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+/* Chatbot */
+#chatbot {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: white;
+}
+
+/* Blockquote rendering in chat messages */
+.message-bubble-border blockquote,
+.message blockquote {
+    border-left: 4px solid var(--primary);
+    background-color: #eef4fb;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-radius: 0 4px 4px 0;
+    font-style: italic;
+    color: #1a2a3a;
+}
+
+/* Example question chips */
+.example-chip button {
+    background-color: white !important;
+    border: 1px solid var(--primary) !important;
+    color: var(--primary) !important;
+    border-radius: 20px !important;
+    font-size: 0.85rem !important;
+    padding: 4px 12px !important;
+}
+.example-chip button:hover {
+    background-color: var(--primary) !important;
+    color: white !important;
+}
+
+/* Send button */
+#send-btn {
+    background-color: var(--primary) !important;
+    color: white !important;
+    min-width: 80px;
+}
+#send-btn:hover {
+    background-color: var(--primary-dark) !important;
+}
+"""
+
+
 def build_ui() -> gr.Blocks:
     """Assemble and return the Gradio Blocks application."""
     with gr.Blocks(
-        title="BCGEU Collective Agreement Chatbot",
-        theme=gr.themes.Soft(),
+        title="Vexilon — BCGEU Agreement Assistant",
+        css=BCGEU_CSS,
         head=(
             '<link rel="manifest" href="/file=manifest.json">'
-            '<meta name="theme-color" content="#3b82f6">'
+            '<meta name="theme-color" content="#005691">'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
         ),
     ) as demo:
-        # Shared state: {"engine": <query_engine | None>}
-        engine_state = gr.State({"engine": None})
 
-        gr.Markdown(
-            """
-# 📋 BCGEU Collective Agreement Chatbot
-Ask questions about BC Government / BCGEU collective agreements. \
-All answers come directly from the selected document.
-
-> ⚠️ **From document only — not legal advice.**
-"""
+        # ── Header ────────────────────────────────────────────────────────────
+        gr.HTML(
+            '<div id="app-header">'
+            "<h1>📋 Vexilon — BCGEU Agreement Assistant</h1>"
+            "<p>19th Main Public Service Agreement (Social, Information &amp; Health)</p>"
+            "</div>"
         )
 
+        # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
+        gr.HTML(f'<div id="disclaimer">{DISCLAIMER}</div>')
+
+        # ── Shared state ──────────────────────────────────────────────────────
+        # No engine state needed — index is module-level
+
+        # ── Chat interface ────────────────────────────────────────────────────
+        chatbot = gr.Chatbot(
+            elem_id="chatbot",
+            type="messages",
+            height=480,
+            show_copy_button=True,
+            bubble_full_width=False,
+            render_markdown=True,
+            placeholder=WELCOME_MESSAGE,
+        )
+
+        # ── Input row ─────────────────────────────────────────────────────────
         with gr.Row():
-            # ── Left panel: controls ────────────────────────────────────────
-            with gr.Column(scale=1, min_width=280):
-                agreement_dd = gr.Dropdown(
-                    choices=AGREEMENT_NAMES,
-                    value=AGREEMENT_NAMES[0],
-                    label="Select Agreement",
-                    interactive=True,
-                )
-                pdf_upload = gr.File(
-                    label="Upload PDF (optional — overrides URL download)",
-                    file_types=[".pdf"],
-                    file_count="single",
-                )
-                load_btn = gr.Button("📥 Load Agreement", variant="primary")
-                status_box = gr.Textbox(
-                    label="Status",
-                    value="Select an agreement and click Load.",
-                    interactive=False,
-                    lines=4,
-                )
-                gr.Markdown(
-                    """
-**Example questions:**
-- *Article 12 overtime rules?*
-- *What is the probationary period?*
-- *Vacation entitlement for new employees?*
+            msg_input = gr.Textbox(
+                placeholder="Ask about the collective agreement…",
+                label="",
+                lines=2,
+                max_lines=6,
+                scale=5,
+                show_label=False,
+                container=False,
+            )
+            send_btn = gr.Button("Send ➤", elem_id="send-btn", scale=1, variant="primary")
 
-**BC Contacts (type to look up):**
-- `health victoria` → Island Health HR
-- `health northern` → Northern Health HR
-- `health fraser` → Fraser Health HR
-- `bcgeu` → BCGEU provincial office
-"""
-                )
-
-            # ── Right panel: chat ───────────────────────────────────────────
-            with gr.Column(scale=2):
-                chatbot = gr.Chatbot(
-                    label="Agreement Chat",
-                    height=520,
-                    show_copy_button=True,
-                    bubble_full_width=False,
-                )
-                msg_input = gr.Textbox(
-                    placeholder="Ask a question about the agreement…",
-                    label="Your Question",
-                    lines=2,
-                    max_lines=6,
-                )
-                with gr.Row():
-                    submit_btn = gr.Button("Send ➤", variant="primary")
-                    clear_btn = gr.Button("🗑 Clear Chat")
-
-        # ── Wiring ────────────────────────────────────────────────────────
-        load_btn.click(
-            fn=on_load_agreement,
-            inputs=[agreement_dd, pdf_upload],
-            outputs=[status_box, engine_state, chatbot],
-            show_progress="minimal",
+        # ── Example questions (auto-submit on click) ──────────────────────────
+        # gr.Examples populates the input; we chain submit on selection.
+        gr.Examples(
+            examples=[[q] for q in EXAMPLE_QUESTIONS],
+            inputs=[msg_input],
+            label="Example questions — click to ask:",
+            examples_per_page=5,
         )
 
-        submit_btn.click(
-            fn=on_submit,
-            inputs=[msg_input, chatbot, agreement_dd, engine_state],
-            outputs=[chatbot, engine_state, msg_input],
+        # ── Submit handlers ───────────────────────────────────────────────────
+        def submit(message: str, history: list[dict]) -> tuple[list[dict], str]:
+            if not message.strip():
+                return history, ""
+            # Append user turn to history
+            history = list(history) + [{"role": "user", "content": message}]
+            # Query RAG (pass history without the current user message as "prior context")
+            response = rag_query(message, history[:-1])
+            history = history + [{"role": "assistant", "content": response}]
+            return history, ""
+
+        send_btn.click(
+            fn=submit,
+            inputs=[msg_input, chatbot],
+            outputs=[chatbot, msg_input],
         )
-        # Allow submitting with the Enter key as well
         msg_input.submit(
-            fn=on_submit,
-            inputs=[msg_input, chatbot, agreement_dd, engine_state],
-            outputs=[chatbot, engine_state, msg_input],
-        )
-
-        clear_btn.click(fn=lambda: [], outputs=[chatbot])
-
-        # Auto-load the default agreement when a new session opens.
-        # Hits the Chroma cache populated by preindex_agreements() — completes in ~1s.
-        demo.load(
-            fn=on_load_agreement,
-            inputs=[agreement_dd, pdf_upload],
-            outputs=[status_box, engine_state, chatbot],
+            fn=submit,
+            inputs=[msg_input, chatbot],
+            outputs=[chatbot, msg_input],
         )
 
     return demo
 
 
-# ─── Pre-indexer ──────────────────────────────────────────────────────────────
-def preindex_agreements() -> None:
-    """
-    Index every agreement into Chroma at startup so the first UI load is instant.
-    Skips agreements already present in the vector store.
-    Runs synchronously before the Gradio server starts.
-    """
-    for name in AGREEMENT_NAMES:
-        print(f"[preindex] Checking '{name}'…")
-        _, status = get_query_engine(name)
-        print(f"[preindex] {status}")
-
-
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    configure_llm()
-    preindex_agreements()
+    startup()
     app = build_ui()
     app.launch(
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
-        allowed_paths=["./manifest.json"],  # Serve PWA manifest
+        allowed_paths=["./manifest.json"],
     )
