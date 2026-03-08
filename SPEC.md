@@ -262,7 +262,7 @@ Each response must follow this structure:
 
 | Component | Choice | Rationale |
 |---|---|---|
-| **LLM** | Anthropic Claude (`claude-haiku-3-5` — MVP only) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
+| **LLM** | Anthropic Claude (`claude-3-5-haiku-20241022` — MVP only) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
 | **Embeddings** | `text-embedding-3-small` (OpenAI) | Cheap ($0.02/million tokens), accurate, stable API |
 | **Vector Store** | FAISS (in-memory) | No server process, no persistence overhead, trivially replaceable with ChromaDB when multi-agreement support is added |
 | **PDF Parsing** | `pypdf` | Lightweight, already available; preserves page numbers |
@@ -305,7 +305,7 @@ User sends message
         system: [citation-enforcement rules + agreement context]
         user: [conversation history + new query]
         context: [retrieved chunks with page numbers]
-  └── Send to Claude API (claude-haiku-3-5)
+  └── Send to Claude API (claude-3-5-haiku-20241022)
   └── Stream response to Gradio chat interface
   └── Append to conversation history
 ```
@@ -321,7 +321,7 @@ User sends message
 
 The system prompt will enforce:
 
-1. Role: "You are blabot, an assistant for BCGEU union stewards..."
+1. Role: "You are Vexilon, an assistant for BCGEU union stewards..."
 2. Grounding: "You may only answer using the provided agreement excerpts. Do not draw on outside knowledge."
 3. Citation requirement: "Every claim must be supported by a verbatim quote from the provided excerpts, formatted as a blockquote with article and page citation."
 4. Not-found handling: "If the excerpts do not address the question, say so clearly."
@@ -332,7 +332,7 @@ The system prompt will enforce:
 
 | Component | Rate | Estimated Monthly (moderate use) |
 |---|---|---|
-| Claude claude-haiku-3-5 | $0.80/M input tokens, $4.00/M output | ~$5–15 CAD |
+| `claude-3-5-haiku-20241022` | $0.80/M input tokens, $4.00/M output | ~$5–15 CAD |
 | text-embedding-3-small | $0.02/M tokens (queries only; index built once) | <$1 CAD |
 | **Total** | | **~$6–16 CAD/month** |
 
@@ -368,7 +368,7 @@ Open `http://localhost:7860`.
 |---|---|---|
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
 | `OPENAI_API_KEY` | *(required)* | OpenAI API key (embeddings only) |
-| `CLAUDE_MODEL` | `claude-haiku-3-5` | Claude model for responses |
+| `CLAUDE_MODEL` | `claude-3-5-haiku-20241022` | Claude model for responses |
 | `EMBED_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
