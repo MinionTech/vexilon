@@ -6,7 +6,7 @@ Tech stack:
   - tiktoken  : Token counting for chunking
   - OpenAI    : text-embedding-3-small embeddings
   - FAISS     : In-memory vector index (no server process)
-  - Anthropic : Claude (claude-3-5-haiku-20241022) for responses
+  - Anthropic : Claude (claude-haiku-4-5) for responses
   - Gradio 5  : Web UI at http://localhost:7860
 
 Quick start:
@@ -44,7 +44,7 @@ import gradio as gr
 PDF_CACHE_DIR = Path("./pdf_cache")
 PDF_PATH = PDF_CACHE_DIR / "main_public_service_19th.pdf"
 
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-haiku-20241022")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 512))       # tokens per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100)) # token overlap
