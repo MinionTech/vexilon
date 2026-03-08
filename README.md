@@ -27,32 +27,28 @@ article and page citations.
 
 ### Run
 
-**Option A — directly (fastest for local development):**
+**Recommended for local development — container with live reload:**
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENAI_API_KEY=sk-...
 
-uv run --with-requirements requirements.txt python app.py
-```
-
-**Option B — container (matches production):**
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...
-
-podman-compose up --build
-```
-
-**Option C — container with live reload (edit `app.py`, see changes without a manual rebuild):**
-
-```bash
 podman-compose watch
 ```
 
-`app.py` changes are synced instantly into the running container.
+`app.py` edits are synced instantly into the running container — no rebuild needed.
 `requirements.txt` or `Containerfile` changes trigger a full rebuild automatically.
+This matches the production environment while keeping iteration fast.
+
+**Alternatives:**
+
+```bash
+# One-shot container build (no live reload):
+podman-compose up --build
+
+# No container — useful for quick iteration or CI:
+uv run --with-requirements requirements.txt python app.py
+```
 
 Open <http://localhost:7860> in your browser.
 
