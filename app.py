@@ -100,8 +100,17 @@ Response format:
 """
 
 # ─── Chunking ─────────────────────────────────────────────────────────────────
-# cl100k_base is used by text-embedding-3-small; initialised once at module load
-_ENCODER = tiktoken.get_encoding("cl100k_base")
+# cl100k_base is used by text-embedding-3-small.
+# Lazy init: tiktoken downloads the BPE vocab (~1 MB) on first call if not cached;
+# we init inside startup() where we already have print() context.
+_ENCODER: tiktoken.Encoding | None = None
+
+
+def _get_encoder() -> tiktoken.Encoding:
+    global _ENCODER
+    if _ENCODER is None:
+        _ENCODER = tiktoken.get_encoding("cl100k_base")
+    return _ENCODER
 
 
 def chunk_text(text: str, page_num: int) -> list[dict]:
@@ -109,7 +118,8 @@ def chunk_text(text: str, page_num: int) -> list[dict]:
     Split *text* into overlapping token-based chunks.
     Returns list of dicts: {text, page, chunk_index}.
     """
-    tokens = _ENCODER.encode(text)
+    enc = _get_encoder()
+    tokens = enc.encode(text)
     chunks = []
     start = 0
     idx = 0
@@ -163,9 +173,12 @@ def build_index(chunks: list[dict]) -> faiss.IndexFlatIP:
     Embed all chunks and build a FAISS inner-product index.
     Vectors are L2-normalised so inner product == cosine similarity.
     """
+    import time
     texts = [c["text"] for c in chunks]
-    print(f"[index] Embedding {len(texts)} chunks…")
+    print(f"[index] Embedding {len(texts)} chunks via OpenAI API (may take 15–60 s)…")
+    t0 = time.time()
     vectors = embed_texts(texts)
+    print(f"[index] Embeddings received in {time.time()-t0:.1f}s")
     # L2-normalise for cosine similarity via inner product
     faiss.normalize_L2(vectors)
     index = faiss.IndexFlatIP(EMBED_DIM)
@@ -195,6 +208,9 @@ _index: faiss.IndexFlatIP | None = None
 def startup() -> None:
     """Load PDF, chunk, embed, and build FAISS index. Called once before Gradio starts."""
     global _chunks, _index
+    print("[startup] Initialising tokeniser (downloads BPE vocab on first run)…")
+    _get_encoder()
+    print("[startup] Tokeniser ready.")
     print(f"[startup] Loading PDF from {PDF_PATH}…")
     _chunks = load_pdf_chunks(PDF_PATH)
     print(f"[startup] {len(_chunks)} chunks loaded from {PDF_PATH.name}")
