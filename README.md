@@ -7,13 +7,13 @@ powered by a local LLM via Ollama and a persistent vector index via Chroma DB.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Ollama `llama3.1:8b` (local) |
+| LLM | Ollama `llama3.2:3b` (local) |
 | Embeddings | Ollama `nomic-embed-text` (local) |
 | RAG Framework | LlamaIndex v0.10+ |
 | Vector Store | Chroma DB — persisted in `chroma_db` volume |
 | Web UI | Gradio — `http://localhost:7860` |
 | PDF Source | [www2.gov.bc.ca](https://www2.gov.bc.ca) / bundled in `pdf_cache/` |
-| Container | Podman + Podman Compose (`compose.yaml`) |
+| Container | Podman + Podman Compose (`compose.yml`) |
 
 ## Quick Start
 
@@ -29,7 +29,7 @@ podman-compose up
 
 Open <http://localhost:7860> in your browser.
 
-> ⏳ **First run:** `model-puller` will download `llama3.1:8b` (~4.7 GB) and
+> ⏳ **First run:** `model-puller` will download `llama3.2:3b` (~2 GB) and
 > `nomic-embed-text` (~274 MB) into the `ollama_data` volume. This only happens
 > once; subsequent starts are fast.
 
@@ -106,7 +106,7 @@ OLLAMA_BASE_URL=https://your-ollama-server.example.com
 | Variable | Compose default | Description |
 |---|---|---|
 | `OLLAMA_BASE_URL` | `http://ollama:11434` | Ollama server URL (service name in compose) |
-| `OLLAMA_MODEL` | `llama3.1:8b` | Ollama LLM model |
+| `OLLAMA_MODEL` | `llama3.2:3b` | Ollama LLM model |
 | `EMBED_MODEL` | `nomic-embed-text` | Ollama embedding model |
 | `PORT` | `7860` | Gradio listen port |
 
@@ -118,7 +118,7 @@ blabot/
 ├── requirements.txt  # Python dependencies
 ├── manifest.json     # PWA manifest
 ├── Containerfile     # Container image definition
-├── compose.yaml      # Podman Compose — blabot + ollama + model-puller
+├── compose.yml       # Podman Compose — blabot + ollama + model-puller
 ├── pdf_cache/        # Bundled PDFs (committed); runtime downloads are git-ignored
 └── chroma_db/        # Chroma vector store (named volume in compose; git-ignored)
 ```

@@ -4,12 +4,12 @@ app.py — BCGEU Collective Agreement RAG Chatbot
 Tech stack:
   - LlamaIndex  : PDF → chunk → vector index (512 token chunks, 100 overlap)
   - Chroma DB   : local persistent vector store  (./chroma_db)
-  - Ollama      : Llama 3.1:8b LLM + nomic-embed-text embeddings (local)
+  - Ollama      : Llama 3.2:3b LLM + nomic-embed-text embeddings (local)
   - Gradio      : Web UI at http://localhost:7860
 
 Quick start:
   1. Install Ollama and pull the required models:
-       ollama pull llama3.1:8b
+       ollama pull llama3.2:3b
        ollama pull nomic-embed-text
   2. pip install -r requirements.txt
   3. python app.py
@@ -447,8 +447,6 @@ def on_submit(
 # ─── Gradio UI ────────────────────────────────────────────────────────────────
 def build_ui() -> gr.Blocks:
     """Assemble and return the Gradio Blocks application."""
-    configure_llm()
-
     with gr.Blocks(
         title="BCGEU Collective Agreement Chatbot",
         theme=gr.themes.Soft(),
