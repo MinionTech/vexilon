@@ -294,10 +294,21 @@ EXAMPLE_QUESTIONS = [
     "Am I entitled to union representation?",
 ]
 
-DISCLAIMER = (
-    "⚠️ **This tool references the collective agreement text only. "
+# Disclaimer rendered entirely with inline styles so Gradio theme cannot override text colour.
+DISCLAIMER_HTML = (
+    '<div style="'
+    "background-color:#fff8e1;"
+    "border-left:4px solid #f59e0b;"
+    "color:#7c4a00;"
+    "padding:10px 14px;"
+    "border-radius:4px;"
+    "font-size:0.85rem;"
+    "margin-bottom:8px;"
+    '">'
+    "⚠️ <strong style=\"color:#7c4a00;\">This tool references the collective agreement text only. "
     "It is not legal advice. "
-    "Consult your BCGEU staff representative for complex matters.**"
+    "Consult your BCGEU staff representative for complex matters.</strong>"
+    "</div>"
 )
 
 WELCOME_MESSAGE = """**Welcome to Vexilon — BCGEU Agreement Assistant**
@@ -349,12 +360,16 @@ BCGEU_CSS = """
 
 /* Disclaimer bar */
 #disclaimer {
-    background-color: #fff8e1;
-    border-left: 4px solid #f59e0b;
-    padding: 10px 14px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    margin-bottom: 8px;
+    background-color: #fff8e1 !important;
+    border-left: 4px solid #f59e0b !important;
+    color: #7c4a00 !important;
+    padding: 10px 14px !important;
+    border-radius: 4px !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 8px !important;
+}
+#disclaimer strong {
+    color: #7c4a00 !important;
 }
 
 /* Chatbot */
@@ -447,7 +462,15 @@ BCGEU_CSS = """
 
 def build_ui() -> gr.Blocks:
     """Assemble and return the Gradio Blocks application."""
-    with gr.Blocks(title="Vexilon — BCGEU Agreement Assistant") as demo:
+    with gr.Blocks(
+        title="Vexilon — BCGEU Agreement Assistant",
+        css=BCGEU_CSS,
+        head=(
+            '<link rel="manifest" href="/file=manifest.json">'
+            '<meta name="theme-color" content="#005691">'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        ),
+    ) as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
         gr.HTML(
@@ -458,7 +481,7 @@ def build_ui() -> gr.Blocks:
         )
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
-        gr.HTML(f'<div id="disclaimer">{DISCLAIMER}</div>')
+        gr.HTML(DISCLAIMER_HTML)
 
         # ── Empty-state onboarding (visible until first message) ───────────────
         onboarding = gr.Group(elem_id="onboarding", visible=True)
@@ -481,7 +504,7 @@ def build_ui() -> gr.Blocks:
             elem_id="chatbot",
             type="messages",
             height=480,
-            buttons=["copy"],
+            show_copy_button=True,
             render_markdown=True,
         )
 
@@ -550,10 +573,4 @@ if __name__ == "__main__":
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
         allowed_paths=["./manifest.json"],
-        css=BCGEU_CSS,
-        head=(
-            '<link rel="manifest" href="/file=manifest.json">'
-            '<meta name="theme-color" content="#005691">'
-            '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        ),
     )
