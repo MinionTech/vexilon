@@ -8,7 +8,7 @@ article and page citations.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Anthropic Claude (`claude-3-5-haiku-20241022`) |
+| LLM | Anthropic Claude (`claude-haiku-4-5`) |
 | Embeddings | OpenAI `text-embedding-3-small` |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | PDF Parsing | pypdf — preserves page numbers |
@@ -27,12 +27,32 @@ article and page citations.
 
 ### Run
 
+**Option A — directly (fastest for local development):**
+
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENAI_API_KEY=sk-...
 
-podman-compose up
+uv run --with-requirements requirements.txt python app.py
 ```
+
+**Option B — container (matches production):**
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
+
+podman-compose up --build
+```
+
+**Option C — container with live reload (edit `app.py`, see changes without a manual rebuild):**
+
+```bash
+podman-compose watch
+```
+
+`app.py` changes are synced instantly into the running container.
+`requirements.txt` or `Containerfile` changes trigger a full rebuild automatically.
 
 Open <http://localhost:7860> in your browser.
 
@@ -71,7 +91,7 @@ All settings are optional — defaults match the product specification.
 |---|---|---|
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
 | `OPENAI_API_KEY` | *(required)* | OpenAI API key (embeddings only) |
-| `CLAUDE_MODEL` | `claude-3-5-haiku-20241022` | Claude model for responses |
+| `CLAUDE_MODEL` | `claude-haiku-4-5` | Claude model for responses |
 | `EMBED_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
@@ -84,15 +104,33 @@ Set `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Spaces secrets. The `pdf_cache/`
 directory is committed to the repo and available at runtime. No persistent volume
 is required — the FAISS index is rebuilt on each cold start.
 
+### Running tests
+
+```bash
+# Fast suite — no API keys needed, runs in ~5 s
+uv run --with-requirements requirements.txt pytest tests/ --ignore=tests/smoke -v
+
+# Smoke test — validates CLAUDE_MODEL against the real Anthropic API
+pytest tests/smoke/ -v
+```
+
 ## Project Structure
 
 ```
 vexilon/
 ├── app.py            # Main application (RAG pipeline + Gradio UI)
-├── requirements.txt  # Python dependencies
+├── conftest.py       # pytest root path configuration
+├── requirements.txt  # Python dependencies (includes pytest)
 ├── manifest.json     # PWA manifest
 ├── Containerfile     # Container image definition
-├── compose.yml       # Podman Compose — single vexilon service
+├── compose.yml       # Podman Compose — single vexilon service with live-reload watch config
 ├── SPEC.md           # Product specification
+├── tests/            # pytest test suite
+│   ├── test_chunking.py    # chunk_text() unit tests
+│   ├── test_index.py       # FAISS build/search unit tests
+│   ├── test_pdf_loader.py  # load_pdf_chunks() unit tests
+│   ├── test_rag_stream.py  # rag_stream() unit tests + model name blocklist
+│   └── smoke/
+│       └── test_model_valid.py  # live API model validation (requires ANTHROPIC_API_KEY)
 └── pdf_cache/        # Bundled PDFs (committed to repo)
 ```

@@ -24,3 +24,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    # ── Live reload for local development ─────────────────────────────────────
+    # Usage: docker compose watch  (or: podman-compose watch)
+    # Syncs app.py edits instantly; rebuilds the image only when deps change.
+    develop:
+      watch:
+        - action: sync
+          path: ./app.py
+          target: /app/app.py
+        - action: rebuild
+          path: requirements.txt
+        - action: rebuild
+          path: Containerfile
