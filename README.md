@@ -55,8 +55,8 @@ uv run --with-requirements requirements.txt python app.py
 
 Open <http://localhost:7860> in your browser.
 
-> ⏳ **First run:** the app downloads the embedding model and builds the FAISS index (~30–60 s).
-> Subsequent starts load the pre-built index from `pdf_cache/` directly — no rebuild needed.
+> ✅ **Startup is fast** — the embedding model is baked into the container image at build time,
+> and the FAISS index is pre-built and committed in `pdf_cache/`. No rebuild on first run.
 
 ### Troubleshooting
 
