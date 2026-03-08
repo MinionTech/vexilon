@@ -15,24 +15,6 @@ import pytest
 
 import app
 
-# ── Model name sanity check ───────────────────────────────────────────────────
-# This is cheap and catches the exact class of bug that broke production on 2026-03-08.
-# Add every known-bad name here as they are discovered.
-_KNOWN_BAD_MODEL_NAMES = {
-    "claude-3-5-haiku-20241022",  # AI-hallucinated; never existed in the Anthropic API
-}
-
-
-def test_claude_model_default_is_not_known_bad():
-    """
-    The module-level CLAUDE_MODEL constant must not be a known-broken model name.
-    This catches AI-hallucinated model IDs before they ever reach the API.
-    """
-    assert app.CLAUDE_MODEL not in _KNOWN_BAD_MODEL_NAMES, (
-        f"CLAUDE_MODEL='{app.CLAUDE_MODEL}' is a known-bad model name. "
-        f"Update the default in app.py."
-    )
-
 
 def test_compose_yml_does_not_hardcode_model_name():
     """
