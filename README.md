@@ -3,9 +3,7 @@ title: Vexilon — BCGEU Agreement Assistant
 emoji: 📋
 colorFrom: blue
 colorTo: indigo
-sdk: gradio
-sdk_version: "5.50.0"
-app_file: app.py
+sdk: docker
 pinned: false
 license: mit
 short_description: Look up the BCGEU 19th Main Public Service Agreement
