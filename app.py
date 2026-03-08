@@ -299,6 +299,8 @@ BCGEU_CSS = """
     --accent: #008542;
     --bg: #f5f7fa;
     --border: #cdd5e0;
+    --text-primary: #333;
+    --text-secondary: #666;
 }
 
 /* App background */
@@ -359,7 +361,7 @@ BCGEU_CSS = """
     max-width: 100%;
     overflow-x: auto;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Empty-state onboarding panel */
@@ -371,13 +373,13 @@ BCGEU_CSS = """
     margin-bottom: 8px;
 }
 #onboarding p {
-    color: #333;
+    color: var(--text-primary, #333);
     font-size: 0.95rem;
     margin: 0 0 16px;
 }
 #onboarding .chip-label {
     font-size: 0.8rem;
-    color: #666;
+    color: var(--text-secondary, #666);
     margin-bottom: 8px;
 }
 
@@ -491,9 +493,9 @@ def build_ui() -> gr.Blocks:
         # ── Submit handlers ───────────────────────────────────────────────────
         def submit(
             message: str, history: list[dict]
-        ) -> Iterator[tuple[list[dict], str, gr.Group]]:
+        ) -> Iterator[tuple[list[dict], str, dict]]:
             if not message.strip():
-                yield history, "", gr.Group(visible=True)
+                yield history, "", gr.update(visible=True)
                 return
             prior_history = list(history)
             # Append user turn; seed an empty assistant bubble for streaming.
@@ -502,13 +504,13 @@ def build_ui() -> gr.Blocks:
                 {"role": "user", "content": message},
                 {"role": "assistant", "content": ""},
             ]
-            yield history, "", gr.Group(visible=False)
+            yield history, "", gr.update(visible=False)
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             for chunk in rag_stream(message, prior_history):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
-                yield history, "", gr.Group(visible=False)
+                yield history, "", gr.update(visible=False)
 
         submit_inputs = [msg_input, chatbot]
         submit_outputs = [chatbot, msg_input, onboarding]
