@@ -4,6 +4,7 @@ tests/test_index.py — Unit tests for build_index() and search_index()
 Uses synthetic vectors and a mocked OpenAI client — zero API calls.
 """
 
+import faiss
 import numpy as np
 import pytest
 
@@ -31,8 +32,6 @@ def _make_embed_fn(vectors: np.ndarray):
 
 def test_build_index_returns_faiss_index(monkeypatch):
     """build_index should return a FAISS IndexFlatIP with ntotal == len(chunks)."""
-    import faiss
-
     n = 5
     chunks = _make_chunks(n)
     # Use random unit vectors (shape matches EMBED_DIM)
@@ -48,8 +47,6 @@ def test_build_index_returns_faiss_index(monkeypatch):
 
 def test_build_index_normalises_vectors(monkeypatch):
     """After build_index, searching with an identical vector should produce score ≈ 1.0."""
-    import faiss
-
     n = 3
     chunks = _make_chunks(n)
     vecs = np.random.randn(n, app.EMBED_DIM).astype(np.float32)
@@ -67,8 +64,6 @@ def test_build_index_normalises_vectors(monkeypatch):
 
 def test_search_index_returns_top_k(monkeypatch):
     """search_index should return exactly top_k results (when index has >= top_k vectors)."""
-    import faiss
-
     n = 10
     top_k = 3
     chunks = _make_chunks(n)
@@ -80,7 +75,6 @@ def test_search_index_returns_top_k(monkeypatch):
 
     # For search, embed_texts is called with the single query string
     query_vec = vecs[0:1].copy()
-    call_order = {"done_build": True}
 
     def _embed_search(texts):
         return query_vec.copy()
@@ -93,8 +87,6 @@ def test_search_index_returns_top_k(monkeypatch):
 
 def test_search_index_finds_most_similar(monkeypatch):
     """The top result should be the chunk whose vector is closest to the query."""
-    import faiss
-
     n = 4
     chunks = _make_chunks(n)
     vecs = np.random.randn(n, app.EMBED_DIM).astype(np.float32)

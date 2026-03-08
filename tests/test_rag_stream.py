@@ -5,19 +5,22 @@ All external API calls (Anthropic, OpenAI/FAISS search) are mocked.
 Tests verify guard-clause behaviour and correct prompt construction.
 """
 
+import re
+from contextlib import contextmanager
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import anthropic
+import pytest
+
+import app
+
 # ── Model name sanity check ───────────────────────────────────────────────────
 # This is cheap and catches the exact class of bug that broke production on 2026-03-08.
 # Add every known-bad name here as they are discovered.
 _KNOWN_BAD_MODEL_NAMES = {
     "claude-3-5-haiku-20241022",  # AI-hallucinated; never existed in the Anthropic API
 }
-
-from contextlib import contextmanager
-from unittest.mock import MagicMock, patch
-
-import pytest
-
-import app
 
 
 def test_claude_model_default_is_not_known_bad():
@@ -37,9 +40,6 @@ def test_compose_yml_does_not_hardcode_model_name():
     Defaults belong in app.py; putting them in compose.yml creates a second source
     of truth that can silently override the app default and cause production outages.
     """
-    import re
-    from pathlib import Path
-
     compose_text = (Path(__file__).parent.parent / "compose.yml").read_text()
     match = re.search(r"CLAUDE_MODEL", compose_text)
     assert not match, (
@@ -173,8 +173,6 @@ def test_rag_stream_appends_user_message_last(monkeypatch):
 
 def test_rag_stream_api_error_yields_error_message(monkeypatch):
     """An Anthropic APIError during streaming should yield an error string, not raise."""
-    import anthropic as _anthropic
-
     fake_index = MagicMock()
     monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", fake_index)
@@ -183,7 +181,7 @@ def test_rag_stream_api_error_yields_error_message(monkeypatch):
 
     @contextmanager
     def _raising_stream(**kwargs):
-        raise _anthropic.APIStatusError(
+        raise anthropic.APIStatusError(
             message="model: bad-model-name",
             response=MagicMock(status_code=404),
             body={"type": "error", "error": {"type": "not_found_error", "message": "model: bad-model-name"}},

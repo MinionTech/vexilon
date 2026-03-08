@@ -4,6 +4,7 @@ tests/test_chunking.py — Unit tests for chunk_text()
 Pure logic, no API calls, no mocking required.
 """
 
+import tiktoken
 import pytest
 from app import chunk_text, CHUNK_SIZE, CHUNK_OVERLAP
 
@@ -40,7 +41,6 @@ def test_multi_chunk_text_overlaps():
     We verify this by asserting the total reconstructed tokens > len(original tokens),
     which is only possible if overlap is actually applied.
     """
-    import tiktoken
     enc = tiktoken.get_encoding("cl100k_base")
     long_text = "word " * (CHUNK_SIZE * 2)
     chunks = chunk_text(long_text, page_num=1)

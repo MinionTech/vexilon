@@ -5,7 +5,6 @@ Uses a tiny in-memory PDF fixture so no real file is required.
 Requires pypdf (already a project dependency).
 """
 
-import io
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
