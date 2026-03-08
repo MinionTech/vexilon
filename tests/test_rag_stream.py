@@ -5,12 +5,49 @@ All external API calls (Anthropic, OpenAI/FAISS search) are mocked.
 Tests verify guard-clause behaviour and correct prompt construction.
 """
 
+# ── Model name sanity check ───────────────────────────────────────────────────
+# This is cheap and catches the exact class of bug that broke production on 2026-03-08.
+# Add every known-bad name here as they are discovered.
+_KNOWN_BAD_MODEL_NAMES = {
+    "claude-3-5-haiku-20241022",  # AI-hallucinated; never existed in the Anthropic API
+}
+
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 import app
+
+
+def test_claude_model_default_is_not_known_bad():
+    """
+    The module-level CLAUDE_MODEL constant must not be a known-broken model name.
+    This catches AI-hallucinated model IDs before they ever reach the API.
+    """
+    assert app.CLAUDE_MODEL not in _KNOWN_BAD_MODEL_NAMES, (
+        f"CLAUDE_MODEL='{app.CLAUDE_MODEL}' is a known-bad model name. "
+        f"Update the default in app.py."
+    )
+
+
+def test_compose_yml_model_default_is_not_known_bad():
+    """
+    The CLAUDE_MODEL fallback in compose.yml must not be a known-broken model name.
+    This is the value that actually reaches the container if no env var is set.
+    """
+    import re
+    from pathlib import Path
+
+    compose_text = (Path(__file__).parent.parent / "compose.yml").read_text()
+    # Match:  CLAUDE_MODEL: ${CLAUDE_MODEL:-some-model-name}
+    match = re.search(r"CLAUDE_MODEL:\s*\$\{CLAUDE_MODEL:-([^}]+)\}", compose_text)
+    assert match, "Could not find CLAUDE_MODEL default in compose.yml"
+    default_in_compose = match.group(1).strip()
+    assert default_in_compose not in _KNOWN_BAD_MODEL_NAMES, (
+        f"compose.yml CLAUDE_MODEL default='{default_in_compose}' is a known-bad model name. "
+        f"Update compose.yml."
+    )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

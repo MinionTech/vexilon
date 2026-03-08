@@ -9,7 +9,7 @@ services:
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-3-5-haiku-20241022}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5}
       EMBED_MODEL: ${EMBED_MODEL:-text-embedding-3-small}
       PORT: "7860"
     ports:
