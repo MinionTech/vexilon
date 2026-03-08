@@ -1,3 +1,16 @@
+---
+title: Vexilon — BCGEU Agreement Assistant
+emoji: 📋
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: "5.50.0"
+app_file: app.py
+pinned: false
+license: mit
+short_description: Look up the BCGEU 19th Main Public Service Agreement
+---
+
 # Vexilon — BCGEU Agreement Assistant
 
 AI chatbot for BCGEU union stewards to look up the 19th Main Public Service Agreement
