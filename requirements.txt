@@ -7,8 +7,10 @@ gradio>=5.0.0,<6.0.0
 # ── LLM ──────────────────────────────────────────────────────────────────────
 anthropic>=0.40.0           # Claude API client
 
-# ── Embeddings ────────────────────────────────────────────────────────────────
-openai>=1.50.0              # text-embedding-3-small (embeddings only)
+# ── Embeddings (local CPU, no API key required) ───────────────────────────────
+# sentence-transformers will pull torch; the Containerfile installs torch+cpu first
+# via --index-url https://download.pytorch.org/whl/cpu to avoid the 3 GB CUDA stack.
+sentence-transformers>=3.0.0  # all-MiniLM-L6-v2 — runs on CPU, ~80 MB model
 
 # ── Vector store ──────────────────────────────────────────────────────────────
 faiss-cpu>=1.8.0            # In-memory vector index (no server process)

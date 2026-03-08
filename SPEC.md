@@ -261,9 +261,9 @@ Each response must follow this structure:
 
 | Component | Choice | Rationale |
 |---|---|---|
-| **LLM** | Anthropic Claude (`claude-3-5-haiku-20241022` — MVP only) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
-| **Embeddings** | `text-embedding-3-small` (OpenAI) | Cheap ($0.02/million tokens), accurate, stable API |
-| **Vector Store** | FAISS (in-memory) | No server process, no persistence overhead, trivially replaceable with ChromaDB when multi-agreement support is added |
+| **LLM** | Anthropic Claude (`claude-haiku-4-5`) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
+| **Embeddings** | `all-MiniLM-L6-v2` via `sentence-transformers` (local CPU) | No API key; no per-query cost; 80 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
+| **Vector Store** | FAISS (in-memory, pre-computed index on disk) | No server process; index loaded from disk at startup (<1s); pre-computed once per agreement update |
 | **PDF Parsing** | `pypdf` | Lightweight, already available; preserves page numbers |
 | **RAG Framework** | Direct implementation (no LlamaIndex) | LlamaIndex added complexity without value for this use case; direct control over chunking, retrieval, and prompting is preferable |
 | **Web UI** | Gradio 5.x | Same framework as current codebase; HF Spaces native; responsive CSS possible |
@@ -277,7 +277,8 @@ Each response must follow this structure:
 |---|---|
 | Ollama | Replaced by Anthropic API |
 | `llama3.2:3b` / `llama3.1:8b` | Replaced by Claude |
-| `nomic-embed-text` (Ollama) | Replaced by OpenAI text-embedding-3-small |
+| `nomic-embed-text` (Ollama) | Replaced by `sentence-transformers` local model |
+| OpenAI `text-embedding-3-small` | Replaced by local `all-MiniLM-L6-v2` — eliminates second API dependency |
 | LlamaIndex | Replaced by direct RAG implementation |
 | ChromaDB | Replaced by FAISS for MVP |
 | Hardcoded phone number lookup | Not a requested feature; removed entirely |
@@ -331,11 +332,11 @@ The system prompt will enforce:
 
 | Component | Rate | Estimated Monthly (moderate use) |
 |---|---|---|
-| `claude-3-5-haiku-20241022` | $0.80/M input tokens, $4.00/M output | ~$5–15 CAD |
-| text-embedding-3-small | $0.02/M tokens (queries only; index built once) | <$1 CAD |
-| **Total** | | **~$6–16 CAD/month** |
+| `claude-haiku-4-5` | $0.80/M input tokens, $4.00/M output | ~$5–15 CAD |
+| `all-MiniLM-L6-v2` embeddings | $0 — runs locally on CPU | $0 |
+| **Total** | | **~$5–15 CAD/month** |
 
-Well within the $100 CAD/month budget. The index is built once at startup; embedding costs are query-only after that.
+Single API dependency (Anthropic only). The FAISS index is pre-computed once locally and committed to the repo; embeddings have zero runtime cost. Index must be regenerated when the agreement PDF changes (~every 3–5 years).
 
 ---
 
@@ -344,13 +345,23 @@ Well within the $100 CAD/month budget. The index is built once at startup; embed
 ### Local Development
 
 ```bash
-# Set your API keys
+# Set your API key
 export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...   # for embeddings only
 
 # Run with Podman Compose
 podman-compose up
 ```
+
+> **After updating the agreement PDF**, regenerate the pre-computed index:
+> ```bash
+> podman-compose build
+> podman run --rm --user root \
+>   -v "$(pwd)/pdf_cache:/app/pdf_cache:z" \
+>   localhost/vexilon_vexilon:latest \
+>   python3 -c "from app import startup; startup(force_rebuild=True)"
+> git add pdf_cache/index.faiss pdf_cache/chunks.json
+> git commit -m "chore: regenerate embedding index for updated agreement PDF"
+> ```
 
 Open `http://localhost:7860`.
 
@@ -366,9 +377,8 @@ Open `http://localhost:7860`.
 | Variable | Default | Description |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `OPENAI_API_KEY` | *(required)* | OpenAI API key (embeddings only) |
-| `CLAUDE_MODEL` | `claude-3-5-haiku-20241022` | Claude model for responses |
-| `EMBED_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
+| `CLAUDE_MODEL` | `claude-haiku-4-5` | Claude model for responses |
+| `EMBED_MODEL` | `all-MiniLM-L6-v2` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
 | `CHUNK_SIZE` | `512` | Tokens per chunk |

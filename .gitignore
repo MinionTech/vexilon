@@ -24,6 +24,8 @@ build/
 chroma_db/          # Local Chroma vector store (rebuilt from PDFs)
 pdf_cache/          # Cached downloaded PDFs — add negation below for bundled PDFs
 !pdf_cache/main_public_service_19th.pdf
+!pdf_cache/index.faiss   # Pre-computed FAISS index (committed for fast cold starts)
+!pdf_cache/chunks.json   # Pre-computed chunk metadata (committed alongside index)
 gradio_cached_examples/
 flagged/
 

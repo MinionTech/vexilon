@@ -2,18 +2,21 @@
 app.py — Vexilon: BCGEU Agreement Assistant
 --------------------------------------------
 Tech stack:
-  - pypdf     : PDF → pages with page number preservation
-  - tiktoken  : Token counting for chunking
-  - OpenAI    : text-embedding-3-small embeddings
-  - FAISS     : In-memory vector index (no server process)
-  - Anthropic : Claude (claude-haiku-4-5) for responses
-  - Gradio 5  : Web UI at http://localhost:7860
+  - pypdf                : PDF → pages with page number preservation
+  - tiktoken             : Token counting for chunking
+  - sentence-transformers: Local CPU embeddings (all-MiniLM-L6-v2, no API key)
+  - FAISS                : In-memory vector index (no server process)
+  - Anthropic            : Claude (claude-haiku-4-5) for responses
+  - Gradio 5             : Web UI at http://localhost:7860
 
 Quick start:
   1. export ANTHROPIC_API_KEY=sk-ant-...
-     export OPENAI_API_KEY=sk-...
   2. pip install -r requirements.txt
   3. python app.py
+
+Index pre-computation (run once after updating the PDF):
+  python -c "from app import startup; startup(force_rebuild=True)"
+  # Saves pdf_cache/index.faiss + pdf_cache/chunks.json for fast cold starts.
 """
 
 # ─── Standard Library ────────────────────────────────────────────────────────
@@ -27,8 +30,8 @@ from pypdf import PdfReader
 # ─── Third-party: Tokenizer ──────────────────────────────────────────────────
 import tiktoken
 
-# ─── Third-party: Embeddings (OpenAI) ───────────────────────────────────────
-from openai import OpenAI
+# ─── Third-party: Embeddings (local, no API key) ────────────────────────────
+from sentence_transformers import SentenceTransformer
 
 # ─── Third-party: Vector Store (FAISS) ──────────────────────────────────────
 import faiss
@@ -43,27 +46,30 @@ import gradio as gr
 # ─── Configuration ───────────────────────────────────────────────────────────
 PDF_CACHE_DIR = Path("./pdf_cache")
 PDF_PATH = PDF_CACHE_DIR / "main_public_service_19th.pdf"
+INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
+CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
+EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 512))       # tokens per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100)) # token overlap
 SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 5))
 
-# Embedding dimension for text-embedding-3-small
-EMBED_DIM = 1536
+# Embedding dimension for all-MiniLM-L6-v2
+EMBED_DIM = 384
 
 # ─── Clients ─────────────────────────────────────────────────────────────────
-_openai_client: OpenAI | None = None
+_embed_model: SentenceTransformer | None = None
 _anthropic_client: anthropic.Anthropic | None = None
 
 
-def get_openai() -> OpenAI:
-    global _openai_client
-    if _openai_client is None:
-        # Reads OPENAI_API_KEY from environment automatically; raises AuthenticationError if missing
-        _openai_client = OpenAI()
-    return _openai_client
+def get_embed_model() -> SentenceTransformer:
+    global _embed_model
+    if _embed_model is None:
+        print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
+        _embed_model = SentenceTransformer(EMBED_MODEL)
+        print("[embed] Embedding model ready.")
+    return _embed_model
 
 
 def get_anthropic() -> anthropic.Anthropic:
@@ -156,17 +162,11 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
 
 # ─── FAISS Index ──────────────────────────────────────────────────────────────
 def embed_texts(texts: list[str]) -> np.ndarray:
-    """Embed a list of texts using text-embedding-3-small. Returns (N, EMBED_DIM) float32 array."""
-    client = get_openai()
-    # OpenAI allows up to 2048 inputs per call; batch to be safe
-    batch_size = 512
-    all_embeddings = []
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i + batch_size]
-        response = client.embeddings.create(model=EMBED_MODEL, input=batch)
-        batch_embeddings = [item.embedding for item in response.data]
-        all_embeddings.extend(batch_embeddings)
-    return np.array(all_embeddings, dtype=np.float32)
+    """Embed a list of texts using the local sentence-transformers model. Returns (N, EMBED_DIM) float32 array."""
+    model = get_embed_model()
+    # encode() handles batching internally; show_progress_bar=False keeps logs clean
+    embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
+    return embeddings.astype(np.float32)
 
 
 def build_index(chunks: list[dict]) -> faiss.IndexFlatIP:
@@ -176,10 +176,10 @@ def build_index(chunks: list[dict]) -> faiss.IndexFlatIP:
     """
     import time
     texts = [c["text"] for c in chunks]
-    print(f"[index] Embedding {len(texts)} chunks via OpenAI API (may take 15–60 s)…")
+    print(f"[index] Embedding {len(texts)} chunks locally (may take 30–90 s on CPU)…")
     t0 = time.time()
     vectors = embed_texts(texts)
-    print(f"[index] Embeddings received in {time.time()-t0:.1f}s")
+    print(f"[index] Embeddings complete in {time.time()-t0:.1f}s")
     # L2-normalise for cosine similarity via inner product
     faiss.normalize_L2(vectors)
     index = faiss.IndexFlatIP(EMBED_DIM)
@@ -207,10 +207,57 @@ _index: faiss.IndexFlatIP | None = None
 _startup_error: str | None = None   # set if startup fails; surfaced in chat UI
 
 
-def startup() -> None:
-    """Load PDF, chunk, embed, and build FAISS index. Called once before Gradio starts."""
+def save_index(index: faiss.IndexFlatIP, chunks: list[dict]) -> None:
+    """Persist the FAISS index and chunk metadata to pdf_cache/ for fast cold starts."""
+    import json
+    faiss.write_index(index, str(INDEX_PATH))
+    with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
+        json.dump(chunks, f, ensure_ascii=False)
+    print(f"[index] Saved index → {INDEX_PATH} and chunks → {CHUNKS_PATH}")
+
+
+def load_precomputed_index() -> tuple[faiss.IndexFlatIP, list[dict]] | tuple[None, None]:
+    """
+    Load a pre-computed FAISS index and chunks from disk if both exist.
+    Returns (index, chunks) on success, (None, None) if files are missing.
+    """
+    import json
+    if not INDEX_PATH.exists() or not CHUNKS_PATH.exists():
+        return None, None
+    print(f"[startup] Loading pre-computed index from {INDEX_PATH}…")
+    index = faiss.read_index(str(INDEX_PATH))
+    with open(CHUNKS_PATH, encoding="utf-8") as f:
+        chunks = json.load(f)
+    print(f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks.")
+    return index, chunks
+
+
+def startup(force_rebuild: bool = False) -> None:
+    """
+    Load the FAISS index and chunks.
+
+    Fast path (normal operation): loads pre-computed index.faiss + chunks.json from pdf_cache/.
+    Slow path (first run or force_rebuild=True): parses the PDF, embeds all chunks, saves to disk.
+
+    After updating the agreement PDF, run:
+        python -c "from app import startup; startup(force_rebuild=True)"
+    """
     global _chunks, _index, _startup_error
     try:
+        if not force_rebuild:
+            index, chunks = load_precomputed_index()
+            if index is not None and chunks is not None:
+                _index = index
+                _chunks = chunks
+                # Still need the encoder warm for query-time token counting
+                print("[startup] Initialising tokeniser…")
+                _get_encoder()
+                # Warm the embedding model so first query isn't slow
+                get_embed_model()
+                print("[startup] Ready.")
+                return
+
+        # ── Slow path: build from scratch ────────────────────────────────────
         print("[startup] Initialising tokeniser (downloads BPE vocab on first run)…")
         _get_encoder()
         print("[startup] Tokeniser ready.")
@@ -218,11 +265,12 @@ def startup() -> None:
         _chunks = load_pdf_chunks(PDF_PATH)
         print(f"[startup] {len(_chunks)} chunks loaded from {PDF_PATH.name}")
         _index = build_index(_chunks)
+        save_index(_index, _chunks)
         print("[startup] Ready.")
     except Exception as exc:  # noqa: BLE001
         _startup_error = str(exc)
         print(f"[startup] ⚠️  Startup failed — app will run but queries will fail: {exc}")
-        print("[startup] Set OPENAI_API_KEY and ANTHROPIC_API_KEY, then restart.")
+        print("[startup] Set ANTHROPIC_API_KEY, then restart.")
 
 
 # ─── RAG Query ────────────────────────────────────────────────────────────────
@@ -236,10 +284,9 @@ def rag_stream(message: str, history: list[dict]) -> Iterator[str]:
         yield (
             "⚠️ **The app failed to start.**\n\n"
             f"```\n{_startup_error}\n```\n\n"
-            "Make sure `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` are set in your "
+            "Make sure `ANTHROPIC_API_KEY` is set in your "
             "environment, then restart the container:\n\n"
-            "```bash\nexport OPENAI_API_KEY=sk-...\n"
-            "export ANTHROPIC_API_KEY=sk-ant-...\n"
+            "```bash\nexport ANTHROPIC_API_KEY=sk-ant-...\n"
             "podman-compose up\n```"
         )
         return

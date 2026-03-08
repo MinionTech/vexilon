@@ -9,9 +9,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# Store HuggingFace model cache in /tmp so the non-root user can write to it
+ENV HF_HOME=/tmp/hf_cache
+
 # Install Python deps in a separate layer so code changes don't bust the cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install CPU-only torch first to avoid pulling the 3 GB CUDA variant that
+# sentence-transformers would otherwise resolve via the default PyPI index.
+RUN pip install --no-cache-dir \
+        torch \
+        --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir -r requirements.txt
 
 # ─── App layer ────────────────────────────────────────────────────────────────
 COPY app.py manifest.json ./
