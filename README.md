@@ -1,4 +1,4 @@
-# blabot — BCGEU Collective Agreement RAG Chatbot
+# Vexilon — BCGEU Collective Agreement RAG Chatbot
 
 AI chatbot for answering questions about BC Government / BCGEU collective agreements,
 powered by a local LLM via Ollama and a persistent vector index via Chroma DB.
@@ -37,7 +37,7 @@ Open <http://localhost:7860> in your browser.
 
 **Port 11434 already in use** — a previous failed start left stale containers. Clean up and retry:
 ```bash
-podman-compose down && podman rm -f ollama model-puller blabot
+podman-compose down && podman rm -f ollama model-puller vexilon
 podman-compose up
 ```
 
@@ -113,12 +113,12 @@ OLLAMA_BASE_URL=https://your-ollama-server.example.com
 ## Project Structure
 
 ```
-blabot/
+vexilon/
 ├── app.py            # Main application (LlamaIndex + Gradio)
 ├── requirements.txt  # Python dependencies
 ├── manifest.json     # PWA manifest
 ├── Containerfile     # Container image definition
-├── compose.yml       # Podman Compose — blabot + ollama + model-puller
+├── compose.yml       # Podman Compose — vexilon + ollama + model-puller
 ├── pdf_cache/        # Bundled PDFs (committed); runtime downloads are git-ignored
 └── chroma_db/        # Chroma vector store (named volume in compose; git-ignored)
 ```

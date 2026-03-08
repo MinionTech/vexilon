@@ -1,5 +1,5 @@
 # BCGEU Collective Agreement RAG Chatbot
-# https://github.com/DerekRoberts/blabot
+# https://github.com/DerekRoberts/vexilon
 
 # ── Web UI ───────────────────────────────────────────────────────────────────
 gradio>=4.19.0,<6.0.0

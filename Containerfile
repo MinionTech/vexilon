@@ -18,7 +18,7 @@ COPY app.py manifest.json ./
 COPY pdf_cache/ ./pdf_cache/
 
 # ─── Non-root user ────────────────────────────────────────────────────────────
-RUN useradd --uid 1001 --no-create-home --shell /sbin/nologin blabot \
+RUN useradd --uid 1001 --no-create-home --shell /sbin/nologin vexilon \
     && chown -R 1001:1001 /app
 
 USER 1001

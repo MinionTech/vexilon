@@ -31,7 +31,7 @@ services:
 
   # ── Model puller (one-shot) ──────────────────────────────────────────────────
   # Pulls required models on first run; exits 0 when done.
-  # blabot waits for this to complete successfully before starting.
+  # Vexilon waits for this to complete successfully before starting.
   # Note: OLLAMA_HOST (not OLLAMA_BASE_URL) is the env var the ollama CLI uses.
   model-puller:
     image: docker.io/ollama/ollama:0.17.7  # Must match ollama service image
@@ -51,12 +51,12 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
-  # ── blabot app ───────────────────────────────────────────────────────────────
-  blabot:
+  # ── Vexilon app ───────────────────────────────────────────────────────────────
+  vexilon:
     build:
       context: .
       dockerfile: Containerfile
-    container_name: blabot
+    container_name: vexilon
     environment:
       <<: *ollama-env
       PORT: "7860"
@@ -71,7 +71,7 @@ services:
       - ALL
     tmpfs:
       - /tmp                  # Writable tmp for Gradio and other runtime files
-      - /home/blabot          # NLTK punkt tokenizer data (written on first LlamaIndex use)
+      - /home/vexilon         # NLTK punkt tokenizer data (written on first LlamaIndex use)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s

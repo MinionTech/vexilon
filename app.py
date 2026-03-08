@@ -229,7 +229,7 @@ def download_pdf(url: str, dest_path: Path) -> bool:
             url,
             timeout=REQUEST_TIMEOUT,
             stream=True,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; blabot/1.0)"},
+            headers={"User-Agent": "Mozilla/5.0 (compatible; vexilon/1.0)"},
         )
         resp.raise_for_status()
 
