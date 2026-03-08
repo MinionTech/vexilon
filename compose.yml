@@ -1,7 +1,7 @@
 # Reusable vars
 x-var:
   - &ollama-url http://ollama:11434
-  - &ollama-llm-model llama3.1:8b
+  - &ollama-llm-model llama3.2:3b
   - &ollama-embed-model nomic-embed-text
 
 # Reusable Ollama environment block
