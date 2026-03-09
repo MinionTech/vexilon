@@ -33,7 +33,9 @@ article and page citations.
 
 ## Hosted
 
-🚀 **Live:** https://huggingface.co/spaces/DerekRoberts/vexilon
+🚀 **TEST:** https://huggingface.co/spaces/DerekRoberts/landru
+
+🚀 **PROD:** https://huggingface.co/spaces/DerekRoberts/vexilon
 
 ## Quick Start
 
@@ -108,7 +110,14 @@ All settings are optional — defaults match the product specification.
 
 ## Hugging Face Spaces Deployment
 
-The Space uses the Gradio SDK (`sdk: gradio`). HF installs [`requirements.txt`](requirements.txt)
+Two environments are available:
+
+| Environment | Space | URL | Trigger |
+|-------------|-------|-----|---------|
+| TEST | `landru` | https://huggingface.co/spaces/DerekRoberts/landru | Push to `main` |
+| PROD | `vexilon` | https://huggingface.co/spaces/DerekRoberts/vexilon | Published Release |
+
+The Spaces use the Gradio SDK (`sdk: gradio`). HF installs [`requirements.txt`](requirements.txt)
 and runs [`app.py`](app.py) directly. [`Containerfile`](Containerfile) is used for local
 development only and is ignored by HF Spaces.
 
@@ -125,8 +134,11 @@ This is a no-op when running locally (files are already present).
 
 ### Automated deploy (GitHub Actions)
 
-Every published GitHub release triggers [`.github/workflows/deploy-hf-spaces.yml`](.github/workflows/deploy-hf-spaces.yml),
-which strips `pdf_cache/` from the commit and pushes code-only to the HF Space.
+- **TEST** (`landru`): Every push to `main` triggers the workflow
+- **PROD** (`vexilon`): Every published GitHub release triggers the workflow
+
+The workflow [`.github/workflows/deploy-hf-spaces.yml`](.github/workflows/deploy-hf-spaces.yml)
+strips `pdf_cache/` from the commit and pushes code-only to the appropriate HF Space.
 
 **Required GitHub secret:**
 
@@ -134,7 +146,7 @@ which strips `pdf_cache/` from the commit and pushes code-only to the HF Space.
 |---|---|
 | `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
 
-**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/DerekRoberts/vexilon/settings)):
+**Required HF Space secrets** (set in each Space's settings):
 
 | Secret | Value |
 |---|---|
