@@ -143,16 +143,19 @@ which strips `pdf_cache/` from the commit and pushes code-only to the HF Space.
 ### Manual deploy (one-time setup or re-deploy)
 
 ````bash
-# Strip pdf_cache/ from the commit (local amend — does not change GitHub history)
+# Create a fresh orphan snapshot with no history (required — HF scans full git history
+# for binary files, so amending is not enough)
+git checkout --orphan hf-snapshot
 git rm --cached -r pdf_cache/
-git commit --amend --no-edit
+git commit -m "deploy: manual"
 
-# Push code-only to HF Space (token as password)
+# Push to HF Space (token as password)
 git remote add hf "https://DerekRoberts:YOUR_HF_TOKEN@huggingface.co/spaces/DerekRoberts/vexilon"
-git push hf main:main --force --no-verify
+git push hf hf-snapshot:main --force --no-verify
 
-# Restore pdf_cache/ in your local working tree
-git checkout -- pdf_cache/
+# Return to your working branch
+git switch -
+git branch -D hf-snapshot
 ````
 
 ### Running tests
