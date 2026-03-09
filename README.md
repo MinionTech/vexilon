@@ -33,7 +33,7 @@ article and page citations.
 
 ## Hosted
 
-> 🚀 **Coming soon** — Hugging Face Space URL will be linked here once the Space is live.
+🚀 **Live:** https://huggingface.co/spaces/DerekRoberts/vexilon
 
 ## Quick Start
 
