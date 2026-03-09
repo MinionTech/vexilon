@@ -1,0 +1,45 @@
+[project]
+name = "vexilon"
+version = "0.1.0"
+description = "BCGEU Collective Agreement RAG Chatbot"
+requires-python = ">=3.12"
+dependencies = [
+    # ── Web UI ──────────────────────────────────────────────────────────────
+    "gradio>=6.7.0",
+
+    # ── LLM ─────────────────────────────────────────────────────────────────
+    "anthropic>=0.84.0",            # Claude API client
+
+    # ── Embeddings (local CPU, no API key required) ──────────────────────────
+    # torch is sourced from the CPU-only wheel index (see [[tool.uv.index]])
+    # to avoid pulling the 3 GB CUDA stack that the default PyPI index would
+    # resolve via sentence-transformers' transitive dep.
+    "torch",
+    "sentence-transformers>=5.0.0", # all-MiniLM-L6-v2 — runs on CPU, ~80 MB model
+
+    # ── Vector store ─────────────────────────────────────────────────────────
+    "faiss-cpu>=1.8.0",             # In-memory vector index (no server process)
+
+    # ── PDF processing ───────────────────────────────────────────────────────
+    "pypdf>=6.0.0",                 # PDF parsing with page number preservation
+
+    # ── Tokenizer (for chunking) ─────────────────────────────────────────────
+    "tiktoken>=0.7.0",              # Token counting for chunk size enforcement
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",                # Test runner
+    "pytest-mock>=3.14.0",          # Mocking fixtures (mocker)
+]
+
+# ── uv index configuration ───────────────────────────────────────────────────
+# Route torch (and only torch) to PyTorch's CPU-only wheel index so uv never
+# resolves the 3 GB CUDA variant from PyPI.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
