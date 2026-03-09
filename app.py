@@ -20,6 +20,8 @@ Index pre-computation (run once after updating the PDF):
 """
 
 # ─── Standard Library ────────────────────────────────────────────────────────
+import sys
+print("[boot] Python started, importing stdlib...", flush=True)
 import json
 import os
 import time
@@ -32,23 +34,30 @@ from pathlib import Path
 os.environ.setdefault("HF_HOME", "/tmp/hf_cache")
 
 # ─── Third-party: PDF ────────────────────────────────────────────────────────
+print("[boot] Importing pypdf...", flush=True)
 from pypdf import PdfReader
 
 # ─── Third-party: Tokenizer ──────────────────────────────────────────────────
+print("[boot] Importing tiktoken...", flush=True)
 import tiktoken
 
 # ─── Third-party: Embeddings (local, no API key) ────────────────────────────
+print("[boot] Importing sentence_transformers (pulls torch)...", flush=True)
 from sentence_transformers import SentenceTransformer
 
 # ─── Third-party: Vector Store (FAISS) ──────────────────────────────────────
+print("[boot] Importing faiss...", flush=True)
 import faiss
 import numpy as np
 
 # ─── Third-party: LLM (Anthropic) ───────────────────────────────────────────
+print("[boot] Importing anthropic...", flush=True)
 import anthropic
 
 # ─── Third-party: Gradio UI ──────────────────────────────────────────────────
+print("[boot] Importing gradio...", flush=True)
 import gradio as gr
+print("[boot] All imports complete.", flush=True)
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 PDF_CACHE_DIR = Path("./pdf_cache")
