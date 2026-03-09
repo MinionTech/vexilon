@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0        # full history so git push works correctly
           lfs: false            # no LFS — pdf_cache/ files are regular git objects
