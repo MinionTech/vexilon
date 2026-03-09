@@ -11,8 +11,8 @@ Tech stack:
 
 Quick start:
   1. export ANTHROPIC_API_KEY=sk-ant-...
-  2. pip install -r requirements.txt
-  3. python app.py
+  2. uv sync
+  3. uv run python app.py
 
 Index pre-computation (run once after updating the PDF):
   python -c "from app import startup; startup(force_rebuild=True)"
@@ -424,9 +424,8 @@ def build_ui() -> gr.Blocks:
 
         # ── Chat interface ────────────────────────────────────────────────────
         chatbot = gr.Chatbot(
-            type="messages",
             height=480,
-            show_copy_button=True,
+            buttons=["copy"],
             render_markdown=True,
         )
 

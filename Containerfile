@@ -29,10 +29,11 @@ RUN HF_HOME=/tmp/hf_cache \
 # HF_HOME must match the path used during the download above.
 ENV HF_HOME=/tmp/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
-    HF_DATASETS_OFFLINE=1
+    HF_DATASETS_OFFLINE=1 \
+    UV_CACHE_DIR=/tmp/uv-cache
 
 # ─── App layer ────────────────────────────────────────────────────────────────
-COPY app.py manifest.json ./
+COPY app.py ./
 COPY pdf_cache/ ./pdf_cache/
 
 # ─── Non-root user ────────────────────────────────────────────────────────────
