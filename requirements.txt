@@ -1,29 +1,9 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
-# BCGEU Collective Agreement RAG Chatbot
-# https://github.com/DerekRoberts/vexilon
-
-# ── Web UI ───────────────────────────────────────────────────────────────────
-# gradio version is controlled by HF Spaces via sdk_version in README.md.
-# Do NOT pin gradio here — HF forces its own version and pip will conflict.
-
-# ── LLM ──────────────────────────────────────────────────────────────────────
-anthropic>=0.84.0           # Claude API client
-
-# ── Embeddings (local CPU, no API key required) ───────────────────────────────
-# The --extra-index-url above directs pip to use CPU-only torch wheels.
+# Runtime dependencies for Hugging Face Spaces (Gradio SDK).
+# Gradio itself is installed by HF via sdk_version in README.md — do NOT list it here.
+# Use bare package names per https://huggingface.co/docs/hub/en/spaces-sdks-gradio
+anthropic
 torch
-sentence-transformers>=5.0.0  # all-MiniLM-L6-v2 — runs on CPU, ~80 MB model
-
-# ── Vector store ──────────────────────────────────────────────────────────────
-faiss-cpu>=1.8.0            # In-memory vector index (no server process)
-
-# ── PDF processing ────────────────────────────────────────────────────────────
-pypdf>=6.0.0                # PDF parsing with page number preservation
-
-# ── Tokenizer (for chunking) ──────────────────────────────────────────────────
-tiktoken>=0.7.0             # Token counting for chunk size enforcement
-
-# ── Testing ───────────────────────────────────────────────────────────────────
-pytest>=8.0.0               # Test runner
-pytest-mock>=3.14.0         # Mocking fixtures (mocker)
+sentence-transformers
+faiss-cpu
+pypdf
+tiktoken
