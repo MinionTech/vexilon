@@ -29,6 +29,17 @@ jobs:
           fetch-depth: 0        # full history so git push works correctly
           lfs: false            # no LFS — pdf_cache/ files are regular git objects
 
+      - name: Strip binary cache files for HF push
+        # HF Spaces rejects binary files (.faiss, .pdf) via git.
+        # app.py downloads them from GitHub raw URLs at first startup instead.
+        # We amend the HEAD commit in-place (local only) to drop pdf_cache/ before
+        # pushing to HF. This never touches the GitHub repo history.
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git rm --cached -r pdf_cache/
+          git commit --amend --no-edit
+
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}

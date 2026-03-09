@@ -23,6 +23,7 @@ Index pre-computation (run once after updating the PDF):
 import json
 import os
 import time
+import urllib.request
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -54,6 +55,13 @@ PDF_CACHE_DIR = Path("./pdf_cache")
 PDF_PATH = PDF_CACHE_DIR / "main_public_service_19th.pdf"
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
+
+# Public GitHub raw URL base for pdf_cache/ assets.
+# Used as a fallback when the app runs in an environment where pdf_cache/
+# was not committed (e.g. Hugging Face Spaces — HF rejects binary files in git).
+_GITHUB_RAW_BASE = (
+    "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/pdf_cache"
+)
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
@@ -235,6 +243,30 @@ def load_precomputed_index() -> tuple[faiss.IndexFlatIP, list[dict]] | tuple[Non
     return index, chunks
 
 
+def _fetch_pdf_cache_if_missing() -> None:
+    """
+    Download pdf_cache/ assets from GitHub if they are absent from the local filesystem.
+
+    This is a no-op when running locally (files are already present) and a transparent
+    fallback when running on Hugging Face Spaces, where binary files cannot be committed
+    to the Space git repo. Files are downloaded from the public GitHub raw URL.
+    """
+    files = {
+        PDF_PATH: f"{_GITHUB_RAW_BASE}/main_public_service_19th.pdf",
+        INDEX_PATH: f"{_GITHUB_RAW_BASE}/index.faiss",
+        CHUNKS_PATH: f"{_GITHUB_RAW_BASE}/chunks.json",
+    }
+    missing = [path for path in files if not path.exists()]
+    if not missing:
+        return
+    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    for path, url in files.items():
+        if not path.exists():
+            print(f"[startup] Downloading {path.name} from GitHub…")
+            urllib.request.urlretrieve(url, path)
+            print(f"[startup] {path.name} downloaded ({path.stat().st_size:,} bytes).")
+
+
 def startup(force_rebuild: bool = False) -> None:
     """
     Load the FAISS index and chunks.
@@ -242,11 +274,15 @@ def startup(force_rebuild: bool = False) -> None:
     Fast path (normal operation): loads pre-computed index.faiss + chunks.json from pdf_cache/.
     Slow path (first run or force_rebuild=True): parses the PDF, embeds all chunks, saves to disk.
 
+    On Hugging Face Spaces, pdf_cache/ is not committed to the Space git repo (HF rejects
+    binary files). _fetch_pdf_cache_if_missing() downloads the assets from GitHub on first run.
+
     After updating the agreement PDF, run:
         python -c "from app import startup; startup(force_rebuild=True)"
     """
     global _chunks, _index, _startup_error
     try:
+        _fetch_pdf_cache_if_missing()
         if not force_rebuild:
             index, chunks = load_precomputed_index()
             if index is not None and chunks is not None:
