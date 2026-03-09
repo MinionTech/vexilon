@@ -33,25 +33,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
-          cache: pip
 
       - name: Cache HuggingFace model
         uses: actions/cache@v4
         with:
           path: /home/runner/.cache/huggingface
-          # Bust the cache when requirements change (new model version, etc.)
-          key: hf-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          # Bust the cache when dependencies change (new model version, etc.)
+          key: hf-${{ runner.os }}-${{ hashFiles('uv.lock') }}
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync
 
       - name: Run tests
         env:
           # Smoke tests (tests/smoke/) skip gracefully when this is absent (fork PRs, etc.).
           # Same-repo PRs (Renovate, feature branches) get the secret and run them.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: pytest tests/ -v
+        run: uv run pytest tests/ -v
