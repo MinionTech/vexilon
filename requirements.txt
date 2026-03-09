@@ -5,18 +5,18 @@
 gradio>=6.7.0,<6.7.1
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
-anthropic>=0.40.0           # Claude API client
+anthropic>=0.84.0           # Claude API client
 
 # ── Embeddings (local CPU, no API key required) ───────────────────────────────
 # sentence-transformers will pull torch; the Containerfile installs torch+cpu first
 # via --index-url https://download.pytorch.org/whl/cpu to avoid the 3 GB CUDA stack.
-sentence-transformers>=3.0.0  # all-MiniLM-L6-v2 — runs on CPU, ~80 MB model
+sentence-transformers>=5.0.0  # all-MiniLM-L6-v2 — runs on CPU, ~80 MB model
 
 # ── Vector store ──────────────────────────────────────────────────────────────
 faiss-cpu>=1.8.0            # In-memory vector index (no server process)
 
 # ── PDF processing ────────────────────────────────────────────────────────────
-pypdf>=3.0.0                # PDF parsing with page number preservation
+pypdf>=6.0.0                # PDF parsing with page number preservation
 
 # ── Tokenizer (for chunking) ──────────────────────────────────────────────────
 tiktoken>=0.7.0             # Token counting for chunk size enforcement
