@@ -1,0 +1,16 @@
+name: Deploy TEST
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  deploy-test:
+    uses: ./.github/workflows/deploy-hf-spaces-reusable.yml
+    with:
+      space_name: 'DerekRoberts/landru'
+    secrets:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}

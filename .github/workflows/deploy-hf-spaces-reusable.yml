@@ -1,0 +1,37 @@
+name: Deploy to Hugging Face Spaces (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      space_name:
+        description: 'The target Hugging Face Space (e.g., DerekRoberts/landru)'
+        required: true
+        type: string
+    secrets:
+      HF_TOKEN:
+        required: true
+
+jobs:
+  deploy:
+    name: Push to ${{ inputs.space_name }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Push code-only snapshot to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote add hf "https://DerekRoberts:${HF_TOKEN}@huggingface.co/spaces/${{ inputs.space_name }}"
+          git checkout --orphan hf-snapshot
+          git rm --cached -r pdf_cache/
+          git commit -m "deploy: $(git log -1 --format='%s' HEAD@{1})"
+          git push hf hf-snapshot:main --force

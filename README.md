@@ -33,7 +33,9 @@ article and page citations.
 
 ## Hosted
 
-🚀 **Live:** https://huggingface.co/spaces/DerekRoberts/vexilon
+🚀 **TEST:** https://huggingface.co/spaces/DerekRoberts/landru
+
+🚀 **PROD:** https://huggingface.co/spaces/DerekRoberts/vexilon
 
 ## Quick Start
 

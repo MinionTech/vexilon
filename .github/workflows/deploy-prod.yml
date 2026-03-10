@@ -1,0 +1,15 @@
+name: Deploy PROD
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  deploy-prod:
+    uses: ./.github/workflows/deploy-hf-spaces-reusable.yml
+    with:
+      space_name: 'DerekRoberts/vexilon'
+    secrets:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
