@@ -127,8 +127,10 @@ This is a no-op when running locally (files are already present).
 
 ### Automated deploy (GitHub Actions)
 
-Every published GitHub release triggers [`.github/workflows/deploy-hf-spaces.yml`](.github/workflows/deploy-hf-spaces.yml),
-which strips `pdf_cache/` from the commit and pushes code-only to the HF Space.
+The deployment process uses a reusable workflow ([`.github/workflows/deploy-hf-spaces-reusable.yml`](.github/workflows/deploy-hf-spaces-reusable.yml)) to strip `pdf_cache/` from the commit and push code-only to the HF Space.
+
+- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
+- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
 
 **Required GitHub secret:**
 
