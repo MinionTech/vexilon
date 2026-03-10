@@ -9,7 +9,7 @@ on:
         type: string
       environment:
         description: 'The GitHub environment to deploy to (e.g., test, prod)'
-        required: false
+        required: true
         type: string
     secrets:
       HF_TOKEN:
