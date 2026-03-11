@@ -58,8 +58,8 @@ COMMIT_MSG=$(git log -1 --format='%s')
 git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 
-# Remove cache files completely
-rm -rf pdf_cache/ 2>/dev/null || true
+# Remove cache files from index and working tree so they aren't committed to HF
+git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
 
 # Commit the code-only snapshot
 git commit -m "deploy: $COMMIT_MSG"
