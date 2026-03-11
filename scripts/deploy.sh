@@ -31,14 +31,25 @@ fi
 # Make sure we are at the root of the repo
 cd "$(dirname "$0")/.."
 
+# Store original ref for cleanup, and set up a trap to ensure cleanup happens on exit.
+ORIGINAL_REF=$(git symbolic-ref -q --short HEAD || git rev-parse HEAD)
+function cleanup() {
+  # Only checkout if we are on the snapshot branch
+  if [[ "$(git branch --show-current)" == "hf-snapshot" ]]; then
+    git checkout "$ORIGINAL_REF" 2>/dev/null || true
+  fi
+  git branch -D hf-snapshot 2>/dev/null || true
+  git config --local --unset http.https://huggingface.co/.extraheader 2>/dev/null || true
+  git remote remove hf 2>/dev/null || true
+}
+trap cleanup EXIT
+
 # Remove the remote if it already exists
 git remote remove hf 2>/dev/null || true
-git remote add hf "https://DerekRoberts:${HF_TOKEN}@huggingface.co/spaces/${SPACE_NAME}"
+git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
+git config --local http.https://huggingface.co/.extraheader "Authorization: Bearer ${HF_TOKEN}"
 
 COMMIT_MSG=$(git log -1 --format='%s')
-
-# Store current branch
-CURRENT_BRANCH=$(git branch --show-current)
 
 # Create an orphaned branch for the snapshot (fails if branch already exists, so delete it first)
 git branch -D hf-snapshot 2>/dev/null || true
@@ -52,14 +63,5 @@ git commit -m "deploy: $COMMIT_MSG"
 
 # Force push to Hugging Face
 git push hf hf-snapshot:main --force
-
-# Cleanup
-if [ -n "$CURRENT_BRANCH" ]; then
-    git checkout "$CURRENT_BRANCH"
-else
-    git checkout -
-fi
-git branch -D hf-snapshot 2>/dev/null || true
-git remote remove hf 2>/dev/null || true
 
 echo "Deployment to ${SPACE_NAME} complete!"
