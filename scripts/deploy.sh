@@ -47,7 +47,7 @@ trap cleanup EXIT
 # Remove the remote if it already exists
 git remote remove hf 2>/dev/null || true
 git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
-git config --local credential.https://huggingface.co.helper "!f() { echo \"username=api\"; echo \"password=\${HF_TOKEN}\"; }; f"
+git config --local credential.https://huggingface.co.helper '!f() { echo "username=api"; echo "password=${HF_TOKEN}"; }; f'
 
 COMMIT_MSG=$(git log -1 --format='%s')
 
