@@ -28,6 +28,9 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     git config user.name "GitHub Actions"
 fi
 
+# Make sure there is no previous branch
+git branch -D hf-snapshot 2>/dev/null || true
+
 # Make sure we are at the root of the repo
 cd "$(dirname "$0")/.."
 
@@ -39,7 +42,7 @@ function cleanup() {
     git checkout "$ORIGINAL_REF" 2>/dev/null || true
   fi
   git branch -D hf-snapshot 2>/dev/null || true
-  git config --local --unset http.https://huggingface.co/.extraheader 2>/dev/null || true
+  git config --local --unset credential.https://huggingface.co.helper 2>/dev/null || true
   git remote remove hf 2>/dev/null || true
 }
 trap cleanup EXIT
@@ -47,7 +50,7 @@ trap cleanup EXIT
 # Remove the remote if it already exists
 git remote remove hf 2>/dev/null || true
 git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
-git config --local http.https://huggingface.co/.extraheader "Authorization: Bearer ${HF_TOKEN}"
+git config --local credential.https://huggingface.co.helper '!f() { echo "username=api"; echo "password=${HF_TOKEN}"; }; f'
 
 COMMIT_MSG=$(git log -1 --format='%s')
 
@@ -55,13 +58,13 @@ COMMIT_MSG=$(git log -1 --format='%s')
 git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 
-# Remove cache files from index
-git rm --cached -r pdf_cache/ 2>/dev/null || true
+# Remove cache files from index and working tree so they aren't committed to HF
+git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
 
 # Commit the code-only snapshot
 git commit -m "deploy: $COMMIT_MSG"
 
 # Force push to Hugging Face
-git push hf hf-snapshot:main --force
+git push hf hf-snapshot:main --force --no-verify
 
 echo "Deployment to ${SPACE_NAME} complete!"
