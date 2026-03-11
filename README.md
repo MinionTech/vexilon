@@ -48,7 +48,6 @@ article and page citations.
 
 **Recommended for local development — container with live reload:**
 
-podman-compose watch
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 
