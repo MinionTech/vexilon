@@ -59,3 +59,38 @@ jobs:
           # Same-repo PRs (Renovate, feature branches) get the secret and run them.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: uv run pytest tests/ -v
+
+  container_test:
+    name: Container Smoke Test
+    if: ${{ ! github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build and Start Container
+        # Injecting a fake ANTHROPIC_API_KEY so the container doesn't fail immediately on startup.
+        # This proves the UI boots and binds to port 7860 without dependency collisions.
+        run: |
+          podman build -t vexilon-test -f Containerfile .
+          podman run -d --rm -p 7860:7860 --name vexilon-app -e ANTHROPIC_API_KEY=sk-ant-test123 vexilon-test
+
+      - name: Wait for Healthcheck
+        # Retry curl against the Gradio UI port. The healthcheck timeout is 30s.
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:7860 > /dev/null 2>&1; then
+              echo "Container is healthy!"
+              exit 0
+            fi
+            echo "Waiting for container..."
+            sleep 2
+          done
+          echo "Healthcheck timed out."
+          exit 1
+
+      - name: Dump Container Logs on Failure
+        if: failure()
+        run: podman logs vexilon-app

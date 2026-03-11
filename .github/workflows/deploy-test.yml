@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'app.py'
+      - 'requirements.txt'
+      - 'pdf_cache/**'
+      - 'scripts/deploy.sh'
+      - 'Containerfile'
 
 permissions: {}
 
