@@ -9,10 +9,15 @@ permissions: {}
 
 jobs:
   deploy-test:
+    runs-on: ubuntu-latest
+    environment: test
     permissions:
       contents: read
-    uses: ./.github/workflows/deploy-hf-spaces-reusable.yml
-    with:
-      space_name: 'DerekRoberts/landru'
-      environment: 'test'
-    secrets: inherit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Push code-only snapshot to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: ./scripts/deploy.sh "DerekRoberts/landru"
