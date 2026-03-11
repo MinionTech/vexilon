@@ -115,12 +115,11 @@ def test_loaded_index_is_searchable(tmp_path, monkeypatch):
 
 # ── startup() error handling ─────────────────────────────────────────────────
 
-def test_startup_sets_startup_error_on_failure(monkeypatch):
+def test_startup_raises_on_failure(monkeypatch):
     """
-    startup() must catch exceptions and record them in _startup_error rather than
-    crashing the process — the UI must stay up so the error is surfaced to the user.
+    startup() must raise exceptions if initialization fails (fail-fast).
+    The container/process should die rather than staying up in a broken state.
     """
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", None)
     monkeypatch.setattr(app, "_chunks", [])
 
@@ -129,15 +128,12 @@ def test_startup_sets_startup_error_on_failure(monkeypatch):
 
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", _boom)
 
-    app.startup()
-
-    assert app._startup_error is not None
-    assert "disk on fire" in app._startup_error
+    with pytest.raises(RuntimeError, match="disk on fire"):
+        app.startup()
 
 
 def test_startup_uses_precomputed_index_when_available(monkeypatch, tmp_path):
     """startup() fast path: if a pre-computed index exists, it MUST use it and skip rebuild."""
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_chunks", [])
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)
 
@@ -151,7 +147,6 @@ def test_startup_uses_precomputed_index_when_available(monkeypatch, tmp_path):
 
     assert app._index is fake_index
     assert app._chunks is fake_chunks
-    assert app._startup_error is None
 
 
 def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
@@ -159,7 +154,6 @@ def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
     startup(force_rebuild=True) must: load PDF → build index → save index,
     and wire up _index and _chunks when there is no pre-computed cache.
     """
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", None)
     monkeypatch.setattr(app, "_chunks", [])
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)
@@ -179,7 +173,6 @@ def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
 
     assert app._index is fake_index
     assert app._chunks is fake_chunks
-    assert app._startup_error is None
     assert len(save_calls) == 1, "save_index must be called exactly once during force_rebuild"
 
 
@@ -188,7 +181,6 @@ def test_startup_slow_path_skips_precomputed_even_if_present(monkeypatch, tmp_pa
     When force_rebuild=True, startup() must NOT use the pre-computed index,
     even if load_precomputed_index() would succeed.
     """
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", None)
     monkeypatch.setattr(app, "_chunks", [])
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)

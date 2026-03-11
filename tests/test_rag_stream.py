@@ -54,19 +54,8 @@ def _stream_yielding(tokens: list[str]):
 
 # ── Guard clauses ─────────────────────────────────────────────────────────────
 
-def test_rag_stream_startup_error_yields_error_message(monkeypatch):
-    """When _startup_error is set, rag_stream must yield an error string and stop."""
-    monkeypatch.setattr(app, "_startup_error", "Something blew up")
-    monkeypatch.setattr(app, "_index", None)
-
-    output = list(app.rag_stream("What are my rights?", []))
-    assert len(output) == 1
-    assert "failed to start" in output[0].lower() or "⚠️" in output[0]
-
-
 def test_rag_stream_no_index_yields_not_ready(monkeypatch):
-    """When _index is None (but no startup error), yield the 'not ready' message."""
-    monkeypatch.setattr(app, "_startup_error", None)
+    """When _index is None, yield the 'not ready' message."""
     monkeypatch.setattr(app, "_index", None)
 
     output = list(app.rag_stream("What are my rights?", []))
@@ -79,7 +68,6 @@ def test_rag_stream_no_index_yields_not_ready(monkeypatch):
 def test_rag_stream_yields_tokens_from_claude(monkeypatch):
     """Happy path: tokens yielded by the Anthropic stream reach the caller."""
     fake_index = MagicMock()
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     monkeypatch.setattr(app, "search_index", lambda *a, **kw: _fake_chunks())
@@ -95,7 +83,6 @@ def test_rag_stream_yields_tokens_from_claude(monkeypatch):
 def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     """The system prompt sent to Claude must reference the retrieved page numbers."""
     fake_index = MagicMock()
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     monkeypatch.setattr(app, "search_index", lambda *a, **kw: _fake_chunks())
@@ -124,7 +111,6 @@ def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
 def test_rag_stream_appends_user_message_last(monkeypatch):
     """The last message in the messages list sent to Claude must be the user's query."""
     fake_index = MagicMock()
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     monkeypatch.setattr(app, "search_index", lambda *a, **kw: _fake_chunks())
@@ -156,7 +142,6 @@ def test_rag_stream_appends_user_message_last(monkeypatch):
 def test_rag_stream_api_error_yields_error_message(monkeypatch):
     """An Anthropic APIError during streaming should yield an error string, not raise."""
     fake_index = MagicMock()
-    monkeypatch.setattr(app, "_startup_error", None)
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     monkeypatch.setattr(app, "search_index", lambda *a, **kw: _fake_chunks())
