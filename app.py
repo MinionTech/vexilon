@@ -428,7 +428,7 @@ DISCLAIMER_HTML = (
     "font-size:0.85rem;"
     "margin-bottom:8px;"
     '">'
-    "⚠️ <strong style=\"color:#7c4a00;\">Information purposes only. Consult your BCGEU representative or a legal advisor as appropriate.</strong>"
+    "⚠️ <strong style=\"color:#7c4a00;\">Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.</strong>"
     "</div>"
 )
 

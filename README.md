@@ -95,7 +95,7 @@ The app is ready immediately on page load — no dropdown, no Load button.
 2. Or click one of the suggested question chips on the welcome screen
 3. Responses include a plain-language explanation followed by verbatim quotes with citations
 
-> **Note:** Information purposes only. Consult your BCGEU representative or a legal advisor as appropriate.
+> **Note:** Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.
 
 ## Configuration
 

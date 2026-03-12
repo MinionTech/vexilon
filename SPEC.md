@@ -167,7 +167,7 @@ This specification exists to prevent that from happening again.
 > **so that** I understand the tool's limitations before acting.
 
 **Acceptance criteria:**
-- A persistent, non-dismissible disclaimer is visible at all times: *"Information purposes only. Consult your BCGEU representative or a legal advisor as appropriate."*
+- A persistent, non-dismissible disclaimer is visible at all times: *"Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate."*
 - The disclaimer does not obscure the chat interface on mobile
 
 ---
