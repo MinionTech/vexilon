@@ -95,8 +95,7 @@ The app is ready immediately on page load — no dropdown, no Load button.
 2. Or click one of the suggested question chips on the welcome screen
 3. Responses include a plain-language explanation followed by verbatim quotes with citations
 
-> **Note:** Responses cite the agreement text only. This is not legal advice.
-> Consult your BCGEU staff representative for complex matters.
+> **Note:** Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.
 
 ## Configuration
 

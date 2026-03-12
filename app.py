@@ -428,9 +428,7 @@ DISCLAIMER_HTML = (
     "font-size:0.85rem;"
     "margin-bottom:8px;"
     '">'
-    "⚠️ <strong style=\"color:#7c4a00;\">This tool references the collective agreement text only. "
-    "It is not legal advice. "
-    "Consult your BCGEU staff representative for complex matters.</strong>"
+    "⚠️ <strong style=\"color:#7c4a00;\">Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.</strong>"
     "</div>"
 )
 
