@@ -334,9 +334,11 @@ The system prompt will enforce:
 
 | Component | Rate | Estimated Monthly (moderate use) |
 |---|---|---|
-| `claude-haiku-4-5` | $0.80/M input tokens, $4.00/M output | ~$5–15 CAD |
+| `claude-haiku-4-5` | $0.80/M input tokens, $4.00/M output | ~$6–18 CAD |
 | `all-MiniLM-L6-v2` embeddings | $0 — runs locally on CPU | $0 |
-| **Total** | | **~$5–15 CAD/month** |
+| **Total** | | **~$6–18 CAD/month** |
+
+Note: The "Query Condenser" adds one extra fast LLM call per multi-turn message, increasing costs by ~10% compared to single-turn RAG.
 
 ### 8.5 Context Awareness (Query Condensing)
 
