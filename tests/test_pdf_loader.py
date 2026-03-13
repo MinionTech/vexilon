@@ -31,7 +31,7 @@ def test_load_pdf_chunks_basic(tmp_path):
     dummy_pdf = tmp_path / "test.pdf"
     dummy_pdf.write_bytes(b"%PDF-1.4 placeholder")  # path just needs to exist
 
-    with patch("app.PdfReader", return_value=_make_mock_reader(["Page one content.", "Page two content."])):
+    with patch("pypdf.PdfReader", return_value=_make_mock_reader(["Page one content.", "Page two content."])):
         chunks = load_pdf_chunks(dummy_pdf)
 
     assert len(chunks) >= 2  # at least one chunk per page
@@ -48,7 +48,7 @@ def test_load_pdf_chunks_skips_blank_pages(tmp_path):
     dummy_pdf.write_bytes(b"%PDF-1.4 placeholder")
 
     with patch(
-        "app.PdfReader",
+        "pypdf.PdfReader",
         return_value=_make_mock_reader(["Real content here.", "   \n\t  ", "More real content."]),
     ):
         chunks = load_pdf_chunks(dummy_pdf)
@@ -64,7 +64,7 @@ def test_load_pdf_chunks_page_numbers_are_one_based(tmp_path):
     dummy_pdf = tmp_path / "test.pdf"
     dummy_pdf.write_bytes(b"%PDF-1.4 placeholder")
 
-    with patch("app.PdfReader", return_value=_make_mock_reader(["Content on first page."])):
+    with patch("pypdf.PdfReader", return_value=_make_mock_reader(["Content on first page."])):
         chunks = load_pdf_chunks(dummy_pdf)
 
     assert all(c["page"] >= 1 for c in chunks)
@@ -83,7 +83,7 @@ def test_load_pdf_chunks_extract_text_none_treated_as_empty(tmp_path):
     reader = MagicMock()
     reader.pages = [page]
 
-    with patch("app.PdfReader", return_value=reader):
+    with patch("pypdf.PdfReader", return_value=reader):
         chunks = load_pdf_chunks(dummy_pdf)
 
     assert chunks == []

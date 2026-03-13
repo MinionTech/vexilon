@@ -32,18 +32,10 @@ from pathlib import Path
 # Move this out of /tmp to avoid being shadowed by the tmpfs mount in compose.yml.
 os.environ.setdefault("HF_HOME", "/app/hf_cache")
 
-# ─── Third-party: PDF ────────────────────────────────────────────────────────
-print("[boot] Importing pypdf...", flush=True)
-from pypdf import PdfReader
-import numpy as np
-
-# ─── Third-party: LLM (Anthropic) ───────────────────────────────────────────
-print("[boot] Importing anthropic...", flush=True)
-import anthropic
-
-# ─── Third-party: Gradio UI ──────────────────────────────────────────────────
-# (Imported inside build_ui to avoid slow startup for CLI/tests)
-print("[boot] All imports complete.", flush=True)
+# ─── Third-party: Deferred Imports ───────────────────────────────────────────
+# (numpy, pypdf, anthropic, faiss, sentence_transformers, gradio)
+# are imported inside functions to keep startup and test-loading fast.
+print("[boot] All boilerplate complete.", flush=True)
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 PDF_CACHE_DIR = Path("./pdf_cache")
@@ -84,7 +76,7 @@ if TYPE_CHECKING:
 
 # ─── Clients ─────────────────────────────────────────────────────────────────
 _embed_model: "SentenceTransformer | None" = None
-_anthropic_client: anthropic.AsyncAnthropic | None = None
+_anthropic_client: "anthropic.AsyncAnthropic | None" = None
 
 
 def get_embed_model() -> "SentenceTransformer":
@@ -97,9 +89,10 @@ def get_embed_model() -> "SentenceTransformer":
     return _embed_model
 
 
-def get_anthropic() -> anthropic.AsyncAnthropic:
+def get_anthropic() -> "anthropic.AsyncAnthropic":
     global _anthropic_client
     if _anthropic_client is None:
+        import anthropic
         # Reads ANTHROPIC_API_KEY from environment automatically; raises AuthenticationError if missing
         _anthropic_client = anthropic.AsyncAnthropic()
     return _anthropic_client
@@ -140,6 +133,8 @@ def chunk_text(text: str, page_num: int) -> list[dict]:
     Split *text* into overlapping token-based chunks using the embedding model's tokenizer.
     Returns list of dicts: {text, page, chunk_index}.
     """
+    if not text.strip():
+        return []
     tokenizer = get_embed_model().tokenizer
     # Ensure the tokenizer doesn't truncate the whole page so we can split it manually
     encoding = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True, truncation=False)
@@ -177,6 +172,7 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     Parse the PDF at *pdf_path* and return all chunks with page metadata.
     Page numbers are 1-based (matching the printed page numbers in the PDF).
     """
+    from pypdf import PdfReader
     reader = PdfReader(str(pdf_path))
     all_chunks = []
     for page_idx, page in enumerate(reader.pages):
@@ -188,8 +184,9 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
 
 
 # ─── FAISS Index ──────────────────────────────────────────────────────────────
-def embed_texts(texts: list[str]) -> np.ndarray:
+def embed_texts(texts: list[str]) -> "np.ndarray":
     """Embed a list of texts using the local sentence-transformers model. Returns (N, EMBED_DIM) float32 array."""
+    import numpy as np
     model = get_embed_model()
     # encode() handles batching internally; show_progress_bar=False keeps logs clean
     embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
@@ -344,6 +341,8 @@ async def condense_query(message: str, history: list[dict]) -> str:
             ]
             raw_content = "".join(text_parts)
         
+        # Ensure it is a string before slicing/concatenating
+        raw_content = str(raw_content)
         msg_len = CONDENSE_QUERY_CONTENT_MAX_LEN
         content = raw_content[:msg_len] + ("..." if len(raw_content) > msg_len else "")
         context_lines.append(f"{role}: {content}")
@@ -368,11 +367,9 @@ async def condense_query(message: str, history: list[dict]) -> str:
         condensed = response.content[0].text.strip().strip('"')
         print(f"[rag] Condensed query: '{message}' -> '{condensed}'")
         return condensed
-    except anthropic.APIError as exc:
-        print(f"[rag] Query condensation failed (API Error): {exc}. Using raw message.")
-        return message
     except Exception as exc:
-        print(f"[rag] Query condensation failed (Unexpected): {exc}. Using raw message.")
+        # We catch generic Exception here since anthropic is deferredly imported
+        print(f"[rag] Query condensation failed: {exc}. Using raw message.")
         return message
 
 
@@ -422,7 +419,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
         ) as stream:
             async for text_chunk in stream.text_stream:
                 yield text_chunk
-    except anthropic.APIError as exc:
+    except Exception as exc:
         yield f"\n\n⚠️ API error: {exc}"
 
 
