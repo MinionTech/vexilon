@@ -86,11 +86,11 @@ def get_embed_model() -> "SentenceTransformer":
         print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
         from sentence_transformers import SentenceTransformer
         _embed_model = SentenceTransformer(EMBED_MODEL)
-        # Increase max_seq_length and tokenizer.model_max_length to handle 
-        # full-page tokenization mapping without "853 > 256" warnings.
-        _embed_model.max_seq_length = 1024
+        # Increase limits to handle full-page tokenization mapping without warnings.
+        # We manually chunk to 256 tokens later, so this is just to keep the logs clean.
+        _embed_model.max_seq_length = 100000
         if hasattr(_embed_model, "tokenizer"):
-            _embed_model.tokenizer.model_max_length = 1024
+            _embed_model.tokenizer.model_max_length = 100000
         print("[embed] Embedding model ready.")
     return _embed_model
 
