@@ -118,10 +118,18 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     async for _ in app.rag_stream("What about overtime?", []):
         pass
 
-    system = captured.get("system", "")
-    assert "[Page 5]" in system
-    assert "[Page 6]" in system
-    assert "Article 1 says something important." in system
+    system_input = captured.get("system", "")
+    if isinstance(system_input, list):
+        # Handle block array format used for caching
+        system_text = "".join(b["text"] for b in system_input if b["type"] == "text")
+        # Also verify caching is enabled
+        assert any(b.get("cache_control") == {"type": "ephemeral"} for b in system_input)
+    else:
+        system_text = system_input
+
+    assert "[Page 5]" in system_text
+    assert "[Page 6]" in system_text
+    assert "Article 1 says something important." in system_text
 
 
 async def test_rag_stream_appends_user_message_last(monkeypatch):

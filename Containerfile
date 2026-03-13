@@ -1,21 +1,24 @@
 # ─── Stage 1: Builder ─────────────────────────────────────────────────────────
-FROM python:3.14-slim AS builder
+FROM python:3.14.3-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.10.9 /uv /usr/local/bin/uv
+ENV UV_LINK_MODE=copy
 
 WORKDIR /app
 
 # Install dependencies into a virtualenv
 # This creates a standalone /app/.venv directory
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
 # Pre-download the embedding model into a persistent cache
-RUN HF_HOME=/app/hf_cache \
+RUN --mount=type=cache,target=/root/.cache/huggingface \
+    HF_HOME=/app/hf_cache \
     uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.14-slim AS runner
+FROM python:3.14.3-slim AS runner
 
 # Runtime system deps only (libgomp for FAISS, curl for healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \

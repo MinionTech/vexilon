@@ -51,6 +51,7 @@ _GITHUB_RAW_BASE = (
 )
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+CONDENSER_MODEL = os.getenv("CONDENSER_MODEL", "claude-haiku-4-5-20251001")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 256))       # tokens per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))  # token overlap
@@ -85,6 +86,11 @@ def get_embed_model() -> "SentenceTransformer":
         print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
         from sentence_transformers import SentenceTransformer
         _embed_model = SentenceTransformer(EMBED_MODEL)
+        # Increase limits to handle full-page tokenization mapping without warnings.
+        # We manually chunk to 256 tokens later, so this is just to keep the logs clean.
+        _embed_model.max_seq_length = 100000
+        if hasattr(_embed_model, "tokenizer"):
+            _embed_model.tokenizer.model_max_length = 100000
         print("[embed] Embedding model ready.")
     return _embed_model
 
@@ -99,8 +105,8 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
 
 
 # ─── System Prompt ───────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are Vexilon, an assistant for BCGEU union stewards. \
-You help stewards understand the 19th Main Public Service Agreement (Social, Information & Health).
+SYSTEM_PROMPT = """You are a helpful assistant for looking up the 19th Main Public Service Agreement. \
+You help users navigate the collective agreement for the Social, Information & Health bargaining unit.
 
 Rules you must follow without exception:
 
@@ -111,7 +117,7 @@ markdown blockquote (> "...") followed by its citation: — Article [X], [Title]
 4. If the excerpts do not address the question, say so clearly: \
 "The collective agreement does not appear to address this question in the excerpts I was given."
 5. Do not predict outcomes, advise on strategy, or offer legal opinions.
-6. Tone: plain language. Your audience is new stewards with no legal background.
+6. Tone: plain language. Your audience has no legal background.
 7. If multiple clauses are relevant, quote each one separately with its own citation.
 8. Maintain conversational continuity. If the user asks a follow-up question, use the previous \
 conversation context and the provided excerpts to provide a coherent answer.
@@ -360,7 +366,7 @@ async def condense_query(message: str, history: list[dict]) -> str:
 
     try:
         response = await client.messages.create(
-            model=CLAUDE_MODEL,
+            model=CONDENSER_MODEL,
             max_tokens=100,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -414,7 +420,11 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
         async with client.messages.stream(
             model=CLAUDE_MODEL,
             max_tokens=1024,
-            system=full_system,
+            system=[{
+                "type": "text",
+                "text": full_system,
+                "cache_control": {"type": "ephemeral"}
+            }],
             messages=messages,
         ) as stream:
             async for text_chunk in stream.text_stream:
@@ -441,9 +451,18 @@ DISCLAIMER_HTML = (
     "padding:10px 14px;"
     "border-radius:4px;"
     "font-size:0.85rem;"
-    "margin-bottom:8px;"
+    "margin-bottom:12px;"
     '">'
-    "⚠️ <strong style=\"color:#7c4a00;\">Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.</strong>"
+    "⚠️ <strong style=\"color:#7c4a00;\">Unofficial Explorer: </strong> This is an independent community project. "
+    "It is not affiliated with, endorsed by, or sponsored by the BCGEU. All responses are AI-generated; the"
+    "<a href='https://www2.gov.bc.ca/gov/content/careers-myhr/managers-supervisors/employee-labour-relations/conditions-agreements/collective-agreements' target='_blank' style='color:#7c4a00; font-weight:bold;'>official PDF</a>"
+    "is the sole authoritative source. Consult your BCGEU representative or a legal advisor as appropriate."
+    "</div>"
+)
+
+ATTRIBUTION_HTML = (
+    "<div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>"
+    "<a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>"
     "</div>"
 )
 
@@ -452,24 +471,15 @@ DISCLAIMER_HTML = (
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
-    with gr.Blocks(title="Vexilon — BCGEU Agreement Assistant") as demo:
+    with gr.Blocks(title="Collective Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## 📋 Vexilon — BCGEU Agreement Assistant\n"
-                    "*19th Main Public Service Agreement (Social, Information & Health)*")
+        gr.Markdown("## BCGEU Collective Agreement Explorer\n"
+                    "*19th Main Agreement; Social, Information & Health*")
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)
 
-        # ── Empty-state onboarding (visible until first message) ───────────────
-        onboarding_text = gr.HTML(
-            "<p>I help BCGEU union stewards look up the 19th Main Public Service Agreement "
-            "(Social, Information &amp; Health). Ask a question and I'll give you a "
-            "plain-language explanation with verbatim quotes and citations. "
-            "I cannot give legal advice or predict how a grievance will be decided.</p>"
-            "<p><em>Try one of these questions:</em></p>",
-            visible=True,
-        )
         with gr.Row(visible=True) as chip_row:
             chip_btns = [
                 gr.Button(q, size="sm")
@@ -481,6 +491,7 @@ def build_ui() -> "gr.Blocks":
             height=480,
             buttons=["copy"],
             render_markdown=True,
+            show_label=False,
         )
 
         # ── Input row ─────────────────────────────────────────────────────────
@@ -499,30 +510,30 @@ def build_ui() -> "gr.Blocks":
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
             message: str, history: list[dict]
-        ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
+        ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
             hide = gr.update(visible=False)
             show = gr.update(visible=True)
             if not message.strip():
-                yield history, "", show, show
+                yield history, "", show
                 return
             prior_history = list(history)
             # Append user turn; seed an empty assistant bubble for streaming.
-            # Hide both onboarding components on first message.
+            # Hide onboarding components on first message.
             history = prior_history + [
                 {"role": "user", "content": message},
                 {"role": "assistant", "content": ""},
             ]
-            yield history, "", hide, hide
+            yield history, "", hide
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             async for chunk in rag_stream(message, prior_history):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
-                yield history, "", hide, hide
+                yield history, "", hide
 
         submit_inputs = [msg_input, chatbot]
-        submit_outputs = [chatbot, msg_input, onboarding_text, chip_row]
+        submit_outputs = [chatbot, msg_input, chip_row]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
         msg_input.submit(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
@@ -538,6 +549,9 @@ def build_ui() -> "gr.Blocks":
                 inputs=submit_inputs,
                 outputs=submit_outputs,
             )
+
+        # ── Attribution Footer ────────────────────────────────────────────────
+        gr.HTML(ATTRIBUTION_HTML)
 
     return demo
 
