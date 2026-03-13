@@ -104,8 +104,8 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
 
 
 # ─── System Prompt ───────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are an assistant for looking up the BCGEU 19th Main Public Service Agreement. \
-You help users understand the 19th Main Public Service Agreement (Social, Information & Health).
+SYSTEM_PROMPT = """You are a helpful assistant for looking up the 19th Main Public Service Agreement. \
+You help users navigate the collective agreement for the Social, Information & Health bargaining unit.
 
 Rules you must follow without exception:
 
@@ -450,11 +450,12 @@ DISCLAIMER_HTML = (
     "padding:10px 14px;"
     "border-radius:4px;"
     "font-size:0.85rem;"
-    "margin-bottom:8px;"
+    "margin-bottom:12px;"
     '">'
-    "⚠️ <strong style=\"color:#7c4a00;\">Unofficial Explorer: Informational purposes only. </strong> "
-    "All responses are AI-generated. The <a href='https://www.bcgeu.ca/19th_main_agreement' target='_blank' style='color:#7c4a00; font-weight:bold;'>official PDF</a> "
-    "remains the sole authoritative source of truth. Consult your BCGEU representative or a legal advisor as appropriate."
+    "⚠️ <strong style=\"color:#7c4a00;\">Unofficial Explorer: </strong> This is an independent community project. "
+    "It is not affiliated with, endorsed by, or sponsored by the BCGEU. All responses are AI-generated; the "
+    "<a href='https://www.bcgeu.ca/19th_main_agreement' target='_blank' style='color:#7c4a00; font-weight:bold;'>official PDF</a> "
+    "is the sole authoritative source. Consult your BCGEU representative or a legal advisor as appropriate."
     "</div>"
 )
 
@@ -475,22 +476,14 @@ def build_ui() -> "gr.Blocks":
         gr.Markdown("## 📋 Unofficial 19th Main Agreement Explorer\n"
                     "*BCGEU Main Public Service Agreement (Social, Information & Health)*")
 
-        # ── Non-affiliation Notice ───────────────────────────────────────────
-        gr.Markdown(
-            "<small>This is an independent community project. It is **not** affiliated with, "
-            "endorsed by, or sponsored by the BCGEU.</small>"
-        )
-
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)
 
         # ── Empty-state onboarding (visible until first message) ───────────────
         onboarding_text = gr.HTML(
-            "<p>This tool helps look up the 19th Main Public Service Agreement "
-            "(Social, Information &amp; Health). Ask a question to receive a "
-            "plain-language explanation with verbatim quotes and citations. "
-            "This tool cannot give legal advice or predict how a grievance will be decided.</p>"
-            "<p><em>Try one of these questions:</em></p>",
+            "<p>Ask a question about the 19th Main Public Service Agreement to receive "
+            "a plain-language explanation backed by verbatim quotes and citations.</p>"
+            "<p><em>Try one of these examples:</em></p>",
             visible=True,
         )
         with gr.Row(visible=True) as chip_row:
