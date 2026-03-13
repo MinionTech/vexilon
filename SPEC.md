@@ -279,7 +279,7 @@ Each response must follow this structure:
 
 | Component | Choice | Rationale |
 |---|---|---|
-| **LLM** | Anthropic Claude (`claude-3-5-haiku-20241022`) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
+| **LLM** | Anthropic Claude (`claude-haiku-4-5-20251001`) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
 | **Embeddings** | `all-MiniLM-L6-v2` via `sentence-transformers` (local CPU) | No API key; no per-query cost; 80 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
 | **Vector Store** | FAISS (in-memory, pre-computed index on disk) | No server process; index loaded from disk at startup (<1s); pre-computed once per agreement update |
 | **PDF Parsing** | `pypdf` | Lightweight, already available; preserves page numbers |
@@ -407,7 +407,7 @@ Open `http://localhost:7860`.
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-3-5-haiku-20241022` | Claude model for responses |
+| `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
 | `EMBED_MODEL` | `all-MiniLM-L6-v2` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |

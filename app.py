@@ -5,7 +5,7 @@ Tech stack:
   - pypdf                : PDF → pages with page number preservation
   - sentence-transformers: Local CPU embeddings (all-MiniLM-L6-v2, no API key)
   - FAISS                : In-memory vector index (no server process)
-  - Anthropic            : Claude (claude-haiku-4-5) for responses
+  - Anthropic            : Claude (claude-haiku-4-5-20251001) for responses
   - Gradio 5             : Web UI at http://localhost:7860
 
 Quick start:
@@ -67,7 +67,7 @@ _GITHUB_RAW_BASE = (
     "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/pdf_cache"
 )
 
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-haiku-20241022")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 512))       # tokens per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100)) # token overlap

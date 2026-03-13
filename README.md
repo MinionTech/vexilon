@@ -23,7 +23,7 @@ article and page citations.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Anthropic Claude (`claude-haiku-4-5`) |
+| LLM | Anthropic Claude (`claude-haiku-4-5-20251001`) |
 | Embeddings | `sentence-transformers/all-MiniLM-L6-v2` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | PDF Parsing | pypdf — preserves page numbers |
@@ -106,7 +106,7 @@ All settings are optional — defaults match the product specification.
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-haiku-4-5` | Claude model for responses |
+| `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
 | `EMBED_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
