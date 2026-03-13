@@ -23,8 +23,6 @@ dependencies = [
     # ── PDF processing ───────────────────────────────────────────────────────
     "pypdf>=6.0.0",                 # PDF parsing with page number preservation
 
-    # ── Tokenizer (for chunking) ─────────────────────────────────────────────
-    "tiktoken>=0.7.0",              # Token counting for chunk size enforcement
 ]
 
 [dependency-groups]
