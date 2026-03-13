@@ -38,5 +38,8 @@ ENV HF_HOME=/app/hf_cache \
 COPY --chown=1001:1001 pdf_cache/ ./pdf_cache/
 COPY --chown=1001:1001 app.py ./
 
+# Bake the PDF index into the image so the bot starts instantly at runtime
+RUN uv run python -c "from app import startup; startup(force_rebuild=True)"
+
 EXPOSE 7860
 CMD ["uv", "run", "python", "app.py"]
