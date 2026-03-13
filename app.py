@@ -463,10 +463,10 @@ def build_ui() -> "gr.Blocks":
 
         # ── Empty-state onboarding (visible until first message) ───────────────
         onboarding_text = gr.HTML(
-            "<p>I help BCGEU union stewards look up the 19th Main Public Service Agreement "
-            "(Social, Information &amp; Health). Ask a question and I'll give you a "
+            "<p>This tool helps BCGEU union stewards look up the 19th Main Public Service Agreement "
+            "(Social, Information &amp; Health). Ask a question to receive a "
             "plain-language explanation with verbatim quotes and citations. "
-            "I cannot give legal advice or predict how a grievance will be decided.</p>"
+            "This tool cannot give legal advice or predict how a grievance will be decided.</p>"
             "<p><em>Try one of these questions:</em></p>",
             visible=True,
         )
@@ -481,6 +481,7 @@ def build_ui() -> "gr.Blocks":
             height=480,
             buttons=["copy"],
             render_markdown=True,
+            show_label=False,
         )
 
         # ── Input row ─────────────────────────────────────────────────────────
@@ -538,6 +539,13 @@ def build_ui() -> "gr.Blocks":
                 inputs=submit_inputs,
                 outputs=submit_outputs,
             )
+
+        # ── Attribution Footer ────────────────────────────────────────────────
+        gr.HTML(
+            "<div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>"
+            "Maintained by BCGEU Stewards. <a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>"
+            "</div>"
+        )
 
     return demo
 
