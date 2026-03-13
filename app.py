@@ -86,10 +86,11 @@ def get_embed_model() -> "SentenceTransformer":
         print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
         from sentence_transformers import SentenceTransformer
         _embed_model = SentenceTransformer(EMBED_MODEL)
-        # Increase max_seq_length to handle full-page tokenization mapping without warnings.
-        # This silenced the "853 > 256" log noise while our manual chunking still ensures
-        # we stay within the model's effective training window for actual embeddings.
+        # Increase max_seq_length and tokenizer.model_max_length to handle 
+        # full-page tokenization mapping without "853 > 256" warnings.
         _embed_model.max_seq_length = 1024
+        if hasattr(_embed_model, "tokenizer"):
+            _embed_model.tokenizer.model_max_length = 1024
         print("[embed] Embedding model ready.")
     return _embed_model
 
@@ -470,10 +471,10 @@ ATTRIBUTION_HTML = (
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
-    with gr.Blocks(title="Unofficial BCGEU Agreement Explorer") as demo:
+    with gr.Blocks(title="19th Main Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## 📋 Unofficial 19th Main Agreement Explorer\n"
+        gr.Markdown("## 📋 19th Main Agreement Explorer\n"
                     "*BCGEU Main Public Service Agreement (Social, Information & Health)*")
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
