@@ -6,7 +6,7 @@ Tech stack:
   - sentence-transformers: Local CPU embeddings (all-MiniLM-L6-v2, no API key)
   - FAISS                : In-memory vector index (no server process)
   - Anthropic            : Claude (claude-haiku-4-5-20251001) for responses
-  - Gradio 5             : Web UI at http://localhost:7860
+  - Gradio 6             : Web UI at http://localhost:7860
 
 Quick start:
   1. export ANTHROPIC_API_KEY=sk-ant-...
