@@ -454,8 +454,8 @@ DISCLAIMER_HTML = (
     "margin-bottom:12px;"
     '">'
     "⚠️ <strong style=\"color:#7c4a00;\">Unofficial Explorer: </strong> This is an independent community project. "
-    "It is not affiliated with, endorsed by, or sponsored by the BCGEU. All responses are AI-generated; the "
-    "<a href='https://www.bcgeu.ca/19th_main_agreement' target='_blank' style='color:#7c4a00; font-weight:bold;'>official PDF</a> "
+    "It is not affiliated with, endorsed by, or sponsored by the BCGEU. All responses are AI-generated; the"
+    "<a href='https://www2.gov.bc.ca/gov/content/careers-myhr/managers-supervisors/employee-labour-relations/conditions-agreements/collective-agreements' target='_blank' style='color:#7c4a00; font-weight:bold;'>official PDF</a>"
     "is the sole authoritative source. Consult your BCGEU representative or a legal advisor as appropriate."
     "</div>"
 )
@@ -471,22 +471,15 @@ ATTRIBUTION_HTML = (
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
-    with gr.Blocks(title="19th Main Agreement Explorer") as demo:
+    with gr.Blocks(title="Collective Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## 📋 19th Main Agreement Explorer\n"
-                    "*BCGEU Main Public Service Agreement (Social, Information & Health)*")
+        gr.Markdown("## BCGEU Collective Agreement Explorer\n"
+                    "*19th Main Agreement; Social, Information & Health*")
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)
 
-        # ── Empty-state onboarding (visible until first message) ───────────────
-        onboarding_text = gr.HTML(
-            "<p>Ask a question about the 19th Main Public Service Agreement to receive "
-            "a plain-language explanation backed by verbatim quotes and citations.</p>"
-            "<p><em>Try one of these examples:</em></p>",
-            visible=True,
-        )
         with gr.Row(visible=True) as chip_row:
             chip_btns = [
                 gr.Button(q, size="sm")
@@ -517,30 +510,30 @@ def build_ui() -> "gr.Blocks":
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
             message: str, history: list[dict]
-        ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
+        ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
             hide = gr.update(visible=False)
             show = gr.update(visible=True)
             if not message.strip():
-                yield history, "", show, show
+                yield history, "", show
                 return
             prior_history = list(history)
             # Append user turn; seed an empty assistant bubble for streaming.
-            # Hide both onboarding components on first message.
+            # Hide onboarding components on first message.
             history = prior_history + [
                 {"role": "user", "content": message},
                 {"role": "assistant", "content": ""},
             ]
-            yield history, "", hide, hide
+            yield history, "", hide
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             async for chunk in rag_stream(message, prior_history):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
-                yield history, "", hide, hide
+                yield history, "", hide
 
         submit_inputs = [msg_input, chatbot]
-        submit_outputs = [chatbot, msg_input, onboarding_text, chip_row]
+        submit_outputs = [chatbot, msg_input, chip_row]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
         msg_input.submit(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
