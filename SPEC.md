@@ -324,7 +324,7 @@ User sends message
         system: [citation-rules + agreement context + continuity rule]
         user: [conversation history + new query]
         context: [retrieved chunks with page numbers]
-  └── Send to Claude API (claude-3-5-haiku-20241022)
+  └── Send to Claude API (claude-haiku-4-5-20251001)
   └── Stream response to Gradio chat interface
   └── Append to conversation history
 ```
@@ -351,7 +351,7 @@ The system prompt will enforce:
 
 | Component | Rate | Estimated Monthly (moderate use) |
 |---|---|---|
-| `claude-3-5-haiku-20241022` | $0.80/M input tokens, $4.00/M output | ~$6–18 CAD |
+| `claude-haiku-4-5-20251001` | $0.80/M input tokens, $4.00/M output | ~$6–18 CAD |
 | `all-MiniLM-L6-v2` embeddings | $0 — runs locally on CPU | $0 |
 | **Total** | | **~$6–18 CAD/month** |
 
