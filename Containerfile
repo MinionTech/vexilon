@@ -38,6 +38,7 @@ COPY --chown=1001:1001 app.py ./
 
 # 3. Bake the index using the copied virtual environment
 # We run this during the build for zero-downtime startups
+USER 1001
 RUN /app/.venv/bin/python -c "from app import startup; startup(force_rebuild=True)"
 
 # ─── Final Environment ────────────────────────────────────────────────────────
@@ -45,7 +46,6 @@ ENV HF_HOME=/app/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     PATH="/app/.venv/bin:$PATH"
 
-USER 1001
 EXPOSE 7860
 
 CMD ["python", "app.py"]

@@ -46,31 +46,21 @@ article and page citations.
 
 ### Run
 
-**Recommended for local development — container with live reload:**
+**Run the production-optimized container:**
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-
-# For live reload, use Docker:
-docker compose watch
-
-# For Podman, use:
 podman-compose up --build
 ```
 
-`app.py` edits are synced instantly into the running container — no rebuild needed.
-`requirements.txt` or `Containerfile` changes trigger a full rebuild automatically.
-This matches the production environment while keeping iteration fast.
+The container uses a multi-stage build and pre-indexes the agreement at build time for zero-downtime startup.
 
 **Alternatives:**
 
-````bash
-# One-shot container build (no live reload):
-podman-compose up --build
-
-# No container — useful for quick iteration or CI:
+```bash
+# Run locally (useful for quick iteration without a container):
 uv run --with-requirements requirements.txt python app.py
-````
+```
 
 Open <http://localhost:7860> in your browser.
 
@@ -185,8 +175,8 @@ vexilon/
 ├── conftest.py       # pytest root path configuration
 ├── requirements.txt  # Python dependencies (includes pytest)
 ├── manifest.json     # PWA manifest
-├── Containerfile     # Container image definition
-├── compose.yml       # Podman Compose — single vexilon service with live-reload watch config
+├── Containerfile     # Production-optimized multi-stage image definition
+├── compose.yml       # Podman Compose config (production parity)
 ├── SPEC.md           # Product specification
 ├── tests/            # pytest test suite
 │   ├── test_chunking.py    # chunk_text() unit tests
