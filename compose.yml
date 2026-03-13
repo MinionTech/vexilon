@@ -7,7 +7,13 @@ services:
       dockerfile: Containerfile
     container_name: vexilon
     environment:
+      # Mandatory: Anthropic API key
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      
+      # Optional: Basic Auth (Login is disabled if VEXILON_PASSWORD is empty)
+      VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
+      VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
+      
       PORT: "7860"
     ports:
       - "7860:7860"
@@ -21,16 +27,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    # ── Live reload for local development ─────────────────────────────────────
-    # Usage: docker compose watch (for live reload)
-    # Note: podman-compose does NOT support 'watch'. Use 'docker compose watch' or run 'podman-compose up --build' for manual rebuilds.
-    # Syncs app.py edits instantly; rebuilds the image only when deps change.
-    develop:
-      watch:
-        - action: sync
-          path: ./app.py
-          target: /app/app.py
-        - action: rebuild
-          path: requirements.txt
-        - action: rebuild
-          path: Containerfile
+    # Production-ready: Use the code baked into the image
+    
+    # Production-optimized: Uses the CMD defined in the Containerfile
+    # (No 'uv' or 'gradio' CLI required in the final image)
