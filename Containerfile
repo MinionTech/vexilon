@@ -1,5 +1,5 @@
 # ─── Stage 1: Builder ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.10.9 /uv /usr/local/bin/uv
 
@@ -15,7 +15,7 @@ RUN HF_HOME=/app/hf_cache \
     uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS runner
+FROM python:3.14-slim AS runner
 
 # Runtime system deps only (libgomp for FAISS, curl for healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \
