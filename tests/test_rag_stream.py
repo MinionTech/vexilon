@@ -76,7 +76,7 @@ async def test_rag_stream_yields_tokens_from_claude(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     
-    async def mock_search(*a, **kw):
+    def mock_search(*a, **kw):
         return _fake_chunks()
     monkeypatch.setattr(app, "search_index", mock_search)
 
@@ -96,7 +96,7 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     
-    async def mock_search(*a, **kw):
+    def mock_search(*a, **kw):
         return _fake_chunks()
     monkeypatch.setattr(app, "search_index", mock_search)
 
@@ -130,7 +130,7 @@ async def test_rag_stream_appends_user_message_last(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     
-    async def mock_search(*a, **kw):
+    def mock_search(*a, **kw):
         return _fake_chunks()
     monkeypatch.setattr(app, "search_index", mock_search)
 
@@ -167,7 +167,7 @@ async def test_rag_stream_api_error_yields_error_message(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
     
-    async def mock_search(*a, **kw):
+    def mock_search(*a, **kw):
         return _fake_chunks()
     monkeypatch.setattr(app, "search_index", mock_search)
 
