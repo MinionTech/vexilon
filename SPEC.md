@@ -376,19 +376,9 @@ To ensure multi-turn conversations are reliable, the system uses the **Query Con
 export ANTHROPIC_API_KEY=sk-ant-...
 
 # Run with Podman Compose
-podman-compose up
+# The build stage automatically bakes the PDF index for zero-downtime startup
+podman-compose up --build
 ```
-
-> **After updating the agreement PDF**, regenerate the pre-computed index:
-> ```bash
-> podman-compose build
-> podman run --rm --user root \
->   -v "$(pwd)/pdf_cache:/app/pdf_cache:z" \
->   localhost/vexilon_vexilon:latest \
->   python3 -c "from app import startup; startup(force_rebuild=True)"
-> git add pdf_cache/index.faiss pdf_cache/chunks.json
-> git commit -m "chore: regenerate embedding index for updated agreement PDF"
-> ```
 
 Open `http://localhost:7860`.
 
