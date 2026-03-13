@@ -474,7 +474,7 @@ def build_ui() -> "gr.Blocks":
 
         # ── Empty-state onboarding (visible until first message) ───────────────
         onboarding_text = gr.HTML(
-            "<p>This tool helps BCGEU union stewards look up the 19th Main Public Service Agreement "
+            "<p>This tool helps look up the 19th Main Public Service Agreement "
             "(Social, Information &amp; Health). Ask a question to receive a "
             "plain-language explanation with verbatim quotes and citations. "
             "This tool cannot give legal advice or predict how a grievance will be decided.</p>"
