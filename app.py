@@ -51,7 +51,7 @@ _GITHUB_RAW_BASE = (
 )
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
-CONDENSER_MODEL = os.getenv("CONDENSER_MODEL", "claude-3-5-haiku-20241022")
+CONDENSER_MODEL = os.getenv("CONDENSER_MODEL", "claude-haiku-4-5-20251001")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 256))       # tokens per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))  # token overlap
