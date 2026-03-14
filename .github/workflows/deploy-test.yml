@@ -1,35 +1,52 @@
 name: Deploy TEST
 
 on:
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
-  # Automated triggers are now handled by promote-test.yml
-  # but we keep push to main as a fallback just in case.
-  push:
-    branches:
-      - main
-    paths:
-      - 'app.py'
-      - 'requirements.txt'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - 'pdf_cache/**'
 
-permissions: {}
+# Serialized deployments to prevent race conditions on the environment
+concurrency:
+  group: deploy-test
+  cancel-in-progress: false
+
+permissions:
+  packages: write
+  contents: read
 
 jobs:
   deploy-test:
-    name: Deploy to TEST HF Space
+    name: Promote & Deploy to TEST
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment: test
-    permissions:
-      contents: read
-      actions: write # Needed if we want to log dispatch status, but mainly for deploy logic.
+    
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
+      SOURCE_TAG: pr-${{ github.event.pull_request.number }}
+      TARGET_TAG: test
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retag Image in GHCR
+        # Retag the PR-specific source to the environment-wide 'test' tag
+        run: |
+          skopeo copy --all \
+            docker://${{ env.IMAGE_NAME }}:${{ env.SOURCE_TAG }} \
+            docker://${{ env.IMAGE_NAME }}:${{ env.TARGET_TAG }}
+
       - name: Push Stub to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        # We tell HF to just pull the 'test' tag from GHCR.
-        run: ./scripts/deploy.sh --stub "ghcr.io/${{ github.repository }}:test" "DerekRoberts/landru"
+        # Deploy using the 'test' pointer
+        run: ./scripts/deploy.sh --stub "${{ env.IMAGE_NAME }}:${{ env.TARGET_TAG }}" "DerekRoberts/landru"
