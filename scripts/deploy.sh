@@ -1,22 +1,30 @@
-# Usage: ./scripts/deploy.sh <space_name> [image_tag] [--dry-run]
+# Usage: ./scripts/deploy.sh [image_tag] [--prod] [--dry-run]
+# Default: Targets "DerekRoberts/landru" (TEST).
+# Use --prod to target "DerekRoberts/vexilon".
 
-if [ -z "${1:-}" ]; then
-    echo "Error: Space name must be provided."
-    echo "Usage: $0 <space_name> [image_tag] [--dry-run]"
-    exit 1
-fi
-
-SPACE_NAME=$1
-IMAGE_TAG=${2:-}
+SPACE_NAME="DerekRoberts/landru"
+IMAGE_TAG=""
 DRY_RUN=false
 
-# Simple flag check
+# Argument Parsing
 for arg in "$@"; do
-  if [ "$arg" == "--dry-run" ]; then
-    DRY_RUN=true
-    # If --dry-run was the second argument, clear IMAGE_TAG
-    [ "$IMAGE_TAG" == "--dry-run" ] && IMAGE_TAG=""
-  fi
+  case "$arg" in
+    --prod)
+      echo "[safety] Production mode enabled."
+      SPACE_NAME="DerekRoberts/vexilon"
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      ;;
+    -*)
+      echo "Unknown flag: $arg"
+      exit 1
+      ;;
+    *)
+      # Assume any non-flag argument is the image tag
+      IMAGE_TAG="$arg"
+      ;;
+  esac
 done
 
 if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
