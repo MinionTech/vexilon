@@ -12,6 +12,8 @@ jobs:
     environment: prod
     permissions:
       contents: read
+      attestations: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6

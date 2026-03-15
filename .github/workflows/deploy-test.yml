@@ -1,30 +1,93 @@
-name: Deploy TEST
+name: Deploy TEST (Unified Fortress)
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
     paths:
+      - 'Dockerfile'
       - 'app.py'
       - 'requirements.txt'
       - 'pyproject.toml'
       - 'uv.lock'
       - 'pdf_cache/**'
+  workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+  pull-requests: read
 
 jobs:
-  deploy-test:
+  build-attest-deploy:
     runs-on: ubuntu-latest
     environment: test
-    permissions:
-      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Push code-only snapshot to Hugging Face Space
+      - name: Resolve PR Metadata (The Forensic Link)
+        id: metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_DATA=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }}/pulls --jq '.[0]')
+          PR_NUM=$(echo "$PR_DATA" | jq -r '.number')
+          HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head.sha')
+          
+          if [ "$PR_NUM" == "null" ] || [ -z "$PR_NUM" ]; then
+            echo "Vouching for un-linked commit"
+            echo "pr_num=unknown" >> $GITHUB_OUTPUT
+            echo "tag_chain=ghcr.io/${{ github.repository }}:latest" >> $GITHUB_OUTPUT
+          else
+            echo "Vouching for PR #$PR_NUM (Head SHA: $HEAD_SHA)"
+            echo "pr_num=$PR_NUM" >> $GITHUB_OUTPUT
+            echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+            # Domain 1 Tag-Back for human convenience
+            echo "tag_chain=ghcr.io/${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:pr-$PR_NUM" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Authoritative Build
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.metadata.outputs.tag_chain }}
+          cache-from: |
+            type=gha
+            ghcr.io/${{ github.repository }}:sha-${{ steps.metadata.outputs.head_sha }}
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.description=Vexilon Production Image (Attested by Main)
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            bcgov.vexilon.trust_domain=1
+            bcgov.vexilon.vouched_pr=${{ steps.metadata.outputs.pr_num }}
+
+      - name: Generate Attestation (The Cryptographic Vouch)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Verified Staging Deploy (The Auditor)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./scripts/deploy.sh "DerekRoberts/landru"
