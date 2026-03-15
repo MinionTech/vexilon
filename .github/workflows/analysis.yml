@@ -100,6 +100,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=sha-${{ github.sha }}
 
       - name: Output Status
         run: echo "Build successful for ${{ github.repository }} (Digest ${{ steps.build.outputs.digest }})"

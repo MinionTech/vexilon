@@ -20,6 +20,10 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS runner
 
+# Build provenance
+ARG VERSION=dev
+ENV VEXILON_VERSION=$VERSION
+
 # Runtime system deps only (libgomp for FAISS, curl for healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \

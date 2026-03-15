@@ -64,6 +64,7 @@ CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN",
 # Security / Auth
 VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
 VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
+VEXILON_VERSION = os.getenv("VEXILON_VERSION", "dev")
 
 # Embedding dimension for all-MiniLM-L6-v2
 EMBED_DIM = 384
@@ -460,11 +461,13 @@ DISCLAIMER_HTML = (
     "</div>"
 )
 
-ATTRIBUTION_HTML = (
-    "<div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>"
-    "<a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>"
-    "</div>"
-)
+ATTRIBUTION_HTML = f"""
+<div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
+    <a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
+    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+    <code style='margin-left: 0.5rem; background: #f3f4f6; padding: 2px 4px; border-radius: 4px;'>{VEXILON_VERSION}</code>
+</div>
+"""
 
 
 
