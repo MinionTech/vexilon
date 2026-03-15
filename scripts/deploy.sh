@@ -42,21 +42,19 @@ cd "$(dirname "$0")/.."
 ORIGINAL_REF=$(git symbolic-ref -q --short HEAD || git rev-parse HEAD)
 
 function cleanup() {
-  git checkout "$ORIGINAL_REF" 2>/dev/null || true
+  echo "[cleanup] Returning to $ORIGINAL_REF..."
+  git checkout -f "$ORIGINAL_REF" 2>/dev/null || true
   git branch -D hf-snapshot 2>/dev/null || true
   git remote remove hf 2>/dev/null || true
+  # Nuke any potential leftover clutter from the orphan reset
+  git clean -fd 2>/dev/null || true
 }
 trap cleanup EXIT
 
 # Create an orphaned branch and clear it
 git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
-git reset # Clears the index, but files remain on disk
-
-# We only want README.md and Dockerfile in the commit
-# We use a temp backup to avoid losing README if we were to git checkout elsewhere
-TMP_README=$(mktemp)
-cp README.md "$TMP_README"
+git reset # Clears the index
 
 # Create the Stub Dockerfile
 cat <<EOF > Dockerfile
@@ -78,11 +76,8 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     git config user.name "GitHub Actions"
 fi
 
-# Re-add only what we need
-git add Dockerfile
-cp "$TMP_README" README.md && git add README.md
-rm "$TMP_README"
-
+# Re-add only the essentials (including app.py as requested)
+git add Dockerfile README.md app.py
 git commit -m "promote: $IMAGE_TAG from $ORIGINAL_REF"
 
 # Auth and Push
