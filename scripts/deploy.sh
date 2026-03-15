@@ -70,32 +70,31 @@ trap cleanup EXIT
 git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 
+if [ -z "$IMAGE_TAG" ]; then
+    echo "Error: Image tag (e.g. 'latest' or 'sha-123') must be provided."
+    echo "Use --dry-run to test the stub generation."
+    exit 1
+fi
+
 # --- SOURCE SCRUBBING / STUB GENERATION ---
-if [ -n "$IMAGE_TAG" ]; then
-    echo "[promote] Creating stub for image: $IMAGE_TAG"
-    
-    # Identify mandatory HF files (README.md for metadata)
-    TMP_META=$(mktemp -d)
-    [ -f README.md ] && cp README.md "$TMP_META/"
-    
-    # Nuke everything
-    git rm -rf . > /dev/null 2>&1 || true
-    
-    # Restore metadata
-    [ -f "$TMP_META/README.md" ] && cp "$TMP_META/README.md" . && git add README.md
-    
-    # Create the Stub Dockerfile
-    cat <<EOF > Dockerfile
+echo "[promote] Creating stub for image: $IMAGE_TAG"
+
+# Identify mandatory HF files (README.md for metadata)
+TMP_META=$(mktemp -d)
+[ -f README.md ] && cp README.md "$TMP_META/"
+
+# Nuke everything
+git rm -rf . > /dev/null 2>&1 || true
+
+# Restore metadata
+[ -f "$TMP_META/README.md" ] && cp "$TMP_META/README.md" . && git add README.md
+
+# Create the Stub Dockerfile
+cat <<EOF > Dockerfile
 FROM ghcr.io/derekroberts/vexilon:$IMAGE_TAG
 EOF
-    git add Dockerfile
-    COMMIT_MSG="promote: $IMAGE_TAG"
-else
-    echo "[deploy] Code-only deployment (no image tag provided)"
-    # Fallback: existing behavior (just remove cache)
-    git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
-    COMMIT_MSG="deploy: $(git log -1 --format='%s' "$ORIGINAL_REF" 2>/dev/null || echo 'initial snapshot')"
-fi
+git add Dockerfile
+COMMIT_MSG="promote: $IMAGE_TAG"
 
 if [ "$DRY_RUN" == "true" ]; then
     echo "--- DRY RUN MODE ---"
