@@ -38,7 +38,7 @@ if [ -z "${GITHUB_ACTIONS:-}" ] && [ "$DRY_RUN" == "false" ] && ! git diff --qui
 fi
 
 # Make sure we are at the root of the repo
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 ORIGINAL_REF=$(git symbolic-ref -q --short HEAD || git rev-parse HEAD)
 
 function cleanup() {
