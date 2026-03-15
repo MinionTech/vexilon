@@ -54,15 +54,42 @@ git config --local credential.https://huggingface.co.helper '!f() { echo "userna
 
 COMMIT_MSG=$(git log -1 --format='%s')
 
-# Create an orphaned branch for the snapshot (fails if branch already exists, so delete it first)
+# Resolve the Provenance Chain (The Auditor Logic)
+CURRENT_SHA=$(git rev-parse HEAD)
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "Auditing Provenance for commit: $CURRENT_SHA"
+    # 1. Resolve Parent PR from System of Record
+    PR_DATA=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${CURRENT_SHA}/pulls" --jq '.[0]')
+    PR_NUM=$(echo "$PR_DATA" | jq -r '.number')
+    
+    if [ "$PR_NUM" != "null" ]; then
+        # 2. Resolve Head SHA (The unforgeable fingerprint)
+        IMAGE_SHA=$(echo "$PR_DATA" | jq -r '.head.sha')
+        echo "Protocol Verified: PR #$PR_NUM resolved to Head SHA $IMAGE_SHA"
+    else
+        echo "Warning: No PR link found for this commit. Falling back to current SHA."
+        IMAGE_SHA=$CURRENT_SHA
+    fi
+else
+    # Local fallback
+    IMAGE_SHA=$CURRENT_SHA
+fi
+
+REPO_NAME=$(echo "ghcr.io/${GITHUB_REPOSITORY:-derekroberts/vexilon}" | tr '[:upper:]' '[:lower:]')
+
+# Create an orphaned branch for the snapshot
 git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 
-# Remove cache files from index and working tree so they aren't committed to HF
-git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
+# Implement the "Stub" logic: Replace the complex Dockerfile with a 1-line pointer
+echo "FROM ${REPO_NAME}:sha-${IMAGE_SHA}" > Dockerfile
 
-# Commit the code-only snapshot
-git commit -m "deploy: $COMMIT_MSG"
+# Remove unneeded files from index to keep the snapshot minimal
+git rm -rf --ignore-unmatch pdf_cache/ .github/ .pytest_cache/ tests/ 2>/dev/null || true
+
+# Commit the stub snapshot
+git add Dockerfile
+git commit -m "deploy: $COMMIT_MSG (image: sha-${IMAGE_SHA})"
 
 # Force push to Hugging Face
 git push hf hf-snapshot:main --force --no-verify
