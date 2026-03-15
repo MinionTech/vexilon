@@ -2,6 +2,10 @@
 # Default: Targets "DerekRoberts/landru" (TEST).
 # Use --prod to target "DerekRoberts/vexilon".
 
+# Strict mode
+set -euo pipefail
+set -x
+
 SPACE_NAME="DerekRoberts/landru"
 IMAGE_TAG=""
 DRY_RUN=false
