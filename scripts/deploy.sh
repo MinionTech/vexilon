@@ -12,7 +12,6 @@ DRY_RUN=false
 TMP_META=""
 
 # Argument Parsing
-FORCE_LOCAL=false
 for arg in "$@"; do
   case "$arg" in
     --prod)
@@ -23,9 +22,6 @@ for arg in "$@"; do
       ;;
     --dry-run)
       DRY_RUN=true
-      ;;
-    --force-local)
-      FORCE_LOCAL=true
       ;;
     -*)
       echo "Unknown flag: $arg"
@@ -41,20 +37,6 @@ done
 if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
     echo "Error: HF_TOKEN environment variable must be set."
     exit 1
-fi
-
-# Guard: Local deployments are "desperation moves"
-if [ -z "${GITHUB_ACTIONS:-}" ] && [ "$DRY_RUN" == "false" ] && [ "$FORCE_LOCAL" == "false" ]; then
-    echo "⚠️  WARNING: You are attempting a manual deployment from a local machine."
-    echo "   Building stubs locally is a 'desperation move'."
-    echo "   Generally, you should let the CI pipeline handle this."
-    echo ""
-    read -p "   Do you really want to proceed? (y/N) " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "   Deployment aborted. Use the CI pipeline or --force-local to bypass."
-        exit 1
-    fi
 fi
 
 # Ensure working directory is clean before proceeding locally
