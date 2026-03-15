@@ -77,6 +77,8 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
 fi
 
 # Re-add only the essentials (including app.py as requested)
+# We also need to fix the README.md metadata on-the-fly to use sdk: docker
+sed -i 's/^sdk: gradio/sdk: docker/' README.md
 git add Dockerfile README.md app.py
 git commit -m "promote: $IMAGE_TAG from $ORIGINAL_REF"
 
