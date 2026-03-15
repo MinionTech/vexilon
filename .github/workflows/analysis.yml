@@ -116,8 +116,8 @@ jobs:
     steps:
       - name: Pull and Start Container
         run: |
-          IMAGE="ghcr.io/${{ github.repository }}:sha-${{ github.sha }}"
-          podman pull ${IMAGE,,}
+          declare -l IMAGE="ghcr.io/${{ github.repository }}:sha-${{ github.sha }}"
+          podman pull $IMAGE
           podman run -d --rm -p 7860:7860 --name vexilon-app -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
 
       - name: Wait for Healthcheck
