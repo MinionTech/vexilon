@@ -465,7 +465,7 @@ ATTRIBUTION_HTML = f"""
 <div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
     <a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
     <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
-    <span style='margin-left: 0.5rem; color: #9ca3af;'>{VEXILON_VERSION}</span>
+    <a href='https://github.com/DerekRoberts/vexilon/pkgs/container/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>{VEXILON_VERSION}</a>
 </div>
 """
 
