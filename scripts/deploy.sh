@@ -54,15 +54,28 @@ git config --local credential.https://huggingface.co.helper '!f() { echo "userna
 
 COMMIT_MSG=$(git log -1 --format='%s')
 
-# Create an orphaned branch for the snapshot (fails if branch already exists, so delete it first)
+# Resolve the Provenance Pointer (The Auditor)
+CURRENT_SHA=$(git rev-parse HEAD)
+REPO_NAME=$(echo "ghcr.io/${GITHUB_REPOSITORY:-derekroberts/vexilon}" | tr '[:upper:]' '[:lower:]')
+IMAGE_TAG="main-sha-${CURRENT_SHA}"
+
+echo "Auditing Deployment for commit: ${CURRENT_SHA}"
+echo "Pointer: ${REPO_NAME}:${IMAGE_TAG}"
+
+# Create an orphaned branch for the snapshot
 git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 
-# Remove cache files from index and working tree so they aren't committed to HF
-git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
+# Implement the "Stub" logic: Replace the Dockerfile with a 1-line pointer
+# This ensures Hugging Face ONLY pulls the binary vouched by our Fortress.
+echo "FROM ${REPO_NAME}:${IMAGE_TAG}" > Dockerfile
 
-# Commit the code-only snapshot
-git commit -m "deploy: $COMMIT_MSG"
+# Remove unneeded files from index to keep the snapshot minimal
+git rm -rf --ignore-unmatch pdf_cache/ .github/ .pytest_cache/ tests/ 2>/dev/null || true
+
+# Commit the stub snapshot
+git add Dockerfile
+git commit -m "deploy: $COMMIT_MSG (vouched: $IMAGE_TAG)"
 
 # Force push to Hugging Face
 git push hf hf-snapshot:main --force --no-verify

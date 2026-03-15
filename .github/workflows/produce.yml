@@ -1,0 +1,83 @@
+name: Production Vouching
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'app.py'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'pdf_cache/**'
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: read
+
+jobs:
+  vouch-and-produce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve PR Metadata (The Forensic Link)
+        id: metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Resolve Parent PR using the System of Record (Relational Link)
+          PR_DATA=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }}/pulls --jq '.[0]')
+          PR_NUM=$(echo "$PR_DATA" | jq -r '.number')
+          HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head.sha')
+          
+          if [ "$PR_NUM" == "null" ] || [ -z "$PR_NUM" ]; then
+            echo "::warning::No PR found for this commit. Performing unvouched build fallback."
+            echo "is_vouched=false" >> $GITHUB_OUTPUT
+            echo "main_tag=ghcr.io/${{ github.repository }}:main-sha-${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "Vouching for PR #$PR_NUM (Head SHA: $HEAD_SHA)"
+            echo "is_vouched=true" >> $GITHUB_OUTPUT
+            echo "pr_num=$PR_NUM" >> $GITHUB_OUTPUT
+            echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+            # The "Tag-Back" logic: Main (Domain 1) tags its own trusted digest with the PR handle
+            echo "main_tag=ghcr.io/${{ github.repository }}:main-sha-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag_chain=ghcr.io/${{ github.repository }}:pr-$PR_NUM,ghcr.io/${{ github.repository }}:sha-$HEAD_SHA" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deterministic Vouching (Full Build)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # We push the 'latest' and 'main-sha' as the Vouched Pointers
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ${{ steps.metadata.outputs.main_tag }}
+            ${{ steps.metadata.outputs.tag_chain }}
+          # Use PR image as cache hint (back-linked by logic)
+          cache-from: |
+            type=gha
+            ghcr.io/${{ github.repository }}:sha-${{ steps.metadata.outputs.head_sha }}
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.description=Vexilon Production Image (Vouched by Main)
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            bcgov.vexilon.trust_domain=1
+            bcgov.vexilon.vouched_pr=${{ steps.metadata.outputs.pr_num }}
