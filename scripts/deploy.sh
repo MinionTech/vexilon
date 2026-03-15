@@ -5,6 +5,7 @@
 SPACE_NAME="DerekRoberts/landru"
 IMAGE_TAG=""
 DRY_RUN=false
+TMP_META=""
 
 # Argument Parsing
 for arg in "$@"; do
@@ -12,6 +13,8 @@ for arg in "$@"; do
     --prod)
       echo "[safety] Production mode enabled."
       SPACE_NAME="DerekRoberts/vexilon"
+      # Prioritize PRODUCTION token if available
+      HF_TOKEN=${HF_TOKEN_PRODUCTION:-$HF_TOKEN}
       ;;
     --dry-run)
       DRY_RUN=true
@@ -55,6 +58,7 @@ function cleanup() {
   git branch -D hf-snapshot 2>/dev/null || true
   git config --local --unset credential.https://huggingface.co.helper 2>/dev/null || true
   git remote remove hf 2>/dev/null || true
+  [ -n "$TMP_META" ] && rm -rf "$TMP_META"
 }
 trap cleanup EXIT
 
@@ -75,7 +79,6 @@ if [ -n "$IMAGE_TAG" ]; then
     
     # Restore metadata
     [ -f "$TMP_META/README.md" ] && cp "$TMP_META/README.md" . && git add README.md
-    rm -rf "$TMP_META"
     
     # Create the Stub Dockerfile
     cat <<EOF > Dockerfile
@@ -87,7 +90,7 @@ else
     echo "[deploy] Code-only deployment (no image tag provided)"
     # Fallback: existing behavior (just remove cache)
     git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
-    COMMIT_MSG="deploy: $(git log -1 --format='%s' hf-snapshot^ 2>/dev/null || echo 'initial snapshot')"
+    COMMIT_MSG="deploy: $(git log -1 --format='%s' "$ORIGINAL_REF" 2>/dev/null || echo 'initial snapshot')"
 fi
 
 if [ "$DRY_RUN" == "true" ]; then
