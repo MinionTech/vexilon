@@ -1,25 +1,31 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Deployment script for Hugging Face Spaces
-# Usage: ./scripts/deploy.sh <space_name> [image_tag]
+# Usage: ./scripts/deploy.sh <space_name> [image_tag] [--dry-run]
 
 if [ -z "${1:-}" ]; then
     echo "Error: Space name must be provided."
-    echo "Usage: $0 <space_name> [image_tag]"
+    echo "Usage: $0 <space_name> [image_tag] [--dry-run]"
     exit 1
 fi
 
 SPACE_NAME=$1
 IMAGE_TAG=${2:-}
+DRY_RUN=false
 
-if [ -z "${HF_TOKEN:-}" ]; then
+# Simple flag check
+for arg in "$@"; do
+  if [ "$arg" == "--dry-run" ]; then
+    DRY_RUN=true
+    # If --dry-run was the second argument, clear IMAGE_TAG
+    [ "$IMAGE_TAG" == "--dry-run" ] && IMAGE_TAG=""
+  fi
+done
+
+if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
     echo "Error: HF_TOKEN environment variable must be set."
     exit 1
 fi
 
 # Ensure working directory is clean before proceeding locally
-if [ -z "${GITHUB_ACTIONS:-}" ] && ! git diff --quiet; then
+if [ -z "${GITHUB_ACTIONS:-}" ] && [ "$DRY_RUN" == "false" ] && ! git diff --quiet; then
     echo "Error: Working directory must be clean before deploying locally. Please commit or stash your changes."
     exit 1
 fi
@@ -53,7 +59,6 @@ if [ -n "$IMAGE_TAG" ]; then
     echo "[promote] Creating stub for image: $IMAGE_TAG"
     
     # Identify mandatory HF files (README.md for metadata)
-    # We use a temporary location to save metadata before nuking the repo
     TMP_META=$(mktemp -d)
     [ -f README.md ] && cp README.md "$TMP_META/"
     
@@ -65,7 +70,6 @@ if [ -n "$IMAGE_TAG" ]; then
     rm -rf "$TMP_META"
     
     # Create the Stub Dockerfile
-    # We use the full GHCR path.
     cat <<EOF > Dockerfile
 FROM ghcr.io/derekroberts/vexilon:$IMAGE_TAG
 EOF
@@ -76,6 +80,18 @@ else
     # Fallback: existing behavior (just remove cache)
     git rm -rf --ignore-unmatch pdf_cache/ 2>/dev/null || true
     COMMIT_MSG="deploy: $(git log -1 --format='%s' hf-snapshot^ 2>/dev/null || echo 'initial snapshot')"
+fi
+
+if [ "$DRY_RUN" == "true" ]; then
+    echo "--- DRY RUN MODE ---"
+    echo "Target Space: $SPACE_NAME"
+    echo "Commit Message: $COMMIT_MSG"
+    echo "Generated Dockerfile content:"
+    cat Dockerfile 2>/dev/null || echo "(No Dockerfile generated - full source deploy)"
+    echo "Files in snapshot:"
+    ls -A
+    echo "--- DRY RUN COMPLETE ---"
+    exit 0
 fi
 
 # Commit the snapshot

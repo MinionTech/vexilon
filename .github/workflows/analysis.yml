@@ -101,8 +101,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Output Image Digest
-        run: echo "Image build & push complete. Digest: ${{ steps.build.outputs.digest }}"
+      - name: Output Status
+        run: echo "Build successful for ${{ github.repository }} (Digest ${{ steps.build.outputs.digest }})"
 
   container_test:
     name: Container Smoke Test
@@ -113,8 +113,6 @@ jobs:
 
     steps:
       - name: Pull and Start Container
-        # Proves the image we just pushed to GHCR actually works.
-        # This replaces the local podman build in CI with a "Pull from GHCR" test.
         run: |
           IMAGE="ghcr.io/${{ github.repository }}:sha-${{ github.sha }}"
           podman pull $IMAGE
@@ -129,17 +127,17 @@ jobs:
             fi
             
             if ! podman inspect vexilon-app --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
-              echo "Container died unexpectedly! Dumping logs..."
+              echo "Container died! Logs:"
               podman logs vexilon-app
               exit 1
             fi
 
-            echo "Wait for container ($i/30)..."
+            echo "Wait... ($i/30)"
             sleep 2
           done
           echo "Healthcheck timed out."
           exit 1
 
-      - name: Dump Container Logs on Failure
+      - name: Dump Logs on Failure
         if: failure()
         run: podman logs vexilon-app
