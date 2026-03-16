@@ -1,16 +1,17 @@
-# Usage: ./.github/scripts/deploy.sh <image_tag> [--prod] [--dry-run]
+# Usage: ./.github/scripts/deploy.sh <image_ref> [--prod] [--dry-run]
+# <image_ref> can be a tag (e.g. 'sha-abc123') or a digest (e.g. 'sha256:abc123...')
 # Default: Targets "DerekRoberts/landru" (TEST).
 # Use --prod as second argument to target "DerekRoberts/vexilon".
 
 # Strict mode + Trace
 set -euo pipefail
 
-IMAGE_TAG="${1:-}"
+IMAGE_REF="${1:-}"
 MODE="${2:-}"
 DRY_RUN=false
 
-if [ -z "$IMAGE_TAG" ]; then
-    echo "Error: Image tag (e.g. 'latest' or 'sha-123') must be provided."
+if [ -z "$IMAGE_REF" ]; then
+    echo "Error: Image reference (e.g. 'sha-abc123' or 'sha256:abc123...') must be provided."
     exit 1
 fi
 
@@ -56,14 +57,16 @@ git checkout --orphan hf-snapshot
 git reset # Clears the index
 
 # Create the Stub Dockerfile
+# Digests use @ syntax, tags use : syntax
+[[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
 cat <<EOF > Dockerfile
-FROM ghcr.io/derekroberts/vexilon:$IMAGE_TAG
+FROM ghcr.io/derekroberts/vexilon${separator}$IMAGE_REF
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then
     echo "--- DRY RUN MODE ---"
     echo "Target: $SPACE_NAME"
-    echo "Image:  $IMAGE_TAG"
+    echo "Image:  $IMAGE_REF"
     echo "Dockerfile content:"
     cat Dockerfile
     echo "--- DRY RUN COMPLETE ---"
@@ -79,7 +82,7 @@ fi
 # We also need to fix the README.md metadata on-the-fly to use sdk: docker
 sed -i 's/^sdk: gradio/sdk: docker/' README.md
 git add Dockerfile README.md app.py
-git commit -m "promote: $IMAGE_TAG from $ORIGINAL_REF"
+git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
 # Auth and Push
 git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}" 2>/dev/null || true
