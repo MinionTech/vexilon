@@ -402,13 +402,6 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
         )
     context = "\n\n---\n\n".join(context_parts)
 
-    full_system = (
-        SYSTEM_PROMPT
-        + "\n\n--- AGREEMENT EXCERPTS ---\n\n"
-        + context
-        + "\n\n--- END EXCERPTS ---"
-    )
-
     # Build message list for Claude: prior history + new user message
     messages = []
     for turn in history:
@@ -421,15 +414,40 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
         async with client.messages.stream(
             model=CLAUDE_MODEL,
             max_tokens=1024,
-            system=[{
-                "type": "text",
-                "text": full_system,
-                "cache_control": {"type": "ephemeral"}
-            }],
+            # Two cache breakpoints:
+            # 1. Static instructions — identical every request; cached once per session.
+            # 2. Dynamic excerpts — changes per query; cached separately.
+            # This avoids re-caching the instructions block whenever the excerpts change.
+            system=[
+                {
+                    "type": "text",
+                    "text": SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        "--- AGREEMENT EXCERPTS ---\n\n"
+                        + context
+                        + "\n\n--- END EXCERPTS ---"
+                    ),
+                    "cache_control": {"type": "ephemeral"},
+                },
+            ],
             messages=messages,
         ) as stream:
             async for text_chunk in stream.text_stream:
                 yield text_chunk
+            # Log cache effectiveness so we can verify caching is working.
+            final = await stream.get_final_message()
+            usage = final.usage
+            cache_created = usage.cache_creation_input_tokens or 0
+            cache_read = usage.cache_read_input_tokens or 0
+            print(
+                f"[rag] Tokens — input: {usage.input_tokens}, "
+                f"cache_create: {cache_created}, cache_read: {cache_read}, "
+                f"output: {usage.output_tokens}"
+            )
     except Exception as exc:
         yield f"\n\n⚠️ API error: {exc}"
 

@@ -40,6 +40,23 @@ def _fake_chunks() -> list[dict]:
     ]
 
 
+def _mock_final_message(mock_stream: MagicMock):
+    """Attaches a mock get_final_message to a stream mock."""
+    fake_usage = MagicMock(
+        input_tokens=10,
+        output_tokens=5,
+        cache_creation_input_tokens=0,
+        cache_read_input_tokens=0,
+    )
+    fake_message = MagicMock()
+    fake_message.usage = fake_usage
+
+    async def _get_final():
+        return fake_message
+
+    mock_stream.get_final_message = _get_final
+
+
 def _stream_yielding(tokens: list[str]):
     """Return an async context-manager mock whose .text_stream yields *tokens*."""
 
@@ -50,6 +67,7 @@ def _stream_yielding(tokens: list[str]):
             for t in tokens:
                 yield t
         mock_stream.text_stream = _async_gen()
+        _mock_final_message(mock_stream)
         yield mock_stream
 
     return _ctx
@@ -91,7 +109,8 @@ async def test_rag_stream_yields_tokens_from_claude(monkeypatch):
 
 
 async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
-    """The system prompt sent to Claude must reference the retrieved page numbers."""
+    """The system prompt sent to Claude must have two cacheable blocks:
+    block 0: static instructions; block 1: retrieved agreement excerpts."""
     fake_index = MagicMock()
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
@@ -109,6 +128,7 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
         async def _async_gen():
             yield "ok"
         mock_stream.text_stream = _async_gen()
+        _mock_final_message(mock_stream)
         yield mock_stream
 
     mock_client = MagicMock()
@@ -118,18 +138,25 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     async for _ in app.rag_stream("What about overtime?", []):
         pass
 
-    system_input = captured.get("system", "")
-    if isinstance(system_input, list):
-        # Handle block array format used for caching
-        system_text = "".join(b["text"] for b in system_input if b["type"] == "text")
-        # Also verify caching is enabled
-        assert any(b.get("cache_control") == {"type": "ephemeral"} for b in system_input)
-    else:
-        system_text = system_input
+    system_input = captured.get("system", [])
+    assert isinstance(system_input, list), "system must be a list of blocks"
+    assert len(system_input) == 2, "expected exactly 2 system blocks (instructions + excerpts)"
 
-    assert "[Page 5]" in system_text
-    assert "[Page 6]" in system_text
-    assert "Article 1 says something important." in system_text
+    instructions_block, excerpts_block = system_input
+
+    # Both blocks must have cache points.
+    assert instructions_block.get("cache_control") == {"type": "ephemeral"}
+    assert excerpts_block.get("cache_control") == {"type": "ephemeral"}
+
+    # Block 0: static instructions only — no excerpt content.
+    instructions_text = instructions_block["text"]
+    assert "AGREEMENT EXCERPTS" not in instructions_text
+
+    # Block 1: agreement excerpts with page references.
+    excerpts_text = excerpts_block["text"]
+    assert "[Page 5]" in excerpts_text
+    assert "[Page 6]" in excerpts_text
+    assert "Article 1 says something important." in excerpts_text
 
 
 async def test_rag_stream_appends_user_message_last(monkeypatch):
@@ -151,6 +178,7 @@ async def test_rag_stream_appends_user_message_last(monkeypatch):
         async def _async_gen():
             yield "ok"
         mock_stream.text_stream = _async_gen()
+        _mock_final_message(mock_stream)
         yield mock_stream
 
     mock_client = MagicMock()
