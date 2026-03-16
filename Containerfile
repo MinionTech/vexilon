@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 FROM python:3.14.3-slim AS runner
 
 # Build provenance
-ARG VERSION=dev
+ARG VERSION
 ENV VEXILON_VERSION=$VERSION
 
 # Runtime system deps only (libgomp for FAISS, curl for healthcheck)
@@ -42,6 +42,9 @@ COPY --from=builder --chown=1001:1001 /app/hf_cache /app/hf_cache
 # 2. Copy application code and PDF assets
 COPY --chown=1001:1001 pdf_cache/ ./pdf_cache/
 COPY --chown=1001:1001 app.py ./
+
+# Bake the build timestamp into a file after code is copied
+RUN date +%Y%m%d-%H%M%S > /app/build_version.txt
 
 # 3. Bake the index using the copied virtual environment
 # We run this during the build for zero-downtime startups

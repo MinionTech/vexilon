@@ -61,10 +61,52 @@ SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 5))
 CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
 CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN", 200))
 
-# Security / Auth
+def get_vexilon_info():
+    """
+    1. Get Version (Priority: Env Var -> Baked File -> Fallback)
+    2. Get Python and OS metadata
+    3. Print a beautiful startup banner
+    """
+    import platform
+    
+    # Priority 1: Env Var
+    version = os.getenv("VEXILON_VERSION")
+    source = "External/CI"
+    
+    if not version:
+        # Priority 2: Baked-in Build File
+        try:
+            with open("/app/build_version.txt", "r") as f:
+                version = f.read().strip()
+                source = "Local Build"
+        except FileNotFoundError:
+            # Priority 3: Fallback (Never dev!)
+            version = "unspecified-local"
+            source = "fallback"
+
+    py_ver = sys.version.split()[0]
+    os_info = platform.system()
+
+    # The Banner
+    print("=" * 50)
+    print(f" VEXILON VERSION : {version} ({source})")
+    print(f" PYTHON VERSION  : {py_ver}")
+    print(f" RUNTIME OS      : {os_info}")
+    print("=" * 50, flush=True)
+
+    return {
+        "ver": version,
+        "src": source,
+        "py": py_ver,
+        "os": os_info
+    }
+
+
+# Initialise version and logging at imports
+_info = get_vexilon_info()
+VEXILON_VERSION = _info["ver"]
 VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
 VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
-VEXILON_VERSION = os.getenv("VEXILON_VERSION", "dev")
 
 # Embedding dimension for all-MiniLM-L6-v2
 EMBED_DIM = 384
