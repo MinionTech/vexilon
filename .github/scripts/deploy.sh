@@ -58,15 +58,10 @@ git reset # Clears the index
 
 # Create the Stub Dockerfile
 # Digests use @ syntax, tags use : syntax
-if [[ "$IMAGE_REF" == sha256:* ]]; then
-  cat <<EOF > Dockerfile
-FROM ghcr.io/derekroberts/vexilon@$IMAGE_REF
+[[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
+cat <<EOF > Dockerfile
+FROM ghcr.io/derekroberts/vexilon${separator}$IMAGE_REF
 EOF
-else
-  cat <<EOF > Dockerfile
-FROM ghcr.io/derekroberts/vexilon:$IMAGE_REF
-EOF
-fi
 
 if [ "$DRY_RUN" == "true" ]; then
     echo "--- DRY RUN MODE ---"
