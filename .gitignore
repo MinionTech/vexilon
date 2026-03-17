@@ -21,13 +21,12 @@ build/
 .ipynb_checkpoints/
 
 # ─── App runtime data (do NOT commit) ────────────────────────────────────────
-chroma_db/          # Local Chroma vector store (rebuilt from PDFs)
-pdf_cache/          # Cached downloaded PDFs — add negation below for bundled PDFs
-!pdf_cache/main_public_service_19th.pdf
-!pdf_cache/index.faiss   # Pre-computed FAISS index (committed for fast cold starts)
-!pdf_cache/chunks.json   # Pre-computed chunk metadata (committed alongside index)
+pdf_cache/          # Cached PDFs and pre-computed FAISS/JSON indices
+chroma_db/          # Local vector store data
 gradio_cached_examples/
 flagged/
+# HuggingFace model weight cache (baked into image, not repo)
+hf_cache/
 
 # ─── Logs
 logs

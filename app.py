@@ -29,8 +29,10 @@ from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 
 # Ensure the HuggingFace model cache is writable and persistent.
-# Move this out of /tmp to avoid being shadowed by the tmpfs mount in compose.yml.
-os.environ.setdefault("HF_HOME", "/app/hf_cache")
+# Inside the container (WORKDIR /app), this resolves to /app/hf_cache.
+# Locally, it resolves to ./hf_cache in the repo root.
+if not os.getenv("HF_HOME"):
+    os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
 
 # ─── Third-party: Deferred Imports ───────────────────────────────────────────
 # (numpy, pypdf, anthropic, faiss, sentence_transformers, gradio)

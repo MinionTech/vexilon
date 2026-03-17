@@ -159,13 +159,24 @@ git branch -D hf-snapshot
 
 ### Running tests
 
-````bash
-# Fast suite — no API keys needed, runs in ~5 s
-uv run --with-requirements requirements.txt pytest tests/ --ignore=tests/smoke -v
+Vexilon uses a **Quality Gate** pattern in the `compose.yml`. By default, the app will not start unless the test suite passes.
 
-# Smoke test — validates CLAUDE_MODEL against the real Anthropic API
-pytest tests/smoke/ -v
+````bash
+# 1. Run the gated startup (Tests must pass before Vexilon launches)
+export ANTHROPIC_API_KEY=sk-ant-...
+podman-compose up
+
+# 2. Skip the gate (Useful for rapid UI iteration)
+podman-compose up vexilon
+
+# 3. Run containerized tests manually
+podman-compose run --rm tests
+
+# 4. Run 'Smoke Tests' against the real Anthropic API (inside container)
+podman-compose run --rm tests sh -c "uv run pytest tests/smoke/ -v"
 ````
+
+> 💡 **Tip:** Local tests use mocked responses by default to save API credits. Use the Smoke Test command above to verify real API connectivity.
 
 ## Project Structure
 

@@ -46,3 +46,10 @@ torch = [{ index = "pytorch-cpu" }]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# Upstream deprecation warnings from FAISS/SWIG when running on Python 3.14.
+# These cannot be fixed in application code and are purely cosmetic.
+filterwarnings = [
+    "ignore:builtin type SwigPyPacked has no __module__ attribute:DeprecationWarning",
+    "ignore:builtin type SwigPyObject has no __module__ attribute:DeprecationWarning",
+    "ignore:builtin type swigvarlink has no __module__ attribute:DeprecationWarning",
+]

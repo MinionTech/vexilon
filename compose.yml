@@ -27,7 +27,25 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    depends_on:
+      tests:
+        condition: service_completed_successfully
     # Production-ready: Use the code baked into the image
     
     # Production-optimized: Uses the CMD defined in the Containerfile
     # (No 'uv' or 'gradio' CLI required in the final image)
+
+  # ── Testing ──────────────────────────────────────────────────────────────────
+  # Run with: podman-compose run --rm tests
+  tests:
+    build:
+      context: .
+      dockerfile: Containerfile
+      target: builder
+    volumes:
+      - .:/app:Z
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      HF_HOME: /app/hf_cache
+    # We use the builder target but sync dev deps at runtime to avoid bloating the image
+    command: sh -c "uv sync --frozen && uv run pytest tests/test_*.py tests/integration/ -v"
