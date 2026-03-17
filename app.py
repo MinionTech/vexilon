@@ -56,9 +56,9 @@ _GITHUB_RAW_BASE = (
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 CONDENSE_MODEL = os.getenv("CONDENSE_MODEL", "claude-haiku-4-5-20251001")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 256))       # tokens per chunk
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))  # token overlap
-SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 5))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 480))       # Save room for special tokens (max 512)
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))  # Better continuity
+SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 15)) # More context slots
 
 # Memory / Context Condensation
 CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
@@ -169,6 +169,8 @@ as stewards can primarily enforce the contract. Cite the Employment Standards Ac
 7. Tone: professional but plain language. Your audience consists of union stewards under pressure.
 8. If multiple clauses are relevant, quote each one separately with its own citation.
 9. Maintain conversational continuity. Use the previous conversation context and the provided excerpts.
+10. If the provided excerpts contain only metadata or table of contents lines, explain that you have limited context but provide what you can.
+11. Search deeply: Look for the *actual* clauses, not just the references to them.
 
 Response format:
 
