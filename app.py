@@ -566,7 +566,19 @@ def build_ui() -> "gr.Blocks":
 
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("## BCGEU Steward Assistant (Vexilon)\n"
-                    "*Main Agreement • Labour Code • ESA • Human Rights Code*")
+                    "*Expert support for stewards, powered by the core labour library.*")
+
+        with gr.Accordion("📜 Knowledge Base & Priority", open=False):
+            gr.Markdown("""
+            ### ⚖️ Document Priority
+            When answering, Vexilon prioritizes the **Collective Agreement** (Priority 1) as it is the primary tool for steward enforcement. Other documents provide statutory and ethical context.
+            
+            1. **Primary: BCGEU 19th Main Agreement** (Contractual Rights)
+            2. **Statutory: Employment Standards Act** (Minimums)
+            3. **Regulatory: Labour Relations Code** (Legal Framework)
+            4. **Protection: Human Rights Code** (Discrimination/Duty to Accommodate)
+            5. **Resources**: Steward Manuals & Ethics Guidelines
+            """)
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)

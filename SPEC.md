@@ -61,11 +61,12 @@ This specification exists to prevent that from happening again.
 - At least one full-stack developer steward may contribute.
 - Developer experience matters but is secondary to end-user experience.
 
-### Target Agreement
-
-- **19th Main Public Service Agreement (Social, Information & Health)**
-- Covers BCGEU members in the Social, Information and Health bargaining unit of the BC Public Service.
-- Future iterations will support additional BCGEU collective agreements.
+- **BCGEU 19th Main Public Service Agreement (Social, Information & Health)**: The core collective agreement. **(Primary authoritative source)**.
+- **BC Employment Standards Act [RSBC 1996]**: Statutory minimums.
+- **BC Labour Relations Code [RSBC 1996]**: Union-management statute.
+- **BC Human Rights Code [RSBC 1996]**: Discrimination/accommodation framework.
+- **BCGEU Steward Fundamentals Handbook**: Union guidance.
+- **Standards of Conduct**: BC Public Service ethics/behavior policy.
 
 ---
 
@@ -73,12 +74,13 @@ This specification exists to prevent that from happening again.
 
 ### Goals (MVP)
 
-- Answer questions about the collective agreement in plain language
+- Answer questions about the collective agreement and related labour laws in plain language
 - Always cite the exact verbatim clause(s) with article number and page reference
+- **Prioritize the Collective Agreement** (Priority 1) as the authoritative source for stewards
 - Support multi-turn conversation so stewards can ask follow-up questions
 - Work on mobile and desktop without configuration
 - Respond in under 10 seconds on a standard internet connection
-- Be honest when the agreement does not address a question
+- Be honest when the provided documents do not address a question
 - Be deployable to Hugging Face Spaces with a public URL
 - Provide basic authentication to prevent unauthorized public access
 
@@ -227,7 +229,8 @@ Each response must follow this structure:
 3. If no relevant clause is found, say so — do not speculate
 4. Do not offer legal opinions, predict outcomes, or advise on strategy
 5. Plain language explanation comes before the quote, not after
-6. Citations must include both article number and page number
+6. Citations must include both the document name, article/section number, and page number
+7. **Prioritization**: If a question involves both the contract (Agreement) and a statute (Code/ESA), the response must lead with the contract language.
 
 ---
 
@@ -308,8 +311,9 @@ Each response must follow this structure:
 
 ```
 App startup
-  └── Load PDF from pdf_cache/
+  └── Scan data/labour_law/ for all PDFs
   └── Parse pages with pypdf (preserve page numbers)
+  └── Add source metadata (e.g., "source": "Employment Standards Act")
   └── Chunk text (256 tokens, 50 token overlap)
   └── Embed all chunks with all-MiniLM-L6-v2
   └── Build FAISS index in memory
@@ -407,7 +411,7 @@ Open `http://localhost:7860`.
 | `EMBED_MODEL` | `all-MiniLM-L6-v2` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
-| `CHUNK_SIZE` | `256` | Tokens per chunk |
+| `CHUNK_SIZE` | `256` | Tokens per chunk (matches embedding model context) |
 | `CHUNK_OVERLAP` | `50` | Token overlap between chunks |
 | `CONDENSE_QUERY_HISTORY_TURNS` | `3` | Number of previous turns used for context condensation |
 | `CONDENSE_QUERY_CONTENT_MAX_LEN` | `200` | Max character length of historical messages in condensation prompt |

@@ -34,10 +34,18 @@ of labour law and contract documents.
 
 Vexilon is currently indexed with the following core documents:
 
-- **BCGEU 19th Main Public Service Agreement**: The core collective agreement for the Social, Information & Health bargaining unit.
-- **BC Labour Relations Code**: Statutory framework governing labour relations in British Columbia.
-- **BCGEU Steward Fundamentals Handbook**: Official union resource for handling grievances, meetings, and investigations.
-- **Social Media Guidelines for Public Service Employees**: BC Public Service ethics policy (April 2024).
+- **BCGEU 19th Main Public Service Agreement (Priority 1)**: The core collective agreement. This is the **authoritative source** for union stewards; all other documents provide context.
+- **BC Employment Standards Act (Priority 2)**: Statutory minimums for wages, overtime, and notice.
+- **BC Labour Relations Code (Priority 3)**: The legal framework for union-management relations and LRB precedents.
+- **BC Human Rights Code (Priority 4)**: Protections against discrimination and the duty to accommodate.
+- **BCGEU Steward Fundamentals Handbook**: Practical union guidance for grievances and meeting scripts.
+- **Standards of Conduct (Public Service Ethics)**: Policy framework for employee behavior and social media use.
+
+### Priority & Weighting Logic
+Vexilon is programmed to prioritize the **Collective Agreement** above all else. When a query overlaps multiple sources:
+1. The **Agreement** is used for primary enforcement.
+2. **Statutes** (ESA, Labour Code, HRC) are cited as secondary legal context.
+3. If no contract language exists, the assistant identifies relevant statutory protections.
 
 ### Adding More Documents
 To expand the knowledge base, simply drop additional PDF files into the `data/labour_law/` directory. The app automatically scans this directory at startup and rebuilds the FAISS index if changes are detected (or if `force_rebuild=True` is passed to `startup()`).
@@ -45,7 +53,6 @@ To expand the knowledge base, simply drop additional PDF files into the `data/la
 > [!TIP]
 > **Suggested Additions:**
 > - WorkSafeBC (WCB) Occupational Health & Safety Policies
-> - BC Employment Standards Act
 > - Specific Component/Local Agreements
 > - Public Service Benefit Plan Details
 
@@ -132,7 +139,7 @@ development only and is ignored by HF Spaces.
 HF Spaces does not accept binary files via git push. Instead, [`app.py`](app.py) downloads
 `pdf_cache/` assets from this public GitHub repo at startup if they are absent:
 
-- `pdf_cache/main_public_service_19th.pdf` — the collective agreement
+- `pdf_cache/bcgeu_19th_main_agreement.pdf` — the collective agreement
 - `pdf_cache/index.faiss` — pre-built FAISS index
 - `pdf_cache/chunks.json` — pre-built chunk metadata
 
