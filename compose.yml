@@ -46,9 +46,13 @@ services:
       dockerfile: Containerfile
       target: builder
     volumes:
-      - .:/app:Z
+      - ./app.py:/app/app.py:Z
+      - ./tests:/app/tests:Z
+      - ./pyproject.toml:/app/pyproject.toml:Z
+      - ./uv.lock:/app/uv.lock:Z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
+      TRANSFORMERS_OFFLINE: "1"
     # We use the builder target but sync dev deps at runtime to avoid bloating the image
     command: sh -c "uv sync --frozen && uv run pytest tests/test_*.py tests/integration/ -v"

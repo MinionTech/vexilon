@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Pre-download the embedding model into a persistent cache
 RUN --mount=type=cache,target=/root/.cache/huggingface \
     HF_HOME=/app/hf_cache \
-    uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+    uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS runner
@@ -47,10 +47,8 @@ COPY --chown=1001:1001 app.py ./
 # Bake the build timestamp into a file after code is copied
 RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt && chown 1001:1001 /app/build_version.txt
 
-# 3. Bake the index using the copied virtual environment
-# We run this during the build for zero-downtime startups
-USER 1001
-RUN /app/.venv/bin/python -c "from app import startup; startup(force_rebuild=True)"
+# The index is provided by the host volume or first-run local bootstrap
+# (Removed force_rebuild=True from image layers to prevent 404 errors)
 
 # ─── Final Environment ────────────────────────────────────────────────────────
 ENV HF_HOME=/app/hf_cache \
