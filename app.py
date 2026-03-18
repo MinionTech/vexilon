@@ -55,10 +55,11 @@ _GITHUB_RAW_BASE = (
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 CONDENSE_MODEL = os.getenv("CONDENSE_MODEL", "claude-haiku-4-5-20251001")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 480))       # Safe token limit for BERT
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))  # Smooth transitions
-SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40)) # Massive window for broad searches
+# Brain: Local Embeddings (Search) + Cloud LLM (Claude)
+EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5") # 512-token window
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))       # Sized for BGE-small
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100)) 
+SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40)) # More context depth
 
 # Memory / Context Condensation
 CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
@@ -184,7 +185,7 @@ Response format:
 [Plain-language explanation]
 
 > "[Verbatim quote]"
-> — [Document Name], Article/Section [X], p. [N]
+— [Document Name], Article/Section [X], p. [N]
 
 [Optional: "This may also be relevant:" + follow-up suggestion]
 """

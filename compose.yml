@@ -30,6 +30,9 @@ services:
     depends_on:
       tests:
         condition: service_completed_successfully
+    volumes:
+      - ./pdf_cache:/app/pdf_cache:Z
+      - ./hf_cache:/app/hf_cache:Z
     # Production-ready: Use the code baked into the image
     
     # Production-optimized: Uses the CMD defined in the Containerfile
