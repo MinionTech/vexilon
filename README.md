@@ -1,5 +1,5 @@
 ---
-title: Vexilon — BCGEU Agreement Assistant
+title: BCGEU Steward Assistant
 emoji: 📋
 colorFrom: blue
 colorTo: indigo
@@ -11,7 +11,7 @@ license: mit
 short_description: Look up the BCGEU 19th Main Public Service Agreement
 ---
 
-# Vexilon — BCGEU Steward Assistant
+# BCGEU Steward Assistant
 
 AI chatbot built to empower BCGEU union stewards with instant, cited answers from a broad library
 of labour law and contract documents.

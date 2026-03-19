@@ -1,5 +1,5 @@
 """
-app.py — Vexilon: BCGEU Agreement Assistant
+app.py — BCGEU Steward Assistant
 --------------------------------------------
 Tech stack:
   - pypdf                : PDF → pages with page number preservation
@@ -51,6 +51,12 @@ CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 # was not committed (e.g. Hugging Face Spaces — HF rejects binary files in git).
 _GITHUB_RAW_BASE = (
     "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/pdf_cache"
+)
+
+# Public GitHub raw URL base for labour_law PDFs.
+# Used for PDF download links in the UI.
+GITHUB_RAW_PDF_BASE = (
+    "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/data/labour_law"
 )
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
@@ -694,10 +700,7 @@ DISCLAIMER_HTML = (
     "font-size:0.85rem;"
     "margin-bottom:12px;"
     '">'
-    "⚠️ <strong style=\"color:#7c4a00;\">Unofficial Explorer: </strong> This is an independent community project. "
-    "It is not affiliated with, endorsed by, or sponsored by the BCGEU. All responses are AI-generated; the"
-    "<a href='https://www2.gov.bc.ca/gov/content/careers-myhr/managers-supervisors/employee-labour-relations/conditions-agreements/collective-agreements' target='_blank' style='color:#7c4a00; font-weight:bold;'>official PDF</a>"
-    "is the sole authoritative source. Consult your BCGEU representative or a legal advisor as appropriate."
+    "This project is not affiliated with the BCGEU. AI-generated responses may contain errors."
     "</div>"
 )
 
@@ -717,18 +720,18 @@ def build_ui() -> "gr.Blocks":
     with gr.Blocks(title="Collective Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## BCGEU Steward Assistant (Vexilon)")
+        gr.Markdown("## BCGEU Steward Assistant")
 
-        with gr.Accordion("📜 Knowledge Base & Priority", open=False):
-            gr.Markdown("""
-            ### ⚖️ Document Priority
-            When answering, Vexilon prioritizes the **Collective Agreement** (Priority 1) as it is the primary tool for steward enforcement. Other documents provide statutory and ethical context.
+        with gr.Accordion("Knowledge Base & Priority", open=False):
+            gr.Markdown(f"""
+            The **Collective Agreement** is our primary reference. Anything else provides additional context.
             
-            1. **Primary: BCGEU 19th Main Agreement** (Contractual Rights)
-            2. **Statutory: Employment Standards Act** (Minimums)
-            3. **Regulatory: Labour Relations Code** (Legal Framework)
-            4. **Protection: Human Rights Code** (Discrimination/Duty to Accommodate)
-            5. **Resources**: Steward Manuals & Ethics Guidelines
+            1. **Primary: BCGEU 19th Main Agreement** (Contractual Rights) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bcgeu_19th_main_agreement.pdf)
+            2. **Statutory: Employment Standards Act** (Minimums) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bc_employment_standards_act.pdf)
+            3. **Regulatory: Labour Relations Code** (Legal Framework) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bc_labour_relations_code.pdf)
+            4. **Protection: Human Rights Code** (Discrimination/Duty to Accommodate) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bc_human_rights_code.pdf)
+            5. **Resources: Steward Manuals & Ethics Guidelines** — [Download PDF]({GITHUB_RAW_PDF_BASE}/bcgeu_steward_resources.pdf)
+            6. **Ethics: Gov BC Standards of Conduct** — [Download PDF]({GITHUB_RAW_PDF_BASE}/gov_bc_standards_of_conduct.pdf)
             """)
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
