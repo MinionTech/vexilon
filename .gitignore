@@ -21,7 +21,8 @@ build/
 .ipynb_checkpoints/
 
 # ─── App runtime data (do NOT commit) ────────────────────────────────────────
-pdf_cache/          # Cached PDFs and pre-computed FAISS/JSON indices
+# Cached PDFs and pre-computed FAISS/JSON indices
+pdf_cache/
 chroma_db/          # Local vector store data
 gradio_cached_examples/
 flagged/

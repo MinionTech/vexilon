@@ -30,6 +30,9 @@ services:
     depends_on:
       tests:
         condition: service_completed_successfully
+    volumes:
+      - ./pdf_cache:/app/pdf_cache:Z
+      - ./hf_cache:/app/hf_cache:Z
     # Production-ready: Use the code baked into the image
     
     # Production-optimized: Uses the CMD defined in the Containerfile
@@ -43,9 +46,16 @@ services:
       dockerfile: Containerfile
       target: builder
     volumes:
-      - .:/app:Z
+      - ./app.py:/app/app.py:Z
+      - ./tests:/app/tests:Z
+      - ./pyproject.toml:/app/pyproject.toml:Z
+      - ./uv.lock:/app/uv.lock:Z
+      - ./conftest.py:/app/conftest.py:Z
+      - ./compose.yml:/app/compose.yml:Z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
-    # We use the builder target but sync dev deps at runtime to avoid bloating the image
-    command: sh -c "uv sync --frozen && uv run pytest tests/test_*.py tests/integration/ -v"
+      TRANSFORMERS_OFFLINE: "1"
+      PYTHONPATH: "/app"
+    # We use python -m pytest to ensure /app is in the sys.path for module discovery
+    command: sh -c "uv sync --frozen && uv run python -m pytest tests/test_*.py tests/integration/ -v"

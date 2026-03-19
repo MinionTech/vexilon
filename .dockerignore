@@ -1,10 +1,14 @@
-.git
-.venv
-__pycache__
-.pytest_cache
+# Exclude large cache directories from docker build context
+hf_cache/
+pdf_cache/
+
+# Standard Python ignores
+__pycache__/
 *.pyc
-*.pyo
-*.pyd
-.db
-.env
-# tests/   <-- Removed so we can run containerized tests
+.venv/
+.pytest_cache/
+.coverage
+
+# FAISS and persistence
+*.faiss
+*chunks.json

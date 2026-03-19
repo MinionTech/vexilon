@@ -23,6 +23,7 @@ import sys
 print("[boot] Python started, importing stdlib...", flush=True)
 import json
 import os
+import shutil
 import time
 import urllib.request
 from collections.abc import AsyncIterator, Iterator
@@ -41,7 +42,7 @@ print("[boot] All boilerplate complete.", flush=True)
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 PDF_CACHE_DIR = Path("./pdf_cache")
-PDF_PATH = PDF_CACHE_DIR / "main_public_service_19th.pdf"
+LABOUR_LAW_DIR = Path("./data/labour_law")
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 
@@ -54,10 +55,11 @@ _GITHUB_RAW_BASE = (
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 CONDENSE_MODEL = os.getenv("CONDENSE_MODEL", "claude-haiku-4-5-20251001")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 256))       # tokens per chunk
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))  # token overlap
-SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 5))
+# Brain: Local Embeddings (Search) + Cloud LLM (Claude)
+EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5") # 512-token window
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))       # Sized for BGE-small
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100)) 
+SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40)) # More context depth
 
 # Memory / Context Condensation
 CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
@@ -150,66 +152,73 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
 
 
 # ─── System Prompt ───────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are a helpful assistant for looking up the 19th Main Public Service Agreement. \
-You help users navigate the collective agreement for the Social, Information & Health bargaining unit.
+SYSTEM_PROMPT = """You are Vexilon, a highly authoritative professional assistant for BCGEU union stewards. \
+You have access to a comprehensive, full-text library of the following documents:
+
+--- KNOWLEDGE MANIFEST ---
+1. FULL TEXT: 19th Main Public Service Agreement (Effective 2022-2025) - The core contract (215 pages).
+2. FULL TEXT: BC Employment Standards Act [RSBC 1996]
+3. FULL TEXT: BC Labour Relations Code
+4. FULL TEXT: BC Human Rights Code
+5. SUPPORT: BCGEU Steward Resource Manual & Ethics Guidelines
+6. SUPPORT: Gov BC Standards of Conduct
+--------------------------
 
 Rules you must follow without exception:
 
-1. You may only answer using the provided agreement excerpts. Do not draw on outside knowledge.
-2. Every claim must be supported by a verbatim quote from the provided excerpts, formatted as a \
-markdown blockquote (> "...") followed by its citation: — Article [X], [Title], p. [N]
+1. PRECISION OVER HELPFULNESS: If the search results show only a Table of Contents entry or a reference to a section (e.g., "See Section 10.4") but the actual text of that section is NOT in your retrieved snippets, you MUST state that the specific language is not available in your current view. NEVER assume or guess the content of a missing section.
+2. Every claim must be supported by a verbatim quote from the provided excerpts, formatted as a markdown blockquote (> "...") followed by its citation: — [Document Name], Article/Section [X], [Title if available], p. [N]
 3. Plain-language explanation comes BEFORE the verbatim quote, not after.
-4. If the excerpts do not address the question, say so clearly: \
-"The collective agreement does not appear to address this question in the excerpts I was given."
-5. Do not predict outcomes, advise on strategy, or offer legal opinions.
-6. Tone: plain language. Your audience has no legal background.
-7. If multiple clauses are relevant, quote each one separately with its own citation.
-8. Maintain conversational continuity. If the user asks a follow-up question, use the previous \
-conversation context and the provided excerpts to provide a coherent answer.
+4. ALWAYS prioritize and lead with the Collective Agreement (Main Agreement) as the primary authority.
+5. If you detect a "gap" (e.g., you see Section 10.1 and 10.3 but not 10.2), explicitly inform the user: "I see a gap in the retrieved sections. Please allow me to BROADEN my search or check the specific Article yourself."
+6. Do not predict outcomes or give legal opinions.
+7. Tone: professional, forensic, and confident but cautious about data gaps.
+8. Cite every relevant clause separately.
+9. Maintain conversational continuity. Use the previous conversation context and the provided excerpts.
+10. If the search results are contradictory or unclear, flag this ambiguity to the user immediately.
+11. Search deeply: Every chunk in your library is tagged with its Article or Appendix name to ensure context is never lost.
 
 Response format:
 
 [Plain-language explanation]
 
-> "[Verbatim quote from the agreement]"
-> — Article [X], [Title], p. [N]
+> "[Verbatim quote]"
+— [Document Name], Article/Section [X], p. [N]
 
-[Optional: "This may also be relevant:" + follow-up suggestion]
+[Optional: "Data Gap Warning: Text for Section [X.Y] was not retrieved in this search."]
 """
 
 # ─── Chunking ─────────────────────────────────────────────────────────────────
 
-def chunk_text(text: str, page_num: int) -> list[dict]:
+def chunk_text(full_text: str, token_data: list[tuple[int, int, int, str]], source_name: str) -> list[dict]:
     """
-    Split *text* into overlapping token-based chunks using the embedding model's tokenizer.
-    Returns list of dicts: {text, page, chunk_index}.
+    Split *full_text* into overlapping token-based chunks across the whole document.
+    Uses 'token_data' [(char_start, char_end, page_num, header)] to preserve metadata.
+    Returns list of dicts: {text, page, source, header, chunk_index}.
     """
-    if not text.strip():
-        return []
-    tokenizer = get_embed_model().tokenizer
-    # Ensure the tokenizer doesn't truncate the whole page so we can split it manually
-    encoding = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True, truncation=False)
-    tokens = encoding.input_ids
-    offsets = encoding.offset_mapping
     chunks = []
-    
-    if not tokens:
+    if not token_data:
         return chunks
         
-    start = 0
     idx = 0
-    while start < len(tokens):
-        end = min(start + CHUNK_SIZE, len(tokens))
+    start = 0
+    while start < len(token_data):
+        end = min(start + CHUNK_SIZE, len(token_data))
         
-        # We need the original text that spans these tokens to preserve original case
-        chunk_char_start = offsets[start][0]
-        chunk_char_end = offsets[end - 1][1]
+        # Get metadata from the first token of the chunk
+        char_start, _, page_num, header = token_data[start]
+        # End Char index is from the last token of the chunk
+        _, char_end, _, _ = token_data[end - 1]
         
-        chunk_text_str = text[chunk_char_start:chunk_char_end]
+        # Contextual Breadcrumb: Prepend source + header 
+        prefix = f"[{source_name} - {header}] " if header else f"[{source_name}] "
+        chunk_text_str = prefix + full_text[char_start:char_end]
         
         chunks.append({
             "text": chunk_text_str,
             "page": page_num,
+            "source": source_name,
+            "header": header,
             "chunk_index": idx,
         })
         idx += 1
@@ -220,18 +229,53 @@ def chunk_text(text: str, page_num: int) -> list[dict]:
 # ─── PDF Loader ───────────────────────────────────────────────────────────────
 def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     """
-    Parse the PDF at *pdf_path* and return all chunks with page metadata.
-    Page numbers are 1-based (matching the printed page numbers in the PDF).
+    Parse the PDF at *pdf_path* into one continuous stream before chunking.
+    This bridges page boundaries so sentences that span pages aren't decapitated.
     """
     from pypdf import PdfReader
+    import re
+    
     reader = PdfReader(str(pdf_path))
-    all_chunks = []
+    source_name = pdf_path.stem.replace("_", " ").title()
+    print(f"[loader] Parsing '{source_name}' ({len(reader.pages)} pages)…")
+    
+    tokenizer = get_embed_model().tokenizer
+    full_text = ""
+    token_metadata = [] # List of (char_start, char_end, page_num, header)
+    
+    current_header = ""
+    header_pattern = re.compile(r"^\s*(ARTICLE|APPENDIX)\s+(\d+|[A-Z]+)", re.IGNORECASE)
+    
     for page_idx, page in enumerate(reader.pages):
-        page_num = page_idx + 1  # 1-based
-        text = page.extract_text() or ""
-        if text.strip():
-            all_chunks.extend(chunk_text(text, page_num))
-    return all_chunks
+        page_num = page_idx + 1
+        page_text = page.extract_text() or ""
+        if not page_text.strip():
+            continue
+            
+        # Update breadcrumb header context
+        for line in page_text.split("\n")[:10]:
+            if ".........." in line or line.strip().endswith((".",)) and re.search(r"\d+$", line.strip()):
+                continue
+            match = header_pattern.search(line)
+            if match:
+                current_header = match.group(0).strip().upper()
+                break # Usually one primary header per page top
+
+        # Track offsets in the global full_text
+        page_offset = len(full_text)
+        full_text += page_text + "\n"
+        
+        # Tokenize this page and record metadata for every token
+        encoding = tokenizer(page_text, add_special_tokens=False, return_offsets_mapping=True, truncation=False)
+        for start, end in encoding.offset_mapping:
+            token_metadata.append((
+                page_offset + start, 
+                page_offset + end, 
+                page_num, 
+                current_header
+            ))
+            
+    return chunk_text(full_text, token_metadata, source_name)
 
 
 # ─── FAISS Index ──────────────────────────────────────────────────────────────
@@ -316,7 +360,6 @@ def _fetch_pdf_cache_if_missing() -> None:
     to the Space git repo. Files are downloaded from the public GitHub raw URL.
     """
     files = {
-        PDF_PATH: f"{_GITHUB_RAW_BASE}/main_public_service_19th.pdf",
         INDEX_PATH: f"{_GITHUB_RAW_BASE}/index.faiss",
         CHUNKS_PATH: f"{_GITHUB_RAW_BASE}/chunks.json",
     }
@@ -346,8 +389,8 @@ def startup(force_rebuild: bool = False) -> None:
     """
     global _chunks, _index
     get_anthropic()  # Ping early to catch missing ANTHROPIC_API_KEY
-    _fetch_pdf_cache_if_missing()
     if not force_rebuild:
+        _fetch_pdf_cache_if_missing()
         index, chunks = load_precomputed_index()
         if index is not None and chunks is not None:
             _index = index
@@ -358,9 +401,25 @@ def startup(force_rebuild: bool = False) -> None:
             return
 
     # ── Slow path: build from scratch ────────────────────────────────────
-    print(f"[startup] Loading PDF from {PDF_PATH}…")
-    _chunks = load_pdf_chunks(PDF_PATH)
-    print(f"[startup] {len(_chunks)} chunks loaded from {PDF_PATH.name}")
+    print(f"[startup] Scanning for PDFs in {LABOUR_LAW_DIR}…")
+    if not LABOUR_LAW_DIR.exists():
+        LABOUR_LAW_DIR.mkdir(parents=True, exist_ok=True)
+        # If empty, copy the default agreement from cache if it exists
+        default_pdf = PDF_CACHE_DIR / "bcgeu_19th_main_agreement.pdf"
+        if default_pdf.exists():
+            shutil.copy(default_pdf, LABOUR_LAW_DIR / "bcgeu_19th_main_agreement.pdf")
+
+    pdf_files = list(LABOUR_LAW_DIR.glob("*.pdf"))
+    if not pdf_files:
+        print("[startup] No PDF files found to index!")
+        return
+
+    _chunks = []
+    for pdf in pdf_files:
+        _chunks.extend(load_pdf_chunks(pdf))
+    
+    num_chunks = len(_chunks)
+    print(f"[startup] Total {num_chunks} chunks loaded from {len(pdf_files)} files.")
     _index = build_index(_chunks)
     save_index(_index, _chunks)
     print("[startup] Ready.")
@@ -403,7 +462,9 @@ async def condense_query(message: str, history: list[dict]) -> str:
     prompt = (
         "Given the following conversation history and a follow-up question, "
         "rephrase the question to be a standalone search query that captures "
-        "the full intent. Only provide the rephrased query, nothing else.\n\n"
+        "the full intent. If the question is about the bot's own capabilities, "
+        "make the query specifically about its documentation and manifest. "
+        "Only provide the rephrased query, nothing else.\n\n"
         f"History:\n{context_str}\n\n"
         f"Follow-up question: {message}\n\n"
         "Standalone query:"
@@ -442,7 +503,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
     context_parts = []
     for chunk in relevant_chunks:
         context_parts.append(
-            f"[Page {chunk['page']}]\n{chunk['text']}"
+            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
         )
     context = "\n\n---\n\n".join(context_parts)
 
@@ -498,11 +559,11 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
 
 # ─── Gradio UI ────────────────────────────────────────────────────────────────
 EXAMPLE_QUESTIONS = [
-    "What are my overtime rights?",
-    "What is the probationary period?",
-    "Can my employer change my schedule without notice?",
-    "What happens if I am disciplined?",
-    "Am I entitled to union representation?",
+    "What are the just cause requirements for discipline?",
+    "What rights do stewards have in investigation meetings?",
+    "What is the nexus test for off-duty conduct?",
+    "Does my employer have a social media policy?",
+    "What happens if I'm disciplined for off-duty behavior?",
 ]
 
 # Disclaimer rendered entirely with inline styles so Gradio theme cannot override text colour.
@@ -539,8 +600,20 @@ def build_ui() -> "gr.Blocks":
     with gr.Blocks(title="Collective Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## BCGEU Collective Agreement Explorer\n"
-                    "*19th Main Agreement; Social, Information & Health*")
+        gr.Markdown("## BCGEU Steward Assistant (Vexilon)\n"
+                    "*Expert support for stewards, powered by the core labour library.*")
+
+        with gr.Accordion("📜 Knowledge Base & Priority", open=False):
+            gr.Markdown("""
+            ### ⚖️ Document Priority
+            When answering, Vexilon prioritizes the **Collective Agreement** (Priority 1) as it is the primary tool for steward enforcement. Other documents provide statutory and ethical context.
+            
+            1. **Primary: BCGEU 19th Main Agreement** (Contractual Rights)
+            2. **Statutory: Employment Standards Act** (Minimums)
+            3. **Regulatory: Labour Relations Code** (Legal Framework)
+            4. **Protection: Human Rights Code** (Discrimination/Duty to Accommodate)
+            5. **Resources**: Steward Manuals & Ethics Guidelines
+            """)
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)

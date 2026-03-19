@@ -164,6 +164,12 @@ def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
     # Track whether save_index was called
     save_calls = []
 
+    # Mock LABOUR_LAW_DIR to point to a tmp_path with one dummy PDF
+    law_dir = tmp_path / "data" / "labour_law"
+    law_dir.mkdir(parents=True)
+    (law_dir / "dummy.pdf").write_bytes(b"dummy")
+    monkeypatch.setattr(app, "LABOUR_LAW_DIR", law_dir)
+
     monkeypatch.setattr(app, "load_pdf_chunks", lambda _path: fake_chunks)
     monkeypatch.setattr(app, "build_index", lambda chunks: fake_index)
     monkeypatch.setattr(app, "save_index", lambda idx, cks: save_calls.append((idx, cks)))
@@ -172,7 +178,7 @@ def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
     app.startup(force_rebuild=True)
 
     assert app._index is fake_index
-    assert app._chunks is fake_chunks
+    assert app._chunks == fake_chunks
     assert len(save_calls) == 1, "save_index must be called exactly once during force_rebuild"
 
 
@@ -189,6 +195,12 @@ def test_startup_slow_path_skips_precomputed_even_if_present(monkeypatch, tmp_pa
     fresh_index, fresh_chunks_list = _tiny_index(n=1)
     fresh_chunks = [{"text": "fresh", "page": 1, "chunk_index": 0}]
 
+    # Mock LABOUR_LAW_DIR to point to a tmp_path with one dummy PDF
+    law_dir = tmp_path / "data" / "labour_law"
+    law_dir.mkdir(parents=True, exist_ok=True)
+    (law_dir / "dummy.pdf").write_bytes(b"dummy")
+    monkeypatch.setattr(app, "LABOUR_LAW_DIR", law_dir)
+
     # load_precomputed_index would return stale data — force_rebuild must bypass it
     monkeypatch.setattr(app, "load_precomputed_index", lambda: (stale_index, stale_chunks))
     monkeypatch.setattr(app, "load_pdf_chunks", lambda _: fresh_chunks)
@@ -198,6 +210,6 @@ def test_startup_slow_path_skips_precomputed_even_if_present(monkeypatch, tmp_pa
 
     app.startup(force_rebuild=True)
 
-    assert app._chunks is fresh_chunks, (
+    assert app._chunks == fresh_chunks, (
         "force_rebuild=True must use freshly-built chunks, not the pre-computed cache"
     )

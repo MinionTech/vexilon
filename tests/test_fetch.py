@@ -20,21 +20,20 @@ import app
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _patch_paths(monkeypatch, tmp_path: Path) -> dict:
-    """Redirect all three pdf_cache paths into tmp_path and return them."""
-    pdf_path = tmp_path / "main_public_service_19th.pdf"
+    """Redirect pdf_cache paths into tmp_path and return them."""
     index_path = tmp_path / "index.faiss"
     chunks_path = tmp_path / "chunks.json"
-    monkeypatch.setattr(app, "PDF_PATH", pdf_path)
+
     monkeypatch.setattr(app, "INDEX_PATH", index_path)
     monkeypatch.setattr(app, "CHUNKS_PATH", chunks_path)
     monkeypatch.setattr(app, "PDF_CACHE_DIR", tmp_path)
-    return {"pdf": pdf_path, "index": index_path, "chunks": chunks_path}
+    return {"index": index_path, "chunks": chunks_path}
 
 
 # ── No-op when all files present ─────────────────────────────────────────────
 
 def test_no_download_when_all_files_present(monkeypatch, tmp_path):
-    """When all three files exist, urlretrieve must never be called."""
+    """When both cache files exist, urlretrieve must never be called."""
     paths = _patch_paths(monkeypatch, tmp_path)
     for p in paths.values():
         p.write_bytes(b"placeholder")
@@ -47,8 +46,8 @@ def test_no_download_when_all_files_present(monkeypatch, tmp_path):
 
 # ── Downloads when files are missing ─────────────────────────────────────────
 
-def test_downloads_all_three_when_cache_dir_empty(monkeypatch, tmp_path):
-    """When no files exist, urlretrieve must be called once for each of the 3 assets."""
+def test_downloads_both_when_cache_dir_empty(monkeypatch, tmp_path):
+    """When no files exist, urlretrieve must be called once for each of the 2 assets."""
     _patch_paths(monkeypatch, tmp_path)
 
     def _fake_retrieve(url, dest):
@@ -57,13 +56,12 @@ def test_downloads_all_three_when_cache_dir_empty(monkeypatch, tmp_path):
     with patch("app.urllib.request.urlretrieve", side_effect=_fake_retrieve) as mock_retrieve:
         app._fetch_pdf_cache_if_missing()
 
-    assert mock_retrieve.call_count == 3
+    assert mock_retrieve.call_count == 2
 
 
 def test_only_downloads_missing_files(monkeypatch, tmp_path):
     """If only one file is missing, only that file should be downloaded."""
     paths = _patch_paths(monkeypatch, tmp_path)
-    paths["pdf"].write_bytes(b"existing pdf")
     paths["index"].write_bytes(b"existing index")
     # chunks is missing
 
@@ -93,7 +91,7 @@ def test_urls_point_to_github_raw(monkeypatch, tmp_path):
     with patch("app.urllib.request.urlretrieve", side_effect=_fake_retrieve):
         app._fetch_pdf_cache_if_missing()
 
-    assert len(called_urls) == 3
+    assert len(called_urls) == 2
     for url in called_urls:
         assert url.startswith(app._GITHUB_RAW_BASE), (
             f"Download URL {url!r} does not start with _GITHUB_RAW_BASE. "
@@ -108,7 +106,6 @@ def test_creates_cache_dir_when_missing(monkeypatch, tmp_path):
     # Point cache dir to a subdirectory that doesn't exist yet
     missing_dir = tmp_path / "new_cache_dir"
     monkeypatch.setattr(app, "PDF_CACHE_DIR", missing_dir)
-    monkeypatch.setattr(app, "PDF_PATH", missing_dir / "main.pdf")
     monkeypatch.setattr(app, "INDEX_PATH", missing_dir / "index.faiss")
     monkeypatch.setattr(app, "CHUNKS_PATH", missing_dir / "chunks.json")
 

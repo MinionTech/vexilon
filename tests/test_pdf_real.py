@@ -13,10 +13,39 @@ using only standard library (struct + bytes literals) — no additional deps.
 """
 
 from pathlib import Path
-
 import pytest
-
+from unittest.mock import MagicMock
+import app
 from app import load_pdf_chunks
+
+@pytest.fixture(autouse=True)
+def mock_tokenizer(monkeypatch):
+    """
+    Mock the tokenizer used by get_embed_model() for all tests in this file.
+    """
+    mock_tok = MagicMock()
+    
+    def _mock_tokenize(text, **kwargs):
+        words = text.split()
+        input_ids = list(range(len(words)))
+        offset_mapping = []
+        current_idx = 0
+        for word in words:
+            start = text.find(word, current_idx)
+            if start == -1:
+                start = current_idx
+            end = start + len(word)
+            offset_mapping.append((start, end))
+            current_idx = end
+            
+        return MagicMock(input_ids=input_ids, offset_mapping=offset_mapping)
+        
+    mock_tok.side_effect = _mock_tokenize
+    
+    mock_embed_model = MagicMock()
+    mock_embed_model.tokenizer = mock_tok
+    monkeypatch.setattr(app, "get_embed_model", lambda: mock_embed_model)
+    return mock_tok
 
 
 # ── Minimal PDF fixture ───────────────────────────────────────────────────────

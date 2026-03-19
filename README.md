@@ -11,11 +11,10 @@ license: mit
 short_description: Look up the BCGEU 19th Main Public Service Agreement
 ---
 
-# Vexilon — BCGEU Agreement Assistant
+# Vexilon — BCGEU Steward Assistant
 
-AI chatbot for BCGEU union stewards to look up the 19th Main Public Service Agreement
-(Social, Information & Health). Ask questions in plain language; get verbatim quotes with
-article and page citations.
+AI chatbot built to empower BCGEU union stewards with instant, cited answers from a broad library
+of labour law and contract documents.
 
 > See [SPEC.md](SPEC.md) for the full product specification.
 
@@ -28,8 +27,34 @@ article and page citations.
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | PDF Parsing | pypdf — preserves page numbers |
 | Web UI | Gradio 6 — `http://localhost:7860` |
-| PDF Source | Bundled in `pdf_cache/` |
-| Container | Podman + Podman Compose (`compose.yml`) |
+| Knowledge Base | Multi-source PDFs in `data/labour_law/` |
+| Deployment | Hugging Face Spaces + GitHub Actions |
+
+## Knowledge Base
+
+Vexilon is currently indexed with the following core documents:
+
+- **BCGEU 19th Main Public Service Agreement (Priority 1)**: The core collective agreement. This is the **authoritative source** for union stewards; all other documents provide context.
+- **BC Employment Standards Act (Priority 2)**: Statutory minimums for wages, overtime, and notice.
+- **BC Labour Relations Code (Priority 3)**: The legal framework for union-management relations and LRB precedents.
+- **BC Human Rights Code (Priority 4)**: Protections against discrimination and the duty to accommodate.
+- **BCGEU Steward Fundamentals Handbook**: Practical union guidance for grievances and meeting scripts.
+- **Standards of Conduct (Public Service Ethics)**: Policy framework for employee behavior and social media use.
+
+### Priority & Weighting Logic
+Vexilon is programmed to prioritize the **Collective Agreement** above all else. When a query overlaps multiple sources:
+1. The **Agreement** is used for primary enforcement.
+2. **Statutes** (ESA, Labour Code, HRC) are cited as secondary legal context.
+3. If no contract language exists, the assistant identifies relevant statutory protections.
+
+### Adding More Documents
+To expand the knowledge base, simply drop additional PDF files into the `data/labour_law/` directory. The app automatically scans this directory at startup and rebuilds the FAISS index if changes are detected (or if `force_rebuild=True` is passed to `startup()`).
+
+> [!TIP]
+> **Suggested Additions:**
+> - WorkSafeBC (WCB) Occupational Health & Safety Policies
+> - Specific Component/Local Agreements
+> - Public Service Benefit Plan Details
 
 ## Hosted
 
@@ -114,7 +139,7 @@ development only and is ignored by HF Spaces.
 HF Spaces does not accept binary files via git push. Instead, [`app.py`](app.py) downloads
 `pdf_cache/` assets from this public GitHub repo at startup if they are absent:
 
-- `pdf_cache/main_public_service_19th.pdf` — the collective agreement
+- `pdf_cache/bcgeu_19th_main_agreement.pdf` — the collective agreement
 - `pdf_cache/index.faiss` — pre-built FAISS index
 - `pdf_cache/chunks.json` — pre-built chunk metadata
 
@@ -184,17 +209,18 @@ podman-compose run --rm tests sh -c "uv run pytest tests/smoke/ -v"
 vexilon/
 ├── app.py            # Main application (RAG pipeline + Gradio UI)
 ├── conftest.py       # pytest root path configuration
-├── requirements.txt  # Python dependencies (includes pytest)
-├── manifest.json     # PWA manifest
+├── requirements.txt  # Python dependencies
 ├── Containerfile     # Production-optimized multi-stage image definition
 ├── compose.yml       # Podman Compose config (production parity)
 ├── SPEC.md           # Product specification
+├── data/             # Knowledge base source files
+│   └── labour_law/   # Directory for PDF documents to be indexed
 ├── tests/            # pytest test suite
 │   ├── test_chunking.py    # chunk_text() unit tests
 │   ├── test_index.py       # FAISS build/search unit tests
 │   ├── test_pdf_loader.py  # load_pdf_chunks() unit tests
 │   ├── test_rag_stream.py  # rag_stream() unit tests + model name blocklist
 │   └── smoke/
-│       └── test_model_valid.py  # live API model validation (requires ANTHROPIC_API_KEY)
-└── pdf_cache/        # Bundled PDFs + pre-built FAISS index (committed to repo)
+│       └── test_model_valid.py  # live API model validation
+└── pdf_cache/        # Pre-built FAISS index and chunk metadata
 ````

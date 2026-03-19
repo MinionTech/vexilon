@@ -154,8 +154,8 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
 
     # Block 1: agreement excerpts with page references.
     excerpts_text = excerpts_block["text"]
-    assert "[Page 5]" in excerpts_text
-    assert "[Page 6]" in excerpts_text
+    assert "[Source: Unknown, Page: 5]" in excerpts_text
+    assert "[Source: Unknown, Page: 6]" in excerpts_text
     assert "Article 1 says something important." in excerpts_text
 
 

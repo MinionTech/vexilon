@@ -62,6 +62,18 @@ def test_embed_texts_different_inputs_produce_different_vectors():
 
 # ── Full pipeline: chunk → embed → index → search ────────────────────────────
 
+def _make_chunks_from_text(text: str, page_num: int, source: str = "Test") -> list[dict]:
+    """
+    Helper: build the token_data list and call chunk_text() directly, mimicking what
+    load_pdf_chunks() does for a single page. Uses the real embedding tokenizer so
+    these tests exercise the real pipeline.
+    """
+    tokenizer = app.get_embed_model().tokenizer
+    encoding = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True, truncation=False)
+    token_data = [(start, end, page_num, "") for start, end in encoding.offset_mapping]
+    return app.chunk_text(text, token_data, source)
+
+
 def test_full_pipeline_returns_semantically_relevant_chunk():
     """
     Full end-to-end integration: chunk_text() → real embed_texts() → build_index() → search_index().
@@ -83,8 +95,8 @@ def test_full_pipeline_returns_semantically_relevant_chunk():
         "Employees must be notified of overtime requirements in advance."
     )
 
-    vacation_chunks = app.chunk_text(vacation_text, page_num=1)
-    overtime_chunks = app.chunk_text(overtime_text, page_num=2)
+    vacation_chunks = _make_chunks_from_text(vacation_text, page_num=1)
+    overtime_chunks = _make_chunks_from_text(overtime_text, page_num=2)
     all_chunks = vacation_chunks + overtime_chunks
 
     index = app.build_index(all_chunks)
@@ -108,7 +120,7 @@ def test_full_pipeline_query_matches_overtime_chunk():
         "Overtime rates apply to any hours worked beyond seven and a half hours per day."
     )
 
-    chunks = app.chunk_text(vacation_text, page_num=1) + app.chunk_text(overtime_text, page_num=2)
+    chunks = _make_chunks_from_text(vacation_text, page_num=1) + _make_chunks_from_text(overtime_text, page_num=2)
     index = app.build_index(chunks)
 
     results = app.search_index(index, chunks, query="What is the overtime pay rate?", top_k=1)
