@@ -46,6 +46,12 @@ COPY --chown=1001:1001 app.py ./
 # Bake the build timestamp into a file after code is copied
 RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt && chown 1001:1001 /app/build_version.txt
 
+# ─── Final Environment ────────────────────────────────────────────────────────
+# Set PATH before any RUN steps that invoke Python so they use the venv.
+ENV HF_HOME=/app/hf_cache \
+    TRANSFORMERS_OFFLINE=1 \
+    PATH="/app/.venv/bin:$PATH"
+
 # 3. Pre-build the FAISS index at image build time.
 # build_index_from_pdfs() parses PDFs, embeds chunks, and writes
 # pdf_cache/index.faiss + pdf_cache/chunks.json — without needing
@@ -54,11 +60,6 @@ RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt &&
 RUN mkdir -p /app/pdf_cache && chown 1001:1001 /app/pdf_cache
 USER 1001
 RUN python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
-
-# ─── Final Environment ────────────────────────────────────────────────────────
-ENV HF_HOME=/app/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
-    PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 7860
 
