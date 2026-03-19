@@ -1,5 +1,5 @@
 """
-app.py — Vexilon: BCGEU Agreement Assistant
+app.py — BCGEU Steward Assistant
 --------------------------------------------
 Tech stack:
   - pypdf                : PDF → pages with page number preservation
@@ -717,12 +717,12 @@ def build_ui() -> "gr.Blocks":
     with gr.Blocks(title="Collective Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## BCGEU Steward Assistant (Vexilon)")
+        gr.Markdown("## BCGEU Steward Assistant")
 
         with gr.Accordion("📜 Knowledge Base & Priority", open=False):
             gr.Markdown("""
             ### ⚖️ Document Priority
-            When answering, Vexilon prioritizes the **Collective Agreement** (Priority 1) as it is the primary tool for steward enforcement. Other documents provide statutory and ethical context.
+            The **Collective Agreement** is our primary reference. Anything else provides additional context.
             
             1. **Primary: BCGEU 19th Main Agreement** (Contractual Rights)
             2. **Statutory: Employment Standards Act** (Minimums)
