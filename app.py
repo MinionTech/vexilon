@@ -717,8 +717,7 @@ def build_ui() -> "gr.Blocks":
     with gr.Blocks(title="Collective Agreement Explorer") as demo:
 
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## BCGEU Steward Assistant\n"
-                    "*Expert support for stewards, powered by the core labour library.*")
+        gr.Markdown("## BCGEU Steward Assistant (Vexilon)")
 
         with gr.Accordion("📜 Knowledge Base & Priority", open=False):
             gr.Markdown("""
