@@ -31,10 +31,15 @@ services:
       tests:
         condition: service_completed_successfully
     volumes:
-      - ./pdf_cache:/app/pdf_cache:Z
+      # hf_cache/: persist the embedding model weights between builds so
+      # podman-compose up --build doesn't re-download 90 MB of weights each time.
       - ./hf_cache:/app/hf_cache:Z
-    # Production-ready: Use the code baked into the image
-    
+      # pdf_cache/ is intentionally NOT mounted from the host.
+      # The FAISS index is baked into the image at build time via the Containerfile
+      # RUN step and lives at /app/pdf_cache/ inside the image.
+      # To update documents: add/change PDFs in data/labour_law/, then run:
+      #   podman-compose up --build
+      # The build re-runs build_index_from_pdfs() automatically.
     # Production-optimized: Uses the CMD defined in the Containerfile
     # (No 'uv' or 'gradio' CLI required in the final image)
 
