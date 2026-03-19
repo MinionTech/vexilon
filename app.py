@@ -228,10 +228,72 @@ def chunk_text(full_text: str, token_data: list[tuple[int, int, int, str]], sour
 
 
 # ─── PDF Loader ───────────────────────────────────────────────────────────────
+
+def _is_toc_or_index_page(page_text: str) -> bool:
+    """
+    Detect whether a page is a Table of Contents or alphabetical Index page.
+
+    These navigational pages mention every article/clause by name but contain
+    no substantive content. Indexing them causes TOC entries to dominate
+    semantic search results, drowning out actual contract text.
+
+    Returns True if the page appears to be TOC/index content.
+    """
+    import re
+    lines = [l.strip() for l in page_text.split("\n") if l.strip()]
+    if not lines:
+        return False
+
+    # Heuristic 1: 3+ dot-leader lines (..........) strongly indicates a TOC page
+    dot_leader_count = sum(1 for l in lines if l.count(".") >= 8 and ".." in l)
+    if dot_leader_count >= 3:
+        return True
+
+    # Heuristic 2: >40% of lines match index-style pattern "Some Text ... NN"
+    # e.g. "Abandonment of Position, 10.10 ........ 23"
+    index_line_re = re.compile(r".{10,}\.\s*\d{1,3}\s*$")
+    index_count = sum(1 for l in lines if index_line_re.search(l))
+    if len(lines) >= 5 and index_count / len(lines) > 0.4:
+        return True
+
+    return False
+
+
+def _clean_page_text(page_text: str) -> str:
+    """
+    Remove noise artifacts injected by web-based PDF extraction.
+
+    BC statute PDFs (ESA, Human Rights Code, Labour Relations Code) were
+    exported from bclaws.gov.bc.ca and contain repeated URL lines and
+    date-stamps that waste ~30 tokens per chunk and dilute embedding quality.
+    """
+    import re
+    # Remove bclaws.gov.bc.ca URL lines
+    page_text = re.sub(
+        r"https?://www\.bclaws\.gov\.bc\.ca/\S*",
+        "",
+        page_text,
+    )
+    # Remove date/time stamps from web-to-PDF artifacts, e.g.:
+    # "17/03/2026, 08:44 Employment Standards Act"
+    page_text = re.sub(
+        r"\d{2}/\d{2}/\d{4},?\s*\d{2}:\d{2}\s+[A-Z][^\n]*",
+        "",
+        page_text,
+    )
+    # Collapse runs of 3+ blank lines down to a single blank line
+    page_text = re.sub(r"\n{3,}", "\n\n", page_text)
+    return page_text.strip()
+
+
 def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     """
     Parse the PDF at *pdf_path* into one continuous stream before chunking.
     This bridges page boundaries so sentences that span pages aren't decapitated.
+
+    Navigational pages (Table of Contents, alphabetical Index) are skipped
+    so they don't contaminate semantic search results.  URL artifacts from
+    web-extracted statute PDFs are also stripped before embedding.
     """
     from pypdf import PdfReader
     import re
@@ -246,10 +308,24 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     
     current_header = ""
     header_pattern = re.compile(r"^\s*(ARTICLE|APPENDIX)\s+(\d+|[A-Z]+)", re.IGNORECASE)
-    
+    skipped_pages = 0
+
     for page_idx, page in enumerate(reader.pages):
         page_num = page_idx + 1
         page_text = page.extract_text() or ""
+        if not page_text.strip():
+            continue
+
+        # Skip pure navigational pages (TOC / alphabetical Index).
+        # These mention every article by name but add no substantive content;
+        # indexing them causes TOC entries to crowd out real contract text in
+        # semantic search results.
+        if _is_toc_or_index_page(page_text):
+            skipped_pages += 1
+            continue
+
+        # Strip web-extraction artifacts (URLs, timestamps) from statute PDFs.
+        page_text = _clean_page_text(page_text)
         if not page_text.strip():
             continue
             
@@ -274,11 +350,14 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
         encoding = tokenizer(page_text, add_special_tokens=False, return_offsets_mapping=True, truncation=False)
         for start, end in encoding.offset_mapping:
             token_metadata.append((
-                page_offset + start, 
-                page_offset + end, 
-                page_num, 
+                page_offset + start,
+                page_offset + end,
+                page_num,
                 current_header
             ))
+
+    if skipped_pages:
+        print(f"[loader] Skipped {skipped_pages} navigational pages (TOC/index) in '{source_name}'.")
             
     return chunk_text(full_text, token_metadata, source_name)
 
