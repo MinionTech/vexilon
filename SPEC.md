@@ -1,4 +1,4 @@
-# Vexilon — BCGEU Agreement Assistant: Product Specification
+# BCGEU Steward Assistant: Product Specification
 
 > **Version:** 0.1.0
 > **Status:** Draft — approved by product owner
@@ -260,7 +260,7 @@ Each response must follow this structure:
 
 - Colour palette: BCGEU brand colours — Primary Blue `#005691`, Green `#008542`, Dark Navy `#003366`, white, light grey
 - Clear, professional appearance — not a developer demo aesthetic
-- Application title: **Vexilon — BCGEU Agreement Assistant**
+- Application title: **BCGEU Steward Assistant**
 
 ### Accessibility
 
@@ -351,7 +351,7 @@ To support multiple simultaneous users without thread pool exhaustion, Vexilon u
 
 The system prompt will enforce:
 
-1. Role: "You are Vexilon, an assistant for BCGEU union stewards..."
+1. Role: "You are the BCGEU Steward Assistant, an assistant for BCGEU union stewards..."
 2. Grounding: "You may only answer using the provided agreement excerpts. Do not draw on outside knowledge."
 3. Citation requirement: "Every claim must be supported by a verbatim quote from the provided excerpts, formatted as a blockquote with article and page citation."
 4. Not-found handling: "If the excerpts do not address the question, say so clearly."
