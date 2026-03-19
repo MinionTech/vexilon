@@ -54,9 +54,9 @@ _GITHUB_RAW_BASE = (
 )
 
 # Public GitHub raw URL base for labour_law PDFs.
-# Used for PDF download links in the UI.
-GITHUB_RAW_PDF_BASE = (
-    "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/data/labour_law"
+# Used for folder/file links in the UI.
+GITHUB_LABOUR_LAW_URL = (
+    "https://github.com/DerekRoberts/vexilon/tree/main/data/labour_law"
 )
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
@@ -155,6 +155,32 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
         # Reads ANTHROPIC_API_KEY from environment automatically; raises AuthenticationError if missing
         _anthropic_client = anthropic.AsyncAnthropic()
     return _anthropic_client
+def get_knowledge_manifest() -> str:
+    """
+    Dynamically scan the labour_law directory and build a formatted list for the system prompt.
+    Files follow the naming convention: [Index]_[Category]_[Title].pdf
+    Example: 1_Primary_BCGEU 19th Main Agreement.pdf
+    """
+    if not LABOUR_LAW_DIR.exists():
+        return "No documents available."
+
+    pdfs = sorted(LABOUR_LAW_DIR.glob("*.pdf"))
+    if not pdfs:
+        return "No documents available."
+
+    lines = []
+    for pdf in pdfs:
+        stem = pdf.stem
+        # Try to parse our convention: Index_Category_Title
+        parts = stem.split("_", 2)
+        if len(parts) == 3:
+            idx, cat, title = parts
+            lines.append(f"{idx}. {title} ({cat})")
+        else:
+            # Fallback for non-conforming filenames
+            lines.append(f"- {stem.replace('_', ' ').title()}")
+
+    return "\n".join(lines)
 
 
 # ─── System Prompt ───────────────────────────────────────────────────────────
@@ -162,13 +188,7 @@ SYSTEM_PROMPT = """You are Vexilon, a highly authoritative professional assistan
 
 --- HOW YOUR SEARCH WORKS ---
 Your library contains the COMPLETE, full text of these documents:
-1. 19th Main Public Service Agreement (2022-2025) — all 37 Articles, all Appendices, all MOUs (215 pages)
-2. BC Employment Standards Act [RSBC 1996]
-3. BC Labour Relations Code [RSBC 1996]
-4. BC Human Rights Code [RSBC 1996]
-5. BCGEU Steward Resource Manual & Ethics Guidelines
-6. Gov BC Standards of Conduct
-7. BC Social Media Guidance for Public Service Employees
+{manifest}
 
 IMPORTANT: For each question you receive, a semantic search retrieves the most relevant \
 excerpts from this library. You see a SUBSET of the library per query — not the whole thing. \
@@ -315,7 +335,10 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     import re
     
     reader = PdfReader(str(pdf_path))
-    source_name = pdf_path.stem.replace("_", " ").title()
+    # Parse source name from filenames like "1_Primary_Agreement Name" -> "Agreement Name"
+    stem = pdf_path.stem
+    parts = stem.split("_", 2)
+    source_name = parts[2] if len(parts) == 3 else stem.replace("_", " ").title()
     print(f"[loader] Parsing '{source_name}' ({len(reader.pages)} pages)…")
     
     tokenizer = get_embed_model().tokenizer
@@ -650,7 +673,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
             system=[
                 {
                     "type": "text",
-                    "text": SYSTEM_PROMPT,
+                    "text": SYSTEM_PROMPT.format(manifest=get_knowledge_manifest()),
                     "cache_control": {"type": "ephemeral"},
                 },
                 {
@@ -727,13 +750,8 @@ def build_ui() -> "gr.Blocks":
             gr.Markdown(f"""
             The **Collective Agreement** is our primary reference. Anything else provides additional context.
             
-            1. **Primary: BCGEU 19th Main Agreement** (Contractual Rights) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bcgeu_19th_main_agreement.pdf)
-            2. **Statutory: Employment Standards Act** (Minimums) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bc_employment_standards_act.pdf)
-            3. **Regulatory: Labour Relations Code** (Legal Framework) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bc_labour_relations_code.pdf)
-            4. **Protection: Human Rights Code** (Discrimination/Duty to Accommodate) — [Download PDF]({GITHUB_RAW_PDF_BASE}/bc_human_rights_code.pdf)
-            5. **Resources: Steward Manuals & Ethics Guidelines** — [Download PDF]({GITHUB_RAW_PDF_BASE}/bcgeu_steward_resources.pdf)
-            6. **Ethics: Gov BC Standards of Conduct** — [Download PDF]({GITHUB_RAW_PDF_BASE}/gov_bc_standards_of_conduct.pdf)
-            7. **Guidance: BC Social Media Guidance for Public Service Employees** — [Download PDF]({GITHUB_RAW_PDF_BASE}/guidance_for_social_media.pdf)
+            All source documents are available for review:
+            [📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})
             """)
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
