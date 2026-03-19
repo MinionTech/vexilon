@@ -47,8 +47,18 @@ Vexilon is programmed to prioritize the **Collective Agreement** above all else.
 2. **Statutes** (ESA, Labour Code, HRC) are cited as secondary legal context.
 3. If no contract language exists, the assistant identifies relevant statutory protections.
 
-### Adding More Documents
-To expand the knowledge base, simply drop additional PDF files into the `data/labour_law/` directory. The app automatically scans this directory at startup and rebuilds the FAISS index if changes are detected (or if `force_rebuild=True` is passed to `startup()`).
+### Adding or Updating Documents
+
+Drop PDFs into `data/labour_law/`, then rebuild and commit the index:
+
+```bash
+python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+```
+
+When done, commit `pdf_cache/index.faiss` and `pdf_cache/chunks.json` if you want to update
+the GitHub fallback that HF Spaces downloads on first boot.  The container image always
+rebuilds the index automatically during `docker build` via the `Containerfile` `RUN` step — no
+manual commit is required for Docker deployments.
 
 > [!TIP]
 > **Suggested Additions:**
@@ -89,8 +99,8 @@ uv run --with-requirements requirements.txt python app.py
 
 Open <http://localhost:7860> in your browser.
 
-> ✅ **Startup is fast** — the embedding model is baked into the container image at build time,
-> and the FAISS index is pre-built and committed in `pdf_cache/`. No rebuild on first run.
+> ✅ **Startup is fast** — the embedding model and FAISS index are both baked into the
+> container image at build time (via the `Containerfile` `RUN` step). No rebuild on first run.
 
 ### Troubleshooting
 
@@ -130,24 +140,30 @@ All settings are optional — defaults match the product specification.
 
 ## Hugging Face Spaces Deployment
 
-The Space uses the Gradio SDK (`sdk: gradio`). HF installs [`requirements.txt`](requirements.txt)
-and runs [`app.py`](app.py) directly. [`Containerfile`](Containerfile) is used for local
-development only and is ignored by HF Spaces.
+The Space runs as **`sdk: docker`** in production — the deploy script pushes a stub
+`Dockerfile` pointing to the pre-built container image on `ghcr.io/derekroberts/vexilon`.
+The FAISS index is already baked into that image (built via the `Containerfile` `RUN` step),
+so the Space starts instantly.
 
-### Binary files (PDF, FAISS index)
+### FAISS index fallback (Gradio SDK / bare startup)
 
-HF Spaces does not accept binary files via git push. Instead, [`app.py`](app.py) downloads
-`pdf_cache/` assets from this public GitHub repo at startup if they are absent:
+If the app ever runs without the pre-built index (e.g. during development or on a fresh
+Gradio-SDK Space), [`_fetch_pdf_cache_if_missing()`](app.py) downloads
+`pdf_cache/index.faiss` and `pdf_cache/chunks.json` from this public GitHub repo.
+Those files are **not** committed by default (`pdf_cache/` is gitignored).
+To publish an updated fallback after rebuilding the index locally:
 
-- `pdf_cache/bcgeu_19th_main_agreement.pdf` — the collective agreement
-- `pdf_cache/index.faiss` — pre-built FAISS index
-- `pdf_cache/chunks.json` — pre-built chunk metadata
-
-This is a no-op when running locally (files are already present).
+```bash
+python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+git add -f pdf_cache/index.faiss pdf_cache/chunks.json
+git commit -m "chore(index): rebuild fallback cache"
+git push
+```
 
 ### Automated deploy (GitHub Actions)
 
-The deployment process uses a reusable workflow ([`.github/workflows/deploy-hf-spaces-reusable.yml`](.github/workflows/deploy-hf-spaces-reusable.yml)) to strip `pdf_cache/` from the commit and push code-only to the HF Space.
+The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
+the HF Space.
 
 - **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
 - **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
@@ -166,20 +182,10 @@ The deployment process uses a reusable workflow ([`.github/workflows/deploy-hf-s
 
 ### Manual deploy (one-time setup or re-deploy)
 
+The `.github/scripts/deploy.sh` script handles this end-to-end.  To run manually:
+
 ````bash
-# Create a fresh orphan snapshot with no history (required — HF scans full git history
-# for binary files, so amending is not enough)
-git checkout --orphan hf-snapshot
-git rm --cached -r pdf_cache/
-git commit -m "deploy: manual"
-
-# Push to HF Space (token as password)
-git remote add hf "https://DerekRoberts:YOUR_HF_TOKEN@huggingface.co/spaces/DerekRoberts/vexilon"
-git push hf hf-snapshot:main --force --no-verify
-
-# Return to your working branch
-git switch -
-git branch -D hf-snapshot
+HF_TOKEN=YOUR_HF_TOKEN ./.github/scripts/deploy.sh sha-$(git rev-parse --short HEAD) --prod
 ````
 
 ### Running tests

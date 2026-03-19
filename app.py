@@ -23,7 +23,6 @@ import sys
 print("[boot] Python started, importing stdlib...", flush=True)
 import json
 import os
-import shutil
 import time
 import urllib.request
 from urllib.error import URLError
@@ -466,18 +465,54 @@ def _fetch_pdf_cache_if_missing() -> None:
                 return
 
 
+def build_index_from_pdfs() -> None:
+    """
+    Parse all PDFs in LABOUR_LAW_DIR, embed them, and write the pre-built index to
+    pdf_cache/index.faiss + pdf_cache/chunks.json.
+
+    This function does NOT require ANTHROPIC_API_KEY — it only uses the local
+    embedding model and the PDF files.  It is called during container image build:
+        RUN python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+
+    Maintainers should also run this locally after adding or updating documents:
+        python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+    then commit the updated pdf_cache/ files (needed only for the HF-Spaces
+    GitHub-download fallback — the container image already has them baked in).
+    """
+    global _chunks, _index
+    print(f"[build] Scanning for PDFs in {LABOUR_LAW_DIR}…")
+    if not LABOUR_LAW_DIR.exists():
+        print(f"[build] {LABOUR_LAW_DIR} does not exist — nothing to index.")
+        return
+
+    pdf_files = list(LABOUR_LAW_DIR.glob("*.pdf"))
+    if not pdf_files:
+        print("[build] No PDF files found to index!")
+        return
+
+    _chunks = []
+    for pdf in pdf_files:
+        _chunks.extend(load_pdf_chunks(pdf))
+
+    num_chunks = len(_chunks)
+    print(f"[build] Total {num_chunks} chunks loaded from {len(pdf_files)} files.")
+    _index = build_index(_chunks)
+    save_index(_index, _chunks)
+    print("[build] Index written to pdf_cache/.")
+
+
 def startup(force_rebuild: bool = False) -> None:
     """
     Load the FAISS index and chunks.
 
     Fast path (normal operation): loads pre-computed index.faiss + chunks.json from pdf_cache/.
-    Slow path (first run or force_rebuild=True): parses the PDF, embeds all chunks, saves to disk.
+    Slow path (first run or force_rebuild=True): calls build_index_from_pdfs().
 
     On Hugging Face Spaces, pdf_cache/ is not committed to the Space git repo (HF rejects
     binary files). _fetch_pdf_cache_if_missing() downloads the assets from GitHub on first run.
 
-    After updating the agreement PDF, run:
-        python -c "from app import startup; startup(force_rebuild=True)"
+    After updating documents, rebuild the index:
+        python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
     """
     global _chunks, _index
     get_anthropic()  # Ping early to catch missing ANTHROPIC_API_KEY
@@ -492,28 +527,8 @@ def startup(force_rebuild: bool = False) -> None:
             print("[startup] Ready.")
             return
 
-    # ── Slow path: build from scratch ────────────────────────────────────
-    print(f"[startup] Scanning for PDFs in {LABOUR_LAW_DIR}…")
-    if not LABOUR_LAW_DIR.exists():
-        LABOUR_LAW_DIR.mkdir(parents=True, exist_ok=True)
-        # If empty, copy the default agreement from cache if it exists
-        default_pdf = PDF_CACHE_DIR / "bcgeu_19th_main_agreement.pdf"
-        if default_pdf.exists():
-            shutil.copy(default_pdf, LABOUR_LAW_DIR / "bcgeu_19th_main_agreement.pdf")
-
-    pdf_files = list(LABOUR_LAW_DIR.glob("*.pdf"))
-    if not pdf_files:
-        print("[startup] No PDF files found to index!")
-        return
-
-    _chunks = []
-    for pdf in pdf_files:
-        _chunks.extend(load_pdf_chunks(pdf))
-    
-    num_chunks = len(_chunks)
-    print(f"[startup] Total {num_chunks} chunks loaded from {len(pdf_files)} files.")
-    _index = build_index(_chunks)
-    save_index(_index, _chunks)
+    # ── Slow path: delegate to the API-key-free build function ────────────
+    build_index_from_pdfs()
     print("[startup] Ready.")
 
 

@@ -20,15 +20,14 @@ build/
 # ─── Jupyter ──────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 
-# ─── App runtime data ────────────────────────────────────────────────────────
-# Raw PDFs stored in the cache dir (large files, potential licensing concerns)
-pdf_cache/*.pdf
-# Allow the pre-computed FAISS index and chunk JSON — these are intentional
-# build artifacts published to GitHub so Hugging Face Spaces can download them
-# on first boot via _fetch_pdf_cache_if_missing() instead of rebuilding from
-# scratch (which takes 5–10 minutes on CPU).
-# To update: run `python -c "from app import startup; startup(force_rebuild=True)"`
-# then commit pdf_cache/index.faiss and pdf_cache/chunks.json.
+# ─── App runtime data (do NOT commit) ────────────────────────────────────────
+# The FAISS index and chunk JSON are built into the container image at build time
+# via `RUN python -c "from app import startup; startup(force_rebuild=True)"`.
+# They do not need to live in git.  _fetch_pdf_cache_if_missing() downloads them
+# from the GitHub raw URL as a fallback for HF Spaces (Gradio SDK mode).
+# To publish an updated fallback: rebuild the index locally, then git add -f the
+# two files below and commit them to main.
+pdf_cache/
 chroma_db/          # Local vector store data
 gradio_cached_examples/
 flagged/

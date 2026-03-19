@@ -39,18 +39,21 @@ WORKDIR /app
 COPY --from=builder --chown=1001:1001 /app/.venv /app/.venv
 COPY --from=builder --chown=1001:1001 /app/hf_cache /app/hf_cache
 
-# 2. Copy application code, PDF assets, and the pre-built FAISS index.
-# The index (pdf_cache/index.faiss + pdf_cache/chunks.json) is committed to the
-# repo and baked into the image so the app starts immediately without rebuilding
-# from PDFs (which takes 5–10 min on CPU).  If the files are absent at runtime
-# (e.g. fresh clone without them), _fetch_pdf_cache_if_missing() downloads them
-# from the GitHub raw URL as a fallback.
+# 2. Copy application code and PDF assets
 COPY --chown=1001:1001 data/ ./data/
 COPY --chown=1001:1001 app.py ./
-COPY --chown=1001:1001 pdf_cache/ ./pdf_cache/
 
 # Bake the build timestamp into a file after code is copied
 RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt && chown 1001:1001 /app/build_version.txt
+
+# 3. Pre-build the FAISS index at image build time.
+# build_index_from_pdfs() parses PDFs, embeds chunks, and writes
+# pdf_cache/index.faiss + pdf_cache/chunks.json — without needing
+# ANTHROPIC_API_KEY (only the local embedding model is used here).
+# Result: container startup loads the index in <1 s instead of 5–10 min.
+RUN mkdir -p /app/pdf_cache && chown 1001:1001 /app/pdf_cache
+USER 1001
+RUN python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
 
 # ─── Final Environment ────────────────────────────────────────────────────────
 ENV HF_HOME=/app/hf_cache \
