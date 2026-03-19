@@ -26,6 +26,7 @@ import os
 import shutil
 import time
 import urllib.request
+from urllib.error import HTTPError
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 
@@ -253,13 +254,17 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
             continue
             
         # Update breadcrumb header context
-        for line in page_text.split("\n")[:10]:
-            if ".........." in line or line.strip().endswith((".",)) and re.search(r"\d+$", line.strip()):
+        # Look through more lines - headers can appear anywhere on the page due to
+        # complex PDF layouts (two-column, footnotes, etc.)
+        lines_to_check = min(50, len(page_text.split("\n")))
+        for line in page_text.split("\n")[:lines_to_check]:
+            # Skip TOC-style entries and page numbers
+            if ".........." in line or (line.strip().endswith(".") and re.search(r"\d+$", line.strip())):
                 continue
             match = header_pattern.search(line)
             if match:
                 current_header = match.group(0).strip().upper()
-                break # Usually one primary header per page top
+                break # Usually one primary header per page
 
         # Track offsets in the global full_text
         page_offset = len(full_text)
@@ -370,8 +375,15 @@ def _fetch_pdf_cache_if_missing() -> None:
     for path, url in files.items():
         if not path.exists():
             print(f"[startup] Downloading {path.name} from GitHub…")
-            urllib.request.urlretrieve(url, path)
-            print(f"[startup] {path.name} downloaded ({path.stat().st_size:,} bytes).")
+            try:
+                urllib.request.urlretrieve(url, path)
+                print(f"[startup] {path.name} downloaded ({path.stat().st_size:,} bytes).")
+            except HTTPError as e:
+                print(f"[startup] Failed to download {path.name}: {e}. Will build from PDFs instead.")
+                # Clean up any partial downloads
+                if path.exists():
+                    path.unlink()
+                return
 
 
 def startup(force_rebuild: bool = False) -> None:
