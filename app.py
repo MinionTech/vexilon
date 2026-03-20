@@ -545,6 +545,9 @@ def build_index_from_pdfs(force: bool = False) -> None:
         except Exception as e:
             print(f"[build] Failed to read manifest: {e}. Rebuilding anyway.")
 
+    # Ensure cache directory exists before writing
+    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
     print(f"[build] Scanning for PDFs in {LABOUR_LAW_DIR}…")
     _chunks = []
     for pdf in pdf_files:
@@ -556,7 +559,6 @@ def build_index_from_pdfs(force: bool = False) -> None:
     save_index(_index, _chunks)
     
     # Save the new manifest
-    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     with open(MANIFEST_PATH, "w") as f:
         json.dump(current_manifest, f, indent=2)
     print(f"[build] Index and manifest written to {PDF_CACHE_DIR}.")
