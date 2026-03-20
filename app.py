@@ -191,7 +191,8 @@ def build_pdf_download_links() -> str:
     if not pdfs:
         return ""
 
-    lines = ["**Download Documents:**"]
+    # Use HTML list for better Gradio rendering compatibility
+    lines = ["<b>Download Documents:</b>", "<ul>"]
     for pdf in pdfs:
         stem = pdf.stem
         # Parse convention: Index_Category_Title
@@ -205,8 +206,9 @@ def build_pdf_download_links() -> str:
         # Use Gradio's /file= endpoint for local/container serving
         # Use relative path from app root for clean URLs
         file_path = f"data/labour_law/{pdf.name}"
-        lines.append(f"- [{display_name}](/file={file_path})")
+        lines.append(f'<li><a href="/file={file_path}" target="_blank">{display_name}</a></li>')
 
+    lines.append("</ul>")
     return "\n".join(lines)
 
 
