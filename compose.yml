@@ -49,12 +49,12 @@ services:
       dockerfile: Containerfile
       target: builder
     volumes:
-      - ./app.py:/app/app.py:Z
-      - ./tests:/app/tests:Z
-      - ./pyproject.toml:/app/pyproject.toml:Z
-      - ./uv.lock:/app/uv.lock:Z
-      - ./conftest.py:/app/conftest.py:Z
-      - ./compose.yml:/app/compose.yml:Z
+      - ./app.py:/app/app.py:ro,z
+      - ./tests:/app/tests:ro,z
+      - ./pyproject.toml:/app/pyproject.toml:ro,z
+      - ./uv.lock:/app/uv.lock:ro,z
+      - ./conftest.py:/app/conftest.py:ro,z
+      - ./compose.yml:/app/compose.yml:ro,z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
@@ -72,8 +72,8 @@ services:
       dockerfile: Containerfile
       target: builder
     volumes:
-      - ./app.py:/app/app.py:Z
-      - ./data:/app/data:Z
+      - ./app.py:/app/app.py:ro,z
+      - ./data:/app/data:ro,z
       - ./pdf_cache:/app/pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
     environment:
