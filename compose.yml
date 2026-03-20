@@ -84,3 +84,10 @@ services:
       HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
     command: uv run python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+
+  # ── Troubleshooting Version ────────────────────────────────────────────────
+  # This service REUSES vexilon but strips the dependencies
+  app:
+    extends: vexilon
+    profiles: ["app"]
+    depends_on: [] # This overrides and removes the default dependencies
