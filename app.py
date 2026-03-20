@@ -181,7 +181,7 @@ def get_knowledge_manifest() -> str:
 
 def build_pdf_download_links() -> str:
     """
-    Generate HTML for individual PDF download links using Gradio's /file= endpoint.
+    Generate markdown for individual PDF download links using Gradio's /file= endpoint.
     Returns markdown-formatted links for each PDF in the labour_law directory.
     """
     if not LABOUR_LAW_DIR.exists():
