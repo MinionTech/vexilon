@@ -487,18 +487,18 @@ def build_index_from_pdfs(force: bool = False) -> None:
         print(f"[build] {LABOUR_LAW_DIR} does not exist — nothing to index.")
         return
 
-    pdf_files = sorted(list(LABOUR_LAW_DIR.glob("*.pdf")))
+    pdf_files = sorted(LABOUR_LAW_DIR.glob("*.pdf"))
     if not pdf_files:
         print("[build] No PDF files found to index!")
         return
 
-    # Calculate hashes for the current PDF set
+    # Calculate hashes for the current PDF set (chunked to handle large files)
     current_manifest = {}
     for pdf in pdf_files:
-        hasher = hashlib.md5()
+        hasher = hashlib.sha256()
         with open(pdf, "rb") as f:
-            buf = f.read()
-            hasher.update(buf)
+            while chunk := f.read(65536):
+                hasher.update(chunk)
         current_manifest[pdf.name] = hasher.hexdigest()
 
     # Check against stored manifest
@@ -507,8 +507,7 @@ def build_index_from_pdfs(force: bool = False) -> None:
             with open(MANIFEST_PATH, "r") as f:
                 stored_manifest = json.load(f)
             if stored_manifest == current_manifest and INDEX_PATH.exists() and CHUNKS_PATH.exists():
-                print("[build] Smart Refresh: No changes detected in data/labour_law/.")
-                print(f"[build] Manifest matched and index/chunks exist. Skipping indexing.")
+                print("[build] Smart Refresh: No changes detected in data/labour_law/. Skipping indexing.")
                 return
         except Exception as e:
             print(f"[build] Failed to read manifest: {e}. Rebuilding anyway.")
