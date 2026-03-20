@@ -179,6 +179,36 @@ def get_knowledge_manifest() -> str:
     return "\n".join(lines)
 
 
+def build_pdf_download_links() -> str:
+    """
+    Generate HTML for individual PDF download links using Gradio's /file= endpoint.
+    Returns markdown-formatted links for each PDF in the labour_law directory.
+    """
+    if not LABOUR_LAW_DIR.exists():
+        return ""
+
+    pdfs = sorted(LABOUR_LAW_DIR.glob("*.pdf"))
+    if not pdfs:
+        return ""
+
+    lines = ["**Download Documents:**"]
+    for pdf in pdfs:
+        stem = pdf.stem
+        # Parse convention: Index_Category_Title
+        parts = stem.split("_", 2)
+        if len(parts) == 3:
+            idx, cat, title = parts
+            display_name = f"{idx}. {title} ({cat})"
+        else:
+            display_name = stem.replace("_", " ").title()
+
+        # Use Gradio's /file= endpoint for local/container serving
+        file_path = f"data/labour_law/{pdf.name}"
+        lines.append(f"- [{display_name}](/file={file_path})")
+
+    return "\n".join(lines)
+
+
 # ─── System Prompt ───────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """You are Vexilon, a highly authoritative professional assistant for BCGEU union stewards.
 
@@ -772,8 +802,10 @@ def build_ui() -> "gr.Blocks":
         with gr.Accordion("Knowledge Base & Priority", open=False):
             gr.Markdown(f"""
             The **Collective Agreement** is our primary reference. Anything else provides additional context.
-            
-            All source documents are available for review:
+
+            {build_pdf_download_links()}
+
+            ---
             [📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})
             """)
 
@@ -870,6 +902,6 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
-        allowed_paths=[],
+        allowed_paths=[str(LABOUR_LAW_DIR.absolute())],
         auth=auth_creds,
     )
