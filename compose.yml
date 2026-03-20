@@ -9,11 +9,18 @@ services:
     environment:
       # Mandatory: Anthropic API key
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      
+
       # Optional: Basic Auth (Login is disabled if VEXILON_PASSWORD is empty)
       VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
       VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
-      
+
+      # Allow downloading models if cache is empty (e.g., after volume mount overwrites it)
+      # Prevent HuggingFace token lookup permission errors
+      # Set HF_TOKEN_PATH to /dev/null so it fails gracefully instead of hitting permission errors
+      HF_TOKEN_PATH: /dev/null
+      # Override the build-time offline mode to allow downloading when cache is empty
+      TRANSFORMERS_OFFLINE: "0"
+
       PORT: "7860"
     ports:
       - "7860:7860"
@@ -32,12 +39,7 @@ services:
         condition: service_completed_successfully
       tests:
         condition: service_completed_successfully
-    volumes:
-      # hf_cache/: persist the embedding model weights between builds
-      - ./hf_cache:/app/hf_cache:Z
-      # pdf_cache/: Mount local cache to allow instant-on startup 
-      # and persistence across container rebuilds.
-      - ./pdf_cache:/app/pdf_cache:Z
+    volumes: []
     # Production-optimized: Uses the CMD defined in the Containerfile
     # (No 'uv' or 'gradio' CLI required in the final image)
 
@@ -78,5 +80,7 @@ services:
       - ./hf_cache:/app/hf_cache:Z
     environment:
       HF_HOME: /app/hf_cache
+      # Prevent HuggingFace token lookup permission errors
+      HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
     command: uv run python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
