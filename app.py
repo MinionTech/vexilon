@@ -51,6 +51,10 @@ GITHUB_LABOUR_LAW_URL = (
     "https://github.com/DerekRoberts/vexilon/tree/main/data/labour_law"
 )
 
+# Raw URL base for downloading pre-computed index from GitHub.
+# Used by _fetch_pdf_cache_if_missing() for HF Spaces bootstrap.
+_GITHUB_RAW_BASE = "https://raw.githubusercontent.com/DerekRoberts/vexilon/main"
+
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
 CONDENSE_MODEL = os.getenv("CONDENSE_MODEL", "claude-haiku-4-5-20251001")
 # Brain: Local Embeddings (Search) + Cloud LLM (Claude)
@@ -467,6 +471,35 @@ def load_precomputed_index() -> tuple["faiss.IndexFlatIP", list[dict]] | tuple[N
     return index, chunks
 
 
+def _fetch_pdf_cache_if_missing() -> None:
+    """
+    Download pre-computed index and chunks from GitHub raw if not present locally.
+    This enables fast cold starts on HuggingFace Spaces where PDFs aren't bundled.
+    """
+    import urllib.request
+
+    # Ensure cache directory exists
+    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Check if both files already exist
+    if INDEX_PATH.exists() and CHUNKS_PATH.exists():
+        return
+
+    # Build URLs for the missing files
+    base = _GITHUB_RAW_BASE
+    urls = {}
+    if not INDEX_PATH.exists():
+        urls[INDEX_PATH] = f"{base}/pdf_cache/index.faiss"
+    if not CHUNKS_PATH.exists():
+        urls[CHUNKS_PATH] = f"{base}/pdf_cache/chunks.json"
+
+    # Download missing files
+    for dest_path, url in urls.items():
+        print(f"[fetch] Downloading {dest_path.name} from {url}…")
+        urllib.request.urlretrieve(url, dest_path)
+        print(f"[fetch] Saved {dest_path}")
+
+
 def build_index_from_pdfs(force: bool = False) -> None:
     """
     Parse all PDFs in LABOUR_LAW_DIR, embed them, and write the pre-built index to
@@ -540,6 +573,11 @@ def startup(force_rebuild: bool = False) -> None:
     """
     global _chunks, _index
     get_anthropic()  # Ping early to catch missing ANTHROPIC_API_KEY
+
+    # Try to fetch pre-computed index from GitHub if not present locally
+    # (Needed for HuggingFace Spaces where PDFs aren't bundled)
+    _fetch_pdf_cache_if_missing()
+
     if not force_rebuild:
         index, chunks = load_precomputed_index()
         if index is not None and chunks is not None:
@@ -551,7 +589,7 @@ def startup(force_rebuild: bool = False) -> None:
             return
 
     # ── Slow path: delegate to the API-key-free build function ────────────
-    build_index_from_pdfs()
+    build_index_from_pdfs(force=force_rebuild)
     print("[startup] Ready.")
 
 

@@ -38,7 +38,7 @@ def test_no_download_when_all_files_present(monkeypatch, tmp_path):
     for p in paths.values():
         p.write_bytes(b"placeholder")
 
-    with patch("app.urllib.request.urlretrieve") as mock_retrieve:
+    with patch("urllib.request.urlretrieve") as mock_retrieve:
         app._fetch_pdf_cache_if_missing()
 
     mock_retrieve.assert_not_called()
@@ -53,7 +53,7 @@ def test_downloads_both_when_cache_dir_empty(monkeypatch, tmp_path):
     def _fake_retrieve(url, dest):
         Path(dest).write_bytes(b"fake content")
 
-    with patch("app.urllib.request.urlretrieve", side_effect=_fake_retrieve) as mock_retrieve:
+    with patch("urllib.request.urlretrieve", side_effect=_fake_retrieve) as mock_retrieve:
         app._fetch_pdf_cache_if_missing()
 
     assert mock_retrieve.call_count == 2
@@ -68,7 +68,7 @@ def test_only_downloads_missing_files(monkeypatch, tmp_path):
     def _fake_retrieve(url, dest):
         Path(dest).write_bytes(b"downloaded")
 
-    with patch("app.urllib.request.urlretrieve", side_effect=_fake_retrieve) as mock_retrieve:
+    with patch("urllib.request.urlretrieve", side_effect=_fake_retrieve) as mock_retrieve:
         app._fetch_pdf_cache_if_missing()
 
     assert mock_retrieve.call_count == 1
@@ -88,7 +88,7 @@ def test_urls_point_to_github_raw(monkeypatch, tmp_path):
         called_urls.append(url)
         Path(dest).write_bytes(b"data")
 
-    with patch("app.urllib.request.urlretrieve", side_effect=_fake_retrieve):
+    with patch("urllib.request.urlretrieve", side_effect=_fake_retrieve):
         app._fetch_pdf_cache_if_missing()
 
     assert len(called_urls) == 2
@@ -114,7 +114,7 @@ def test_creates_cache_dir_when_missing(monkeypatch, tmp_path):
     def _fake_retrieve(url, dest):
         Path(dest).write_bytes(b"data")
 
-    with patch("app.urllib.request.urlretrieve", side_effect=_fake_retrieve):
+    with patch("urllib.request.urlretrieve", side_effect=_fake_retrieve):
         app._fetch_pdf_cache_if_missing()
 
     assert missing_dir.exists(), "PDF_CACHE_DIR must be created if it doesn't exist"
