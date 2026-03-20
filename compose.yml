@@ -39,7 +39,11 @@ services:
         condition: service_completed_successfully
       tests:
         condition: service_completed_successfully
-    volumes: []
+    volumes:
+      # hf_cache/: persist the embedding model weights between builds
+      - ./hf_cache:/app/hf_cache:U
+      # pdf_cache/: persist the index between runs
+      - ./pdf_cache:/app/pdf_cache:U
     # Production-optimized: Uses the CMD defined in the Containerfile
     # (No 'uv' or 'gradio' CLI required in the final image)
 
