@@ -117,13 +117,13 @@ services:
     tmpfs:
       - /tmp
     volumes:
-      - ./app.py:/app/app.py:rw,Z
+      - ./app.py:/app/app.py:ro,Z
       - ./scripts:/app/scripts:ro,Z
       - ./data:/app/data:ro,Z
       - ./pdf_cache:/app/pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
-    command: sh -c "uv sync --frozen && uv run python app.py"
+    command: sh -c "uv sync --frozen && uv run --with huv huv run --watch ./app.py python app.py"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
