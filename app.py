@@ -68,6 +68,25 @@ SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))  # More context depth
 CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
 CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN", 200))
 
+# Verification Bot (for reducing hallucinations)
+VERIFY_MODEL = os.getenv("VERIFY_MODEL", "claude-haiku-4-5-20251001")
+VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
+
+VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
+
+For each claim in the response:
+1. Check if the quoted text actually supports the claim being made
+2. Check if the citation (document name, article/section, page number) is accurate
+3. Identify any hallucinations, misquotes, or unsupported claims
+
+Respond in this format:
+- VERIFIED: [claim summary] — the quote supports the claim
+- DISPUTED: [claim summary] — the quote does NOT support the claim
+- UNCERTAIN: [claim summary] — cannot verify due to unclear citation
+
+If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
+If there are disputed claims, list them with explanations."""
+
 
 def get_vexilon_info():
     """
@@ -797,6 +816,55 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
         yield f"\n\n⚠️ API error: {exc}"
 
 
+async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str]:
+    """Get context (excerpts) for a query without generating a response."""
+    query = await condense_query(message, history)
+    relevant_chunks = search_index(_index, _chunks, query)
+
+    context_parts = []
+    for chunk in relevant_chunks:
+        context_parts.append(
+            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
+        )
+    context = "\n\n---\n\n".join(context_parts)
+    return query, context
+
+
+async def verify_response(assistant_response: str, context: str) -> str:
+    """
+    Use a second bot to verify that the claims in the response are supported
+    by the provided context/citations. Returns verification result.
+    """
+    if not VERIFY_ENABLED:
+        return ""
+
+    client = get_anthropic()
+    try:
+        verification_messages = [
+            {
+                "role": "user",
+                "content": f"""RESPONSE TO VERIFY:
+{assistant_response}
+
+SOURCE CITATIONS AND CONTEXT:
+{context}
+
+{VERIFY_SYSTEM_PROMPT}""",
+            }
+        ]
+
+        verify_resp = await client.messages.create(
+            model=VERIFY_MODEL,
+            max_tokens=512,
+            system=[{"type": "text", "text": VERIFY_SYSTEM_PROMPT}],
+            messages=verification_messages,
+        )
+
+        return verify_resp.content[0].text
+    except Exception as exc:
+        return f"⚠️ Verification unavailable: {exc}"
+
+
 # ─── Gradio UI ────────────────────────────────────────────────────────────────
 EXAMPLE_QUESTIONS = [
     "What are the just cause requirements for discipline?",
@@ -900,6 +968,15 @@ def build_ui() -> "gr.Blocks":
                 accumulated += chunk
                 history[-1]["content"] = accumulated
                 yield history, "", hide
+
+            # Run verification after response is complete
+            if VERIFY_ENABLED and accumulated.strip():
+                _, context = await get_rag_context(message, prior_history)
+                verification = await verify_response(accumulated, context)
+                if verification and verification != "ALL_CLAIMS_VERIFIED":
+                    verification_note = f"\n\n---\n\n**Verification:** {verification}"
+                    history[-1]["content"] += verification_note
+                    yield history, "", hide
 
         submit_inputs = [msg_input, chatbot]
         submit_outputs = [chatbot, msg_input, chip_row]
