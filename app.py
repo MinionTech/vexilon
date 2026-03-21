@@ -937,55 +937,58 @@ def build_ui() -> "gr.Blocks":
             show_label=False,
         )
 
-        # ── Export / Import controls ────────────────────────────────────────────
+        # ── Input row with integrated export/import ─────────────────────────────
         with gr.Row():
-            gr.Markdown("**Session:**")
-            export_json_btn = gr.Button("Export JSON", size="sm")
-            export_md_btn = gr.Button("Export Markdown", size="sm")
-            import_file = gr.File(
-                label="Import JSON",
-                file_count="single",
-                file_types=[".json"],
-                scale=1,
+            msg_input = gr.Textbox(
+                placeholder="Ask about the collective agreement…",
+                label="",
+                lines=2,
+                max_lines=6,
+                scale=5,
+                show_label=False,
+                container=False,
             )
-            import_btn = gr.Button("Load", size="sm")
+            with gr.Column(scale=1):
+                with gr.Row():
+                    send_btn = gr.Button("Send ➤", variant="primary", scale=2)
+                with gr.Row(equal_height=True):
+                    download_btn = gr.Button("📥", size="sm", scale=1)
+                    upload_btn = gr.UploadButton(
+                        "📤",
+                        file_count="single",
+                        file_types=[".json"],
+                        size="sm",
+                        scale=1,
+                    )
 
-        # Export handlers
-        def _do_export_json(history):
-            if not history:
-                return None
-            json_str = export_history_json(history)
-            return json_str
+        # Hidden download button for file download
+        download_file = gr.DownloadButton(visible=False)
 
+        # Export handler
         def _do_export_md(history):
             if not history:
-                return None
-            md_str = export_history_markdown(history)
-            return md_str
+                return gr.skip()
+            return export_history_markdown(history)
 
-        export_json_btn.click(
-            fn=_do_export_json,
-            inputs=[chatbot],
-            outputs=[gr.DownloadButton(label="Download JSON", visible=True)],
-        )
-
-        export_md_btn.click(
+        download_btn.click(
             fn=_do_export_md,
             inputs=[chatbot],
-            outputs=[gr.DownloadButton(label="Download Markdown", visible=True)],
+            outputs=[download_file],
         )
 
         # Import handler
         def _do_import(file_obj):
+            if file_obj is None:
+                return []
             history, error = import_history_json(file_obj)
             if error:
-                return history, error
-            return history, ""
+                return []
+            return history
 
-        import_btn.click(
+        upload_btn.click(
             fn=_do_import,
-            inputs=[import_file],
-            outputs=[chatbot, gr.Textbox(visible=False)],
+            inputs=[upload_btn],
+            outputs=[chatbot],
         )
 
         # ── Input row ─────────────────────────────────────────────────────────
