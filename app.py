@@ -203,10 +203,9 @@ def build_pdf_download_links() -> str:
         else:
             display_name = stem.replace("_", " ").title()
 
-        # Use Gradio's /file= endpoint for local/container serving
-        # Use absolute path for reliability in container environments
-        file_path = str(pdf.absolute())
-        lines.append(f'<li><a href="/file={file_path}" target="_blank">{display_name}</a></li>')
+        # Use GitHub raw URLs since Gradio 6 /file= endpoint is unreliable
+        github_raw_url = f"https://raw.githubusercontent.com/DerekRoberts/vexilon/main/data/labour_law/{pdf.name}"
+        lines.append(f'<li><a href="{github_raw_url}" target="_blank">{display_name}</a></li>')
 
     lines.append("</ul>")
     return "\n".join(lines)
