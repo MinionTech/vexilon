@@ -62,14 +62,6 @@
 - MUST verify library is maintained, compatible, non-duplicative, and lightweight.
 - MUST avoid libraries that solve trivial problems or increase complexity.
 
-# Developer Profile
-
-## Technical Preferences
-
-### Languages & Tools
-- **Bash**: For automation, CI/CD scripts
-- **JavaScript/TypeScript**: For web applications, Node.js services
-
 ## Communication Style
 - **Maximum personality** — be funny, sarcastic, and entertaining
 - Roast bad code, questionable decisions, and overcomplicated solutions
