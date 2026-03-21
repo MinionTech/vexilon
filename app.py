@@ -204,8 +204,8 @@ def build_pdf_download_links() -> str:
             display_name = stem.replace("_", " ").title()
 
         # Use Gradio's /file= endpoint for local/container serving
-        # Use relative path from app root for clean URLs
-        file_path = f"data/labour_law/{pdf.name}"
+        # Use absolute path for reliability in container environments
+        file_path = str(pdf.absolute())
         lines.append(f'<li><a href="/file={file_path}" target="_blank">{display_name}</a></li>')
 
     lines.append("</ul>")
@@ -803,14 +803,10 @@ def build_ui() -> "gr.Blocks":
         gr.Markdown("## BCGEU Steward Assistant")
 
         with gr.Accordion("Knowledge Base & Priority", open=False):
-            gr.Markdown(f"""
-            The **Collective Agreement** is our primary reference. Anything else provides additional context.
-
-            {build_pdf_download_links()}
-
-            ---
-            [📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})
-            """)
+            gr.Markdown("**The Collective Agreement** is our primary reference. Anything else provides additional context.")
+            # Use gr.HTML() to preserve clickable links (gr.Markdown sanitizes HTML)
+            gr.HTML(build_pdf_download_links())
+            gr.Markdown(f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)
@@ -901,9 +897,9 @@ if __name__ == "__main__":
         auth_creds = (VEXILON_USERNAME, VEXILON_PASSWORD)
         print(f"[startup] Authentication enabled for user '{VEXILON_USERNAME}'")
 
-    # Build allowed_paths: allow PDF files in LABOUR_LAW_DIR (security: only PDFs)
-    # Using glob restricts to *.pdf files only - any other files added to dir won't be servable
-    allowed_pdf_paths = [str(LABOUR_LAW_DIR.absolute())]
+    # Build allowed_paths: allow specific PDF files in LABOUR_LAW_DIR (security: only PDFs)
+    # List each PDF explicitly to ensure exact paths work with /file= endpoint
+    allowed_pdf_paths = [str(p.absolute()) for p in LABOUR_LAW_DIR.glob("*.pdf")]
 
     app.launch(
         server_name="0.0.0.0",
