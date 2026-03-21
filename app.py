@@ -181,9 +181,11 @@ def get_knowledge_manifest() -> str:
 
 def build_pdf_download_links() -> str:
     """
-    Generate markdown for individual PDF download links using Gradio's /file= endpoint.
-    Returns markdown-formatted links for each PDF in the labour_law directory.
+    Generate HTML for individual PDF download links using Gradio's /gradio_api/file= endpoint.
+    Returns HTML-formatted links for each PDF in the labour_law directory.
     """
+    import html
+
     if not LABOUR_LAW_DIR.exists():
         return ""
 
@@ -191,7 +193,7 @@ def build_pdf_download_links() -> str:
     if not pdfs:
         return ""
 
-    # Use HTML list for better Gradio rendering compatibility
+    # Use relative path for cross-environment compatibility (local dev + Docker container)
     lines = ["<b>Download Documents:</b>", "<ul>"]
     for pdf in pdfs:
         stem = pdf.stem
@@ -203,9 +205,9 @@ def build_pdf_download_links() -> str:
         else:
             display_name = stem.replace("_", " ").title()
 
-        # Use /gradio_api/file= endpoint (Gradio 6 static file serving)
-        file_path = str(pdf.absolute())
-        lines.append(f'<li><a href="/gradio_api/file={file_path}" target="_blank">{display_name}</a></li>')
+        # Use relative path for Gradio's /gradio_api/file= endpoint (works in both local and container)
+        file_path = f"data/labour_law/{pdf.name}"
+        lines.append(f'<li><a href="/gradio_api/file={file_path}" target="_blank">{html.escape(display_name)}</a></li>')
 
     lines.append("</ul>")
     return "\n".join(lines)
@@ -896,14 +898,14 @@ if __name__ == "__main__":
         auth_creds = (VEXILON_USERNAME, VEXILON_PASSWORD)
         print(f"[startup] Authentication enabled for user '{VEXILON_USERNAME}'")
 
-    # Build allowed_paths: allow specific PDF files in LABOUR_LAW_DIR (security: only PDFs)
-    # Allow access to PDF files
-    allowed_pdf_paths = [str(p.absolute()) for p in LABOUR_LAW_DIR.glob("*.pdf")]
+    # Build allowed_paths: allow labour_law directory for PDF downloads
+    # Use relative path for cross-environment compatibility (local dev + Docker container)
+    allowed_paths = [str(LABOUR_LAW_DIR)]
 
     app.launch(
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
-        allowed_paths=allowed_pdf_paths,
+        allowed_paths=allowed_paths,
         auth=auth_creds,
     )
