@@ -123,7 +123,7 @@ services:
       - ./pdf_cache:/app/pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
-    command: sh -c "uv sync --frozen && uv run --with huv huv run --watch ./app.py python app.py"
+    command: sh -c "uv sync --frozen && uv run --with watchdog python scripts/reload.py"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
