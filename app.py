@@ -205,6 +205,10 @@ _rate_limiter = RateLimiter(
     max_per_minute=RATE_LIMIT_PER_MINUTE, max_per_hour=RATE_LIMIT_PER_HOUR
 )
 
+# Two-Bot Self-Review Pipeline (Issue #104)
+USE_REVIEWER = os.getenv("USE_REVIEWER", "true").lower() == "true"
+REVIEWER_MODEL = os.getenv("REVIEWER_MODEL", "claude-haiku-4-5-20251001")
+
 
 def get_vexilon_info():
     """
@@ -255,6 +259,8 @@ EMBED_DIM = 384
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import anthropic
+    import numpy as np
     from sentence_transformers import SentenceTransformer
     import faiss
     import gradio as gr
@@ -394,6 +400,28 @@ Response format:
 
 > "[Verbatim quote]"
 — [Document Name], Article/Section [X], p. [N]
+"""
+
+# ─── Two-Bot Review Prompt (Bot B) ──────────────────────────────────────────────
+REVIEWER_SYSTEM_PROMPT = """You are a Senior BCGEU Staff Representative reviewing a junior steward's output for accuracy and completeness.
+
+Your role is to VERIFY the steward's response before it reaches the member. You must critically evaluate:
+1. CITATIONS: Are all quoted articles/sections accurate and verbatim?
+2. NEXUS: Does the analysis properly connect the facts to the relevant contract language?
+3. PROCEDURES: Are the suggested steps correct and in proper order?
+4. GAPS: Did the steward miss anything important?
+
+Scoring criteria (1-10):
+- 9-10: Approved - ready for member
+- 7-8: Minor issues - recommend corrections but safe to use
+- 5-6: Significant issues - needs revision before use
+- 1-4: Escalate to Area Office - contains errors or dangerous advice
+
+Response format:
+SCORE: [1-10]
+VERIFIED STEPS: [final safe instructions, corrections if needed]
+ISSUES: [specific errors or gaps found, if any]
+ESCALATE: [yes/no - only if score < 5]
 """
 
 # ─── Chunking ─────────────────────────────────────────────────────────────────
@@ -987,6 +1015,170 @@ SOURCE CITATIONS AND CONTEXT:
         return f"⚠️ Verification unavailable: {exc}"
 
 
+# ─── Review Logging ───────────────────────────────────────────────────────────────
+REVIEW_LOG_PATH = Path("./pdf_cache/review_log.csv")
+
+
+def log_review(query: str, raw_response: str, review_output: str, score: int) -> None:
+    """Append a review record to the audit log CSV."""
+    import csv
+    import datetime
+
+    REVIEW_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not REVIEW_LOG_PATH.exists()
+    with open(REVIEW_LOG_PATH, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if write_header:
+            writer.writerow(
+                [
+                    "timestamp",
+                    "query",
+                    "raw_response",
+                    "review_output",
+                    "score",
+                    "steward",
+                ]
+            )
+        writer.writerow(
+            [
+                datetime.datetime.now().isoformat(),
+                query[:500],  # Truncate long queries
+                raw_response[:1000],  # Truncate long responses
+                review_output[:2000],
+                score,
+                VEXILON_USERNAME,
+            ]
+        )
+
+
+# ─── Two-Bot Review Stream (Bot B) ─────────────────────────────────────────────
+async def review_stream(
+    raw_response: str, query: str, context: str
+) -> AsyncIterator[str]:
+    """
+    Bot B: Senior BCGEU rep reviewing Bot A's (steward) output.
+    Yields the review result with score and verified steps.
+    """
+    client = get_anthropic()
+    review_prompt = f"""Review the following steward's response for accuracy and completeness:
+
+QUERY: {query}
+
+STEWARD'S RESPONSE:
+{raw_response}
+
+CONTEXT USED:
+{context[:2000]}
+
+{REVIEWER_SYSTEM_PROMPT}
+"""
+
+    try:
+        async with client.messages.stream(
+            model=REVIEWER_MODEL,
+            max_tokens=512,
+            messages=[{"role": "user", "content": review_prompt}],
+        ) as stream:
+            async for text_chunk in stream.text_stream:
+                yield text_chunk
+            final = await stream.get_final_message()
+            review_text = final.content[0].text if final.content else ""
+
+            # Parse score from response
+            score = 5  # default
+            import re
+
+            score_match = re.search(r"SCORE:\s*(\d+)", review_text, re.IGNORECASE)
+            if score_match:
+                score = int(score_match.group(1))
+
+            # Log the review
+            log_review(query, raw_response, review_text, score)
+            print(f"[review] Score: {score}/10 for query: '{query[:50]}...'")
+    except Exception as exc:
+        yield f"\n\n⚠️ Review error: {exc}"
+
+
+# ─── Combined RAG + Review Stream ─────────────────────────────────────────────
+async def rag_review_stream(
+    message: str, history: list[dict], use_reviewer: bool = False
+) -> AsyncIterator[str]:
+    """
+    Retrieve relevant chunks, build the prompt, stream from Bot A (RAG),
+    and optionally pass through Bot B (reviewer) for verification.
+    """
+    if use_reviewer is None:
+        use_reviewer = USE_REVIEWER
+
+    if _index is None:
+        yield "⚠️ The index is not ready yet. Please wait a moment and try again."
+        return
+
+    # Rewrite query for RAG if there is history
+    query = await condense_query(message, history)
+    relevant_chunks = search_index(_index, _chunks, query)
+
+    # Build context block from retrieved chunks
+    context_parts = []
+    for chunk in relevant_chunks:
+        context_parts.append(
+            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
+        )
+    context = "\n\n---\n\n".join(context_parts)
+
+    # Build message list for Claude: prior history + new user message
+    messages = []
+    for turn in history:
+        if turn["role"] in ("user", "assistant"):
+            messages.append({"role": turn["role"], "content": turn["content"]})
+    messages.append({"role": "user", "content": message})
+
+    client = get_anthropic()
+
+    try:
+        # Bot A: Get raw RAG response
+        raw_response = ""
+        async with client.messages.stream(
+            model=CLAUDE_MODEL,
+            max_tokens=1024,
+            system=[
+                {
+                    "type": "text",
+                    "text": SYSTEM_PROMPT.format(manifest=get_knowledge_manifest()),
+                    "cache_control": {"type": "ephemeral"},
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        "--- AGREEMENT EXCERPTS ---\n\n"
+                        + context
+                        + "\n\n--- END EXCERPTS ---"
+                    ),
+                    "cache_control": {"type": "ephemeral"},
+                },
+            ],
+            messages=messages,
+        ) as stream:
+            async for text_chunk in stream.text_stream:
+                raw_response += text_chunk
+                yield text_chunk
+            final = await stream.get_final_message()
+            usage = final.usage
+            print(
+                f"[rag] Tokens — input: {usage.input_tokens}, "
+                f"output: {usage.output_tokens}"
+            )
+
+        # Bot B: Review the response if enabled
+        if use_reviewer:
+            yield "\n\n---\n\n**🔍 Senior Rep Review:**\n"
+            async for review_chunk in review_stream(raw_response, query, context):
+                yield review_chunk
+
+    except Exception as exc:
+        yield f"\n\n⚠️ API error: {exc}"
+
+
 # ─── Gradio UI ────────────────────────────────────────────────────────────────
 EXAMPLE_QUESTIONS = [
     "What are the just cause requirements for discipline?",
@@ -1052,6 +1244,17 @@ def build_ui() -> "gr.Blocks":
             show_label=False,
         )
 
+        # ── Reviewer Toggle ───────────────────────────────────────────────────
+        with gr.Row():
+            reviewer_toggle = gr.Checkbox(
+                label="Enable Senior Rep Review (Two-Bot Pipeline)",
+                value=USE_REVIEWER,
+                scale=1,
+            )
+            gr.Markdown(
+                "<span style='color:#6b7280;font-size:0.85rem'>Bot B verifies Bot A's output for accuracy</span>"
+            )
+
         # ── Input row ─────────────────────────────────────────────────────────
         with gr.Row():
             msg_input = gr.Textbox(
@@ -1067,7 +1270,7 @@ def build_ui() -> "gr.Blocks":
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
-            message: str, history: list[dict], request=None
+            message: str, history: list[dict], use_reviewer: bool
         ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
 
@@ -1105,23 +1308,12 @@ def build_ui() -> "gr.Blocks":
             yield history, "", hide
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
-            context = ""
-            async for text_chunk, ctx in rag_stream(message, prior_history):
-                accumulated += text_chunk
-                if ctx:
-                    context = ctx  # Capture context from first yield
+            async for chunk in rag_review_stream(message, prior_history, use_reviewer):
+                accumulated += chunk
                 history[-1]["content"] = accumulated
                 yield history, "", hide
 
-            # Run verification after response is complete
-            if VERIFY_ENABLED and accumulated.strip() and context:
-                verification = await verify_response(accumulated, context)
-                if verification and verification != "ALL_CLAIMS_VERIFIED":
-                    verification_note = f"\n\n---\n\n**Verification:** {verification}"
-                    history[-1]["content"] += verification_note
-                    yield history, "", hide
-
-        submit_inputs = [msg_input, chatbot]
+        submit_inputs = [msg_input, chatbot, reviewer_toggle]
         submit_outputs = [chatbot, msg_input, chip_row]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
