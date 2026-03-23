@@ -68,6 +68,25 @@ SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))  # More context depth
 CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
 CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN", 200))
 
+# Verification Bot (for reducing hallucinations)
+VERIFY_MODEL = os.getenv("VERIFY_MODEL", "claude-haiku-4-5-20251001")
+VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
+
+VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
+
+For each claim in the response:
+1. Check if the quoted text actually supports the claim being made
+2. Check if the citation (document name, article/section, page number) is accurate
+3. Identify any hallucinations, misquotes, or unsupported claims
+
+Respond in this format:
+- VERIFIED: [claim summary] — the quote supports the claim
+- DISPUTED: [claim summary] — the quote does NOT support the claim
+- UNCERTAIN: [claim summary] — cannot verify due to unclear citation
+
+If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
+If there are disputed claims, list them with explanations."""
+
 
 def get_vexilon_info():
     """
@@ -725,14 +744,18 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return message
 
 
-async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
+async def rag_stream(
+    message: str, history: list[dict]
+) -> AsyncIterator[tuple[str, str]]:
     """
-    Retrieve relevant chunks, build the prompt, and stream a response from Claude.
-    *history* is a list of {"role": ..., "content": ...} dicts (Gradio messages format).
-    Yields text chunks as they arrive from the Anthropic streaming API.
+    Stream response tokens from Claude, yielding (text_chunk, context) tuples.
+    The context is yielded once at the start with empty text, then text chunks follow with empty context.
     """
-    if _index is None:
-        yield "⚠️ The index is not ready yet. Please wait a moment and try again."
+    if not _index or not _chunks:
+        yield (
+            "\n\n⚠️ Knowledge base not loaded. Please refresh or rebuild the index.",
+            "",
+        )
         return
 
     # Rewrite query for RAG if there is history
@@ -781,8 +804,10 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
             ],
             messages=messages,
         ) as stream:
+            # Yield context first, then stream text chunks
+            yield ("", context)
             async for text_chunk in stream.text_stream:
-                yield text_chunk
+                yield (text_chunk, "")
             # Log cache effectiveness so we can verify caching is working.
             final = await stream.get_final_message()
             usage = final.usage
@@ -794,7 +819,54 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
                 f"output: {usage.output_tokens}"
             )
     except Exception as exc:
-        yield f"\n\n⚠️ API error: {exc}"
+        yield (f"\n\n⚠️ API error: {exc}", "")
+
+
+async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str]:
+    """Get context (excerpts) for a query without generating a response."""
+    query = await condense_query(message, history)
+    relevant_chunks = search_index(_index, _chunks, query)
+
+    context_parts = []
+    for chunk in relevant_chunks:
+        context_parts.append(
+            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
+        )
+    context = "\n\n---\n\n".join(context_parts)
+    return query, context
+
+
+async def verify_response(assistant_response: str, context: str) -> str:
+    """
+    Use a second bot to verify that the claims in the response are supported
+    by the provided context/citations. Returns verification result.
+    """
+    if not VERIFY_ENABLED:
+        return ""
+
+    client = get_anthropic()
+    try:
+        verification_messages = [
+            {
+                "role": "user",
+                "content": f"""RESPONSE TO VERIFY:
+{assistant_response}
+
+SOURCE CITATIONS AND CONTEXT:
+{context}""",
+            }
+        ]
+
+        verify_resp = await client.messages.create(
+            model=VERIFY_MODEL,
+            max_tokens=512,
+            system=[{"type": "text", "text": VERIFY_SYSTEM_PROMPT}],
+            messages=verification_messages,
+        )
+
+        return verify_resp.content[0].text
+    except Exception as exc:
+        return f"⚠️ Verification unavailable: {exc}"
 
 
 # ─── Export / Import Functions ────────────────────────────────────────────────
@@ -1025,10 +1097,21 @@ def build_ui() -> "gr.Blocks":
             yield history, "", hide
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
-            async for chunk in rag_stream(message, prior_history):
-                accumulated += chunk
+            context = ""
+            async for text_chunk, ctx in rag_stream(message, prior_history):
+                accumulated += text_chunk
+                if ctx:
+                    context = ctx  # Capture context from first yield
                 history[-1]["content"] = accumulated
                 yield history, "", hide
+
+            # Run verification after response is complete
+            if VERIFY_ENABLED and accumulated.strip() and context:
+                verification = await verify_response(accumulated, context)
+                if verification and verification != "ALL_CLAIMS_VERIFIED":
+                    verification_note = f"\n\n---\n\n**Verification:** {verification}"
+                    history[-1]["content"] += verification_note
+                    yield history, "", hide
 
         submit_inputs = [msg_input, chatbot]
         submit_outputs = [chatbot, msg_input, chip_row]

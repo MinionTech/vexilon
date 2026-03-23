@@ -132,6 +132,8 @@ The app is ready immediately on page load — no dropdown, no Load button.
 
 All settings are optional — defaults match the product specification.
 
+### Core Settings
+
 | Variable | Default | Description |
 |---|---|---|
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
@@ -140,9 +142,25 @@ All settings are optional — defaults match the product specification.
 | `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
 | `EMBED_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
-| `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
-| `CHUNK_SIZE` | `512` | Tokens per chunk |
+| `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
+| `CHUNK_SIZE` | `450` | Tokens per chunk |
 | `CHUNK_OVERLAP` | `100` | Token overlap between chunks |
+
+### Verification Bot
+
+Vexilon includes a second AI bot that verifies responses against source citations to reduce hallucinations:
+
+| Variable | Default | Description |
+|---|---|---|
+| `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
+| `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Claude model for verification |
+
+When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
+
+> **Evaluation:** After deploying, monitor responses for "Verification:" notes.
+> - If notes appear frequently → verification is catching real issues; keep enabled
+> - If notes never appear → the main bot is reliable; consider disabling to save ~30% on API costs
+> - This evaluation approach assumes VERIFY_ENABLED=true by default to assess value over time
 
 ## Hugging Face Spaces Deployment
 

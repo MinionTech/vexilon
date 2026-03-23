@@ -91,3 +91,42 @@ services:
     extends: vexilon
     profiles: ["app"]
     depends_on: [] # This overrides and removes the default dependencies
+
+  # ── Fast Development ───────────────────────────────────────────────────
+  # Use: podman compose up --build dev
+  # Builds from source with live reload. Loads pre-computed index if available.
+  dev:
+    build:
+      context: .
+      dockerfile: Containerfile
+      target: builder
+    profiles: ["dev"]
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
+      VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
+      HF_TOKEN_PATH: /dev/null
+      TRANSFORMERS_OFFLINE: "1"
+      PORT: "7860"
+      HF_HOME: /app/hf_cache
+      PATH: "/app/.venv/bin:$PATH"
+    ports:
+      - "7860:7860"
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./app.py:/app/app.py:ro,Z
+      - ./scripts:/app/scripts:ro,Z
+      - ./data:/app/data:ro,Z
+      - ./pdf_cache:/app/pdf_cache:Z
+      - ./hf_cache:/app/hf_cache:Z
+      - ./pyproject.toml:/app/pyproject.toml:ro,Z
+    command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

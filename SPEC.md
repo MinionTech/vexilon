@@ -376,6 +376,23 @@ To ensure multi-turn conversations are reliable, the system uses the **Query Con
 2.  **Implementation**: A fast LLM pass (Claude) reconstructs the user's intent into a standalone query using the conversation history.
 3.  **Benefit**: Decouples the "conversational brain" from the "retrieval search," ensuring the FAISS index always receives high-fidelity queries even for vague follow-ups.
 
+### 9.6 Verification Bot
+
+To reduce hallucinations, Vexilon includes an optional verification bot that reviews responses against source citations:
+
+1.  **Trigger**: Runs after the main response completes streaming
+2.  **Process**: A second LLM call checks if quoted text actually supports the claims made
+3.  **Output**: 
+   - If claims are verified → clean response (no note added)
+   - If claims are disputed → "Verification:" note appended with issues
+4.  **Configuration**:
+   | Variable | Default | Description |
+   |---|---|---|
+   | `VERIFY_ENABLED` | `true` | Enable verification bot |
+   | `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Model for verification (can use cheaper model) |
+
+**Note:** The verification bot provides limited additional value since it uses the same context as the main bot. It may catch obvious issues (wrong page numbers, misquoted text) but cannot detect when relevant text was simply not retrieved. Future improvements may include multi-perspective retrieval for complex topics.
+
 ---
 
 ## 10. Deployment
@@ -410,11 +427,13 @@ Open `http://localhost:7860`.
 | `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
 | `EMBED_MODEL` | `all-MiniLM-L6-v2` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
-| `SIMILARITY_TOP_K` | `5` | Chunks retrieved per query |
-| `CHUNK_SIZE` | `256` | Tokens per chunk (matches embedding model context) |
-| `CHUNK_OVERLAP` | `50` | Token overlap between chunks |
+| `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query (increased from 5 for more context) |
+| `CHUNK_SIZE` | `450` | Tokens per chunk |
+| `CHUNK_OVERLAP` | `100` | Token overlap between chunks |
 | `CONDENSE_QUERY_HISTORY_TURNS` | `3` | Number of previous turns used for context condensation |
 | `CONDENSE_QUERY_CONTENT_MAX_LEN` | `200` | Max character length of historical messages in condensation prompt |
+| `VERIFY_ENABLED` | `true` | Enable verification bot |
+| `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Claude model for verification |
 
 ---
 
