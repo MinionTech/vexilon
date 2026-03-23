@@ -109,6 +109,7 @@ services:
       TRANSFORMERS_OFFLINE: "1"
       PORT: "7860"
       HF_HOME: /app/hf_cache
+      PATH: "/app/.venv/bin:$PATH"
     ports:
       - "7860:7860"
     cap_drop:
@@ -122,7 +123,7 @@ services:
       - ./pdf_cache:/app/pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
-    command: sh -c "uv sync --frozen && gradio app.py --port 7860 --host 0.0.0.0 --reload"
+    command: sh -c "uv sync --frozen && uv run gradio app.py --port 7860 --host 0.0.0.0 --reload"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
