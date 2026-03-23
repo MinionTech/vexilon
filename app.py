@@ -20,6 +20,7 @@ Index pre-computation (run once after updating the PDF):
 
 # ─── Standard Library ────────────────────────────────────────────────────────
 import sys
+import threading
 
 print("[boot] Python started, importing stdlib...", flush=True)
 import json
@@ -100,8 +101,6 @@ class RateLimiter:
     """Simple in-memory rate limiter for request throttling."""
 
     def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
-        import threading
-
         self.minute_limit = max_per_minute
         self.hour_limit = max_per_hour
         self.requests: dict[str, list[float]] = {}
@@ -109,8 +108,6 @@ class RateLimiter:
 
     def _clean_old_requests(self, key: str) -> None:
         """Remove requests older than 1 hour and cleans up the user entry if empty."""
-        import time
-
         now = time.time()
         hour_ago = now - _SECONDS_IN_HOUR
         if key in self.requests:
@@ -120,8 +117,6 @@ class RateLimiter:
 
     def is_allowed(self, user_id: str = "default") -> tuple[bool, str]:
         """Check if request is allowed. Returns (allowed, message)."""
-        import time
-
         with self._lock:
             self._clean_old_requests(user_id)
             now = time.time()

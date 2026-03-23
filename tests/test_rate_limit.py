@@ -61,11 +61,9 @@ class TestRateLimiter:
         # Manually add old request (simulating time passage)
         limiter.requests["user1"].append(time.time() - 7200)  # 2 hours ago
 
-        # Should still have the old entry in the list but filtered for recent
+        # Old requests cleaned; only recent ones count toward limit
         allowed, _ = limiter.is_allowed("user1")
-        assert (
-            allowed is True
-        )  # 2 recent requests are within limits; old request is cleaned
+        assert allowed is True  # 2 recent requests are within hourly limit
 
     def test_hour_limit_enforced(self):
         """Should block when hourly limit exceeded."""
