@@ -92,15 +92,15 @@ services:
     profiles: ["app"]
     depends_on: [] # This overrides and removes the default dependencies
 
-  # ── Fast UI Development ───────────────────────────────────────────────────
-  # Use: podman compose up --build ui
+  # ── Fast Development ───────────────────────────────────────────────────
+  # Use: podman compose up --build dev
   # Builds from source with live reload. Loads pre-computed index if available.
-  ui:
+  dev:
     build:
       context: .
       dockerfile: Containerfile
       target: builder
-    profiles: ["ui"]
+    profiles: ["dev"]
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
@@ -122,7 +122,7 @@ services:
       - ./pdf_cache:/app/pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
-    command: sh -c "uv sync --frozen && uv run --with watchdog python scripts/reload.py"
+    command: sh -c "uv sync --frozen && gradio app.py --port 7860 --host 0.0.0.0 --reload"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
