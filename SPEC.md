@@ -434,6 +434,8 @@ Open `http://localhost:7860`.
 | `CONDENSE_QUERY_CONTENT_MAX_LEN` | `200` | Max character length of historical messages in condensation prompt |
 | `VERIFY_ENABLED` | `true` | Enable verification bot |
 | `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Claude model for verification |
+| `RATE_LIMIT_PER_MINUTE` | `10` | Max requests per minute per client IP |
+| `RATE_LIMIT_PER_HOUR` | `100` | Max requests per hour per client IP |
 
 ---
 
@@ -460,7 +462,7 @@ These are explicitly deferred and must NOT be built until the MVP criteria above
 - Comparing clauses across agreements
 - Admin interface for managing agreements or users
 - Analytics or usage tracking
-- Rate limiting (revisit if costs exceed budget)
+- ~~Rate limiting~~ (IMPLEMENTED)
 - Native mobile app
 
 ---

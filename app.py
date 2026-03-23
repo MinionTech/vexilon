@@ -20,6 +20,7 @@ Index pre-computation (run once after updating the PDF):
 
 # ─── Standard Library ────────────────────────────────────────────────────────
 import sys
+import threading
 
 print("[boot] Python started, importing stdlib...", flush=True)
 import json
@@ -72,6 +73,10 @@ CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN",
 VERIFY_MODEL = os.getenv("VERIFY_MODEL", "claude-haiku-4-5-20251001")
 VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
 
+# Rate Limiting (for abuse prevention and cost control)
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
+RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "100"))
+
 VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
 
 For each claim in the response:
@@ -86,6 +91,59 @@ Respond in this format:
 
 If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
+
+
+_SECONDS_IN_MINUTE = 60
+_SECONDS_IN_HOUR = 3600
+
+
+class RateLimiter:
+    """Simple in-memory rate limiter for request throttling."""
+
+    def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
+        self.minute_limit = max_per_minute
+        self.hour_limit = max_per_hour
+        self.requests: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+
+    def _clean_old_requests(self, key: str) -> None:
+        """Remove requests older than 1 hour and cleans up the user entry if empty."""
+        now = time.time()
+        hour_ago = now - _SECONDS_IN_HOUR
+        if key in self.requests:
+            self.requests[key] = [t for t in self.requests[key] if t > hour_ago]
+            if not self.requests[key]:
+                del self.requests[key]
+
+    def is_allowed(self, user_id: str = "default") -> tuple[bool, str]:
+        """Check if request is allowed. Returns (allowed, message)."""
+        with self._lock:
+            self._clean_old_requests(user_id)
+            now = time.time()
+            minute_ago = now - _SECONDS_IN_MINUTE
+
+            requests = self.requests.get(user_id, [])
+            recent_requests = [t for t in requests if t > minute_ago]
+
+            if len(recent_requests) >= self.minute_limit:
+                return (
+                    False,
+                    f"Rate limit exceeded: {self.minute_limit} requests per minute. Please wait before trying again.",
+                )
+
+            if len(requests) >= self.hour_limit:
+                return (
+                    False,
+                    f"Rate limit exceeded: {self.hour_limit} requests per hour. Please try again later.",
+                )
+
+            self.requests.setdefault(user_id, []).append(now)
+            return True, ""
+
+
+_rate_limiter = RateLimiter(
+    max_per_minute=RATE_LIMIT_PER_MINUTE, max_per_hour=RATE_LIMIT_PER_HOUR
+)
 
 
 def get_vexilon_info():
@@ -949,7 +1007,7 @@ def build_ui() -> "gr.Blocks":
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
-            message: str, history: list[dict]
+            message: str, history: list[dict], request=None
         ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
 
@@ -958,6 +1016,17 @@ def build_ui() -> "gr.Blocks":
             if not message.strip():
                 yield history, "", show
                 return
+
+            user_id = request.client.host if request else "default"
+            allowed, rate_msg = _rate_limiter.is_allowed(user_id)
+            if not allowed:
+                history = list(history) + [
+                    {"role": "user", "content": message},
+                    {"role": "assistant", "content": rate_msg},
+                ]
+                yield history, "", show
+                return
+
             prior_history = list(history)
             # Append user turn; seed an empty assistant bubble for streaming.
             # Hide onboarding components on first message.

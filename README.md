@@ -162,6 +162,17 @@ When enabled, the verification bot reviews each response and checks if quoted te
 > - If notes never appear → the main bot is reliable; consider disabling to save ~30% on API costs
 > - This evaluation approach assumes VERIFY_ENABLED=true by default to assess value over time
 
+### Rate Limiting
+
+Rate limiting prevents abuse and controls API costs by throttling requests per client IP:
+
+| Variable | Default | Description |
+|---|---|---|
+| `RATE_LIMIT_PER_MINUTE` | `10` | Maximum requests per minute per client IP |
+| `RATE_LIMIT_PER_HOUR` | `100` | Maximum requests per hour per client IP |
+
+When a rate limit is exceeded, users receive a clear error message indicating which limit was hit and when they can retry.
+
 ## Hugging Face Spaces Deployment
 
 The Space runs as **`sdk: docker`** in production — the deploy script pushes a stub
