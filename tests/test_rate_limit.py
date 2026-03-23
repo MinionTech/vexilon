@@ -63,7 +63,9 @@ class TestRateLimiter:
 
         # Should still have the old entry in the list but filtered for recent
         allowed, _ = limiter.is_allowed("user1")
-        assert allowed is True  # Only 1 recent request
+        assert (
+            allowed is True
+        )  # 2 recent requests are within limits; old request is cleaned
 
     def test_hour_limit_enforced(self):
         """Should block when hourly limit exceeded."""

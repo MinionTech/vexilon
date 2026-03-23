@@ -92,48 +92,58 @@ If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
 
+_SECONDS_IN_MINUTE = 60
+_SECONDS_IN_HOUR = 3600
+
+
 class RateLimiter:
     """Simple in-memory rate limiter for request throttling."""
 
     def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
+        import threading
+
         self.minute_limit = max_per_minute
         self.hour_limit = max_per_hour
         self.requests: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
 
     def _clean_old_requests(self, key: str) -> None:
-        """Remove requests older than 1 hour."""
+        """Remove requests older than 1 hour and cleans up the user entry if empty."""
         import time
 
         now = time.time()
-        hour_ago = now - 3600
+        hour_ago = now - _SECONDS_IN_HOUR
         if key in self.requests:
             self.requests[key] = [t for t in self.requests[key] if t > hour_ago]
+            if not self.requests[key]:
+                del self.requests[key]
 
     def is_allowed(self, user_id: str = "default") -> tuple[bool, str]:
         """Check if request is allowed. Returns (allowed, message)."""
         import time
 
-        self._clean_old_requests(user_id)
-        now = time.time()
-        minute_ago = now - 60
+        with self._lock:
+            self._clean_old_requests(user_id)
+            now = time.time()
+            minute_ago = now - _SECONDS_IN_MINUTE
 
-        requests = self.requests.get(user_id, [])
-        recent_requests = [t for t in requests if t > minute_ago]
+            requests = self.requests.get(user_id, [])
+            recent_requests = [t for t in requests if t > minute_ago]
 
-        if len(recent_requests) >= self.minute_limit:
-            return (
-                False,
-                f"Rate limit exceeded: {self.minute_limit} requests per minute. Please wait before trying again.",
-            )
+            if len(recent_requests) >= self.minute_limit:
+                return (
+                    False,
+                    f"Rate limit exceeded: {self.minute_limit} requests per minute. Please wait before trying again.",
+                )
 
-        if len(requests) >= self.hour_limit:
-            return (
-                False,
-                f"Rate limit exceeded: {self.hour_limit} requests per hour. Please try again later.",
-            )
+            if len(requests) >= self.hour_limit:
+                return (
+                    False,
+                    f"Rate limit exceeded: {self.hour_limit} requests per hour. Please try again later.",
+                )
 
-        self.requests.setdefault(user_id, []).append(now)
-        return True, ""
+            self.requests.setdefault(user_id, []).append(now)
+            return True, ""
 
 
 _rate_limiter = RateLimiter(
@@ -1002,7 +1012,7 @@ def build_ui() -> "gr.Blocks":
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
-            message: str, history: list[dict]
+            message: str, history: list[dict], request: "gr.Request"
         ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
 
@@ -1012,7 +1022,8 @@ def build_ui() -> "gr.Blocks":
                 yield history, "", show
                 return
 
-            allowed, rate_msg = _rate_limiter.is_allowed()
+            user_id = request.client.host if request else "default"
+            allowed, rate_msg = _rate_limiter.is_allowed(user_id)
             if not allowed:
                 history = list(history) + [
                     {"role": "user", "content": message},
