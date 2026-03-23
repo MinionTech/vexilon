@@ -1036,11 +1036,17 @@ def build_ui() -> "gr.Blocks":
         # Hidden download button for file download
         download_file = gr.DownloadButton(visible=False)
 
-        # Export handler
+        # Export handler - writes to temp file for download
         def _do_export_md(history):
             if not history:
-                return gr.skip()
-            return export_history_markdown(history)
+                return None
+            import tempfile
+
+            md_content = export_history_markdown(history)
+            fd, path = tempfile.mkstemp(suffix=".md", prefix="vexilon_")
+            with os.fdopen(fd, "w") as f:
+                f.write(md_content)
+            return path
 
         download_btn.click(
             fn=_do_export_md,
