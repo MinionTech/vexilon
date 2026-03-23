@@ -744,14 +744,18 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return message
 
 
-async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
+async def rag_stream(
+    message: str, history: list[dict]
+) -> AsyncIterator[tuple[str, str]]:
     """
-    Retrieve relevant chunks, build the prompt, and stream a response from Claude.
-    *history* is a list of {"role": ..., "content": ...} dicts (Gradio messages format).
-    Yields text chunks as they arrive from the Anthropic streaming API.
+    Stream response tokens from Claude, yielding (text_chunk, context) tuples.
+    The context is yielded once at the start with empty text, then text chunks follow with empty context.
     """
-    if _index is None:
-        yield "⚠️ The index is not ready yet. Please wait a moment and try again."
+    if not _index or not _chunks:
+        yield (
+            "\n\n⚠️ Knowledge base not loaded. Please refresh or rebuild the index.",
+            "",
+        )
         return
 
     # Rewrite query for RAG if there is history
@@ -800,8 +804,10 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
             ],
             messages=messages,
         ) as stream:
+            # Yield context first, then stream text chunks
+            yield ("", context)
             async for text_chunk in stream.text_stream:
-                yield text_chunk
+                yield (text_chunk, "")
             # Log cache effectiveness so we can verify caching is working.
             final = await stream.get_final_message()
             usage = final.usage
@@ -813,7 +819,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[str]:
                 f"output: {usage.output_tokens}"
             )
     except Exception as exc:
-        yield f"\n\n⚠️ API error: {exc}"
+        yield (f"\n\n⚠️ API error: {exc}", "")
 
 
 async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str]:
@@ -847,9 +853,7 @@ async def verify_response(assistant_response: str, context: str) -> str:
 {assistant_response}
 
 SOURCE CITATIONS AND CONTEXT:
-{context}
-
-{VERIFY_SYSTEM_PROMPT}""",
+{context}""",
             }
         ]
 
@@ -964,14 +968,16 @@ def build_ui() -> "gr.Blocks":
             yield history, "", hide
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
-            async for chunk in rag_stream(message, prior_history):
-                accumulated += chunk
+            context = ""
+            async for text_chunk, ctx in rag_stream(message, prior_history):
+                accumulated += text_chunk
+                if ctx:
+                    context = ctx  # Capture context from first yield
                 history[-1]["content"] = accumulated
                 yield history, "", hide
 
             # Run verification after response is complete
-            if VERIFY_ENABLED and accumulated.strip():
-                _, context = await get_rag_context(message, prior_history)
+            if VERIFY_ENABLED and accumulated.strip() and context:
                 verification = await verify_response(accumulated, context)
                 if verification and verification != "ALL_CLAIMS_VERIFIED":
                     verification_note = f"\n\n---\n\n**Verification:** {verification}"
