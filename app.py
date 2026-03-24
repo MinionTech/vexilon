@@ -1294,16 +1294,11 @@ def build_ui() -> "gr.Blocks":
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
         gr.HTML(DISCLAIMER_HTML)
 
-        # ── Export & Import ───────────────────────────────────────────────────
-        with gr.Accordion("Conversation Management", open=False):
-            with gr.Row():
-                export_btn = gr.Button("📤 Export Conversation", variant="secondary")
-                import_btn = gr.UploadButton(
-                    "📥 Import Conversation", file_types=[".md"], variant="secondary"
-                )
-            export_file = gr.File(
-                label="Download Conversation", interactive=False, visible=False
-            )
+        # ── Export & Import Toolbar ───────────────────────────────────────────
+        with gr.Row():
+            export_btn = gr.Button("📤 Save Chat", variant="secondary", scale=1)
+            import_btn = gr.UploadButton("📥 Load Chat", file_types=[".md"], variant="secondary", scale=1)
+        export_file = gr.File(label="Download Now", interactive=False, visible=False)
 
         with gr.Row(visible=True) as chip_row:
             chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
@@ -1411,24 +1406,30 @@ def build_ui() -> "gr.Blocks":
         def handle_export(history):
             if not history:
                 return gr.update(visible=False, value=None)
+            
             md_str = history_to_markdown(history)
-            # Create a temporary file that Gradio can serve
-            fd, path = tempfile.mkstemp(suffix=".md")
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
+            
+            # Format filename as requested: 2026-03-24_09-19.md
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+            filename = f"{timestamp}.md"
+            
+            # Use os.path.join for robust path handling
+            save_path = os.path.join(tempfile.gettempdir(), filename)
+            
+            with open(save_path, "w", encoding="utf-8") as f:
                 f.write(md_str)
 
-            # Schedule file deletion after 10 minutes to avoid resource leak
+            # Cleanup timer (10 mins)
             def cleanup():
                 try:
-                    if os.path.exists(path):
-                        os.remove(path)
-                        print(f"[ui] Cleaned up temporary export file: {path}")
+                    if os.path.exists(save_path):
+                        os.remove(save_path)
                 except Exception:
-                    logging.error(f"[ui] Failed to clean up export file: {path}", exc_info=True)
+                    logging.error(f"[ui] Cleanup failed for {save_path}", exc_info=True)
 
             threading.Timer(600, cleanup).start()
 
-            return gr.update(value=path, visible=True)
+            return gr.update(value=save_path, visible=True)
 
         export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_file])
 
