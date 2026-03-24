@@ -1316,9 +1316,8 @@ def build_ui() -> "gr.Blocks":
             import_btn = gr.UploadButton(
                 "📥 Load Chat", file_types=[".md"], variant="secondary", scale=1
             )
-            gr.Markdown(
-                "<span style='color:#6b7280;font-size:0.85rem'>Bot B verifies Bot A's output for accuracy</span>",
-                scale=2,
+            gr.HTML(
+                "<span style='color:#6b7280;font-size:0.85rem;margin-left:10px;'>Bot B verifies Bot A's output for accuracy</span>"
             )
 
         # ── Input row ─────────────────────────────────────────────────────────
