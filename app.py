@@ -1296,9 +1296,10 @@ def build_ui() -> "gr.Blocks":
 
         # ── Export & Import Toolbar ───────────────────────────────────────────
         with gr.Row():
-            export_btn = gr.Button("📤 Save Chat", variant="secondary", scale=1)
-            import_btn = gr.UploadButton("📥 Load Chat", file_types=[".md"], variant="secondary", scale=1)
-        export_file = gr.File(label="Download Now", interactive=False, visible=False)
+            export_btn = gr.DownloadButton("📤 Save Chat", variant="secondary", scale=1)
+            import_btn = gr.UploadButton(
+                "📥 Load Chat", file_types=[".md"], variant="secondary", scale=1
+            )
 
         with gr.Row(visible=True) as chip_row:
             chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
@@ -1405,17 +1406,17 @@ def build_ui() -> "gr.Blocks":
         # ── Export/Import Handlers ───────────────────────────────────────────
         def handle_export(history):
             if not history:
-                return gr.update(visible=False, value=None)
-            
+                return None
+
             md_str = history_to_markdown(history)
-            
+
             # Format filename as requested: 2026-03-24_09-19.md
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             filename = f"{timestamp}.md"
-            
+
             # Use os.path.join for robust path handling
             save_path = os.path.join(tempfile.gettempdir(), filename)
-            
+
             with open(save_path, "w", encoding="utf-8") as f:
                 f.write(md_str)
 
@@ -1429,9 +1430,9 @@ def build_ui() -> "gr.Blocks":
 
             threading.Timer(600, cleanup).start()
 
-            return gr.update(value=save_path, visible=True)
+            return save_path
 
-        export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_file])
+        export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
 
         def handle_import(file):
             if file is None:
