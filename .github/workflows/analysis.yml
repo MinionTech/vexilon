@@ -157,9 +157,36 @@ jobs:
         if: failure()
         run: podman logs vexilon-app
 
+  trivy:
+    name: Trivy Security Scan
+    if: (! github.event.pull_request.draft)
+    continue-on-error: true
+    permissions:
+      security-events: write
+    runs-on: ubuntu-slim
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          format: "sarif"
+          output: "trivy-results.sarif"
+          ignore-unfixed: true
+          scan-type: "fs"
+          scanners: "vuln,secret,misconfig"
+          severity: "CRITICAL,HIGH"
+          trivy-config: ".github/trivy.yaml"
+          trivyignores: ".trivyignore"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: "trivy-results.sarif"
+
   results:
     name: Results
-    needs: [container_build, container_test]
+    needs: [container_build, container_test, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
