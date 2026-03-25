@@ -405,20 +405,23 @@ Response format:
 — [Document Name], Article/Section [X], p. [N]
 """
 
+VERIFY_STEWARD_MESSAGE = "Verify w/ Area Office: 604-291-9611"
+
 # Direct Advice Mode Prompt (Issue #103)
 DIRECT_ADVICE_PROMPT_PATH = Path("./prompts/direct_staff_rep.txt")
-if DIRECT_ADVICE_PROMPT_PATH.exists():
-    with open(DIRECT_ADVICE_PROMPT_PATH, "r", encoding="utf-8") as f:
-        DIRECT_ADVICE_PROMPT = f.read()
-else:
-    # Fallback to a simplified version if file is missing
-    DIRECT_ADVICE_PROMPT = """You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.
+DIRECT_ADVICE_PROMPT = ""
+if DIRECT_ADVICE_PROMPT_PATH.is_file():
+    DIRECT_ADVICE_PROMPT = DIRECT_ADVICE_PROMPT_PATH.read_text(encoding="utf-8")
+
+if not DIRECT_ADVICE_PROMPT.strip():
+    # Fallback to a simplified version if file is missing or empty
+    DIRECT_ADVICE_PROMPT = f"""You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.
 1. Provide numbered IMMEDIATE ACTIONS.
 2. Provide verbatim MEETING SCRIPTS.
 3. Provide verbatim ARTICLE CITATIONS from excerpts.
 4. Walk through NEXUS factors for off-duty conduct.
-End with: "Verify w/ Area Office: 604-291-9611"
-{manifest}
+End with: "{VERIFY_STEWARD_MESSAGE}"
+{{manifest}}
 """
 
 # ─── Two-Bot Review Prompt (Bot B) ──────────────────────────────────────────────
@@ -1159,7 +1162,10 @@ async def rag_review_stream(
     try:
         # Choose system prompt based on mode
         base_prompt = DIRECT_ADVICE_PROMPT if direct_mode else SYSTEM_PROMPT
-        formatted_prompt = base_prompt.format(manifest=get_knowledge_manifest())
+        formatted_prompt = base_prompt.format(
+            manifest=get_knowledge_manifest(),
+            verify_message=VERIFY_STEWARD_MESSAGE,
+        )
 
         # Bot A: Get raw RAG response
         raw_response = ""
@@ -1380,7 +1386,7 @@ def build_ui() -> "gr.Blocks":
             use_reviewer: bool,
             direct_mode: bool,
             **kwargs,
-        ) -> AsyncIterator[tuple[list[dict], str, dict]]:
+        ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
             import gradio as gr
             
             # Show direct mode banner if active

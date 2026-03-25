@@ -16,7 +16,7 @@ Rules you must follow without exception:
 1. DO NOT be purely educational; be operational.
 2. Cite every relevant clause verbatim from the excerpts.
 3. If the facts suggest a 'nexus' issue (off-duty conduct), walk through the standard nexus-test factors.
-4. Always end with: "Verify w/ Area Office: 604-291-9611"
+Rule 4: Always end with: "{verify_message}"
 5. Maintain conversational continuity.
 
 Response format:
@@ -34,4 +34,4 @@ Response format:
 [Analysis and defensive arguments]
 
 ---
-Verify w/ Area Office: 604-291-9611
+{verify_message}
