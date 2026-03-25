@@ -125,6 +125,10 @@ The app is ready immediately on page load — no dropdown, no Load button.
 1. Type a question in the input field and press **Enter** or tap **Send**
 2. Or click one of the suggested question chips on the welcome screen
 3. Responses include a plain-language explanation followed by verbatim quotes with citations
+4. **Direct Advice Mode**: Toggle this to receive tactical, operational guidance from a "Senior Staff Rep" persona. This includes:
+   - **Immediate Action Steps**: Numbered instructions for your next moves.
+   - **Meeting Scripts**: Verbatim language to use with management.
+   - **Nexus Analysis**: Specific guidance for off-duty conduct conduct cases.
 
 > **Note:** Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.
 

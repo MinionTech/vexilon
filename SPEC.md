@@ -191,6 +191,24 @@ This specification exists to prevent that from happening again.
 
 ---
 
+### US-08: Direct Advice Mode for Experienced Stewards
+
+> **As an** experienced union steward in a high-pressure meeting,
+> **I want to** toggle a "Direct Advice" mode,
+> **so that** I get numbered action steps, meeting scripts, and aggressive nexus-test arguments instead of general educational summaries.
+
+**Acceptance criteria:**
+- A checkbox/toggle labeled "Direct Advice Mode" is available in the UI.
+- When enabled, the assistant's persona shifts to a "Senior BCGEU Staff Rep" (10+ years experience).
+- Responses follow a strict operational format:
+  1. **Immediate Actions** (numbered steps)
+  2. **Meeting Scripts** (verbatim language for management)
+  3. **Contract Authority** (verbatim quotes)
+  4. **Strategy/Nexus Notes** (defensive analysis)
+- A clear visual indicator (banner) appears when this mode is active to prevent accidental use.
+
+---
+
 ## 5. Security
 
 ### Authentication
@@ -402,6 +420,17 @@ To reduce hallucinations, Vexilon includes an optional verification bot that rev
    | `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Model for verification (can use cheaper model) |
 
 **Note:** The verification bot provides limited additional value since it uses the same context as the main bot. It may catch obvious issues (wrong page numbers, misquoted text) but cannot detect when relevant text was simply not retrieved. Future improvements may include multi-perspective retrieval for complex topics.
+
+### 9.7 Direct Advice Mode (Staff Rep Persona)
+
+To support stewards in tactical situations (e.g., immediate disciplinary meetings), Vexilon implements a **Direct Advice Mode**:
+
+1.  **Persona Swap**: Swaps the standard educational `SYSTEM_PROMPT` for a specialized `DIRECT_ADVICE_PROMPT` (stored in `prompts/direct_staff_rep.txt`).
+2.  **Operational Focus**: Shifts focus from "summarizing the agreement" to "providing a script and action plan."
+3.  **Nexus-Test Integration**: Prioritizes nexus-test factors when off-duty conduct conduct is detected.
+4.  **UI Feedback**: Updates the top disclaimer banner to a blue "Direct Advice Mode Active" state to ensure the steward is aware they are receiving tactical rather than educational guidance.
+
+---
 
 ---
 

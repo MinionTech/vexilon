@@ -363,7 +363,7 @@ def build_pdf_download_links() -> str:
     return "\n".join(lines)
 
 
-# ─── System Prompt ───────────────────────────────────────────────────────────
+# ─── System Prompts ───────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """You are Vexilon, a highly authoritative professional assistant for BCGEU union stewards.
 
 --- HOW YOUR SEARCH WORKS ---
@@ -403,6 +403,25 @@ Response format:
 
 > "[Verbatim quote]"
 — [Document Name], Article/Section [X], p. [N]
+"""
+
+VERIFY_STEWARD_MESSAGE = "Verify w/ Area Office: 604-291-9611"
+
+# Direct Advice Mode Prompt (Issue #103)
+DIRECT_ADVICE_PROMPT_PATH = Path("./prompts/direct_staff_rep.txt")
+DIRECT_ADVICE_PROMPT = ""
+if DIRECT_ADVICE_PROMPT_PATH.is_file():
+    DIRECT_ADVICE_PROMPT = DIRECT_ADVICE_PROMPT_PATH.read_text(encoding="utf-8")
+
+if not DIRECT_ADVICE_PROMPT.strip():
+    # Fallback to a simplified version if file is missing or empty
+    DIRECT_ADVICE_PROMPT = f"""You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.
+1. Provide numbered IMMEDIATE ACTIONS.
+2. Provide verbatim MEETING SCRIPTS.
+3. Provide verbatim ARTICLE CITATIONS from excerpts.
+4. Walk through NEXUS factors for off-duty conduct.
+End with: "{VERIFY_STEWARD_MESSAGE}"
+{{manifest}}
 """
 
 # ─── Two-Bot Review Prompt (Bot B) ──────────────────────────────────────────────
@@ -1104,11 +1123,15 @@ CONTEXT USED:
 
 # ─── Combined RAG + Review Stream ─────────────────────────────────────────────
 async def rag_review_stream(
-    message: str, history: list[dict], use_reviewer: bool = False
+    message: str,
+    history: list[dict],
+    use_reviewer: bool = False,
+    direct_mode: bool = False,
 ) -> AsyncIterator[str]:
     """
     Retrieve relevant chunks, build the prompt, stream from Bot A (RAG),
     and optionally pass through Bot B (reviewer) for verification.
+    If direct_mode is True, swaps the system prompt for a more operational persona.
     """
 
     if _index is None:
@@ -1137,6 +1160,13 @@ async def rag_review_stream(
     client = get_anthropic()
 
     try:
+        # Choose system prompt based on mode
+        base_prompt = DIRECT_ADVICE_PROMPT if direct_mode else SYSTEM_PROMPT
+        formatted_prompt = base_prompt.format(
+            manifest=get_knowledge_manifest(),
+            verify_message=VERIFY_STEWARD_MESSAGE,
+        )
+
         # Bot A: Get raw RAG response
         raw_response = ""
         async with client.messages.stream(
@@ -1145,7 +1175,7 @@ async def rag_review_stream(
             system=[
                 {
                     "type": "text",
-                    "text": SYSTEM_PROMPT.format(manifest=get_knowledge_manifest()),
+                    "text": formatted_prompt,
                     "cache_control": {"type": "ephemeral"},
                 },
                 {
@@ -1264,6 +1294,20 @@ DISCLAIMER_HTML = (
     "</div>"
 )
 
+DIRECT_MODE_HTML = (
+    '<div style="'
+    "background-color:#e0f2fe;"
+    "border-left:4px solid #0ea5e9;"
+    "color:#075985;"
+    "padding:10px 14px;"
+    "border-radius:4px;"
+    "font-size:0.85rem;"
+    "margin-bottom:12px;"
+    '">'
+    "<b>⚡ Direct Advice Mode Active:</b> Responses focus on operational steps and scripts."
+    "</div>"
+)
+
 ATTRIBUTION_HTML = f"""
 <div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
     <a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
@@ -1292,7 +1336,7 @@ def build_ui() -> "gr.Blocks":
             )
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
-        gr.HTML(DISCLAIMER_HTML)
+        disclaimer_box = gr.HTML(DISCLAIMER_HTML)
 
         with gr.Row(visible=True) as chip_row:
             chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
@@ -1308,9 +1352,14 @@ def build_ui() -> "gr.Blocks":
         # ── Reviewer Toggle & Management ──────────────────────────────────────
         with gr.Row():
             reviewer_toggle = gr.Checkbox(
-                label="Enable Senior Rep Review (Two-Bot Pipeline)",
+                label="Enable Senior Rep Review",
                 value=USE_REVIEWER,
-                scale=3,
+                scale=2,
+            )
+            direct_mode_toggle = gr.Checkbox(
+                label="Direct Advice Mode",
+                value=False,
+                scale=2,
             )
             export_btn = gr.DownloadButton("⬇️ Save Chat", variant="secondary", scale=1)
             import_btn = gr.UploadButton(
@@ -1335,15 +1384,19 @@ def build_ui() -> "gr.Blocks":
             message: str,
             history: list[dict],
             use_reviewer: bool,
+            direct_mode: bool,
             **kwargs,
-        ) -> AsyncIterator[tuple[list[dict], str, dict]]:
+        ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
             import gradio as gr
+            
+            # Show direct mode banner if active
+            top_banner = DIRECT_MODE_HTML if direct_mode else DISCLAIMER_HTML
 
             request = kwargs.get("request")
             hide = gr.update(visible=False)
             show = gr.update(visible=True)
             if not message.strip():
-                yield history, "", show
+                yield history, "", show, gr.update()
                 return
 
             user_id = request.client.host if request else "default"
@@ -1353,7 +1406,7 @@ def build_ui() -> "gr.Blocks":
                     {"role": "user", "content": message},
                     {"role": "assistant", "content": rate_msg},
                 ]
-                yield history, "", show
+                yield history, "", show, gr.update()
                 return
 
             message, was_flagged = sanitize_input(message)
@@ -1362,6 +1415,7 @@ def build_ui() -> "gr.Blocks":
                     history,
                     "Your input was flagged for security review. Please try a different question.",
                     show,
+                    gr.update(),
                 )
                 return
             prior_history = list(history)
@@ -1371,16 +1425,18 @@ def build_ui() -> "gr.Blocks":
                 {"role": "user", "content": message},
                 {"role": "assistant", "content": ""},
             ]
-            yield history, "", hide
+            yield history, "", hide, gr.update(value=top_banner)
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
-            async for chunk in rag_review_stream(message, prior_history, use_reviewer):
+            async for chunk in rag_review_stream(
+                message, prior_history, use_reviewer, direct_mode
+            ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
-                yield history, "", hide
+                yield history, "", hide, gr.update(value=top_banner)
 
-        submit_inputs = [msg_input, chatbot, reviewer_toggle]
-        submit_outputs = [chatbot, msg_input, chip_row]
+        submit_inputs = [msg_input, chatbot, reviewer_toggle, direct_mode_toggle]
+        submit_outputs = [chatbot, msg_input, chip_row, disclaimer_box]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
         msg_input.submit(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
