@@ -1351,7 +1351,7 @@ def build_ui() -> "gr.Blocks":
                 scale=2,
             )
             direct_mode_toggle = gr.Checkbox(
-                label="⚡ Direct Advice Mode",
+                label="Direct Advice Mode",
                 value=False,
                 scale=2,
             )
