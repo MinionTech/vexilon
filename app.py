@@ -299,54 +299,69 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
     return _anthropic_client
 
 
+def _get_all_source_files() -> list[Path]:
+    """
+    Scan LABOUR_LAW_DIR for PDF and Markdown files and return a combined list
+    sorted by filename for consistent processing.
+    """
+    if not LABOUR_LAW_DIR.exists():
+        return []
+    pdfs = list(LABOUR_LAW_DIR.glob("*.pdf"))
+    mds = list(LABOUR_LAW_DIR.glob("*.md"))
+    return sorted(pdfs + mds, key=lambda p: p.name)
+
+
+def _get_source_name(stem: str) -> str:
+    """
+    Parse source_name from internal filename convention: [Index]_[Category]_[Title].
+    Also handles [Index]_[Title] and fallback to title-cased filename.
+    """
+    parts = stem.split("_", 2)
+    if len(parts) == 3:
+        # Index_Category_Title
+        return parts[2]
+    elif len(parts) == 2:
+        # Index_Title
+        return parts[1]
+    # Fallback / No underscores
+    return stem.replace("_", " ").title()
+
+
 def get_knowledge_manifest() -> str:
     """
     Dynamically scan the labour_law directory and build a formatted list for the system prompt.
     Files follow the naming convention: [Index]_[Category]_[Title].pdf
     Example: 1_Primary_BCGEU 19th Main Agreement.pdf
     """
-    if not LABOUR_LAW_DIR.exists():
-        return "No documents available."
-
-    pdfs = sorted(LABOUR_LAW_DIR.glob("*.pdf"))
-    mds = sorted(LABOUR_LAW_DIR.glob("*.md"))
-    files = sorted(pdfs + mds, key=lambda p: p.name)
-    
+    files = _get_all_source_files()
     if not files:
         return "No documents available."
 
     lines = []
     for f in files:
         stem = f.stem
-        # Try to parse our convention: Index_Category_Title
+        source_name = _get_source_name(stem)
         parts = stem.split("_", 2)
-        if len(parts) == 1:
-            # Fallback for non-conforming filenames
-            lines.append(f"- {stem.replace('_', ' ').title()} (Uncategorized)")
+        if len(parts) == 3:
+            idx, cat, _ = parts
+            lines.append(f"{idx}. {source_name} ({cat})")
         elif len(parts) == 2:
-            idx, title = parts
-            lines.append(f"{idx}. {title} (Reference)")
+            idx, _ = parts
+            lines.append(f"{idx}. {source_name} (Reference)")
         else:
-            idx, cat, title = parts
-            lines.append(f"{idx}. {title} ({cat})")
+            lines.append(f"- {source_name} (Uncategorized)")
 
     return "\n".join(lines)
 
 
 def build_pdf_download_links() -> str:
     """
-    Generate HTML for individual PDF download links using Gradio's /gradio_api/file= endpoint.
-    Returns HTML-formatted links for each PDF in the labour_law directory.
+    Generate HTML for individual PDF and MD download links using Gradio's /gradio_api/file= endpoint.
+    Returns HTML-formatted links for each source in the labour_law directory.
     """
     import html
 
-    if not LABOUR_LAW_DIR.exists():
-        return ""
-
-    pdfs = sorted(LABOUR_LAW_DIR.glob("*.pdf"))
-    mds = sorted(LABOUR_LAW_DIR.glob("*.md"))
-    files = sorted(pdfs + mds, key=lambda p: p.name)
-
+    files = _get_all_source_files()
     if not files:
         return ""
 
@@ -354,16 +369,16 @@ def build_pdf_download_links() -> str:
     lines = ["<b>Download Documents:</b>", "<ul>"]
     for f in files:
         stem = f.stem
-        # Parse convention: Index_Category_Title
+        source_name = _get_source_name(stem)
         parts = stem.split("_", 2)
         if len(parts) == 3:
-            idx, cat, title = parts
-            display_name = f"{idx}. {title} ({cat})"
+            idx, cat, _ = parts
+            display_name = f"{idx}. {source_name} ({cat})"
         elif len(parts) == 2:
-            idx, title = parts
-            display_name = f"{idx}. {title} (Reference)"
+            idx, _ = parts
+            display_name = f"{idx}. {source_name} (Reference)"
         else:
-            display_name = stem.replace("_", " ").title()
+            display_name = source_name
 
         # Use relative path for Gradio's /gradio_api/file= endpoint (works in both local and container)
         file_path = f"data/labour_law/{f.name}"
@@ -570,9 +585,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     better than PDF extraction.
     """
     content = md_path.read_text(encoding="utf-8")
-    stem = md_path.stem
-    parts = stem.split("_", 2)
-    source_name = parts[2] if len(parts) == 3 else stem.replace("_", " ").title()
+    source_name = _get_source_name(md_path.stem)
     print(f"[loader] Parsing Markdown '{source_name}'…")
 
     tokenizer = get_embed_model().tokenizer
@@ -617,10 +630,7 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     import re
 
     reader = PdfReader(str(pdf_path))
-    # Parse source name from filenames like "1_Primary_Agreement Name" -> "Agreement Name"
-    stem = pdf_path.stem
-    parts = stem.split("_", 2)
-    source_name = parts[2] if len(parts) == 3 else stem.replace("_", " ").title()
+    source_name = _get_source_name(pdf_path.stem)
     print(f"[loader] Parsing '{source_name}' ({len(reader.pages)} pages)…")
 
     tokenizer = get_embed_model().tokenizer
@@ -801,7 +811,7 @@ def _fetch_pdf_cache_if_missing() -> None:
         print(f"[fetch] Saved {dest_path}")
 
 
-def build_index_from_pdfs(force: bool = False) -> None:
+def build_index_from_sources(force: bool = False) -> None:
     """
     Parse all source files (PDF and MD) in LABOUR_LAW_DIR, embed them, 
     and write the pre-built index to pdf_cache/index.faiss + pdf_cache/chunks.json.
@@ -809,19 +819,16 @@ def build_index_from_pdfs(force: bool = False) -> None:
     Args:
         force (bool): If True, ignores the existing manifest and rebuilds the
                       index from scratch. Defaults to False.
+
+    SMART REFRESH: This function generates a manifest.json containing SHA256 hashes
+    of all source files. If the current files match the stored manifest (and the
+    index exists), the expensive embedding process is skipped.
     """
     import hashlib
 
     global _chunks, _index
 
-    if not LABOUR_LAW_DIR.exists():
-        print(f"[build] {LABOUR_LAW_DIR} does not exist — nothing to index.")
-        return
-
-    pdf_files = sorted(LABOUR_LAW_DIR.glob("*.pdf"))
-    md_files = sorted(LABOUR_LAW_DIR.glob("*.md"))
-    all_files = pdf_files + md_files
-    
+    all_files = _get_all_source_files()
     if not all_files:
         print("[build] No source files found to index!")
         return
@@ -880,7 +887,7 @@ def startup(force_rebuild: bool = False) -> None:
     Initialise the vector index and load document chunks.
 
     If force_rebuild=False (default), we try to load a pre-computed index
-    from pdf_cache/. If missing, we fall back to build_index_from_pdfs()
+    from pdf_cache/. If missing, we fall back to build_index_from_sources()
     which embeds documents from scratch.
     """
     global _chunks, _index
@@ -901,7 +908,7 @@ def startup(force_rebuild: bool = False) -> None:
             return
 
     # ── Slow path: delegate to the API-key-free build function ────────────
-    build_index_from_pdfs(force=force_rebuild)
+    build_index_from_sources(force=force_rebuild)
     print("[startup] Ready.")
 
 

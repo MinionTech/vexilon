@@ -83,7 +83,7 @@ services:
       # Prevent HuggingFace token lookup permission errors
       HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
-    command: uv run python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+    command: uv run python -c "from app import build_index_from_sources; build_index_from_sources()"
 
   # ── Troubleshooting Version ────────────────────────────────────────────────
   # This service REUSES vexilon but strips the dependencies

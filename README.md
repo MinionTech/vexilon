@@ -58,7 +58,7 @@ Drop PDFs into `data/labour_law/` using our **Smart Renaming** convention to ens
 Then rebuild and commit the index:
 
 ```bash
-python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+python -c "from app import build_index_from_sources; build_index_from_sources()"
 ```
 
 When done, commit `pdf_cache/index.faiss` and `pdf_cache/chunks.json` if you want to update
@@ -211,7 +211,7 @@ Those files are **not** committed by default (`pdf_cache/` is gitignored).
 To publish an updated fallback after rebuilding the index locally:
 
 ```bash
-python -c "from app import build_index_from_pdfs; build_index_from_pdfs()"
+python -c "from app import build_index_from_sources; build_index_from_sources()"
 git add -f pdf_cache/index.faiss pdf_cache/chunks.json
 git commit -m "chore(index): rebuild fallback cache"
 git push
