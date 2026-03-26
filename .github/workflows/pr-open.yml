@@ -208,7 +208,6 @@ jobs:
     name: Trivy Security Scan
     needs: container_build
     if: (! github.event.pull_request.draft)
-    continue-on-error: true
     permissions:
       security-events: write
       packages: read
@@ -220,7 +219,8 @@ jobs:
         run: |
           # Use the real PR head commit SHA independently
           IMAGE_SHA=${{ github.event.pull_request.head.sha || github.sha }}
-          echo "tag=ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}" >> "$GITHUB_OUTPUT"
+          declare -l IMAGE="ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}"
+          echo "tag=${IMAGE}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v4

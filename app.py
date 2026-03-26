@@ -974,6 +974,92 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return message
 
 
+<<<<<<< Updated upstream
+=======
+# ─── Export / Import Functions ────────────────────────────────────────────────
+MAX_IMPORT_SIZE_BYTES = 500 * 1024  # 500KB limit
+
+
+def export_history_markdown(history) -> str:
+    """Serialize conversation history to Markdown for export."""
+    lines = ["# Vexilon Conversation Export\n"]
+
+    # Handle None or empty
+    if not history:
+        return "\n".join(lines)
+
+    for i, turn in enumerate(history):
+        # Gradio chatbot returns list of tuples: [(user_msg, bot_msg), ...]
+        if isinstance(turn, (list, tuple)) and len(turn) >= 2:
+            user_msg, bot_msg = turn[0], turn[1]
+            if user_msg:
+                lines.append(f"## User\n{user_msg}\n")
+            if bot_msg:
+                lines.append(f"## Assistant\n{bot_msg}\n")
+        elif isinstance(turn, dict):
+            role = turn.get("role", "unknown")
+            content = turn.get("content", "")
+            if isinstance(content, list):
+                text_parts = [
+                    p.get("text", "") if isinstance(p, dict) else str(p)
+                    for p in content
+                ]
+                content = "".join(text_parts)
+            content = str(content)
+
+            if role == "user":
+                lines.append(f"## User\n{content}\n")
+            elif role == "assistant":
+                lines.append(f"## Assistant\n{content}\n")
+
+    return "\n".join(lines)
+
+
+def import_history_json(file_obj: object) -> tuple[list[dict], str]:
+    """
+    Import conversation history from JSON file.
+    Returns (history, error_message). Empty error means success.
+    """
+    if file_obj is None:
+        return [], "No file provided"
+
+    try:
+        if hasattr(file_obj, "read"):
+            content = file_obj.read()
+        elif isinstance(file_obj, (bytes, str)):
+            content = file_obj
+        else:
+            return [], "Invalid file object"
+
+        if len(content) > MAX_IMPORT_SIZE_BYTES:
+            return (
+                [],
+                f"File too large. Maximum size is {MAX_IMPORT_SIZE_BYTES // 1024}KB",
+            )
+
+        if isinstance(content, bytes):
+            content = content.decode("utf-8")
+
+        history = json.loads(content)
+
+        if not isinstance(history, list):
+            return [], "Invalid format: expected a JSON array of message objects"
+
+        for i, turn in enumerate(history):
+            if not isinstance(turn, dict):
+                return [], f"Invalid message at index {i}: expected object"
+            if "role" not in turn or "content" not in turn:
+                return [], f"Invalid message at index {i}: missing 'role' or 'content'"
+
+        return history, ""
+
+    except json.JSONDecodeError as e:
+        return [], f"Invalid JSON: {e}"
+    except Exception as e:
+        return [], f"Import failed: {e}"
+
+
+>>>>>>> Stashed changes
 async def rag_stream(
     message: str, history: list[dict]
 ) -> AsyncIterator[tuple[str, str]]:
