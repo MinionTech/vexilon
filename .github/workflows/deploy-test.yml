@@ -9,13 +9,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'app.py'
-      - 'Containerfile'
-      - 'data/**'
-      - 'scripts/**'
-      - 'pyproject.toml'
-      - 'uv.lock'
 
 permissions: {}
 
@@ -60,10 +53,14 @@ jobs:
 
           # Resolve tag to immutable digest — proves image was built by CI for this PR
           declare -l IMAGE="ghcr.io/${{ github.repository }}:${TAG}"
-          DIGEST=$(skopeo inspect "docker://${IMAGE}" --format '{{.Digest}}')
-          if [ -z "$DIGEST" ]; then
-            echo "::error::Image not found in GHCR: ${IMAGE}"
-            exit 1
+          if ! DIGEST=$(skopeo inspect "docker://${IMAGE}" --format '{{.Digest}}' 2>/dev/null); then
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "::notice::No CI image found for PR head ${TAG}. Skipping deployment (likely a docs-only or non-code change)."
+              exit 0
+            else
+              echo "::error::Image not found in GHCR: ${IMAGE}"
+              exit 1
+            fi
           fi
 
           echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
