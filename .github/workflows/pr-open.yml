@@ -17,8 +17,6 @@ on:
       - '.trivyignore'
       - '.github/trivy.yml'
       - '.github/workflows/deploy-*.yml'
-  schedule:
-    - cron: "0 11 * * 0" # 3 AM PST = 11 AM UTC, runs Sundays
 
 permissions: {}
 
