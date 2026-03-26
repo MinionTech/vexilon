@@ -13,11 +13,11 @@ on:
       - '**.md'
       - '!data/**'
       - 'LICENSE'
-      - '.gitignore'
-      - '.dockerignore'
       - 'renovate.json'
+      - '.*'
       - '.*/**'
       - '!.github/workflows/pr-open.yml'
+      - '!.dockerignore'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
