@@ -9,12 +9,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'app.py'
-      - 'requirements.txt'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - 'pdf_cache/**'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.dockerignore'
+      - '.trivyignore'
+      - '.github/trivy.yaml'
+      - '.github/workflows/deploy-*.yml'
 
 permissions: {}
 
