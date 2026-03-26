@@ -974,8 +974,7 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return message
 
 
-<<<<<<< Updated upstream
-=======
+
 # ─── Export / Import Functions ────────────────────────────────────────────────
 MAX_IMPORT_SIZE_BYTES = 500 * 1024  # 500KB limit
 
@@ -1059,7 +1058,7 @@ def import_history_json(file_obj: object) -> tuple[list[dict], str]:
         return [], f"Import failed: {e}"
 
 
->>>>>>> Stashed changes
+
 async def rag_stream(
     message: str, history: list[dict]
 ) -> AsyncIterator[tuple[str, str]]:
