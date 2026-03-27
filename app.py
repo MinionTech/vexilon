@@ -1492,16 +1492,25 @@ CUSTOM_CSS = """
 }
 
 /* 2. Persona Segmented Control (Pill style) */
+#persona_selector.block {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-width: fit-content !important;
+}
 #persona_selector .wrap {
     display: flex !important;
     gap: 0 !important;
     flex-wrap: nowrap !important;
+    padding: 0 !important;
 }
 #persona_selector label {
     height: 32px !important;
     line-height: 32px !important;
-    padding: 0 10px !important;
+    padding: 0 12px !important;
     border: 1px solid var(--border-color-primary) !important;
+    margin-right: -1px !important;
     font-size: 0.8rem !important;
     border-radius: 0 !important;
     background: var(--background-fill-secondary) !important;
@@ -1509,9 +1518,6 @@ CUSTOM_CSS = """
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-}
-#persona_selector label:not(:last-child) {
-    margin-right: -1px !important;
 }
 #persona_selector label:first-child {
     border-top-left-radius: 8px !important;
@@ -1545,9 +1551,9 @@ CUSTOM_CSS = """
 #reviewer_toggle label {
     height: 32px !important;
     line-height: 32px !important;
-    padding: 0 8px !important;
+    padding: 0 10px !important;
     border: 1px solid var(--border-color-primary) !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     font-size: 0.8rem !important;
     display: flex !important;
     align-items: center !important;
@@ -1555,12 +1561,15 @@ CUSTOM_CSS = """
     background: var(--background-fill-secondary) !important;
     cursor: pointer !important;
 }
+#reviewer_toggle input {
+    margin: 0 6px 0 0 !important;
+}
 
 /* 4. Button normalization */
 .sm-btn {
     height: 32px !important;
     min-height: 32px !important;
-    padding: 0 8px !important;
+    padding: 0 10px !important;
     font-size: 0.8rem !important;
     min-width: 60px !important;
 }
