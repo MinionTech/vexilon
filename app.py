@@ -1517,13 +1517,13 @@ def build_ui() -> "gr.Blocks":
         # ── Reviewer Toggle & Management ──────────────────────────────────────
         with gr.Row():
             reviewer_toggle = gr.Checkbox(
-                label="Enable Senior Rep Review",
+                label="2nd Bot Review",
                 value=USE_REVIEWER,
                 scale=2,
             )
             persona_selector = gr.Radio(
                 choices=["Explorer", "Direct Advice", "Case Builder"],
-                label="Assistant Persona",
+                label="Persona",
                 value="Explorer",
                 scale=5,
             )
