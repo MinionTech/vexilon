@@ -1506,9 +1506,10 @@ CUSTOM_CSS = """
     padding: 0 !important;
 }
 #persona_selector label {
+    flex: 1 !important;
     height: 32px !important;
     line-height: 32px !important;
-    padding: 0 12px !important;
+    padding: 0 !important;
     border: 1px solid var(--border-color-primary) !important;
     font-size: 0.8rem !important;
     border-radius: 0 !important;
@@ -1517,6 +1518,10 @@ CUSTOM_CSS = """
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+}
+#persona_selector label span {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 #persona_selector label:not(:last-child) {
     margin-right: -1px !important;
