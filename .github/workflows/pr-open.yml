@@ -206,7 +206,7 @@ jobs:
 
   trivy:
     name: Trivy Security Scan
-    needs: container_build
+    needs: [audit, tests]
     if: (! github.event.pull_request.draft)
     permissions:
       security-events: write
