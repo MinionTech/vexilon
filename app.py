@@ -435,6 +435,20 @@ Response format:
 
 VERIFY_STEWARD_MESSAGE = "Verify w/ Area Office: 604-291-9611"
 
+# Case Builder Mode Prompt (Issue #152)
+CASE_BUILDER_PROMPT_PATH = Path("./prompts/case_builder.txt")
+CASE_BUILDER_PROMPT = ""
+if CASE_BUILDER_PROMPT_PATH.is_file():
+    CASE_BUILDER_PROMPT = CASE_BUILDER_PROMPT_PATH.read_text(encoding="utf-8")
+
+if not CASE_BUILDER_PROMPT.strip():
+    CASE_BUILDER_PROMPT = """You are a BCGEU Staff Rep specializing in Grievance Drafting.
+1. Draft a formal STATEMENT OF GRIEVANCE.
+2. Provide a point-by-point REBUTTAL.
+3. Audit against KVP/Millhaven factors.
+4. List the REDRESS SOUGHT.
+"""
+
 # Direct Advice Mode Prompt (Issue #103)
 DIRECT_ADVICE_PROMPT_PATH = Path("./prompts/direct_staff_rep.txt")
 DIRECT_ADVICE_PROMPT = ""
@@ -1270,11 +1284,13 @@ async def rag_review_stream(
     history: list[dict],
     use_reviewer: bool = False,
     direct_mode: bool = False,
+    case_builder: bool = False,
 ) -> AsyncIterator[str]:
     """
     Retrieve relevant chunks, build the prompt, stream from Bot A (RAG),
     and optionally pass through Bot B (reviewer) for verification.
     If direct_mode is True, swaps the system prompt for a more operational persona.
+    If case_builder is True, swaps the system prompt for a formal drafting persona.
     """
 
     if _index is None:
@@ -1304,14 +1320,19 @@ async def rag_review_stream(
 
     try:
         # Choose system prompt based on mode
-        base_prompt = DIRECT_ADVICE_PROMPT if direct_mode else SYSTEM_PROMPT
+        base_prompt = SYSTEM_PROMPT
+        if direct_mode:
+            base_prompt = DIRECT_ADVICE_PROMPT
+        elif case_builder:
+            base_prompt = CASE_BUILDER_PROMPT
+
         formatted_prompt = base_prompt.format(
             manifest=get_knowledge_manifest(),
             verify_message=VERIFY_STEWARD_MESSAGE,
         )
 
         # Audit Logic (Issue #161 Refactor): Consolidate tests and fallbacks
-        if direct_mode:
+        if direct_mode or case_builder:
             matched_tests = _test_registry.find_matches(message + " " + query)
             
             # 1. New Registry Tests
@@ -1471,6 +1492,20 @@ DIRECT_MODE_HTML = (
     "</div>"
 )
 
+CASE_BUILDER_HTML = (
+    '<div style="'
+    "background-color:#f0fdf4;"
+    "border-left:4px solid #22c55e;"
+    "color:#14532d;"
+    "padding:10px 14px;"
+    "border-radius:4px;"
+    "font-size:0.85rem;"
+    "margin-bottom:12px;"
+    '">'
+    "<b>📝 Case Builder Mode Active:</b> Responses focus on drafting formal rebuttals and grievances."
+    "</div>"
+)
+
 ATTRIBUTION_HTML = f"""
 <div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
     <a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
@@ -1524,6 +1559,11 @@ def build_ui() -> "gr.Blocks":
                 value=False,
                 scale=2,
             )
+            case_builder_toggle = gr.Checkbox(
+                label="Case Builder (Drafting)",
+                value=False,
+                scale=2,
+            )
             export_btn = gr.DownloadButton("⬇️ Save Chat", variant="secondary", scale=1)
             import_btn = gr.UploadButton(
                 "⬆️ Load Chat", file_types=[".md"], variant="secondary", scale=1
@@ -1548,12 +1588,17 @@ def build_ui() -> "gr.Blocks":
             history: list[dict],
             use_reviewer: bool,
             direct_mode: bool,
+            case_builder: bool,
             **kwargs,
         ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
             import gradio as gr
             
-            # Show direct mode banner if active
-            top_banner = DIRECT_MODE_HTML if direct_mode else DISCLAIMER_HTML
+            # Show mode banners
+            top_banner = DISCLAIMER_HTML
+            if direct_mode:
+                top_banner = DIRECT_MODE_HTML
+            elif case_builder:
+                top_banner = CASE_BUILDER_HTML
 
             request = kwargs.get("request")
             hide = gr.update(visible=False)
@@ -1592,13 +1637,13 @@ def build_ui() -> "gr.Blocks":
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             async for chunk in rag_review_stream(
-                message, prior_history, use_reviewer, direct_mode
+                message, prior_history, use_reviewer, direct_mode, case_builder
             ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
                 yield history, "", hide, gr.update(value=top_banner)
 
-        submit_inputs = [msg_input, chatbot, reviewer_toggle, direct_mode_toggle]
+        submit_inputs = [msg_input, chatbot, reviewer_toggle, direct_mode_toggle, case_builder_toggle]
         submit_outputs = [chatbot, msg_input, chip_row, disclaimer_box]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
