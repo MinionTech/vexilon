@@ -435,36 +435,23 @@ Response format:
 
 VERIFY_STEWARD_MESSAGE = "Verify w/ Area Office: 604-291-9611"
 
-# Case Builder Mode Prompt (Issue #152)
-CASE_BUILDER_PROMPT_PATH = Path("./prompts/case_builder.txt")
-CASE_BUILDER_PROMPT = ""
-if CASE_BUILDER_PROMPT_PATH.is_file():
-    CASE_BUILDER_PROMPT = CASE_BUILDER_PROMPT_PATH.read_text(encoding="utf-8")
-
-if not CASE_BUILDER_PROMPT.strip():
-    CASE_BUILDER_PROMPT = """You are a BCGEU Staff Rep specializing in Grievance Drafting.
-1. Draft a formal STATEMENT OF GRIEVANCE.
-2. Provide a point-by-point REBUTTAL.
-3. Audit against KVP/Millhaven factors.
-4. List the REDRESS SOUGHT.
-"""
-
-# Direct Advice Mode Prompt (Issue #103)
-DIRECT_ADVICE_PROMPT_PATH = Path("./prompts/direct_staff_rep.txt")
-DIRECT_ADVICE_PROMPT = ""
-if DIRECT_ADVICE_PROMPT_PATH.is_file():
-    DIRECT_ADVICE_PROMPT = DIRECT_ADVICE_PROMPT_PATH.read_text(encoding="utf-8")
-
-if not DIRECT_ADVICE_PROMPT.strip():
-    # Fallback to a simplified version if file is missing or empty
-    DIRECT_ADVICE_PROMPT = f"""You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.
-1. Provide numbered IMMEDIATE ACTIONS.
-2. Provide verbatim MEETING SCRIPTS.
-3. Provide verbatim ARTICLE CITATIONS from excerpts.
-4. Walk through NEXUS factors for off-duty conduct.
-End with: "{VERIFY_STEWARD_MESSAGE}"
-{{manifest}}
-"""
+def get_persona_prompt(mode_name: str) -> str:
+    """Helper to load system prompts for different operational modes."""
+    paths = {
+        "Direct Advice": Path("./prompts/direct_staff_rep.txt"),
+        "Case Builder": Path("./prompts/case_builder.txt"),
+    }
+    
+    path = paths.get(mode_name)
+    if path and path.is_file():
+        return path.read_text(encoding="utf-8")
+    
+    # Fallbacks if files are missing or empty
+    fallbacks = {
+        "Direct Advice": "You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.",
+        "Case Builder": "You are a BCGEU Staff Rep specializing in Grievance Drafting.",
+    }
+    return fallbacks.get(mode_name, SYSTEM_PROMPT)
 
 # ─── Two-Bot Review Prompt (Bot B) ──────────────────────────────────────────────
 REVIEWER_SYSTEM_PROMPT = """You are a Senior BCGEU Staff Representative reviewing a junior steward's output for accuracy and completeness.
@@ -1283,8 +1270,7 @@ async def rag_review_stream(
     message: str,
     history: list[dict],
     use_reviewer: bool = False,
-    direct_mode: bool = False,
-    case_builder: bool = False,
+    persona_mode: str = "Explorer",
 ) -> AsyncIterator[str]:
     """
     Retrieve relevant chunks, build the prompt, stream from Bot A (RAG),
@@ -1319,20 +1305,18 @@ async def rag_review_stream(
     client = get_anthropic()
 
     try:
-        # Choose system prompt based on mode
-        base_prompt = SYSTEM_PROMPT
-        if direct_mode:
-            base_prompt = DIRECT_ADVICE_PROMPT
-        elif case_builder:
-            base_prompt = CASE_BUILDER_PROMPT
+        # 1. Resolve System Prompt based on Persona
+        base_prompt = persona_mode if persona_mode != "Explorer" else SYSTEM_PROMPT
+        if base_prompt in ["Direct Advice", "Case Builder"]:
+            base_prompt = get_persona_prompt(base_prompt)
 
         formatted_prompt = base_prompt.format(
             manifest=get_knowledge_manifest(),
             verify_message=VERIFY_STEWARD_MESSAGE,
         )
 
-        # Audit Logic (Issue #161 Refactor): Consolidate tests and fallbacks
-        if direct_mode or case_builder:
+        # 2. Audit Logic (Issue #161 Refactor)
+        if persona_mode != "Explorer":
             matched_tests = _test_registry.find_matches(message + " " + query)
             
             # 1. New Registry Tests
@@ -1478,33 +1462,17 @@ DISCLAIMER_HTML = (
     "</div>"
 )
 
-DIRECT_MODE_HTML = (
-    '<div style="'
-    "background-color:#e0f2fe;"
-    "border-left:4px solid #0ea5e9;"
-    "color:#075985;"
-    "padding:10px 14px;"
-    "border-radius:4px;"
-    "font-size:0.85rem;"
-    "margin-bottom:12px;"
-    '">'
-    "<b>⚡ Direct Advice Mode Active:</b> Responses focus on operational steps and scripts."
-    "</div>"
-)
+DIRECT_MODE_HTML = """
+<div style="background-color:#e0f2fe; border-left:4px solid #0ea5e9; color:#075985; padding:10px 14px; border-radius:4px; font-size:0.85rem; margin-bottom:12px;">
+    <b>⚡ Direct Advice Mode Active:</b> Responses focus on operational steps and scripts.
+</div>
+"""
 
-CASE_BUILDER_HTML = (
-    '<div style="'
-    "background-color:#f0fdf4;"
-    "border-left:4px solid #22c55e;"
-    "color:#14532d;"
-    "padding:10px 14px;"
-    "border-radius:4px;"
-    "font-size:0.85rem;"
-    "margin-bottom:12px;"
-    '">'
-    "<b>📝 Case Builder Mode Active:</b> Responses focus on drafting formal rebuttals and grievances."
-    "</div>"
-)
+CASE_BUILDER_HTML = """
+<div style="background-color:#f0fdf4; border-left:4px solid #22c55e; color:#14532d; padding:10px 14px; border-radius:4px; font-size:0.85rem; margin-bottom:12px;">
+    <b>📝 Case Builder Mode Active:</b> Responses focus on drafting formal rebuttals and grievances.
+</div>
+"""
 
 ATTRIBUTION_HTML = f"""
 <div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
@@ -1554,15 +1522,11 @@ def build_ui() -> "gr.Blocks":
                 value=USE_REVIEWER,
                 scale=2,
             )
-            direct_mode_toggle = gr.Checkbox(
-                label="Direct Advice Mode",
-                value=False,
-                scale=2,
-            )
-            case_builder_toggle = gr.Checkbox(
-                label="Case Builder (Drafting)",
-                value=False,
-                scale=2,
+            persona_selector = gr.Radio(
+                choices=["Explorer", "Direct Advice", "Case Builder"],
+                label="Assistant Persona",
+                value="Explorer",
+                scale=5,
             )
             export_btn = gr.DownloadButton("⬇️ Save Chat", variant="secondary", scale=1)
             import_btn = gr.UploadButton(
@@ -1587,17 +1551,16 @@ def build_ui() -> "gr.Blocks":
             message: str,
             history: list[dict],
             use_reviewer: bool,
-            direct_mode: bool,
-            case_builder: bool,
+            persona_mode: str,
             **kwargs,
         ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
             import gradio as gr
             
-            # Show mode banners
+            # 1. Identify Banner
             top_banner = DISCLAIMER_HTML
-            if direct_mode:
+            if persona_mode == "Direct Advice":
                 top_banner = DIRECT_MODE_HTML
-            elif case_builder:
+            elif persona_mode == "Case Builder":
                 top_banner = CASE_BUILDER_HTML
 
             request = kwargs.get("request")
@@ -1637,13 +1600,13 @@ def build_ui() -> "gr.Blocks":
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             async for chunk in rag_review_stream(
-                message, prior_history, use_reviewer, direct_mode, case_builder
+                message, prior_history, use_reviewer, persona_mode
             ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
                 yield history, "", hide, gr.update(value=top_banner)
 
-        submit_inputs = [msg_input, chatbot, reviewer_toggle, direct_mode_toggle, case_builder_toggle]
+        submit_inputs = [msg_input, chatbot, reviewer_toggle, persona_selector]
         submit_outputs = [chatbot, msg_input, chip_row, disclaimer_box]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
