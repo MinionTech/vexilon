@@ -46,6 +46,7 @@ print("[boot] All boilerplate complete.", flush=True)
 # ─── Configuration ───────────────────────────────────────────────────────────
 PDF_CACHE_DIR = Path("./pdf_cache")
 LABOUR_LAW_DIR = Path("./data/labour_law")
+TESTS_DIR = LABOUR_LAW_DIR / "tests"
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
@@ -473,7 +474,8 @@ ISSUES: [specific errors or gaps found, if any]
 ESCALATE: [yes/no - only if score < 5]
 """
 
-# Millhaven Factors for Off-Duty Conduct Audit (Issue #154)
+# Millhaven Factors for Off-Duty Conduct Audit (Issue #154) - DEPRECATED in favor of TestRegistry
+# (kept as fallback constants until logic migration is complete)
 MILLHAVEN_FACTORS_PATH = Path("./prompts/millhaven_audit_criteria.txt")
 MILLHAVEN_FACTORS = ""
 if MILLHAVEN_FACTORS_PATH.is_file():
@@ -484,6 +486,67 @@ OFF_DUTY_KEYWORDS = {
     "reddit", "social media", "arrest", "charged", "personal life",
     "instagram", "twitter", "tiktok", "personal blog", "off-site"
 }
+
+# ─── Test Registry (Issue #160) ────────────────────────────────────────────────
+from dataclasses import dataclass
+
+@dataclass
+class TestDoctrine:
+    name: str
+    keywords: set[str]
+    content: str
+    file_path: Path
+
+class TestRegistry:
+    """Registry for modular labour-law tests/doctrines."""
+    def __init__(self):
+        self.tests: list[TestDoctrine] = []
+        self._lock = threading.Lock()
+
+    def load(self, directory: Path) -> None:
+        """Scan directory for .md files and parse them into the registry."""
+        if not directory.exists():
+            print(f"[registry] Warning: {directory} does not exist.")
+            return
+
+        with self._lock:
+            self.tests = []
+            for f in directory.glob("*.md"):
+                try:
+                    text = f.read_text(encoding="utf-8")
+                    lines = text.split("\n")
+                    
+                    # Simple parser for "Keywords: k1, k2"
+                    keywords = set()
+                    content_start = 0
+                    for i, line in enumerate(lines):
+                        if line.startswith("**Keywords:**"):
+                            kw_line = line.replace("**Keywords:**", "").strip()
+                            keywords = {k.strip().lower() for k in kw_line.split(",") if k.strip()}
+                            content_start = i + 1
+                            break
+                    
+                    self.tests.append(TestDoctrine(
+                        name=f.stem.replace("_", " ").title(),
+                        keywords=keywords,
+                        content="\n".join(lines[content_start:]).strip(),
+                        file_path=f
+                    ))
+                except Exception as e:
+                    print(f"[registry] Failed to load {f.name}: {e}")
+            print(f"[registry] Loaded {len(self.tests)} tests from {directory.name}")
+
+    def find_matches(self, query: str) -> list[TestDoctrine]:
+        """Find all tests whose keywords appear in the lowercased query."""
+        q_lower = query.lower()
+        matches = []
+        with self._lock:
+            for test in self.tests:
+                if any(k in q_lower for k in test.keywords):
+                    matches.append(test)
+        return matches
+
+_test_registry = TestRegistry()
 
 # ─── Chunking ─────────────────────────────────────────────────────────────────
 
@@ -907,7 +970,10 @@ def startup(force_rebuild: bool = False) -> None:
 
     # Try to fetch pre-computed index from GitHub if not present locally
     # (Needed for HuggingFace Spaces where PDFs aren't bundled)
+    print(f"[startup] Starting Vexilon {VEXILON_VERSION}…")
     _fetch_pdf_cache_if_missing()
+    load_local_state()
+    _test_registry.load(TESTS_DIR)
 
     if not force_rebuild:
         index, chunks = load_precomputed_index()
@@ -1249,16 +1315,26 @@ async def rag_review_stream(
             verify_message=VERIFY_STEWARD_MESSAGE,
         )
 
-        # Logic Check (Issue #154): Proactively detect off-duty conduct
-        msg_lower = message.lower()
-        query_lower = query.lower()
-        is_off_duty = any(k in msg_lower or k in query_lower for k in OFF_DUTY_KEYWORDS)
+        # Test Registry Logic (Issue #160): Proactively detect doctrines
+        matched_tests = _test_registry.find_matches(message + " " + query)
         
-        if is_off_duty and direct_mode and MILLHAVEN_FACTORS:
-            formatted_prompt += f"\n\n--- MANDATORY LOGIC CHECK: MILLHAVEN AUDIT ---\n"
-            formatted_prompt += f"This case involves potential off-duty conduct. You MUST audit the facts against these 5 factors:\n"
-            formatted_prompt += MILLHAVEN_FACTORS
-            formatted_prompt += "\nIn your response, identify which factors management HAS NOT PROVEN."
+        if direct_mode and matched_tests:
+            for test in matched_tests:
+                formatted_prompt += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+                formatted_prompt += f"This case involves potential {test.name}. You MUST audit the facts against these criteria:\n"
+                formatted_prompt += test.content
+                formatted_prompt += f"\nIn your response, identify which factors in the {test.name} management HAS NOT PROVEN."
+
+        # Fallback for Millhaven if registry didn't catch it (legacy compat)
+        if not matched_tests and direct_mode and MILLHAVEN_FACTORS:
+            msg_lower = message.lower()
+            query_lower = query.lower()
+            is_off_duty = any(k in msg_lower or k in query_lower for k in OFF_DUTY_KEYWORDS)
+            if is_off_duty:
+                formatted_prompt += f"\n\n--- MANDATORY LOGIC CHECK: MILLHAVEN AUDIT ---\n"
+                formatted_prompt += f"This case involves potential off-duty conduct. You MUST audit the facts against these 5 factors:\n"
+                formatted_prompt += MILLHAVEN_FACTORS
+                formatted_prompt += "\nIn your response, identify which factors management HAS NOT PROVEN."
 
         # Bot A: Get raw RAG response
         raw_response = ""
