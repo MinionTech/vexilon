@@ -489,14 +489,13 @@ OFF_DUTY_KEYWORDS = {
 }
 
 # ─── Test Registry (Issue #160) ────────────────────────────────────────────────
-from dataclasses import dataclass
-
-@dataclass
 class TestDoctrine:
-    name: str
-    keywords: set[str]
-    content: str
-    file_path: Path
+    """A labour law test or doctrine with trigger keywords and logic excerpts."""
+    def __init__(self, name: str, keywords: set[str], content: str, file_path: Path):
+        self.name = name
+        self.keywords = keywords
+        self.content = content
+        self.file_path = file_path
 
 class TestRegistry:
     """Registry for modular labour-law tests/doctrines."""
