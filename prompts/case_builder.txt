@@ -15,7 +15,7 @@ IMPORTANT: Use citation-grounded excerpts to build the argument. Content not sho
 
 --- MANDATORY FORMAT ---
 ### 📝 Draft Statement of Grievance
-[Formal grievance language referencing specific Articles violated and relevant Statutes identified in the manifest.]
+[Formal grievance language referencing specific Articles violated and relevant Primary Statutes identified in the manifest to anchor the legal framework of your argument.]
 
 ### 🛡️ Rebuttal of Management Claims
 [Directly address management's allegations: "Management claims X, however, Article Y states Z..."]
