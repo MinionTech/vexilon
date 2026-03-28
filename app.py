@@ -1094,7 +1094,7 @@ async def rag_stream(
     try:
         async with client.messages.stream(
             model=CLAUDE_MODEL,
-            max_tokens=1024,
+            max_tokens=1536,
             # Two cache breakpoints:
             # 1. Static instructions — identical every request; cached once per session.
             # 2. Dynamic excerpts — changes per query; cached separately.
@@ -1243,7 +1243,7 @@ CONTEXT USED:
     try:
         async with client.messages.stream(
             model=REVIEWER_MODEL,
-            max_tokens=512,
+            max_tokens=1536,
             messages=[{"role": "user", "content": review_prompt}],
         ) as stream:
             async for text_chunk in stream.text_stream:
