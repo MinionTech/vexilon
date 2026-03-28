@@ -33,19 +33,18 @@ RUN useradd --uid 1001 --no-create-home --shell /sbin/nologin vexilon
 WORKDIR /app
 
 # 1. Copy the virtualenv and model cache from the builder
-COPY --from=builder --chown=1001:1001 /app/.venv /app/.venv
-COPY --from=builder --chown=1001:1001 /app/hf_cache /app/hf_cache
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/hf_cache /app/hf_cache
 
 # 2. Copy application code and PDF assets
-COPY --chown=1001:1001 data/ ./data/
-COPY --chown=1001:1001 scripts/ ./scripts/
-COPY --chown=1001:1001 prompts/ ./prompts/
-COPY --chown=1001:1001 app.py ./
+COPY data/ ./data/
+COPY scripts/ ./scripts/
+COPY prompts/ ./prompts/
+COPY app.py ./
 RUN chmod +x /app/scripts/*.sh
 
 # Bake the build timestamp into a file after code is copied
-RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt \
-    && chown 1001:1001 /app/build_version.txt
+RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt
 
 # ─── Final Environment ────────────────────────────────────────────────────────
 # Set PATH before any RUN steps that invoke Python so they use the venv.
