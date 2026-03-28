@@ -84,6 +84,7 @@ async def test_rag_review_stream_yields_tokens_from_claude(monkeypatch):
     fake_index = MagicMock()
     monkeypatch.setattr(main_app, "_index", fake_index)
     monkeypatch.setattr(main_app, "_chunks", _fake_chunks())
+    monkeypatch.setattr(config, "VERIFY_ENABLED", False)
 
     def mock_search(*a, **kw):
         return _fake_chunks()

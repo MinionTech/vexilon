@@ -15,8 +15,8 @@ def test_ui_builds_correctly(monkeypatch, mock_anthropic):
     Verifies that build_ui() runs without error and returns a gr.Blocks instance.
     """
     # Setup mocks
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_anthropic)
-    monkeypatch.setattr(app, "_index", "not-none")
+    monkeypatch.setattr(main_app, "get_anthropic", lambda: mock_anthropic)
+    monkeypatch.setattr(main_app, "_index", "not-none")
     
     # This catches syntax errors in handlers or missing component references
     demo = main_app.build_ui()

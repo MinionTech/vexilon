@@ -101,7 +101,7 @@ def test_full_pipeline_returns_semantically_relevant_chunk():
     all_chunks = vacation_chunks + overtime_chunks
 
     index = vector.build_index(all_chunks)
-    results = vector.search_index(index, all_chunks, query="How many vacation days am I entitled to?", k=1)
+    results = vector.search_index(index, all_chunks, query="How many vacation days am I entitled to?", top_k=1)
 
     assert len(results) == 1
     assert results[0]["page"] == 1, (
@@ -124,7 +124,7 @@ def test_full_pipeline_query_matches_overtime_chunk():
     chunks = _make_chunks_from_text(vacation_text, page_num=1) + _make_chunks_from_text(overtime_text, page_num=2)
     index = vector.build_index(chunks)
 
-    results = vector.search_index(index, chunks, query="What is the overtime pay rate?", k=1)
+    results = vector.search_index(index, chunks, query="What is the overtime pay rate?", top_k=1)
 
     assert len(results) == 1
     assert results[0]["page"] == 2, (
