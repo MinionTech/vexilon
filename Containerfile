@@ -5,20 +5,18 @@ FROM ghcr.io/astral-sh/uv:0.11.1 AS uv_source
 FROM python:3.14.3-slim AS builder
 
 COPY --from=uv_source /uv /usr/local/bin/uv
-ENV UV_LINK_MODE=copy
-
 WORKDIR /app
 
 # Install dependencies into a virtualenv
 # This creates a standalone /app/.venv directory
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
+    UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
 # Pre-download the embedding model into a persistent cache
 RUN --mount=type=cache,target=/root/.cache/huggingface \
     HF_HOME=/app/hf_cache \
-    uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
+    UV_LINK_MODE=copy uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS runner
