@@ -220,7 +220,7 @@ def build_ui():
     import gradio as gr
     from src.vexilon import ui_styles
     
-    with gr.Blocks(title="Vexilon: Steward Assistant", css=ui_styles.CUSTOM_CSS, allowed_paths=[config.LABOUR_LAW_DIR.absolute()]) as demo:
+    with gr.Blocks(title="Vexilon: Steward Assistant") as demo:
         gr.Markdown("## BCGEU Steward Assistant")
         
         with gr.Accordion("Knowledge Base & Priority", open=False):
@@ -265,4 +265,5 @@ def build_ui():
 
 if __name__ == "__main__":
     startup()
-    build_ui().launch(server_name="0.0.0.0", server_port=7860)
+    from src.vexilon import ui_styles
+    build_ui().launch(server_name="0.0.0.0", server_port=7860, css=ui_styles.CUSTOM_CSS, allowed_paths=[config.LABOUR_LAW_DIR.absolute()])
