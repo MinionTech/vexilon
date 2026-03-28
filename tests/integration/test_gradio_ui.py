@@ -28,14 +28,12 @@ def test_ui_builds_correctly(monkeypatch, mock_anthropic):
     chatbot = next((c for c in demo.children if isinstance(c, gr.Chatbot)), None)
     assert chatbot is not None
     
-    textbox = None
-    for child in demo.children:
-        if isinstance(child, gr.Textbox):
-            textbox = child
-        elif isinstance(child, gr.Row):
-            # Textbox is inside a Row in app.py
-            for sub in child.children:
-                if isinstance(sub, gr.Textbox):
-                    textbox = sub
+    def find_tb(block):
+        if isinstance(block, gr.Textbox): return block
+        for child in getattr(block, "children", []):
+            tb = find_tb(child)
+            if tb: return tb
+        return None
     
+    textbox = find_tb(demo)
     assert textbox is not None
