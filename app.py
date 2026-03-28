@@ -226,7 +226,7 @@ def build_ui():
         with gr.Accordion("Knowledge Base & Priority", open=False):
             gr.HTML(manifest.build_pdf_download_links())
         
-        chatbot = gr.Chatbot(type="messages", label="Vexilon RAG", show_label=False, height=550)
+        chatbot = gr.Chatbot(label="Vexilon RAG", show_label=False, height=550)
         
         with gr.Row(elem_classes=["compact-row"]):
             with gr.Column(scale=8):
