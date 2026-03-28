@@ -41,9 +41,10 @@ def mock_embedding_model(request, monkeypatch):
     mock_model.tokenizer = mock_tokenize
     mock_model.encode = MagicMock(return_value=[[0.1]*384])
     
+    from src.vexilon import loader
     # We only patch if the test isn't an integration test that specifically wants the real deal
     # (By default we mock, integration tests can un-mock if needed)
-    monkeypatch.setattr(app, "get_embed_model", lambda: mock_model)
+    monkeypatch.setattr(loader, "get_embed_model", lambda: mock_model)
     return mock_model
 
 @pytest.fixture

@@ -53,16 +53,16 @@ services:
     volumes:
       - ./app.py:/app/app.py:ro,z
       - ./tests:/app/tests:ro,z
+      - ./src:/app/src:ro,z
       - ./pyproject.toml:/app/pyproject.toml:ro,z
       - ./uv.lock:/app/uv.lock:ro,z
       - ./conftest.py:/app/conftest.py:ro,z
       - ./compose.yml:/app/compose.yml:ro,z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      HF_HOME: /app/hf_cache
+      HF_HOME: /app/.hf_cache
       TRANSFORMERS_OFFLINE: "1"
       PYTHONPATH: "/app"
-    # We use python -m pytest to ensure /app is in the sys.path for module discovery
     command: sh -c "uv sync --frozen && uv run python -m pytest tests/test_*.py tests/integration/ -v"
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
@@ -76,14 +76,14 @@ services:
     volumes:
       - ./app.py:/app/app.py:ro,z
       - ./data:/app/data:ro,z
-      - ./pdf_cache:/app/pdf_cache:Z
-      - ./hf_cache:/app/hf_cache:Z
+      - ./src:/app/src:ro,z
+      - ./.pdf_cache:/app/.pdf_cache:Z
+      - ./.hf_cache:/app/.hf_cache:Z
     environment:
-      HF_HOME: /app/hf_cache
-      # Prevent HuggingFace token lookup permission errors
+      HF_HOME: /app/.hf_cache
       HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
-    command: uv run python -c "from app import build_index_from_sources; build_index_from_sources()"
+    command: uv run python -m src.vexilon.vector --rebuild
 
   # ── Troubleshooting Version ────────────────────────────────────────────────
   # This service REUSES vexilon but strips the dependencies
@@ -108,7 +108,7 @@ services:
       HF_TOKEN_PATH: /dev/null
       TRANSFORMERS_OFFLINE: "1"
       PORT: "7860"
-      HF_HOME: /app/hf_cache
+      HF_HOME: /app/.hf_cache
       PATH: "/app/.venv/bin:$PATH"
     ports:
       - "7860:7860"
@@ -120,10 +120,11 @@ services:
       - ./app.py:/app/app.py:ro,Z
       - ./scripts:/app/scripts:ro,Z
       - ./data:/app/data:ro,Z
-      - ./pdf_cache:/app/pdf_cache:Z
-      - ./hf_cache:/app/hf_cache:Z
+      - ./src:/app/src:ro,Z
+      - ./.pdf_cache:/app/.pdf_cache:Z
+      - ./.hf_cache:/app/.hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
-    command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."
+    command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs src ."
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 30s
