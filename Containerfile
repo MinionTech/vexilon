@@ -56,7 +56,7 @@ ENV HF_HOME=/app/.hf_cache \
 # 3. Pre-build the FAISS index at image build time.
 RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
 USER 1001
-RUN python -c "from app import build_index_from_sources; build_index_from_sources()"
+RUN python -c "from src.vexilon.vector import build_index_from_sources; build_index_from_sources()"
 
 EXPOSE 7860
 
