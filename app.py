@@ -311,7 +311,7 @@ def _get_all_source_files() -> list[Path]:
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     mds = [p for p in LABOUR_LAW_DIR.rglob("*.md") if not p.is_relative_to(tests_dir)]
-    return sorted(pdfs + mds, key=lambda p: p.name)
+    return sorted(pdfs + mds, key=lambda p: str(p))
 
 
 def _get_source_name(stem: str) -> str:
