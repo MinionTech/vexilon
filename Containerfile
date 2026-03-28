@@ -41,9 +41,9 @@ COPY --from=builder --chown=1001:1001 /app/hf_cache /app/hf_cache
 
 # 2. Copy application code and PDF assets
 COPY --chown=1001:1001 data/ ./data/
-COPY --chown=1001:1001 app.py ./
 COPY --chown=1001:1001 scripts/ ./scripts/
 COPY --chown=1001:1001 prompts/ ./prompts/
+COPY --chown=1001:1001 app.py ./
 RUN chmod +x /app/scripts/*.sh
 
 # Bake the build timestamp into a file after code is copied
