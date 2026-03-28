@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
 # Pre-download the embedding model into a persistent cache
-RUN HF_HOME=/app/hf_cache UV_LINK_MODE=copy uv run python -c \
+RUN HF_HOME=/app/hf_cache HF_HUB_DISABLE_IMPLICIT_TOKEN=1 UV_LINK_MODE=copy uv run python -c \
     "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
