@@ -67,7 +67,7 @@ services:
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
   # Run with: podman-compose run --rm index-refresh
-  # This updates the local pdf_cache/ folder using the smart refresh logic.
+  # This updates the local .pdf_cache/ folder using the smart refresh logic.
   index-refresh:
     build:
       context: .
@@ -76,7 +76,7 @@ services:
     volumes:
       - ./app.py:/app/app.py:ro,z
       - ./data:/app/data:ro,z
-      - ./pdf_cache:/app/pdf_cache:Z
+      - ./.pdf_cache:/app/.pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
     environment:
       HF_HOME: /app/hf_cache
@@ -125,7 +125,7 @@ services:
       - ./app.py:/app/app.py:ro,Z
       - ./scripts:/app/scripts:ro,Z
       - ./data:/app/data:ro,Z
-      - ./pdf_cache:/app/pdf_cache:Z
+      - ./.pdf_cache:/app/.pdf_cache:Z
       - ./hf_cache:/app/hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
     command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."

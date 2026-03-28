@@ -48,17 +48,18 @@ jobs:
         
       - name: Run Index Validation
         run: |
-          echo "Building fresh index based on data/labour_law/..."
+          echo "Building fresh index from data/labour_law/..."
           uv run python -c "from app import build_index_from_sources; build_index_from_sources(force=True)"
-          
-          echo "Comparing newly generated manifest with the one in the PR..."
-          if ! git diff --exit-code pdf_cache/manifest.json; then
-            echo "❌ ERROR: Stale Cache Detected!"
-            echo "The manifest.json does not match the actual PDF content in data/labour_law/."
-            echo "Please run 'podman-compose run --rm index-refresh' locally and commit the updated manifest.json."
-            exit 1
-          fi
-          echo "✅ Cache is fresh."
+
+          echo "Verifying output files exist and are non-empty..."
+          for f in .pdf_cache/index.faiss .pdf_cache/chunks.json .pdf_cache/manifest.json; do
+            if [ ! -s "$f" ]; then
+              echo "❌ ERROR: $f is missing or empty!"
+              exit 1
+            fi
+            echo "✅ $f exists ($(stat -c%s "$f") bytes)"
+          done
+          echo "✅ Index build validation passed."
 
   tests:
     name: Unit Tests

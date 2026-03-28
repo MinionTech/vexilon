@@ -15,7 +15,7 @@ Quick start:
 
 Index pre-computation (run once after updating the PDF):
   python -c "from app import startup; startup(force_rebuild=True)"
-  # Saves pdf_cache/index.faiss + pdf_cache/chunks.json for fast cold starts.
+  # Saves .pdf_cache/index.faiss + .pdf_cache/chunks.json for fast cold starts.
 """
 
 # ─── Standard Library ────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ if not os.getenv("HF_HOME"):
 print("[boot] All boilerplate complete.", flush=True)
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-PDF_CACHE_DIR = Path("./pdf_cache")
+PDF_CACHE_DIR = Path("./.pdf_cache")
 LABOUR_LAW_DIR = Path("./data/labour_law")
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
@@ -302,13 +302,15 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
 
 def _get_all_source_files() -> list[Path]:
     """
-    Scan LABOUR_LAW_DIR for PDF and Markdown files and return a combined list
-    sorted by filename for consistent processing.
+    Recursively scan LABOUR_LAW_DIR for PDF and Markdown files and return a
+    combined list sorted by filename for consistent processing.
+    The tests/ subdirectory is excluded (used by TestRegistry, not RAG index).
     """
     if not LABOUR_LAW_DIR.exists():
         return []
-    pdfs = list(LABOUR_LAW_DIR.glob("*.pdf"))
-    mds = list(LABOUR_LAW_DIR.glob("*.md"))
+    tests_dir = LABOUR_LAW_DIR / "tests"
+    pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
+    mds = [p for p in LABOUR_LAW_DIR.rglob("*.md") if not p.is_relative_to(tests_dir)]
     return sorted(pdfs + mds, key=lambda p: p.name)
 
 
@@ -382,7 +384,7 @@ def build_pdf_download_links() -> str:
             display_name = source_name
 
         # Use relative path for Gradio's /gradio_api/file= endpoint (works in both local and container)
-        file_path = f"data/labour_law/{f.name}"
+        file_path = str(f.relative_to(Path(".")))
         lines.append(
             f'<li><a href="/gradio_api/file={file_path}" target="_blank">{html.escape(display_name)}</a></li>'
         )
@@ -823,7 +825,7 @@ _index: "faiss.IndexFlatIP | None" = None
 
 
 def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
-    """Persist the FAISS index and chunk metadata to pdf_cache/ for fast cold starts."""
+    """Persist the FAISS index and chunk metadata to .pdf_cache/ for fast cold starts."""
     import faiss
 
     faiss.write_index(index, str(INDEX_PATH))
@@ -871,9 +873,9 @@ def _fetch_pdf_cache_if_missing() -> None:
     base = _GITHUB_RAW_BASE
     urls = {}
     if not INDEX_PATH.exists():
-        urls[INDEX_PATH] = f"{base}/pdf_cache/index.faiss"
+        urls[INDEX_PATH] = f"{base}/.pdf_cache/index.faiss"
     if not CHUNKS_PATH.exists():
-        urls[CHUNKS_PATH] = f"{base}/pdf_cache/chunks.json"
+        urls[CHUNKS_PATH] = f"{base}/.pdf_cache/chunks.json"
 
     # Download missing files
     for dest_path, url in urls.items():
@@ -885,7 +887,7 @@ def _fetch_pdf_cache_if_missing() -> None:
 def build_index_from_sources(force: bool = False) -> None:
     """
     Parse all source files (PDF and MD) in LABOUR_LAW_DIR, embed them, 
-    and write the pre-built index to pdf_cache/index.faiss + pdf_cache/chunks.json.
+    and write the pre-built index to .pdf_cache/index.faiss + .pdf_cache/chunks.json.
 
     Args:
         force (bool): If True, ignores the existing manifest and rebuilds the
@@ -958,7 +960,7 @@ def startup(force_rebuild: bool = False) -> None:
     Initialise the vector index and load document chunks.
 
     If force_rebuild=False (default), we try to load a pre-computed index
-    from pdf_cache/. If missing, we fall back to build_index_from_sources()
+    from .pdf_cache/. If missing, we fall back to build_index_from_sources()
     which embeds documents from scratch.
     """
     global _chunks, _index
@@ -1181,7 +1183,7 @@ SOURCE CITATIONS AND CONTEXT:
 
 
 # ─── Review Logging ───────────────────────────────────────────────────────────────
-REVIEW_LOG_PATH = Path("./pdf_cache/review_log.csv")
+REVIEW_LOG_PATH = Path("./.pdf_cache/review_log.csv")
 
 
 def log_review(query: str, raw_response: str, review_output: str, score: int) -> None:

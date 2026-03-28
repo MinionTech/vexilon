@@ -453,7 +453,7 @@ Open `http://localhost:7860`.
 
 - App type: Gradio
 - Secrets: `ANTHROPIC_API_KEY`
-- The `pdf_cache/` directory is committed to the repo and available at runtime
+- The `.pdf_cache/` directory is committed to the repo and available at runtime
 - No persistent volume required (FAISS index rebuilt on each cold start — acceptable for this scale)
 
 ### Environment Variables

@@ -54,10 +54,10 @@ ENV HF_HOME=/app/hf_cache \
 
 # 3. Pre-build the FAISS index at image build time.
 # build_index_from_sources() parses PDFs, embeds chunks, and writes
-# pdf_cache/index.faiss + pdf_cache/chunks.json — without needing
+# .pdf_cache/index.faiss + .pdf_cache/chunks.json — without needing
 # ANTHROPIC_API_KEY (only the local embedding model is used here).
 # Result: container startup loads the index in <1 s instead of 5–10 min.
-RUN mkdir -p /app/pdf_cache && chown 1001:1001 /app/pdf_cache
+RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
 USER 1001
 RUN python -c "from app import build_index_from_sources; build_index_from_sources()"
 

@@ -61,7 +61,7 @@ Then rebuild and commit the index:
 python -c "from app import build_index_from_sources; build_index_from_sources()"
 ```
 
-When done, commit `pdf_cache/index.faiss` and `pdf_cache/chunks.json` if you want to update
+When done, commit `.pdf_cache/index.faiss` and `.pdf_cache/chunks.json` if you want to update
 the GitHub fallback that HF Spaces downloads on first boot.  The container image always
 rebuilds the index automatically during `docker build` via the `Containerfile` `RUN` step — no
 manual commit is required for Docker deployments.
@@ -206,13 +206,13 @@ so the Space starts instantly.
 
 If the app ever runs without the pre-built index (e.g. during development or on a fresh
 Gradio-SDK Space), [`_fetch_pdf_cache_if_missing()`](app.py) downloads
-`pdf_cache/index.faiss` and `pdf_cache/chunks.json` from this public GitHub repo.
-Those files are **not** committed by default (`pdf_cache/` is gitignored).
+`.pdf_cache/index.faiss` and `.pdf_cache/chunks.json` from this public GitHub repo.
+Those files are **not** committed by default (`.pdf_cache/` is gitignored).
 To publish an updated fallback after rebuilding the index locally:
 
 ```bash
 python -c "from app import build_index_from_sources; build_index_from_sources()"
-git add -f pdf_cache/index.faiss pdf_cache/chunks.json
+git add -f .pdf_cache/index.faiss .pdf_cache/chunks.json
 git commit -m "chore(index): rebuild fallback cache"
 git push
 ```
@@ -277,7 +277,12 @@ vexilon/
 ├── compose.yml       # Podman Compose config (production parity)
 ├── SPEC.md           # Product specification
 ├── data/             # Knowledge base source files
-│   └── labour_law/   # Directory for PDF documents to be indexed
+│   └── labour_law/   # Hierarchical document library
+│       ├── primary/       # Collective Agreement, Labour Relations Code
+│       ├── statutory/     # Employment Standards Act, Human Rights Code
+│       ├── resources/     # Steward manuals, ethics guides
+│       ├── jurisprudence/ # Arbitration awards, case precedents
+│       └── tests/         # Test/doctrine registry (Millhaven, KVP)
 ├── tests/            # pytest test suite
 │   ├── test_chunking.py    # chunk_text() unit tests
 │   ├── test_index.py       # FAISS build/search unit tests
@@ -285,5 +290,5 @@ vexilon/
 │   ├── test_rag_stream.py  # rag_stream() unit tests + model name blocklist
 │   └── smoke/
 │       └── test_model_valid.py  # live API model validation
-└── pdf_cache/        # Pre-built FAISS index and chunk metadata
+└── .pdf_cache/       # Pre-built FAISS index and chunk metadata
 ````
