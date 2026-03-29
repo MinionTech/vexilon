@@ -173,3 +173,6 @@ vite.config.ts.timestamp-*
 screenshots/
 *.png
 test_output*.txt
+
+# Git worktrees
+.worktrees

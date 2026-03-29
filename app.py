@@ -62,7 +62,13 @@ GITHUB_LABOUR_LAW_URL = (
 _GITHUB_RAW_BASE = "https://raw.githubusercontent.com/DerekRoberts/vexilon/main"
 
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+REVIEWER_MODEL = os.getenv("REVIEWER_MODEL", "claude-haiku-4-5-20251001")
 CONDENSE_MODEL = os.getenv("CONDENSE_MODEL", "claude-haiku-4-5-20251001")
+
+# Generation Limits (Tokens)
+RAG_MAX_TOKENS = 1536
+REVIEWER_MAX_TOKENS = 1536
+
 # Brain: Local Embeddings (Search) + Cloud LLM (Claude)
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")  # 512-token window
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))  # Sized for BGE-small
@@ -1094,7 +1100,7 @@ async def rag_stream(
     try:
         async with client.messages.stream(
             model=CLAUDE_MODEL,
-            max_tokens=1024,
+            max_tokens=RAG_MAX_TOKENS,
             # Two cache breakpoints:
             # 1. Static instructions — identical every request; cached once per session.
             # 2. Dynamic excerpts — changes per query; cached separately.
@@ -1243,7 +1249,7 @@ CONTEXT USED:
     try:
         async with client.messages.stream(
             model=REVIEWER_MODEL,
-            max_tokens=512,
+            max_tokens=REVIEWER_MAX_TOKENS,
             messages=[{"role": "user", "content": review_prompt}],
         ) as stream:
             async for text_chunk in stream.text_stream:
@@ -1340,7 +1346,7 @@ async def rag_review_stream(
         raw_response = ""
         async with client.messages.stream(
             model=CLAUDE_MODEL,
-            max_tokens=1024,
+            max_tokens=RAG_MAX_TOKENS,
             system=[
                 {
                     "type": "text",
