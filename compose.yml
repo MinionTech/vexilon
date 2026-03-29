@@ -50,6 +50,8 @@ services:
       context: .
       dockerfile: Containerfile
       target: builder
+    mem_limit: 2g         # Integration tests load the real 800 MB embedding model;
+    memswap_limit: 2g     # match mem_limit to disable swap — clean OOM, not host thrash
     volumes:
       - ./app.py:/app/app.py:ro,z
       - ./tests:/app/tests:ro,z
