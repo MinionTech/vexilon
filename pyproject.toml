@@ -17,7 +17,7 @@ dependencies = [
     # ── Vector store ─────────────────────────────────────────────────────────
     "faiss-cpu>=1.8.0",             # In-memory vector index (no server process)
     # ── PDF processing ───────────────────────────────────────────────────────
-    "pypdf>=6.0.0",                 # PDF parsing with page number preservation
+    # PDF parsing with page number preservation
     "pymupdf>=1.27.2.2",
     "pymupdf4llm>=1.27.2.2",
 ]

@@ -1693,7 +1693,12 @@ def build_ui() -> "gr.Blocks":
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    startup()
+    import argparse
+    parser = argparse.ArgumentParser(description="Vexilon RAG Service")
+    parser.add_argument("--rebuild", action="store_true", help="Force rebuild of FAISS index from sources")
+    args = parser.parse_args()
+
+    startup(force_rebuild=args.rebuild)
     app = build_ui()
     # Enable authentication if a password is set in the environment.
     auth_creds = None

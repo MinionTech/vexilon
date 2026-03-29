@@ -109,7 +109,7 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
     
     # Selection based on user request for "best outcome"
     primary_model = os.getenv("CONVERT_MODEL", "claude-sonnet-4-6")
-    secondary_model = os.getenv("CONCENSUS_MODEL", "claude-haiku-4-5-20251001") # Fast consensus model
+    secondary_model = os.getenv("CONSENSUS_MODEL", "claude-haiku-4-5-20251001") # Fast consensus model
     
     print(f"[*] Primary Model:   {primary_model}")
     if verify:
@@ -274,6 +274,12 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
 
     # Final Success Polish
     final_md = "\n\n".join(full_markdown)
+    
+    # Prune redundant blank lines (collapse 3+ into 2)
+    final_md = re.sub(r'\n{3,}', '\n\n', final_md)
+    # Strip leading/trailing whitespace
+    final_md = final_md.strip() + "\n"
+
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_md)
 
