@@ -96,3 +96,23 @@
     font-size: 0.8rem !important;
     min-width: 60px !important;
 }
+
+/* 5. Mobile: collapse Reviewer to checkbox-only */
+@media (max-width: 540px) {
+    #reviewer_toggle.block {
+        min-width: unset !important;
+    }
+    #reviewer_toggle label {
+        padding: 0 6px !important;
+        border: none !important;
+        background: transparent !important;
+    }
+    #reviewer_toggle label span {
+        display: none !important;
+    }
+    #reviewer_toggle input {
+        margin: 0 !important;
+        width: 18px !important;
+        height: 18px !important;
+    }
+}
