@@ -50,6 +50,7 @@ TESTS_DIR = LABOUR_LAW_DIR / "tests"
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
+_CSS_PATH = Path(__file__).parent / "style.css"
 
 # Public GitHub raw URL base for labour_law PDFs.
 # Used for folder/file links in the UI.
@@ -1708,6 +1709,6 @@ if __name__ == "__main__":
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
         allowed_paths=allowed_paths,
-        css="style.css",
+        css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "",
         auth=auth_creds,
     )
