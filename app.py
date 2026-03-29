@@ -218,7 +218,6 @@ _rate_limiter = RateLimiter(
 
 # Two-Bot Self-Review Pipeline (Issue #104)
 USE_REVIEWER = os.getenv("USE_REVIEWER", "false").lower() == "true"
-REVIEWER_MODEL = os.getenv("REVIEWER_MODEL", "claude-haiku-4-5-20251001")
 
 
 def get_vexilon_info():
@@ -263,9 +262,6 @@ VEXILON_VERSION = _info["ver"]
 VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
 VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
 
-# Embedding dimension for all-MiniLM-L6-v2
-EMBED_DIM = 384
-
 # ─── Typing ──────────────────────────────────────────────────────────────────
 from typing import TYPE_CHECKING
 
@@ -295,6 +291,10 @@ def get_embed_model() -> "SentenceTransformer":
             _embed_model.tokenizer.model_max_length = 100000
         print("[embed] Embedding model ready.")
     return _embed_model
+
+
+# Embedding dimension (derived from model to prevent FAISS mismatch)
+EMBED_DIM = get_embed_model().get_sentence_embedding_dimension()
 
 
 def get_anthropic() -> "anthropic.AsyncAnthropic":
@@ -455,7 +455,9 @@ Response format:
 — [Document Name], Article/Section [X], p. [N]
 """
 
-VERIFY_STEWARD_MESSAGE = "Verify w/ Area Office: 604-291-9611"
+VERIFY_STEWARD_MESSAGE = os.getenv(
+    "STEWARD_VERIFY_MESSAGE", "Verify w/ Area Office: 604-291-9611"
+)
 
 def get_persona_prompt(mode_name: str) -> str:
     """Helper to load system prompts for different operational modes."""
