@@ -18,7 +18,7 @@ import argparse
 import traceback
 import difflib
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 import anthropic
 import pymupdf  # High-precision PDF extraction (geometric word reconstruction)

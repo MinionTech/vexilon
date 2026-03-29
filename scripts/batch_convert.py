@@ -29,7 +29,7 @@ def main():
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("Error: ANTHROPIC_API_KEY is not set.")
         print("Export your API key before running the batch converter:")
-        print("export ANTHROPIC_API_KEY=sk-ant-...")
+        print("export ANTHROPIC_API_KEY=your-key-here")
         sys.exit(1)
 
     if args.files:

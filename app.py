@@ -881,6 +881,7 @@ def _fetch_pdf_cache_if_missing() -> None:
     This enables fast cold starts on HuggingFace Spaces where PDFs aren't bundled.
     """
     import urllib.request
+    import urllib.error
 
     # Ensure cache directory exists
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -903,7 +904,7 @@ def _fetch_pdf_cache_if_missing() -> None:
         try:
             urllib.request.urlretrieve(url, dest_path)
             print(f"[fetch] Saved {dest_path}")
-        except Exception as e:
+        except (urllib.error.URLError, OSError) as e:
             print(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")
 
 
