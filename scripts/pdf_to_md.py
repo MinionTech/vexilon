@@ -158,11 +158,17 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
             md_p1 = convert_batch(client, primary_model, batch_text, source_name, batch_id)
             md_p2 = convert_batch(client, secondary_model, batch_text, source_name, batch_id)
 
-            # Strip "(continued)" variants — both models hallucinate these on multi-page sections.
-            # This word never appears in the source PDFs; it's always AI-invented page-break noise.
-            _continued_pattern = re.compile(r'\s*[\(\*-]*\s*continued\s*[\)\*-]*', re.IGNORECASE)
-            md_p1 = _continued_pattern.sub('', md_p1)
-            md_p2 = _continued_pattern.sub('', md_p2)
+            # Strip "(continued)" variants from headings only — AI adds these for multi-page sections.
+            # Only applied to heading lines (starting with #) to preserve legitimate body text usage.
+            def _strip_continued_headings(md: str) -> str:
+                lines = md.split('\n')
+                return '\n'.join(
+                    re.sub(r'\s*[\(\*-]*\s*continued\s*[\)\*-]*', '', l, flags=re.IGNORECASE).strip()
+                    if l.startswith('#') else l
+                    for l in lines
+                )
+            md_p1 = _strip_continued_headings(md_p1)
+            md_p2 = _strip_continued_headings(md_p2)
 
             # Write P1 to disk IMMEDIATELY (incremental save)
             full_markdown.append(md_p1)
