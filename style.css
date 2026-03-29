@@ -53,7 +53,8 @@
 #persona_selector .radio-circle {
     display: none !important;
 }
-#persona_selector label.selected {
+#persona_selector label.selected,
+#persona_selector label:has(input:checked) {
     background-color: var(--primary-500) !important;
     color: white !important;
     border-color: var(--primary-600) !important;

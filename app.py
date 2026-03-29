@@ -1512,7 +1512,7 @@ def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
 
-    with gr.Blocks(title="Collective Agreement Explorer", css="style.css") as demo:
+    with gr.Blocks(title="Collective Agreement Explorer") as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("## BCGEU Steward Assistant")
 
@@ -1708,5 +1708,6 @@ if __name__ == "__main__":
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
         allowed_paths=allowed_paths,
+        css="style.css",
         auth=auth_creds,
     )
