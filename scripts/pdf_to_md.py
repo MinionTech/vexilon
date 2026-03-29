@@ -166,8 +166,14 @@ def main():
 
     input_path = Path(args.input)
     if not input_path.exists():
-        print(f"Error: File {input_path} not found.")
-        sys.exit(1)
+        # Try finding it recursively in the knowledge base
+        matches = list(Path("data/labour_law").rglob(input_path.name))
+        if matches:
+            input_path = matches[0]
+            print(f"[*] Found '{input_path.name}' in {input_path.parent}")
+        else:
+            print(f"Error: File {args.input} not found in current directory or knowledge base.")
+            sys.exit(1)
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("Error: ANTHROPIC_API_KEY environment variable not set.")
