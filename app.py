@@ -309,13 +309,16 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
 def _get_rag_source_files() -> list[Path]:
     """
     Recursively scan LABOUR_LAW_DIR for Markdown files ONLY.
-    PDFs are completely ignored for indexing purposes.
+    PDFs and Forensic Integrity Audits are completely ignored for indexing.
     The tests/ subdirectory is excluded.
     """
     if not LABOUR_LAW_DIR.exists():
         return []
     tests_dir = LABOUR_LAW_DIR / "tests"
-    mds = [p for p in LABOUR_LAW_DIR.rglob("*.md") if not p.is_relative_to(tests_dir)]
+    mds = [
+        p for p in LABOUR_LAW_DIR.rglob("*.md") 
+        if not p.is_relative_to(tests_dir) and not p.name.endswith(".integrity.md")
+    ]
     return sorted(mds, key=lambda p: str(p))
 
 def _get_download_source_files() -> list[Path]:
