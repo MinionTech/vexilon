@@ -47,7 +47,7 @@ def is_hallucination(word: str, raw_text_lower: str) -> bool:
     return True
 
 STRUCTURAL_WORDS = {
-    "table", "contents", "continued", "appendix", "article", "section", 
+    "table", "contents", "appendix", "article", "section", 
     "part", "page", "break", "definition", "term", "title", "subject"
 }
 
@@ -79,7 +79,7 @@ STRICT INTEGRITY RULES:
 4. STRUCTURE: Use # for Articles, ## for Sections. Use Table format for lists of definitions or tables.
 5. NO NOISE: Remove page numbers, URLs, and footers.
 6. FORMAT: Output ONLY Markdown. No preamble, 'Here is the markdown' talk, or meta-notes.
-7. NO META-TALK: Do NOT add meta-text like 'Included for completeness', '[Batch 22]', or '(Continued)'. Your output must contain ONLY text that originated from the PDF source document."""
+7. NO META-TALK: Do NOT add meta-text like 'Included for completeness', '[Batch 22]', or '(Continued)'. Your output must contain ONLY text that originated from the PDF source document. Do NOT synthesize structure that is not explicitly in the text."""
 
     max_retries = 3
     for attempt in range(max_retries):
@@ -194,16 +194,21 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
                             break
                 
                 print(f"    [*] BATCH PREVIEW READY: Check {output_path.name}")
-                ans = input("    [?] Approve this batch anyway? (y/n/skip): ").lower().strip()
+                ans = input("    [?] Approve this batch anyway? (y/n/skip/p2): ").lower().strip()
                 if ans == 'n':
                     sys.exit(1)
                 elif ans == 'skip':
                     print("[SKIP] Batch skipped (Check file manually later).")
                     continue
+                elif ans == 'p2':
+                    md_p1 = md_p2
+                    print("    [*] Overriding P1 with P2 consensus.")
 
                 integrity_failures += 1
                 with open(audit_path, "a", encoding="utf-8") as af:
                     af.write(f"### [Batch {batch_id}] Hallucination Flagged: {true_hallucinations}\n")
+                    if ans == 'p2':
+                        af.write("- ACTION: Auditor overrode P1 with P2 consensus.\n")
                     af.write("| Words | Context (Snippet) |\n|---|---|\n")
                     for w in true_hallucinations[:10]:
                         af.write(f"| `{w}` | {md_p1.splitlines()[0][:60]}... |\n")
