@@ -36,6 +36,8 @@ def clean_for_integrity_check(text: str) -> str:
     # Collapse whitespace and lowercase
     return " ".join(text.lower().split())
 
+STRUCTURAL_WORDS = {"table", "contents", "continued", "appendix", "article", "section", "part", "page", "break"}
+
 def extract_raw_text(pdf_path: Path) -> List[str]:
     """Basic extraction using pypdf to get page-by-page raw content."""
     print(f"[*] Extracting raw text from {pdf_path.name}...")
@@ -63,7 +65,8 @@ STRICT INTEGRITY RULES:
 3. NO SUMMARIZATION: Every single sentence of substance MUST be preserved in its entirety.
 4. STRUCTURE: Use # for Articles, ## for Sections. Use Table format for lists of definitions or tables.
 5. NO NOISE: Remove page numbers, URLs, and footers.
-6. FORMAT: Output ONLY Markdown. No preamble or 'Here is the markdown' talk."""
+6. FORMAT: Output ONLY Markdown. No preamble, 'Here is the markdown' talk, or meta-notes.
+7. NO META-TALK: Do NOT add meta-text like 'Included for completeness', '[Batch 22]', or '(Continued)'. Your output must contain ONLY text that originated from the PDF source document."""
 
     max_retries = 3
     for attempt in range(max_retries):
@@ -85,7 +88,7 @@ STRICT INTEGRITY RULES:
     
     return "" # Unreachable
 
-def convert_to_md(raw_pages: List[str], source_name: str, verify: bool = True) -> str:
+def convert_to_md(raw_pages: List[str], source_name: str, output_path: Path, verify: bool = True) -> str:
     """Use Claude to restructure into clean MD with optional dual-pass verification."""
     client = anthropic.Anthropic()
     
@@ -126,11 +129,11 @@ def convert_to_md(raw_pages: List[str], source_name: str, verify: bool = True) -
             md_words = set(md_fingerprint.split())
             new_words = md_words - raw_words
             
-            # Filter out common formatting words that might be added (e.g. "Table", "Note")
-            true_hallucinations = [w for w in new_words if len(w) > 3] 
+            # Filter out structural and common formatting words
+            true_hallucinations = [w for w in new_words if len(w) > 3 and w not in STRUCTURAL_WORDS] 
             
             if true_hallucinations:
-                print(f"    [!] WARNING: Potential hallucinations detected: {true_hallucinations[:5]}...")
+                print(f"    [!] WARNING: Potential substantive hallucinations: {true_hallucinations[:5]}...")
                 integrity_failures += 1
             
             # Consensus Check (P1 vs P2)
@@ -138,6 +141,11 @@ def convert_to_md(raw_pages: List[str], source_name: str, verify: bool = True) -
                 print(f"    [!] NOTICE: Structural divergence between models. Defaulting to {primary_model}.")
 
         full_markdown.append(md_p1)
+        
+        # Incremental save to prevent data loss
+        with open(output_path, "a", encoding="utf-8") as f:
+            f.write(md_p1 + "\n\n")
+            
         time.sleep(0.5)
 
     if integrity_failures > 0:
@@ -171,13 +179,14 @@ def main():
     print(f"Input:  {input_path}")
     print(f"Output: {output_path}")
     print("-" * 66)
+    
+    # Initialize/Clear output file for incremental writes
+    output_path.write_text("", encoding="utf-8")
 
     try:
         raw_pages = extract_raw_text(input_path)
-        markdown_content = convert_to_md(raw_pages, input_path.stem, verify=args.verify)
+        markdown_content = convert_to_md(raw_pages, input_path.stem, output_path, verify=args.verify)
         
-        # Save output
-        output_path.write_text(markdown_content, encoding="utf-8")
         print("-" * 66)
         print(f"[FINISH] Conversion Complete.")
         print(f"Vexilon Integrity Fingerprint: {len(markdown_content)} chars / {len(markdown_content.split())} words")
