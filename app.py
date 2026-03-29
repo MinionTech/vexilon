@@ -2,7 +2,7 @@
 app.py — BCGEU Steward Assistant
 --------------------------------------------
 Tech stack:
-  - pypdf                : PDF → pages with page number preservation
+  - pymupdf             : PDF extraction for Markdown conversion
   - sentence-transformers: Local CPU embeddings (all-MiniLM-L6-v2, no API key)
   - FAISS                : In-memory vector index (no server process)
   - Anthropic            : Claude (claude-haiku-4-5-20251001) for responses
@@ -39,7 +39,7 @@ if not os.getenv("HF_HOME"):
     os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
 
 # ─── Third-party: Deferred Imports ───────────────────────────────────────────
-# (numpy, pypdf, anthropic, faiss, sentence_transformers, gradio)
+# (numpy, anthropic, faiss, sentence_transformers, gradio)
 # are imported inside functions to keep startup and test-loading fast.
 print("[boot] All boilerplate complete.", flush=True)
 
@@ -679,7 +679,9 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     Markdown is preferred for structured summaries as it preserves semantic hierarchies
     better than PDF extraction.
     """
-    content = md_path.read_text(encoding="utf-8")
+    content = md_path.read_text(encoding="utf-8").strip()
+    if not content:
+        return []
     source_name = _get_source_name(md_path.stem)
     print(f"[loader] Parsing Markdown '{source_name}'…")
 
@@ -710,89 +712,6 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         char_offset += len(line) + 1 # +1 for newline
 
     return chunk_text(content, token_metadata, source_name)
-
-
-def load_pdf_chunks(pdf_path: Path) -> list[dict]:
-    """
-    Parse the PDF at *pdf_path* into one continuous stream before chunking.
-    This bridges page boundaries so sentences that span pages aren't decapitated.
-
-    Navigational pages (Table of Contents, alphabetical Index) are skipped
-    so they don't contaminate semantic search results.  URL artifacts from
-    web-extracted statute PDFs are also stripped before embedding.
-    """
-    from pypdf import PdfReader
-    import re
-
-    reader = PdfReader(str(pdf_path))
-    source_name = _get_source_name(pdf_path.stem)
-    print(f"[loader] Parsing '{source_name}' ({len(reader.pages)} pages)…")
-
-    tokenizer = get_embed_model().tokenizer
-    full_text = ""
-    token_metadata = []  # List of (char_start, char_end, page_num, header)
-
-    current_header = ""
-    header_pattern = re.compile(r"^\s*(ARTICLE|APPENDIX)\s+(\d+|[A-Z]+)", re.IGNORECASE)
-    skipped_pages = 0
-
-    for page_idx, page in enumerate(reader.pages):
-        page_num = page_idx + 1
-        page_text = page.extract_text() or ""
-        if not page_text.strip():
-            continue
-
-        # Skip pure navigational pages (TOC / alphabetical Index).
-        # These mention every article by name but add no substantive content;
-        # indexing them causes TOC entries to crowd out real contract text in
-        # semantic search results.
-        if _is_toc_or_index_page(page_text):
-            skipped_pages += 1
-            continue
-
-        # Strip web-extraction artifacts (URLs, timestamps) from statute PDFs.
-        page_text = _clean_page_text(page_text)
-        if not page_text.strip():
-            continue
-
-        # Update breadcrumb header context
-        # Look through more lines - headers can appear anywhere on the page due to
-        # complex PDF layouts (two-column, footnotes, etc.)
-        page_lines = page_text.split("\n")
-        lines_to_check = min(50, len(page_lines))
-        for line in page_lines[:lines_to_check]:
-            # Skip TOC-style entries and page numbers
-            if ".........." in line or (
-                line.strip().endswith(".") and re.search(r"\d+$", line.strip())
-            ):
-                continue
-            match = header_pattern.search(line)
-            if match:
-                current_header = match.group(0).strip().upper()
-                break  # Usually one primary header per page
-
-        # Track offsets in the global full_text
-        page_offset = len(full_text)
-        full_text += page_text + "\n"
-
-        # Tokenize this page and record metadata for every token
-        encoding = tokenizer(
-            page_text,
-            add_special_tokens=False,
-            return_offsets_mapping=True,
-            truncation=False,
-        )
-        for start, end in encoding.offset_mapping:
-            token_metadata.append(
-                (page_offset + start, page_offset + end, page_num, current_header)
-            )
-
-    if skipped_pages:
-        print(
-            f"[loader] Skipped {skipped_pages} navigational pages (TOC/index) in '{source_name}'."
-        )
-
-    return chunk_text(full_text, token_metadata, source_name)
 
 
 # ─── FAISS Index ──────────────────────────────────────────────────────────────
