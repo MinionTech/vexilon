@@ -294,7 +294,8 @@ def get_embed_model() -> "SentenceTransformer":
 
 
 # Embedding dimension (derived from model to prevent FAISS mismatch)
-EMBED_DIM = get_embed_model().get_sentence_embedding_dimension()
+# Hardcoded to 384 for BAAI/bge-small-en-v1.5 to avoid model load during import/pytest collection.
+EMBED_DIM = 384
 
 
 def get_anthropic() -> "anthropic.AsyncAnthropic":
