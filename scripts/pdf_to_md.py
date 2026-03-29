@@ -38,7 +38,7 @@ def clean_for_integrity_check(text: str) -> str:
 
 STRUCTURAL_WORDS = {
     "table", "contents", "continued", "appendix", "article", "section", 
-    "part", "page", "break", "definition", "term", "title"
+    "part", "page", "break", "definition", "term", "title", "subject"
 }
 
 def extract_raw_text(pdf_path: Path) -> List[str]:
@@ -139,6 +139,12 @@ def convert_to_md(raw_pages: List[str], source_name: str, output_path: Path, ver
             
             if true_hallucinations:
                 print(f"    [!] WARNING: Potential substantive hallucinations: {true_hallucinations[:5]}...")
+                # Also print the context line for rapid human audit
+                for h_word in true_hallucinations[:3]:
+                    for line in md_p1.split("\n"):
+                        if h_word in line.lower():
+                            print(f"        [>] Line: \"{line.strip()[:100]}\"")
+                            break
                 integrity_failures += 1
                 
                 # Capture the 'iffier' lines for the audit report
