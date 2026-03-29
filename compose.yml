@@ -123,6 +123,7 @@ services:
       - /tmp
     volumes:
       - ./app.py:/app/app.py:ro,Z
+      - ./style.css:/app/style.css:ro,Z
       - ./scripts:/app/scripts:ro,Z
       - ./data:/app/data:ro,Z
       - ./.pdf_cache:/app/.pdf_cache:Z

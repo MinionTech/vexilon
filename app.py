@@ -899,8 +899,11 @@ def _fetch_pdf_cache_if_missing() -> None:
     # Download missing files
     for dest_path, url in urls.items():
         print(f"[fetch] Downloading {dest_path.name} from {url}…")
-        urllib.request.urlretrieve(url, dest_path)
-        print(f"[fetch] Saved {dest_path}")
+        try:
+            urllib.request.urlretrieve(url, dest_path)
+            print(f"[fetch] Saved {dest_path}")
+        except Exception as e:
+            print(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")
 
 
 def build_index_from_sources(force: bool = False) -> None:
