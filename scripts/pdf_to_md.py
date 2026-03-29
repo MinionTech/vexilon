@@ -107,7 +107,8 @@ def convert_to_md(raw_pages: List[str], source_name: str, output_path: Path, ver
     batch_size = 3 # Smaller batches = higher precision
     full_markdown = []
     integrity_failures = 0
-    audit_log = [f"# Vexilon Forensic Integrity Audit: {source_name}\n\n"]
+    audit_path = output_path.with_suffix(".integrity.md")
+    audit_path.write_text(f"# Vexilon Forensic Integrity Audit: {source_name}\n\n", encoding="utf-8")
 
     for i in range(0, len(raw_pages), batch_size):
         batch = raw_pages[i:i+batch_size]
@@ -141,23 +142,25 @@ def convert_to_md(raw_pages: List[str], source_name: str, output_path: Path, ver
                 integrity_failures += 1
                 
                 # Capture the 'iffier' lines for the audit report
-                audit_log.append(f"### [Batch {batch_id}] Hallucination Flagged: {true_hallucinations}\n")
-                audit_log.append("| Substantive Words Added | Contextual Line (Markdown) |\n|---|---|\n")
-                for h_word in true_hallucinations[:10]:
-                    # Find first line in MD containing this word
-                    for line in md_p1.split("\n"):
-                        if h_word in line.lower():
-                            audit_log.append(f"| `{h_word}` | {line.strip()} |\n")
-                            break
-                audit_log.append("\n---\n")
+                with open(audit_path, "a", encoding="utf-8") as af:
+                    af.write(f"### [Batch {batch_id}] Hallucination Flagged: {true_hallucinations}\n")
+                    af.write("| Substantive Words Added | Contextual Line (Markdown) |\n|---|---|\n")
+                    for h_word in true_hallucinations[:10]:
+                        # Find first line in MD containing this word
+                        for line in md_p1.split("\n"):
+                            if h_word in line.lower():
+                                af.write(f"| `{h_word}` | {line.strip()} |\n")
+                                break
+                    af.write("\n---\n")
             
             # Consensus Check (P1 vs P2)
             if clean_for_integrity_check(md_p1) != clean_for_integrity_check(md_p2):
                 print(f"    [!] NOTICE: Structural divergence between models. Defaulting to {primary_model}.")
-                audit_log.append(f"### [Batch {batch_id}] Structural Divergence Detected\n")
-                audit_log.append(f"- Note: {secondary_model} output differed from {primary_model}.\n")
-                audit_log.append("- Divergence usually occurs on complex headers, tables, or noisy footers.\n")
-                audit_log.append("\n---\n")
+                with open(audit_path, "a", encoding="utf-8") as af:
+                    af.write(f"### [Batch {batch_id}] Structural Divergence Detected\n")
+                    af.write(f"- Note: {secondary_model} output differed from {primary_model}.\n")
+                    af.write("- Divergence usually occurs on complex headers, tables, or noisy footers.\n")
+                    af.write("\n---\n")
 
         full_markdown.append(md_p1)
         
@@ -170,12 +173,11 @@ def convert_to_md(raw_pages: List[str], source_name: str, output_path: Path, ver
     if integrity_failures > 0:
         print(f"\n[!] ALERT: Found {integrity_failures} batches with potential word-integrity issues.")
         print(f"    Please audit: {output_path.with_suffix('.integrity.md')}")
-        
-        # Save the audit log
-        audit_path = output_path.with_suffix(".integrity.md")
-        audit_path.write_text("".join(audit_log), encoding="utf-8")
     else:
         print("\n[SUCCESS] Forensic word-integrity check passed.")
+        # If everything passed, we can leave a small clean audit
+        with open(audit_path, "a", encoding="utf-8") as af:
+            af.write("\n\n✅ **SUCCESS:** Forensic word-integrity check passed with 100% parity.\n")
 
     return "\n\n".join(full_markdown)
 
