@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Optional, List
 
 import anthropic
-from pypdf import PdfReader
+import pymupdf  # High-precision PDF extraction (geometric word reconstruction)
 
 def print_banner():
     print("=" * 66)
@@ -39,14 +39,14 @@ def clean_for_integrity_check(text: str) -> str:
 STRUCTURAL_WORDS = {"table", "contents", "continued", "appendix", "article", "section", "part", "page", "break"}
 
 def extract_raw_text(pdf_path: Path) -> List[str]:
-    """Basic extraction using pypdf to get page-by-page raw content."""
-    print(f"[*] Extracting raw text from {pdf_path.name}...")
-    reader = PdfReader(str(pdf_path))
+    """Precision extraction using PyMuPDF to preserve word integrity."""
+    print(f"[*] Extracting raw text with high precision (PyMuPDF) from {pdf_path.name}...")
+    doc = pymupdf.open(str(pdf_path))
     pages = []
     
-    for page in reader.pages:
-        text = page.extract_text() or ""
-        # Remove bclaws-specific web artifacts that contaminate the word count
+    for page in doc:
+        text = page.get_text() or ""
+        # Remove bclaws-specific web artifacts
         text = re.sub(r"https?://\www\.bclaws\.gov\.bc\.ca/\S*", "", text)
         text = re.sub(r"\d{2}/\d{2}/\d{4},?\s*\d{2}:\d{2}\s+[^\n]*", "", text)
         pages.append(text.strip())
