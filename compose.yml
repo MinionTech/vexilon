@@ -77,7 +77,6 @@ services:
       - ./app.py:/app/app.py:ro,z
       - ./data:/app/data:ro,z
       - ./.pdf_cache:/app/.pdf_cache:Z
-      - ./hf_cache:/app/hf_cache:Z
     environment:
       HF_HOME: /app/hf_cache
       # Prevent HuggingFace token lookup permission errors
@@ -127,7 +126,6 @@ services:
       - ./scripts:/app/scripts:ro,Z
       - ./data:/app/data:ro,Z
       - ./.pdf_cache:/app/.pdf_cache:Z
-      - ./hf_cache:/app/hf_cache:Z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
     command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."
     healthcheck:
