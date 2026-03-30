@@ -3,7 +3,7 @@ title: BCGEU Steward Assistant
 emoji: 📋
 colorFrom: blue
 colorTo: indigo
-sdk: gradio
+sdk: docker
 sdk_version: "6.9.0"
 app_file: app.py
 pinned: false
