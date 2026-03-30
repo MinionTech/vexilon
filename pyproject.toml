@@ -6,23 +6,20 @@ requires-python = ">=3.12"
 dependencies = [
     # ── Web UI ──────────────────────────────────────────────────────────────
     "gradio>=6.7.0",
-
     # ── LLM ─────────────────────────────────────────────────────────────────
     "anthropic>=0.84.0",            # Claude API client
-
     # ── Embeddings (local CPU, no API key required) ──────────────────────────
     # torch is sourced from the CPU-only wheel index (see [[tool.uv.index]])
     # to avoid pulling the 3 GB CUDA stack that the default PyPI index would
     # resolve via sentence-transformers' transitive dep.
     "torch",
-    "sentence-transformers>=5.0.0", # all-MiniLM-L6-v2 — runs on CPU, ~80 MB model
-
+    "sentence-transformers>=5.0.0", # BAAI/bge-small-en-v1.5 — runs on CPU
     # ── Vector store ─────────────────────────────────────────────────────────
     "faiss-cpu>=1.8.0",             # In-memory vector index (no server process)
-
     # ── PDF processing ───────────────────────────────────────────────────────
-    "pypdf>=6.0.0",                 # PDF parsing with page number preservation
-
+    # PDF parsing with page number preservation
+    "pymupdf>=1.27.2.2",
+    "pymupdf4llm>=1.27.2.2",
 ]
 
 [dependency-groups]

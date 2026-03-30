@@ -23,11 +23,10 @@ of labour law and contract documents.
 | Component | Technology |
 |-----------|------------|
 | LLM | Anthropic Claude (`claude-haiku-4-5-20251001`) |
-| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` — local CPU, no API key |
+| Embeddings | `BAAI/bge-small-en-v1.5` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
-| PDF Parsing | pypdf — preserves page numbers |
 | Web UI | Gradio 6 — `http://localhost:7860` |
-| Knowledge Base | Multi-source PDFs in `data/labour_law/` |
+| Knowledge Base | Multi-source Markdown in `data/labour_law/` |
 | Deployment | Hugging Face Spaces + GitHub Actions |
 
 ## Knowledge Base
@@ -50,21 +49,25 @@ Vexilon is programmed to prioritize the **Collective Agreement** above all else.
 
 ### Adding or Updating Documents
 
-Drop PDFs into `data/labour_law/` using our **Smart Renaming** convention to ensure proper indexing and UI labeling:
+Vexilon indexes **Markdown files** (`.md`), not PDFs. PDFs are kept only for the "Download Original" links in the UI.
 
-`[Index]_[Category]_[Human Readable Title].pdf`
-*(Example: `7_Guidance_Social Media Policy.pdf`)*
+Add or replace Markdown files in `data/labour_law/` using the naming convention:
 
-Then rebuild and commit the index:
+`[Index]_[Category]_[Human Readable Title].md`
+*(Example: `7_Guidance_Social Media Policy.md`)*
+
+To convert a PDF to Markdown first, see [docs/MARKDOWN_CONVERSION.md](docs/MARKDOWN_CONVERSION.md).
+
+Then rebuild the index:
 
 ```bash
-python -c "from app import build_index_from_sources; build_index_from_sources()"
+python app.py --rebuild-index
 ```
 
 When done, commit `.pdf_cache/index.faiss` and `.pdf_cache/chunks.json` if you want to update
-the GitHub fallback that HF Spaces downloads on first boot.  The container image always
-rebuilds the index automatically during `docker build` via the `Containerfile` `RUN` step — no
-manual commit is required for Docker deployments.
+the GitHub fallback that HF Spaces downloads on first boot. The container image always
+rebuilds the index automatically during `docker build` — no manual commit is required for
+Docker deployments.
 
 > [!TIP]
 > **Suggested Additions:**
@@ -90,7 +93,7 @@ manual commit is required for Docker deployments.
 **Run the production-optimized container:**
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 podman-compose up --build
 ```
 
@@ -114,7 +117,7 @@ Open <http://localhost:7860> in your browser.
 Check with `echo $ANTHROPIC_API_KEY` and re-export before running:
 
 ````bash
-export ANTHROPIC_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 podman-compose up
 ````
 
@@ -132,6 +135,19 @@ The app is ready immediately on page load — no dropdown, no Load button.
 
 > **Note:** Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.
 
+## Maintenance & Tools
+
+### PDF to Markdown Conversion
+For optimal RAG performance, we recommend converting core PDFs into high-fidelity Markdown. This improves header-aware chunking and removes "noise" like web-to-PDF artifacts.
+
+See [docs/MARKDOWN_CONVERSION.md](docs/MARKDOWN_CONVERSION.md) for full rationale and instructions.
+
+**Run the converter:**
+```bash
+export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+python scripts/pdf_to_md.py path/to/document.pdf
+```
+
 ## Configuration
 
 All settings are optional — defaults match the product specification.
@@ -144,7 +160,7 @@ All settings are optional — defaults match the product specification.
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
 | `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
-| `EMBED_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers embedding model |
+| `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
 | `CHUNK_SIZE` | `450` | Tokens per chunk |
@@ -211,7 +227,7 @@ Those files are **not** committed by default (`.pdf_cache/` is gitignored).
 To publish an updated fallback after rebuilding the index locally:
 
 ```bash
-python -c "from app import build_index_from_sources; build_index_from_sources()"
+python app.py --rebuild-index
 git add -f .pdf_cache/index.faiss .pdf_cache/chunks.json
 git commit -m "chore(index): rebuild fallback cache"
 git push
@@ -247,24 +263,39 @@ HF_TOKEN=YOUR_HF_TOKEN ./.github/scripts/deploy.sh sha-$(git rev-parse --short H
 
 ### Running tests
 
-Vexilon uses a **Quality Gate** pattern in the `compose.yml`. By default, the app will not start unless the test suite passes.
+Vexilon uses a **Quality Gate** pattern in `compose.yml` — the app will not start unless the test suite passes.
+
+#### Test tiers
+
+| Tier | Location | Model | When to run |
+|---|---|---|---|
+| **Unit** | `tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
+| **Integration** | `tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
+| **Smoke** | `tests/smoke/` | Real Anthropic API | Manually, to verify live API connectivity |
+
+#### Commands
 
 ````bash
-# 1. Run the gated startup (Tests must pass before Vexilon launches)
-export ANTHROPIC_API_KEY=sk-ant-...
-podman-compose up
+# Run unit tests only — fast, safe locally
+uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
 
-# 2. Skip the gate (Useful for rapid UI iteration)
-podman-compose up vexilon
-
-# 3. Run containerized tests manually
+# Run full suite (unit + integration) inside the memory-capped container
 podman-compose run --rm tests
 
-# 4. Run 'Smoke Tests' against the real Anthropic API (inside container)
-podman-compose run --rm tests sh -c "uv run pytest tests/smoke/ -v"
+# Gated startup — tests must pass before Vexilon launches
+export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+podman-compose up
+
+# Skip the gate — useful for rapid UI iteration
+podman-compose up vexilon
+
+# Smoke tests — verifies real Anthropic API connectivity
+podman-compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
 ````
 
-> 💡 **Tip:** Local tests use mocked responses by default to save API credits. Use the Smoke Test command above to verify real API connectivity.
+> [!NOTE]
+> Integration tests intentionally load the real embedding model. Run them locally only if you have
+> ~1.5 GB of free RAM headroom. The Compose `tests` service caps usage at 2 GB.
 
 ## Project Structure
 
@@ -284,11 +315,24 @@ vexilon/
 │       ├── jurisprudence/ # Arbitration awards, case precedents
 │       └── tests/         # Test/doctrine registry (Millhaven, KVP)
 ├── tests/            # pytest test suite
+│   ├── conftest.py         # root: mock embedding model + mock Anthropic client
 │   ├── test_chunking.py    # chunk_text() unit tests
+│   ├── test_condense_query.py  # query condensation unit tests
+│   ├── test_fetch.py       # index bootstrap / HTTP fetch unit tests
 │   ├── test_index.py       # FAISS build/search unit tests
-│   ├── test_pdf_loader.py  # load_pdf_chunks() unit tests
-│   ├── test_rag_stream.py  # rag_stream() unit tests + model name blocklist
+│   ├── test_knowledge_base.py  # PDF/MD parity integrity check
+│   ├── test_md_ingestion.py    # TOC detection, artifact cleaning, MD loader
+│   ├── test_md_loader.py   # load_md_chunks() unit tests
+│   ├── test_persistence.py # index save/load round-trip tests
+│   ├── test_rag_stream.py  # rag_stream() unit tests
+│   ├── test_rate_limit.py  # rate limiter unit tests
+│   ├── test_sanitize_input.py  # prompt injection detection tests
+│   ├── test_verify_response.py # verification bot unit tests
+│   ├── integration/        # real model — run via: podman-compose run --rm tests
+│   │   ├── test_app_flow.py        # full startup → index → RAG stream flow
+│   │   ├── test_embed_pipeline.py  # sentence-transformers + FAISS interop
+│   │   └── test_gradio_ui.py       # Gradio Blocks construction check
 │   └── smoke/
-│       └── test_model_valid.py  # live API model validation
+│       └── test_model_valid.py  # live Anthropic API model validation
 └── .pdf_cache/       # Pre-built FAISS index and chunk metadata
 ````

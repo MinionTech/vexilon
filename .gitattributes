@@ -1,0 +1,10 @@
+# GitHub Linguist Overrides
+# -------------------------
+# Mark all generated Markdown files in the knowledge base as "generated"
+# so they are collapsed by default in Pull Request diffs. This prevents
+# massive files (like 200+ page Collective Agreements) from crashing the UI.
+
+data/labour_law/**/*.md linguist-generated=true
+
+# Keep PDFs as binary so they are handled correctly
+data/labour_law/**/*.pdf binary

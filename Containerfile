@@ -40,7 +40,7 @@ COPY --from=builder /app/hf_cache /app/hf_cache
 COPY data/ ./data/
 COPY scripts/ ./scripts/
 COPY prompts/ ./prompts/
-COPY app.py ./
+COPY app.py style.css ./
 RUN chmod +x /app/scripts/*.sh
 
 # Bake the build timestamp into a file after code is copied

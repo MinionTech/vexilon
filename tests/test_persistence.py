@@ -167,10 +167,10 @@ def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
     # Mock LABOUR_LAW_DIR to point to a tmp_path with one dummy PDF
     law_dir = tmp_path / "data" / "labour_law"
     law_dir.mkdir(parents=True)
-    (law_dir / "dummy.pdf").write_bytes(b"dummy")
+    (law_dir / "dummy.md").write_bytes(b"dummy")
     monkeypatch.setattr(app, "LABOUR_LAW_DIR", law_dir)
 
-    monkeypatch.setattr(app, "load_pdf_chunks", lambda _path: fake_chunks)
+    monkeypatch.setattr(app, "load_md_chunks", lambda _path: fake_chunks)
     monkeypatch.setattr(app, "build_index", lambda chunks: fake_index)
     monkeypatch.setattr(app, "save_index", lambda idx, cks: save_calls.append((idx, cks)))
 
@@ -198,12 +198,12 @@ def test_startup_slow_path_skips_precomputed_even_if_present(monkeypatch, tmp_pa
     # Mock LABOUR_LAW_DIR to point to a tmp_path with one dummy PDF
     law_dir = tmp_path / "data" / "labour_law"
     law_dir.mkdir(parents=True, exist_ok=True)
-    (law_dir / "dummy.pdf").write_bytes(b"dummy")
+    (law_dir / "dummy.md").write_bytes(b"dummy")
     monkeypatch.setattr(app, "LABOUR_LAW_DIR", law_dir)
 
     # load_precomputed_index would return stale data — force_rebuild must bypass it
     monkeypatch.setattr(app, "load_precomputed_index", lambda: (stale_index, stale_chunks))
-    monkeypatch.setattr(app, "load_pdf_chunks", lambda _: fresh_chunks)
+    monkeypatch.setattr(app, "load_md_chunks", lambda _: fresh_chunks)
     monkeypatch.setattr(app, "build_index", lambda _: fresh_index)
     monkeypatch.setattr(app, "save_index", lambda idx, cks: None)
 

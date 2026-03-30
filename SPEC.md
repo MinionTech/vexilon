@@ -310,10 +310,10 @@ Each response must follow this structure:
 | Component | Choice | Rationale |
 |---|---|---|
 | **LLM** | Anthropic Claude (`claude-haiku-4-5-20251001`) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
-| **Embeddings** | `all-MiniLM-L6-v2` via `sentence-transformers` (local CPU) | No API key; no per-query cost; 80 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
+| **Embeddings** | `BAAI/bge-small-en-v1.5` via `sentence-transformers` (local CPU) | No API key; no per-query cost; ~90 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
 | **Vector Store** | FAISS (in-memory, pre-computed index on disk) | No server process; index loaded from disk at startup (<1s); pre-computed once per agreement update |
-| **PDF Parsing** | `pypdf` | Lightweight, already available; preserves page numbers |
-| **RAG Framework** | Direct implementation (no LlamaIndex) | LlamaIndex added complexity without value for this use case; direct control over chunking, retrieval, and prompting is preferable |
+| **PDF Parsing** | `PyMuPDF` (pymupdf) | High-precision extraction; geometric word-reconstruction prevents "word-splitting" errors seen in government PDFs. |
+| **Forensic Pipeline** | `pdf_to_md.py` | Markdown-First architecture: PDFs are pre-converted to structured Markdown with dual-pass AI verification and integrity auditing. |
 | **Web UI** | Gradio 6.x | HF Spaces native; supports asynchronous handlers for high concurrency |
 | **Hosting** | Hugging Face Spaces | Free tier; Gradio-native; public URL with no infrastructure to manage |
 | **Local Dev** | Podman + `compose.yml` | Existing setup retained |
@@ -326,7 +326,7 @@ Each response must follow this structure:
 | Ollama | Replaced by Anthropic API |
 | `llama3.2:3b` / `llama3.1:8b` | Replaced by Claude |
 | `nomic-embed-text` (Ollama) | Replaced by `sentence-transformers` local model |
-| OpenAI `text-embedding-3-small` | Replaced by local `all-MiniLM-L6-v2` — eliminates second API dependency |
+| OpenAI `text-embedding-3-small` | Replaced by local `BAAI/bge-small-en-v1.5` — eliminates second API dependency |
 | LlamaIndex | Replaced by direct RAG implementation |
 | ChromaDB | Replaced by FAISS for MVP |
 | Hardcoded phone number lookup | Not a requested feature; removed entirely |
@@ -339,18 +339,18 @@ Each response must follow this structure:
 
 ```
 App startup
-  └── Scan data/labour_law/ for all PDFs
-  └── Parse pages with pypdf (preserve page numbers)
-  └── Add source metadata (e.g., "source": "Employment Standards Act")
+  └── Scan data/labour_law/ for all Markdown (.md) "shadow" files
+  └── (CI Gate: Ensures every .pdf has a validated .md partner)
+  └── Parse Markdown with source metadata and page-tags
   └── Chunk text (256 tokens, 50 token overlap)
-  └── Embed all chunks with all-MiniLM-L6-v2
+  └── Embed all chunks with BAAI/bge-small-en-v1.5
   └── Build FAISS index in memory
   └── Ready
 
 User sends message
   └── Condense Query (Claude)
         └── [conversation history + new message] → standalone search query
-  └── Embed condensed query with all-MiniLM-L6-v2
+  └── Embed condensed query with BAAI/bge-small-en-v1.5
   └── FAISS similarity search → top-5 chunks (with page numbers)
   └── Build final prompt:
         system: [citation-rules + agreement context + continuity rule]
@@ -391,7 +391,7 @@ The system prompt will enforce:
 | Component | Rate | Estimated Monthly (moderate use) |
 |---|---|---|
 | `claude-haiku-4-5-20251001` | $0.80/M input tokens, $4.00/M output | ~$6–18 CAD |
-| `all-MiniLM-L6-v2` embeddings | $0 — runs locally on CPU | $0 |
+| `BAAI/bge-small-en-v1.5` embeddings | $0 — runs locally on CPU | $0 |
 | **Total** | | **~$6–18 CAD/month** |
 
 Note: The "Query Condenser" adds one extra fast LLM call per multi-turn message, increasing costs by ~10% compared to single-turn RAG.
@@ -421,14 +421,14 @@ To reduce hallucinations, Vexilon includes an optional verification bot that rev
 
 **Note:** The verification bot provides limited additional value since it uses the same context as the main bot. It may catch obvious issues (wrong page numbers, misquoted text) but cannot detect when relevant text was simply not retrieved. Future improvements may include multi-perspective retrieval for complex topics.
 
-### 9.7 Direct Advice Mode (Staff Rep Persona)
+### 9.8 Forensic Markdown Pipeline
 
-To support stewards in tactical situations (e.g., immediate disciplinary meetings), Vexilon implements a **Direct Advice Mode**:
+To ensure the highest possible grounding and citation accuracy, Vexilon uses a "Markdown-First" ingestion strategy. This decouples the messy PDF parsing from the RAG retrieval logic.
 
-1.  **Persona Swap**: Swaps the standard educational `SYSTEM_PROMPT` for a specialized `DIRECT_ADVICE_PROMPT` (stored in `prompts/direct_staff_rep.txt`).
-2.  **Operational Focus**: Shifts focus from "summarizing the agreement" to "providing a script and action plan."
-3.  **Nexus-Test Integration**: Prioritizes nexus-test factors when off-duty conduct conduct is detected.
-4.  **UI Feedback**: Updates the top disclaimer banner to a blue "Direct Advice Mode Active" state to ensure the steward is aware they are receiving tactical rather than educational guidance.
+1.  **Atomic Engine (`pdf_to_md.py`)**: Uses **PyMuPDF** for geometric word reconstruction, followed by a **Claude 4.6 (Sonnet)** pass to restructure the text into clean, hierarchical Markdown.
+2.  **Dual-Pass Verification**: A second model (Haiku) performs a parallel conversion. The script flags substantive word discrepancies (hallucinations) between the two models and the raw source.
+3.  **Integrity Audit**: Generates a sidecar `.integrity.md` report showing exactly which lines were flagged, allowing for a rapid human audit of 200+ page documents.
+4.  **Shadow File Architecture**: Side-by-side storage (`filename.pdf` for users, `filename.md` for AI) ensures the official source is always available for human verification while the RAG index uses high-fidelity text.
 
 ---
 
@@ -464,11 +464,11 @@ Open `http://localhost:7860`.
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
 | `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
-| `EMBED_MODEL` | `all-MiniLM-L6-v2` | Local sentence-transformers embedding model |
+| `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
-| `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query (increased from 5 for more context) |
+| `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
 | `CHUNK_SIZE` | `450` | Tokens per chunk |
-| `CHUNK_OVERLAP` | `100` | Token overlap between chunks |
+| `CHUNK_OVERLAP` | `100` | Token overlap between chunks (~22%) |
 | `CONDENSE_QUERY_HISTORY_TURNS` | `3` | Number of previous turns used for context condensation |
 | `CONDENSE_QUERY_CONTENT_MAX_LEN` | `200` | Max character length of historical messages in condensation prompt |
 | `VERIFY_ENABLED` | `true` | Enable verification bot |

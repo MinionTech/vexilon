@@ -2,8 +2,8 @@
 app.py — BCGEU Steward Assistant
 --------------------------------------------
 Tech stack:
-  - pypdf                : PDF → pages with page number preservation
-  - sentence-transformers: Local CPU embeddings (all-MiniLM-L6-v2, no API key)
+  - pymupdf             : PDF extraction for Markdown conversion
+  - sentence-transformers: Local CPU embeddings (BAAI/bge-small-en-v1.5, no API key)
   - FAISS                : In-memory vector index (no server process)
   - Anthropic            : Claude (claude-haiku-4-5-20251001) for responses
   - Gradio 6             : Web UI at http://localhost:7860
@@ -39,7 +39,7 @@ if not os.getenv("HF_HOME"):
     os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
 
 # ─── Third-party: Deferred Imports ───────────────────────────────────────────
-# (numpy, pypdf, anthropic, faiss, sentence_transformers, gradio)
+# (numpy, anthropic, faiss, sentence_transformers, gradio)
 # are imported inside functions to keep startup and test-loading fast.
 print("[boot] All boilerplate complete.", flush=True)
 
@@ -50,6 +50,7 @@ TESTS_DIR = LABOUR_LAW_DIR / "tests"
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
+_CSS_PATH = Path(__file__).parent / "style.css"
 
 # Public GitHub raw URL base for labour_law PDFs.
 # Used for folder/file links in the UI.
@@ -217,7 +218,6 @@ _rate_limiter = RateLimiter(
 
 # Two-Bot Self-Review Pipeline (Issue #104)
 USE_REVIEWER = os.getenv("USE_REVIEWER", "false").lower() == "true"
-REVIEWER_MODEL = os.getenv("REVIEWER_MODEL", "claude-haiku-4-5-20251001")
 
 
 def get_vexilon_info():
@@ -262,9 +262,6 @@ VEXILON_VERSION = _info["ver"]
 VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
 VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
 
-# Embedding dimension for all-MiniLM-L6-v2
-EMBED_DIM = 384
-
 # ─── Typing ──────────────────────────────────────────────────────────────────
 from typing import TYPE_CHECKING
 
@@ -296,6 +293,11 @@ def get_embed_model() -> "SentenceTransformer":
     return _embed_model
 
 
+# Embedding dimension (derived from model to prevent FAISS mismatch)
+# Hardcoded to 384 for BAAI/bge-small-en-v1.5 to avoid model load during import/pytest collection.
+EMBED_DIM = 384
+
+
 def get_anthropic() -> "anthropic.AsyncAnthropic":
     global _anthropic_client
     if _anthropic_client is None:
@@ -306,18 +308,31 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
     return _anthropic_client
 
 
-def _get_all_source_files() -> list[Path]:
+def _get_rag_source_files() -> list[Path]:
     """
-    Recursively scan LABOUR_LAW_DIR for PDF and Markdown files and return a
-    combined list sorted by filename for consistent processing.
-    The tests/ subdirectory is excluded (used by TestRegistry, not RAG index).
+    Recursively scan LABOUR_LAW_DIR for Markdown files ONLY.
+    PDFs and Forensic Integrity Audits are completely ignored for indexing.
+    The tests/ subdirectory is excluded.
+    """
+    if not LABOUR_LAW_DIR.exists():
+        return []
+    tests_dir = LABOUR_LAW_DIR / "tests"
+    mds = [
+        p for p in LABOUR_LAW_DIR.rglob("*.md") 
+        if not p.is_relative_to(tests_dir) and not p.name.endswith(".integrity.md")
+    ]
+    return sorted(mds, key=lambda p: str(p))
+
+def _get_download_source_files() -> list[Path]:
+    """
+    Recursively scan LABOUR_LAW_DIR for PDF files ONLY (for human downloads).
+    The tests/ subdirectory is excluded.
     """
     if not LABOUR_LAW_DIR.exists():
         return []
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
-    mds = [p for p in LABOUR_LAW_DIR.rglob("*.md") if not p.is_relative_to(tests_dir)]
-    return sorted(pdfs + mds, key=lambda p: str(p))
+    return sorted(pdfs, key=lambda p: str(p))
 
 
 def _get_source_name(stem: str) -> str:
@@ -342,7 +357,7 @@ def get_knowledge_manifest() -> str:
     Files follow the naming convention: [Index]_[Category]_[Title].pdf
     Example: 1_Primary_BCGEU 19th Main Agreement.pdf
     """
-    files = _get_all_source_files()
+    files = _get_rag_source_files()
     if not files:
         return "No documents available."
 
@@ -370,7 +385,7 @@ def build_pdf_download_links() -> str:
     """
     import html
 
-    files = _get_all_source_files()
+    files = _get_download_source_files()
     if not files:
         return ""
 
@@ -441,7 +456,9 @@ Response format:
 — [Document Name], Article/Section [X], p. [N]
 """
 
-VERIFY_STEWARD_MESSAGE = "Verify w/ Area Office: 604-291-9611"
+VERIFY_STEWARD_MESSAGE = os.getenv(
+    "STEWARD_VERIFY_MESSAGE", "Verify w/ Area Office: 604-291-9611"
+)
 
 def get_persona_prompt(mode_name: str) -> str:
     """Helper to load system prompts for different operational modes."""
@@ -567,6 +584,10 @@ def chunk_text(
     if not token_data:
         return chunks
 
+    # Safety guard: Ensure the loop always advances. If configuration is
+    # invalid (size <= overlap), we force a minimum step of 1 token.
+    step = max(1, CHUNK_SIZE - CHUNK_OVERLAP)
+
     idx = 0
     start = 0
     while start < len(token_data):
@@ -591,7 +612,7 @@ def chunk_text(
             }
         )
         idx += 1
-        start += CHUNK_SIZE - CHUNK_OVERLAP
+        start += step
     return chunks
 
 
@@ -663,23 +684,55 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     Markdown is preferred for structured summaries as it preserves semantic hierarchies
     better than PDF extraction.
     """
-    content = md_path.read_text(encoding="utf-8")
+    content = md_path.read_text(encoding="utf-8").strip()
+    if not content:
+        return []
     source_name = _get_source_name(md_path.stem)
     print(f"[loader] Parsing Markdown '{source_name}'…")
 
     tokenizer = get_embed_model().tokenizer
     token_metadata = []
     
-    # Very simple header detection for MD
+    # Split into header-delimited sections and filter TOC blocks
     current_header = ""
     lines = content.split("\n")
-    char_offset = 0
+    
+    # Group lines into sections by header, then filter TOC sections
+    sections: list[tuple[str, list[str]]] = []  # (header, lines)
+    current_lines: list[str] = []
     for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            if current_lines:
+                sections.append((current_header, current_lines))
+            current_header = stripped.lstrip("#").strip().upper()
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    if current_lines:
+        sections.append((current_header, current_lines))
+    
+    # Rebuild content without TOC sections and tokenize
+    filtered_lines: list[str] = []
+    for header, section_lines in sections:
+        section_text = "\n".join(section_lines)
+        if _is_toc_or_index_page(section_text):
+            print(f"[loader]   Skipping TOC/index section: {header or '(untitled)'}")
+            continue
+        filtered_lines.extend(section_lines)
+    
+    filtered_content = "\n".join(filtered_lines)
+    if not filtered_content.strip():
+        return []
+    
+    # Tokenize filtered content
+    current_header = ""
+    char_offset = 0
+    for line in filtered_lines:
         stripped = line.strip()
         if stripped.startswith("#"):
             current_header = stripped.lstrip("#").strip().upper()
         
-        # Tokenize line and record metadata
         encoding = tokenizer(
             line,
             add_special_tokens=False,
@@ -691,92 +744,9 @@ def load_md_chunks(md_path: Path) -> list[dict]:
                 (char_offset + start_off, char_offset + end_off, 1, current_header)
             )
         
-        char_offset += len(line) + 1 # +1 for newline
+        char_offset += len(line) + 1  # +1 for newline
 
-    return chunk_text(content, token_metadata, source_name)
-
-
-def load_pdf_chunks(pdf_path: Path) -> list[dict]:
-    """
-    Parse the PDF at *pdf_path* into one continuous stream before chunking.
-    This bridges page boundaries so sentences that span pages aren't decapitated.
-
-    Navigational pages (Table of Contents, alphabetical Index) are skipped
-    so they don't contaminate semantic search results.  URL artifacts from
-    web-extracted statute PDFs are also stripped before embedding.
-    """
-    from pypdf import PdfReader
-    import re
-
-    reader = PdfReader(str(pdf_path))
-    source_name = _get_source_name(pdf_path.stem)
-    print(f"[loader] Parsing '{source_name}' ({len(reader.pages)} pages)…")
-
-    tokenizer = get_embed_model().tokenizer
-    full_text = ""
-    token_metadata = []  # List of (char_start, char_end, page_num, header)
-
-    current_header = ""
-    header_pattern = re.compile(r"^\s*(ARTICLE|APPENDIX)\s+(\d+|[A-Z]+)", re.IGNORECASE)
-    skipped_pages = 0
-
-    for page_idx, page in enumerate(reader.pages):
-        page_num = page_idx + 1
-        page_text = page.extract_text() or ""
-        if not page_text.strip():
-            continue
-
-        # Skip pure navigational pages (TOC / alphabetical Index).
-        # These mention every article by name but add no substantive content;
-        # indexing them causes TOC entries to crowd out real contract text in
-        # semantic search results.
-        if _is_toc_or_index_page(page_text):
-            skipped_pages += 1
-            continue
-
-        # Strip web-extraction artifacts (URLs, timestamps) from statute PDFs.
-        page_text = _clean_page_text(page_text)
-        if not page_text.strip():
-            continue
-
-        # Update breadcrumb header context
-        # Look through more lines - headers can appear anywhere on the page due to
-        # complex PDF layouts (two-column, footnotes, etc.)
-        page_lines = page_text.split("\n")
-        lines_to_check = min(50, len(page_lines))
-        for line in page_lines[:lines_to_check]:
-            # Skip TOC-style entries and page numbers
-            if ".........." in line or (
-                line.strip().endswith(".") and re.search(r"\d+$", line.strip())
-            ):
-                continue
-            match = header_pattern.search(line)
-            if match:
-                current_header = match.group(0).strip().upper()
-                break  # Usually one primary header per page
-
-        # Track offsets in the global full_text
-        page_offset = len(full_text)
-        full_text += page_text + "\n"
-
-        # Tokenize this page and record metadata for every token
-        encoding = tokenizer(
-            page_text,
-            add_special_tokens=False,
-            return_offsets_mapping=True,
-            truncation=False,
-        )
-        for start, end in encoding.offset_mapping:
-            token_metadata.append(
-                (page_offset + start, page_offset + end, page_num, current_header)
-            )
-
-    if skipped_pages:
-        print(
-            f"[loader] Skipped {skipped_pages} navigational pages (TOC/index) in '{source_name}'."
-        )
-
-    return chunk_text(full_text, token_metadata, source_name)
+    return chunk_text(filtered_content, token_metadata, source_name)
 
 
 # ─── FAISS Index ──────────────────────────────────────────────────────────────
@@ -867,6 +837,7 @@ def _fetch_pdf_cache_if_missing() -> None:
     This enables fast cold starts on HuggingFace Spaces where PDFs aren't bundled.
     """
     import urllib.request
+    import urllib.error
 
     # Ensure cache directory exists
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -886,8 +857,11 @@ def _fetch_pdf_cache_if_missing() -> None:
     # Download missing files
     for dest_path, url in urls.items():
         print(f"[fetch] Downloading {dest_path.name} from {url}…")
-        urllib.request.urlretrieve(url, dest_path)
-        print(f"[fetch] Saved {dest_path}")
+        try:
+            urllib.request.urlretrieve(url, dest_path)
+            print(f"[fetch] Saved {dest_path}")
+        except (urllib.error.URLError, OSError) as e:
+            print(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")
 
 
 def build_index_from_sources(force: bool = False) -> None:
@@ -907,7 +881,7 @@ def build_index_from_sources(force: bool = False) -> None:
 
     global _chunks, _index
 
-    all_files = _get_all_source_files()
+    all_files = _get_rag_source_files()
     if not all_files:
         print("[build] No source files found to index!")
         return
@@ -1489,113 +1463,14 @@ ATTRIBUTION_HTML = f"""
 </div>
 """
 
-# Custom CSS for a Unified, Single-Line Action Bar
-CUSTOM_CSS = """
-/* 1. Unified row alignment */
-.compact-row {
-    align-items: center !important;
-    gap: 6px !important;
-    flex-wrap: nowrap !important;
-    overflow: visible !important;
-}
 
-/* 2. Persona Segmented Control (Pill style) */
-#persona_selector.block {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-width: fit-content !important;
-}
-#persona_selector .wrap {
-    display: flex !important;
-    gap: 0 !important;
-    flex-wrap: nowrap !important;
-    padding: 0 !important;
-}
-#persona_selector label {
-    flex: 1 !important;
-    height: 32px !important;
-    line-height: 32px !important;
-    padding: 0 !important;
-    border: 1px solid var(--border-color-primary) !important;
-    font-size: 0.8rem !important;
-    border-radius: 0 !important;
-    background: var(--background-fill-secondary) !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-#persona_selector label span {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-#persona_selector label:not(:last-child) {
-    margin-right: -1px !important;
-}
-#persona_selector label:first-child {
-    border-top-left-radius: 8px !important;
-    border-bottom-left-radius: 8px !important;
-}
-#persona_selector label:last-child {
-    border-top-right-radius: 8px !important;
-    border-bottom-right-radius: 8px !important;
-}
-#persona_selector input[type="radio"], 
-#persona_selector .radio-circle {
-    display: none !important;
-}
-#persona_selector label.selected {
-    background-color: var(--primary-500) !important;
-    color: white !important;
-    border-color: var(--primary-600) !important;
-    z-index: 1;
-}
-
-/* 3. Reviewer Checkbox (Unified height) */
-#reviewer_toggle.block {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-width: 90px !important;
-    overflow: visible !important;
-}
-#reviewer_toggle label {
-    height: 32px !important;
-    line-height: 32px !important;
-    padding: 0 10px !important;
-    border: 1px solid var(--border-color-primary) !important;
-    border-radius: 8px !important;
-    font-size: 0.8rem !important;
-    display: flex !important;
-    align-items: center !important;
-    white-space: nowrap !important;
-    background: var(--background-fill-secondary) !important;
-    cursor: pointer !important;
-}
-#reviewer_toggle input {
-    margin: 0 6px 0 0 !important;
-}
-
-/* 4. Button normalization */
-.sm-btn {
-    height: 32px !important;
-    min-height: 32px !important;
-    padding: 0 10px !important;
-    font-size: 0.8rem !important;
-    min-width: 60px !important;
-}
-"""
 
 
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
 
-    with gr.Blocks(title="Collective Agreement Explorer", css=CUSTOM_CSS) as demo:
+    with gr.Blocks(title="Collective Agreement Explorer") as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("## BCGEU Steward Assistant")
 
@@ -1772,7 +1647,20 @@ def build_ui() -> "gr.Blocks":
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    startup()
+    import argparse
+    parser = argparse.ArgumentParser(description="Vexilon RAG Service")
+    parser.add_argument(
+        "--rebuild-index", action="store_true", help="Force rebuild of FAISS index from sources"
+    )
+    args = parser.parse_args()
+
+    if args.rebuild_index:
+        startup(force_rebuild=True)
+        print("[startup] Index rebuild complete. Exiting (--rebuild-index specified).")
+        sys.exit(0)
+
+    # Standard startup sequence
+    startup(force_rebuild=False)
     app = build_ui()
     # Enable authentication if a password is set in the environment.
     auth_creds = None
@@ -1791,5 +1679,6 @@ if __name__ == "__main__":
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
         allowed_paths=allowed_paths,
+        css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "",
         auth=auth_creds,
     )
