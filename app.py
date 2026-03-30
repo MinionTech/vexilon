@@ -1793,7 +1793,11 @@ if __name__ == "__main__":
     # Note: This allows the entire directory rather than specific files for cross-environment
     # compatibility. The directory only contains PDF files per project structure, so this is acceptable.
     allowed_paths = [str(LABOUR_LAW_DIR)]
-
+    
+    # ── Final Build Report ──────────────────────────────────────────────────
+    print(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
+    print(f"[startup] Version: {VEXILON_VERSION} | Threads: {os.environ.get('OMP_NUM_THREADS', 'Auto')}")
+    
     app.launch(
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", 7860)),
