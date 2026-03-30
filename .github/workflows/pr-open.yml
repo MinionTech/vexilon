@@ -9,15 +9,6 @@ name: PR Open
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
-    paths-ignore:
-      - '**.md'
-      - '!data/**'
-      - 'LICENSE'
-      - 'renovate.json'
-      - '.*'
-      - '.*/**'
-      - '!.github/workflows/pr-open.yml'
-      - '!.dockerignore'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
