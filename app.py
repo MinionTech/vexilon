@@ -39,13 +39,6 @@ import tempfile
 if not os.getenv("HF_HOME"):
     os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
 
-# Stabilize CPU usage in shared-resource environments (HF Spaces/CI)
-# Prevents thread thrashing that leads to 10+ minute hang times.
-if "OMP_NUM_THREADS" not in os.environ:
-    os.environ["OMP_NUM_THREADS"] = "1"
-if "MKL_NUM_THREADS" not in os.environ:
-    os.environ["MKL_NUM_THREADS"] = "1"
-
 # ─── Third-party: Deferred Imports ───────────────────────────────────────────
 # (numpy, anthropic, faiss, sentence_transformers, gradio)
 # are imported inside functions to keep startup and test-loading fast.
@@ -293,15 +286,27 @@ _anthropic_client: "anthropic.AsyncAnthropic | None" = None
 def get_embed_model() -> "SentenceTransformer":
     global _embed_model
     if _embed_model is None:
+        # Stabilize CPU usage in shared-resource environments (HF Spaces/CI)
+        # We only do this at RUNTIME. Doing this during BUILD causes infinite hangs.
+        if os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI"):
+            if "OMP_NUM_THREADS" not in os.environ:
+                os.environ["OMP_NUM_THREADS"] = "1"
+            if "MKL_NUM_THREADS" not in os.environ:
+                os.environ["MKL_NUM_THREADS"] = "1"
+
         print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
+        
+        # Ensure we are truly offline to avoid lock-file permission errors 
+        # in the root-owned (read-only) hf_cache.
+        if os.getenv("TRANSFORMERS_OFFLINE") == "1":
+             os.environ["HF_HUB_OFFLINE"] = "1"
+
         from sentence_transformers import SentenceTransformer
 
         # Use the requested device (cpu) to avoid CUDA detection overhead.
-        # We rely on TRANSFORMERS_OFFLINE=1 (set in Containerfile) for production air-gapping.
         _embed_model = SentenceTransformer(EMBED_MODEL, device="cpu")
 
         # Sane limit for offset mapping (4096 is plenty for any single page).
-        # 100,000 was causing potential memory pressure and is far beyond the model's window.
         _embed_model.max_seq_length = MAX_EMBED_TOKENS
         if hasattr(_embed_model, "tokenizer"):
             _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
