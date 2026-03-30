@@ -1,118 +1,114 @@
-/* 1. Unified row alignment */
-.compact-row {
-    align-items: center !important;
-    gap: 6px !important;
-    flex-wrap: nowrap !important;
-    overflow: visible !important;
+:root {
+    --primary: #005691;
+    --primary-light: #0ea5e9;
+    --primary-dark: #003d66;
+    --accent: #f59e0b;
+    --success: #22c55e;
+    --error: #ef4444;
+    --bg-main: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
 }
 
-/* 2. Persona Segmented Control (Pill style) */
-#persona_selector.block {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-width: fit-content !important;
+/* Base Styles */
+body, .gradio-container {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
 }
+
+/* Glassmorphism Containers */
+.gradio-container {
+    padding: 2rem !important;
+}
+
+.block.gr-box {
+    background: var(--bg-card) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow) !important;
+    border-radius: 16px !important;
+}
+
+/* Header Refinement */
+h2 {
+    color: var(--primary-dark) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.025em !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Segmented Persona Control */
+#persona_selector {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(8px) !important;
+    padding: 4px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
 #persona_selector .wrap {
     display: flex !important;
-    gap: 0 !important;
-    flex-wrap: nowrap !important;
-    padding: 0 !important;
+    gap: 4px !important;
 }
+
 #persona_selector label {
     flex: 1 !important;
-    height: 32px !important;
-    line-height: 32px !important;
-    padding: 0 !important;
-    border: 1px solid var(--border-color-primary) !important;
-    font-size: 0.8rem !important;
-    border-radius: 0 !important;
-    background: var(--background-fill-secondary) !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    border: none !important;
+    border-radius: 8px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 600 !important;
+    color: var(--primary) !important;
+    background: transparent !important;
 }
-#persona_selector label span {
-    margin: 0 !important;
-    padding: 0 !important;
+
+#persona_selector label:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
 }
-#persona_selector label:not(:last-child) {
-    margin-right: -1px !important;
-}
-#persona_selector label:first-child {
-    border-top-left-radius: 8px !important;
-    border-bottom-left-radius: 8px !important;
-}
-#persona_selector label:last-child {
-    border-top-right-radius: 8px !important;
-    border-bottom-right-radius: 8px !important;
-}
-#persona_selector input[type="radio"],
-#persona_selector .radio-circle {
-    display: none !important;
-}
+
 #persona_selector label.selected,
 #persona_selector label:has(input:checked) {
-    background-color: var(--primary-500) !important;
+    background: var(--primary) !important;
     color: white !important;
-    border-color: var(--primary-600) !important;
-    z-index: 1;
+    box-shadow: 0 4px 12px rgba(0, 86, 145, 0.3) !important;
 }
 
-/* 3. Reviewer Checkbox (Unified height) */
-#reviewer_toggle.block {
-    background: transparent !important;
+/* Button Refinements */
+.gr-button-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
     border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-width: 90px !important;
-    overflow: visible !important;
-}
-#reviewer_toggle label {
-    height: 32px !important;
-    line-height: 32px !important;
-    padding: 0 10px !important;
-    border: 1px solid var(--border-color-primary) !important;
-    border-radius: 8px !important;
-    font-size: 0.8rem !important;
-    display: flex !important;
-    align-items: center !important;
-    white-space: nowrap !important;
-    background: var(--background-fill-secondary) !important;
-    cursor: pointer !important;
-}
-#reviewer_toggle input {
-    margin: 0 6px 0 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 86, 145, 0.2) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
 }
 
-/* 4. Button normalization */
+.gr-button-primary:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(0, 86, 145, 0.3) !important;
+}
+
+/* Chatbot Bubbles */
+.message.user {
+    background: var(--primary) !important;
+    color: white !important;
+    border-radius: 18px 18px 0 18px !important;
+}
+
+.message.bot {
+    background: white !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 18px 18px 18px 0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+}
+
+/* Compact Adjustments */
 .sm-btn {
-    height: 32px !important;
-    min-height: 32px !important;
-    padding: 0 10px !important;
-    font-size: 0.8rem !important;
-    min-width: 60px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
 }
 
-/* 5. Mobile: collapse Reviewer to checkbox-only */
-@media (max-width: 540px) {
-    #reviewer_toggle.block {
-        min-width: unset !important;
-    }
-    #reviewer_toggle label {
-        padding: 0 6px !important;
-        border: none !important;
-        background: transparent !important;
-    }
-    #reviewer_toggle label span {
-        display: none !important;
-    }
-    #reviewer_toggle input {
-        margin: 0 !important;
-        width: 18px !important;
-        height: 18px !important;
-    }
+#reviewer_toggle label {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
 }
