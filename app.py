@@ -285,15 +285,23 @@ _anthropic_client: "anthropic.AsyncAnthropic | None" = None
 def get_embed_model() -> "SentenceTransformer":
     global _embed_model
     if _embed_model is None:
+        # Stabilize CPU usage in shared-resource environments (HF Spaces/CI)
+        # Prevents thread thrashing that leads to 10+ minute hang times.
+        if "OMP_NUM_THREADS" not in os.environ:
+            os.environ["OMP_NUM_THREADS"] = "1"
+        if "MKL_NUM_THREADS" not in os.environ:
+            os.environ["MKL_NUM_THREADS"] = "1"
+
         print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
         from sentence_transformers import SentenceTransformer
 
-        _embed_model = SentenceTransformer(EMBED_MODEL)
-        # Increase limits to handle full-page tokenization mapping without warnings.
-        # We manually chunk to 256 tokens later, so this is just to keep the logs clean.
-        _embed_model.max_seq_length = 100000
+        # Use local_files_only=True to guarantee zero network latency during load
+        _embed_model = SentenceTransformer(EMBED_MODEL, device="cpu", model_kwargs={"local_files_only": True})
+        # Sane limit for offset mapping (4096 is plenty for any single page).
+        # 100,000 was causing potential memory pressure and is far beyond the model's window.
+        _embed_model.max_seq_length = 4096
         if hasattr(_embed_model, "tokenizer"):
-            _embed_model.tokenizer.model_max_length = 100000
+            _embed_model.tokenizer.model_max_length = 4096
         print("[embed] Embedding model ready.")
     return _embed_model
 

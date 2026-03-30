@@ -37,9 +37,8 @@ services:
     depends_on:
       index-refresh:
         condition: service_completed_successfully
-      tests:
-        condition: service_completed_successfully
-    volumes: []
+    volumes:
+      - ./.pdf_cache:/app/.pdf_cache:z
     # Production-optimized: Uses the CMD defined in the Containerfile
     # (No 'uv' or 'gradio' CLI required in the final image)
 
