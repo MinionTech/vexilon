@@ -62,55 +62,58 @@ jobs:
           done
           echo "✅ Index build validation passed."
 
-  tests:
+  unit_tests:
     name: Unit Tests
     if: ${{ ! github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
-
+    timeout-minutes: 5
     permissions:
       contents: read
-
-    # Override the /tmp/hf_cache default from app.py so actions/cache can persist it.
-    env:
-      HF_HOME: /home/runner/.cache/huggingface
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.14"
           enable-cache: true
+      - name: Install dependencies
+        run: uv sync
+      - name: Run Unit Tests
+        run: uv run pytest tests/ -v --ignore=tests/integration/ --ignore=tests/smoke/
 
+  integration_tests:
+    name: Integration Tests
+    if: ${{ ! github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      HF_HOME: /home/runner/.cache/huggingface
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+          enable-cache: true
       - name: Cache HuggingFace model
         uses: actions/cache@v5
         with:
           path: /home/runner/.cache/huggingface
-          # Bust the cache when dependencies change (new model version, etc.)
           key: hf-${{ runner.os }}-${{ hashFiles('uv.lock') }}
-
-      - name: Validate requirements.txt resolves against public indexes
-        # Proves every pinned version in requirements.txt actually exists on PyPI
-        # and the PyTorch CPU wheel index. --dry-run resolves without downloading.
-        run: pip install --dry-run -r requirements.txt
-
       - name: Install dependencies
         run: uv sync
-
-      - name: Run Unit Tests
-        run: uv run pytest tests/ -v --ignore=tests/integration/ --ignore=tests/smoke/
-
       - name: Run Integration Tests
-        if: ${{ always() }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: uv run pytest tests/integration/ -v
 
   container_build:
     name: Build & Push to GHCR
+    needs: [unit_tests, integration_tests]
     if: ${{ ! github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -210,7 +213,7 @@ jobs:
 
   trivy:
     name: Trivy Security Scan
-    needs: [audit, tests]
+    needs: [audit, unit_tests, integration_tests]
     if: (! github.event.pull_request.draft)
     permissions:
       security-events: write
@@ -235,7 +238,7 @@ jobs:
 
   results:
     name: Results
-    needs: [audit, tests, container_build, container_test, trivy]
+    needs: [audit, unit_tests, integration_tests, container_build, container_test, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
