@@ -462,14 +462,18 @@ Response format:
 — [Document Name], Article/Section [X], p. [N]
 """
 
-GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES ---
+GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts. If the specific text was not retrieved, suggest the user ask about that section directly. NEVER fabricate contract language.
 2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation (Document, Article, Page).
 3. HIERARCHY: Lead with the Collective Agreement. Use Statutes only to reinforce the legal framework.
-4. GRIEVANCE FILING (CRITICAL): If you identify a likely violation or are asked for resolution steps, you MUST proactively recommend filing a grievance. Provide this link: [Download BCGEU Grievance Form](/gradio_api/file=data/labour_law/forms/BCGEU%20Grievance%20Form.pdf) and mention the 'BCGEU Grievance Form Guide.md'.
+4. GRIEVANCE FILING (CRITICAL): If you identify a likely violation or are asked for resolution steps, you MUST proactively recommend filing a grievance. 
+   - YOU MUST APPEND a final section titled '### 📁 Resolution & Next Steps'.
+   - THIS SECTION MUST CONTAIN this link: [Download BCGEU Grievance Form](/gradio_api/file=data/labour_law/forms/BCGEU%20Grievance%20Form.pdf)
+   - YOU MUST ALSO mention the 'BCGEU Grievance Form Guide.md' for instructions.
 5. TONE: Professional, authoritative, and forensic.
 ----------------------------------
 """
+
 
 def get_persona_prompt(mode_name: str) -> str:
     """Helper to load system prompts for different operational modes."""
@@ -477,22 +481,17 @@ def get_persona_prompt(mode_name: str) -> str:
         "Direct": Path("./prompts/direct_staff_rep.txt"),
         "Defend": Path("./prompts/case_builder.txt"),
     }
-    
-    path = paths.get(mode_name)
-    if path and path.is_file():
-        return path.read_text(encoding="utf-8")
-    
-    # Fallbacks if files are missing or empty
     fallbacks = {
         "Direct": "You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.",
         "Defend": "You are a BCGEU Staff Rep specializing in Grievance Drafting.",
     }
     
-    content = fallbacks.get(mode_name, SYSTEM_PROMPT)
-    if path and path.is_file():
-        content = path.read_text(encoding="utf-8")
+    path = paths.get(mode_name)
+    content = path.read_text(encoding="utf-8") if path and path.is_file() else fallbacks.get(mode_name, SYSTEM_PROMPT)
         
-    return f"{content}\n\n{GLOBAL_MANDATORY_RULES}"
+    return f"{GLOBAL_MANDATORY_RULES}\n\n{content}"
+
+
 
 VERIFY_STEWARD_MESSAGE = os.getenv(
     "STEWARD_VERIFY_MESSAGE", "Verify w/ Area Office: 604-291-9611"
@@ -1384,17 +1383,12 @@ async def rag_review_stream(
         if persona_mode in ["Direct", "Defend"]:
             base_prompt = get_persona_prompt(persona_mode)
 
-        # Ensure manifest and global rules are integrated
-        if persona_mode == "Explore":
-            # Explore already has the manifest placeholder in its top-level constant
-            formatted_prompt = base_prompt.format(
-                manifest=get_knowledge_manifest(),
-                verify_message=VERIFY_STEWARD_MESSAGE,
-            )
-        else:
-            # For Direct/Defend, we need to append the manifest context if not present
-            formatted_prompt = f"{base_prompt}\n\n--- KNOWLEDGE MANIFEST ---\n{get_knowledge_manifest()}"
-            formatted_prompt = formatted_prompt.replace("{verify_message}", VERIFY_STEWARD_MESSAGE)
+        # Standardized formatting for all personas
+        formatted_prompt = base_prompt.format(
+            manifest=get_knowledge_manifest(),
+            verify_message=VERIFY_STEWARD_MESSAGE,
+        )
+
 
 
         # 2. Audit Logic (Issue #161 Refactor)
@@ -1545,16 +1539,17 @@ DISCLAIMER_HTML = (
 )
 
 DIRECT_MODE_HTML = """
-<div style="background-color:rgba(14, 165, 233, 0.1); border-left:4px solid #0ea5e9; color:#075985; padding:12px 16px; border-radius:8px; font-size:0.9rem; margin-bottom:16px; backdrop-filter: blur(4px);">
-    <span style="font-weight: 800;">⚡ Operational Strategy Mode:</span> Responses focus on immediate scripts and tactical steps.
+<div style="background-color:#e0f2fe; border-left:4px solid #0ea5e9; color:#075985; padding:10px 14px; border-radius:4px; font-size:0.85rem; margin-bottom:12px;">
+    <b>⚡ Direct Advice Mode Active:</b> Responses focus on operational steps and scripts.
 </div>
 """
 
 CASE_BUILDER_HTML = """
-<div style="background-color:rgba(34, 197, 94, 0.1); border-left:4px solid #22c55e; color:#14532d; padding:12px 16px; border-radius:8px; font-size:0.9rem; margin-bottom:16px; backdrop-filter: blur(4px);">
-    <span style="font-weight: 800;">📝 Case Drafting Mode:</span> Responses focus on formal grievance statements and rebuttals.
+<div style="background-color:#f0fdf4; border-left:4px solid #22c55e; color:#14532d; padding:10px 14px; border-radius:4px; font-size:0.85rem; margin-bottom:12px;">
+    <b>📝 Case Builder Mode Active:</b> Responses focus on drafting formal rebuttals and grievances.
 </div>
 """
+
 
 
 ATTRIBUTION_HTML = f"""
@@ -1574,26 +1569,19 @@ def build_ui() -> "gr.Blocks":
 
     with gr.Blocks(title="Collective Agreement Explorer") as demo:
         # ── Header ────────────────────────────────────────────────────────────
-        with gr.Row():
-            with gr.Column(scale=8):
-                gr.Markdown("# Vexilon: BCGEU Steward Intelligence")
-                gr.Markdown("Contractual analysis and grievance support powered by the collective agreement.")
-            with gr.Column(scale=2, min_width=150):
-                gr.HTML(f"""
-                <div style="text-align: right; opacity: 0.6; font-size: 0.8rem;">
-                    v{VEXILON_VERSION}<br>
-                    <a href="{VEXILON_REPO_URL}" target="_blank" style="color: inherit;">GitHub Repository</a>
-                </div>
-                """)
+        # ── Header ────────────────────────────────────────────────────────────
+        gr.Markdown("## BCGEU Steward Assistant")
 
-        with gr.Accordion("📚 Knowledge Base & Quick Access", open=False):
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown("### Primary Documents\nVerified PDF sources and statutory framework.")
-                    gr.HTML(build_pdf_download_links())
-                with gr.Column():
-                    gr.Markdown("### Repository Access\nBrowse source markdown and criteria library.")
-                    gr.Markdown(f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+        with gr.Accordion("Knowledge Base & Priority", open=False):
+            gr.Markdown(
+                "**The Collective Agreement and Primary Statutes** are our primary references. Anything else provides additional context."
+            )
+            # Use gr.HTML() to preserve clickable links (gr.Markdown sanitizes HTML)
+            gr.HTML(build_pdf_download_links())
+            gr.Markdown(
+                f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
+            )
+
 
 
         # ── Disclaimer (persistent, non-dismissible) ──────────────────────────
@@ -1611,26 +1599,25 @@ def build_ui() -> "gr.Blocks":
         )
 
         # ── Reviewer Toggle & Management ──────────────────────────────────────
-        # ── Reviewer Toggle & Management ──────────────────────────────────────
         with gr.Row(variant="compact", elem_classes="compact-row"):
             persona_selector = gr.Radio(
-                choices=["Research", "Operational", "Drafting"],
-                value="Research",
+                choices=["Explore", "Direct", "Defend"],
+                value="Explore",
                 show_label=False,
                 container=False,
-                scale=4,
+                scale=3,
                 elem_id="persona_selector",
             )
             reviewer_toggle = gr.Checkbox(
-                label="Senior Review",
+                label="Reviewer",
                 value=USE_REVIEWER,
                 container=False,
                 scale=1,
                 elem_id="reviewer_toggle",
             )
-            with gr.Group():
-                export_btn = gr.DownloadButton("⬇️ Save", variant="secondary", size="sm", elem_classes="sm-btn")
-                import_btn = gr.UploadButton("⬆️ Load", file_types=[".md"], variant="secondary", size="sm", elem_classes="sm-btn")
+            export_btn = gr.DownloadButton("⬇️ Save", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
+            import_btn = gr.UploadButton("⬆️ Load", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
+
 
 
         # ── Input row ─────────────────────────────────────────────────────────
@@ -1656,15 +1643,13 @@ def build_ui() -> "gr.Blocks":
         ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
             import gradio as gr
             
-            # 1. Identify Banner & Persona Mapping
-            persona_map = {"Research": "Explore", "Operational": "Direct", "Drafting": "Defend"}
-            internal_persona = persona_map.get(persona_mode, "Explore")
-            
+            # 1. Identify Banner
             top_banner = DISCLAIMER_HTML
-            if internal_persona == "Direct":
+            if persona_mode == "Direct":
                 top_banner = DIRECT_MODE_HTML
-            elif internal_persona == "Defend":
+            elif persona_mode == "Defend":
                 top_banner = CASE_BUILDER_HTML
+
 
 
             request = kwargs.get("request")
@@ -1704,11 +1689,12 @@ def build_ui() -> "gr.Blocks":
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             async for chunk in rag_review_stream(
-                message, prior_history, use_reviewer, internal_persona
+                message, prior_history, use_reviewer, persona_mode
             ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
                 yield history, "", hide, gr.update(value=top_banner)
+
 
 
         submit_inputs = [msg_input, chatbot, reviewer_toggle, persona_selector]
