@@ -693,16 +693,46 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     tokenizer = get_embed_model().tokenizer
     token_metadata = []
     
-    # Very simple header detection for MD
+    # Split into header-delimited sections and filter TOC blocks
     current_header = ""
     lines = content.split("\n")
-    char_offset = 0
+    
+    # Group lines into sections by header, then filter TOC sections
+    sections: list[tuple[str, list[str]]] = []  # (header, lines)
+    current_lines: list[str] = []
     for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            if current_lines:
+                sections.append((current_header, current_lines))
+            current_header = stripped.lstrip("#").strip().upper()
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    if current_lines:
+        sections.append((current_header, current_lines))
+    
+    # Rebuild content without TOC sections and tokenize
+    filtered_lines: list[str] = []
+    for header, section_lines in sections:
+        section_text = "\n".join(section_lines)
+        if _is_toc_or_index_page(section_text):
+            print(f"[loader]   Skipping TOC/index section: {header or '(untitled)'}")
+            continue
+        filtered_lines.extend(section_lines)
+    
+    filtered_content = "\n".join(filtered_lines)
+    if not filtered_content.strip():
+        return []
+    
+    # Tokenize filtered content
+    current_header = ""
+    char_offset = 0
+    for line in filtered_lines:
         stripped = line.strip()
         if stripped.startswith("#"):
             current_header = stripped.lstrip("#").strip().upper()
         
-        # Tokenize line and record metadata
         encoding = tokenizer(
             line,
             add_special_tokens=False,
@@ -714,9 +744,9 @@ def load_md_chunks(md_path: Path) -> list[dict]:
                 (char_offset + start_off, char_offset + end_off, 1, current_header)
             )
         
-        char_offset += len(line) + 1 # +1 for newline
+        char_offset += len(line) + 1  # +1 for newline
 
-    return chunk_text(content, token_metadata, source_name)
+    return chunk_text(filtered_content, token_metadata, source_name)
 
 
 # ─── FAISS Index ──────────────────────────────────────────────────────────────

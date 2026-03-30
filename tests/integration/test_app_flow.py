@@ -30,9 +30,11 @@ async def test_full_rag_flow_integration(monkeypatch, mock_anthropic, tmp_path):
     cache_dir = tmp_path / "pdf_cache"
     cache_dir.mkdir()
     monkeypatch.setattr(app, "LABOUR_LAW_DIR", test_data_dir)
+    monkeypatch.setattr(app, "TESTS_DIR", test_data_dir / "tests")
     monkeypatch.setattr(app, "PDF_CACHE_DIR", cache_dir)
     monkeypatch.setattr(app, "INDEX_PATH", cache_dir / "index.faiss")
     monkeypatch.setattr(app, "CHUNKS_PATH", cache_dir / "chunks.json")
+    monkeypatch.setattr(app, "MANIFEST_PATH", cache_dir / "manifest.json")
 
     # Mock the anthropic client globally for the app
     monkeypatch.setattr(app, "get_anthropic", lambda: mock_anthropic)
