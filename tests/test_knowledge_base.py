@@ -13,8 +13,9 @@ def test_pdf_md_parity():
     if not DATA_DIR.exists():
         pytest.skip(f"Directory {DATA_DIR} not found. Skipping parity test.")
 
-    # Skip the internal tests/ and cache directories
-    skip_dirs = {DATA_DIR / "tests", DATA_DIR / ".pdf_cache"}
+    # Skip the internal tests/, cache, and the forms directory (Issue #191)
+    # Forms in 'forms/' use Guide.md companions instead of direct .md parity.
+    skip_dirs = {DATA_DIR / "tests", DATA_DIR / ".pdf_cache", DATA_DIR / "forms"}
     
     pdfs = [
         p for p in DATA_DIR.rglob("*.pdf") 
@@ -24,7 +25,9 @@ def test_pdf_md_parity():
     missing_md = []
     for pdf in pdfs:
         md_file = pdf.with_suffix(".md")
-        if not md_file.exists():
+        # Accept either .md or ' Guide.md' (Issue #192)
+        md_guide = pdf.parent / f"{pdf.stem} Guide.md"
+        if not md_file.exists() and not md_guide.exists():
             missing_md.append(f"  - {pdf.relative_to(REPO_ROOT)}")
             
     if missing_md:
