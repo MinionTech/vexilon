@@ -25,6 +25,7 @@ import threading
 print("[boot] Python started, importing stdlib...", flush=True)
 import json
 import os
+import re
 import time
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
@@ -44,6 +45,17 @@ if not os.getenv("HF_HOME"):
 print("[boot] All boilerplate complete.", flush=True)
 
 # ─── Configuration ───────────────────────────────────────────────────────────
+VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
+_GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
+
+# Public GitHub raw URL base for labour_law PDFs.
+# Used for folder/file links in the UI.
+GITHUB_LABOUR_LAW_URL = os.getenv(
+    "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
+)
+
+# Raw URL base for downloading pre-computed index from GitHub.
+# Used by _fetch_pdf_cache_if_missing() for HF Spaces bootstrap.
 PDF_CACHE_DIR = Path("./.pdf_cache")
 LABOUR_LAW_DIR = Path("./data/labour_law")
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
@@ -52,19 +64,13 @@ CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
 _CSS_PATH = Path(__file__).parent / "style.css"
 
-# Public GitHub raw URL base for labour_law PDFs.
-# Used for folder/file links in the UI.
-GITHUB_LABOUR_LAW_URL = (
-    "https://github.com/DerekRoberts/vexilon/tree/main/data/labour_law"
-)
+# Models
+DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", "claude-haiku-4-5-20251001")
+CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
+REVIEWER_MODEL = os.getenv("VEXILON_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
+CONDENSE_MODEL = os.getenv("VEXILON_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
+VERIFY_MODEL = os.getenv("VEXILON_VERIFY_MODEL", DEFAULT_MODEL_LLM)
 
-# Raw URL base for downloading pre-computed index from GitHub.
-# Used by _fetch_pdf_cache_if_missing() for HF Spaces bootstrap.
-_GITHUB_RAW_BASE = "https://raw.githubusercontent.com/DerekRoberts/vexilon/main"
-
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-4-5-20251001")
-REVIEWER_MODEL = os.getenv("REVIEWER_MODEL", "claude-haiku-4-5-20251001")
-CONDENSE_MODEL = os.getenv("CONDENSE_MODEL", "claude-haiku-4-5-20251001")
 
 # Generation Limits (Tokens)
 RAG_MAX_TOKENS = 1536
@@ -141,7 +147,6 @@ def sanitize_input(user_input: str) -> tuple[str, bool]:
 
 
 # Verification Bot (for reducing hallucinations)
-VERIFY_MODEL = os.getenv("VERIFY_MODEL", "claude-haiku-4-5-20251001")
 VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
 
 # Rate Limiting (for abuse prevention and cost control)
@@ -294,8 +299,8 @@ def get_embed_model() -> "SentenceTransformer":
 
 
 # Embedding dimension (derived from model to prevent FAISS mismatch)
-# Hardcoded to 384 for BAAI/bge-small-en-v1.5 to avoid model load during import/pytest collection.
-EMBED_DIM = 384
+# Default is 384 for BAAI/bge-small-en-v1.5
+EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
 
 
 def get_anthropic() -> "anthropic.AsyncAnthropic":
@@ -447,6 +452,7 @@ ask about that section directly. NEVER guess or fabricate contract language.
 10. If the search results are contradictory or unclear, flag this ambiguity to the user immediately.
 11. Every chunk is tagged with its Article or Appendix name for context.
 12. If asked about your capabilities, knowledge gaps, or what documents you have: describe the library manifest above. Do NOT audit or list "missing" articles — you have the complete text of everything listed above.
+13. GRIEVANCE FILING: If a steward asks how to resolve a confirmed violation, or if you determine a violation has likely occurred, you MUST proactively recommend filing a grievance. Provide a direct download link to the form: [Download BCGEU Grievance Form](/gradio_api/file=data/labour_law/forms/BCGEU%20Grievance%20Form.pdf) and advise them to consult 'BCGEU Grievance Form Guide.md' (also available in the manifest) for step-by-step instructions.
 
 Response format:
 
@@ -733,6 +739,10 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         if stripped.startswith("#"):
             current_header = stripped.lstrip("#").strip().upper()
         
+        # Page estimation removed per user request (Issue #177)
+        # Markdown sources are treated as continuous text (Default to p. 1)
+        page_num = 1
+        
         encoding = tokenizer(
             line,
             add_special_tokens=False,
@@ -741,7 +751,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         )
         for start_off, end_off in encoding.offset_mapping:
             token_metadata.append(
-                (char_offset + start_off, char_offset + end_off, 1, current_header)
+                (char_offset + start_off, char_offset + end_off, page_num, current_header)
             )
         
         char_offset += len(line) + 1  # +1 for newline
@@ -1198,6 +1208,68 @@ def log_review(query: str, raw_response: str, review_output: str, score: int) ->
         )
 
 
+def get_ground_truth_for_review(response: str, all_chunks: list[dict]) -> str:
+    """
+    Extract cited articles from Bot A's response and fetch their full text from context.
+    This prevents circular verification (Issue #183) by giving Bot B independent context.
+    Improved robustness (dashes, plurals, header matching) based on PR feedback.
+    """
+    # 1. Match formal Bot A citations (handles various dashes and optional brackets)
+    # e.g., '— [Doc Name], Article 10.4' or '- Doc Name, Section 5'
+    formal_regex = re.compile(
+        r"(?:[-–—]\s*)?(?:\[(?P<doc>[^\]]+)\]|(?P<doc_raw>[^,]+)),\s*(?:Article|Section|Clause|Appendix)\s*(?P<art>[\w\d.]+)", 
+        re.IGNORECASE
+    )
+    # 2. Match informal mentions in text: 'Article 10.4'
+    informal_regex = re.compile(
+        r"(?:Article|Section|Clause|Appendix)\s+(?P<art>[\w\d.]+)", 
+        re.IGNORECASE
+    )
+    
+    cited_targets = []
+    # Extract from formal citations first
+    for m in formal_regex.finditer(response):
+        doc_hint = (m.group("doc") or m.group("doc_raw")).strip().lower()
+        art_root = m.group("art").split(".")[0].upper()
+        cited_targets.append((doc_hint, art_root))
+    
+    # Supplement with informal mentions
+    for m in informal_regex.finditer(response):
+        art_root = m.group("art").split(".")[0].upper()
+        if not any(t[1] == art_root for t in cited_targets):
+            cited_targets.append((None, art_root))
+            
+    if not cited_targets:
+        return ""
+        
+    truth_parts = []
+    seen_chunk_ids = set()
+    
+    # 3. Pulll chunks matching these targets (using regex for robust header parsing)
+    header_num_re = re.compile(r"(?:ARTICLE|SECTION|APPENDIX|CLAUSE)\s+(?P<num>[\w\d.]+)", re.IGNORECASE)
+    
+    for doc_hint, art_num in cited_targets:
+        for chunk in all_chunks:
+            cid = (chunk["source"], chunk["chunk_index"])
+            if cid in seen_chunk_ids:
+                continue
+            
+            header = chunk.get("header", "").upper()
+            m_header = header_num_re.search(header)
+            
+            match_header = m_header and m_header.group("num") == art_num
+            match_doc = (doc_hint is None) or (doc_hint in chunk["source"].lower())
+            
+            if match_header and match_doc:
+                truth_parts.append(
+                    f"[Source: {chunk['source']}, Page: {chunk['page']}]\n{chunk['text']}"
+                )
+                seen_chunk_ids.add(cid)
+                
+    # Limit to 15 chunks (roughly 6k-8k tokens) for performance and window safety
+    return "\n\n---\n\n".join(truth_parts[:15])
+
+
 # ─── Two-Bot Review Stream (Bot B) ─────────────────────────────────────────────
 async def review_stream(
     raw_response: str, query: str, context: str
@@ -1207,15 +1279,22 @@ async def review_stream(
     Yields the review result with score and verified steps.
     """
     client = get_anthropic()
-    review_prompt = f"""Review the following steward's response for accuracy and completeness:
+    # Independent re-retrieval for Bot B (Issue #183)
+    # Extracts cited articles from Bot A's response and fetches ground truth context.
+    ground_truth = get_ground_truth_for_review(raw_response, _chunks)
+    if not ground_truth:
+        # Fallback to Bot A's context if no citations were generated or re-retrieval failed
+        ground_truth = context
+
+    review_prompt = f"""Review the following steward's response for accuracy and completeness using the provided GROUND TRUTH context.
 
 QUERY: {query}
 
 STEWARD'S RESPONSE:
 {raw_response}
 
-CONTEXT USED:
-{context[:2000]}
+GROUND TRUTH CONTEXT (FOR VERIFICATION):
+{ground_truth[:4000]}
 
 {REVIEWER_SYSTEM_PROMPT}
 """
@@ -1457,9 +1536,9 @@ CASE_BUILDER_HTML = """
 
 ATTRIBUTION_HTML = f"""
 <div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
-    <a href='https://github.com/DerekRoberts/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
+    <a href='{VEXILON_REPO_URL}' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
     <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
-    <a href='https://github.com/DerekRoberts/vexilon/pkgs/container/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>{VEXILON_VERSION}</a>
+    <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>{VEXILON_VERSION}</a>
 </div>
 """
 
