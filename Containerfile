@@ -34,7 +34,7 @@ WORKDIR /app
 
 # 1. Copy the virtualenv and model cache from the builder
 COPY --from=builder /app/.venv /app/.venv
-COPY --from=builder --chown=1001:1001 /app/hf_cache /app/hf_cache
+COPY --from=builder /app/hf_cache /app/hf_cache
 
 # 2. Copy application code and PDF assets
 COPY data/ ./data/
