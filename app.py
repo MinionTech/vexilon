@@ -295,8 +295,8 @@ def get_embed_model() -> "SentenceTransformer":
         print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
         from sentence_transformers import SentenceTransformer
 
-        # Use local_files_only=True to guarantee zero network latency during load
-        _embed_model = SentenceTransformer(EMBED_MODEL, device="cpu", model_kwargs={"local_files_only": True})
+        # Use the requested device (cpu) to avoid CUDA detection overhead.
+        _embed_model = SentenceTransformer(EMBED_MODEL, device="cpu")
         # Sane limit for offset mapping (4096 is plenty for any single page).
         # 100,000 was causing potential memory pressure and is far beyond the model's window.
         _embed_model.max_seq_length = 4096
