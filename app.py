@@ -1211,29 +1211,30 @@ def get_ground_truth_for_review(response: str, all_chunks: list[dict]) -> str:
     """
     Extract cited articles from Bot A's response and fetch their full text from context.
     This prevents circular verification (Issue #183) by giving Bot B independent context.
+    Improved robustness (dashes, plurals, header matching) based on PR feedback.
     """
-    # 1. Match formal Bot A citations: — [Doc Name], Article X
+    # 1. Match formal Bot A citations (handles various dashes and optional brackets)
+    # e.g., '— [Doc Name], Article 10.4' or '- Doc Name, Section 5'
     formal_regex = re.compile(
-        r"—\s*\[(?P<doc>[^\]]+)\],\s*(?:Article|Section)\s*(?P<art>[\w\d.]+)", 
+        r"(?:[-–—]\s*)?(?:\[(?P<doc>[^\]]+)\]|(?P<doc_raw>[^,]+)),\s*(?:Article|Section|Clause|Appendix)\s*(?P<art>[\w\d.]+)", 
         re.IGNORECASE
     )
-    # 2. Match informal mentions in text: Article 10.4
+    # 2. Match informal mentions in text: 'Article 10.4'
     informal_regex = re.compile(
-        r"(?:Article|Section|Appendix)\s+(?P<art>[\w\d.]+)", 
+        r"(?:Article|Section|Clause|Appendix)\s+(?P<art>[\w\d.]+)", 
         re.IGNORECASE
     )
     
     cited_targets = []
     # Extract from formal citations first
     for m in formal_regex.finditer(response):
-        # We match on the root number (e.g. 10.4 -> 10) for broad header matching
-        doc_hint = m.group("doc").lower()
-        art_root = m.group("art").split(".")[0]
+        doc_hint = (m.group("doc") or m.group("doc_raw")).strip().lower()
+        art_root = m.group("art").split(".")[0].upper()
         cited_targets.append((doc_hint, art_root))
     
     # Supplement with informal mentions
     for m in informal_regex.finditer(response):
-        art_root = m.group("art").split(".")[0]
+        art_root = m.group("art").split(".")[0].upper()
         if not any(t[1] == art_root for t in cited_targets):
             cited_targets.append((None, art_root))
             
@@ -1243,21 +1244,19 @@ def get_ground_truth_for_review(response: str, all_chunks: list[dict]) -> str:
     truth_parts = []
     seen_chunk_ids = set()
     
-    # 3. Pull chunks matching these targets
+    # 3. Pulll chunks matching these targets (using regex for robust header parsing)
+    header_num_re = re.compile(r"(?:ARTICLE|SECTION|APPENDIX|CLAUSE)\s+(?P<num>[\w\d.]+)", re.IGNORECASE)
+    
     for doc_hint, art_num in cited_targets:
-        target_upper = art_num.upper()
         for chunk in all_chunks:
             cid = (chunk["source"], chunk["chunk_index"])
             if cid in seen_chunk_ids:
                 continue
             
             header = chunk.get("header", "").upper()
-            tokens = header.split()
-            match_header = False
-            # Check for header pattern: "ARTICLE 10 - ..." or "APPENDIX 3 - ..."
-            if len(tokens) >= 2 and tokens[0] in ["ARTICLE", "SECTION", "APPENDIX"] and tokens[1] == target_upper:
-                match_header = True
+            m_header = header_num_re.search(header)
             
+            match_header = m_header and m_header.group("num") == art_num
             match_doc = (doc_hint is None) or (doc_hint in chunk["source"].lower())
             
             if match_header and match_doc:
