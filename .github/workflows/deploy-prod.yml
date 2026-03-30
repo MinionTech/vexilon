@@ -40,7 +40,7 @@ jobs:
             
             if [ -n "$PR_HEAD_SHA" ] && [ "$PR_HEAD_SHA" != "null" ]; then
               TAG="sha-${PR_HEAD_SHA}"
-              IMAGE="ghcr.io/${{ github.repository }}:${TAG,,}" # Case-insensitive
+              declare -l IMAGE="ghcr.io/${{ github.repository }}:${TAG}"
               
               echo "  Candidate PR Head: ${TAG}..."
               
