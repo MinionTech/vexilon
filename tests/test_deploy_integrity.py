@@ -33,8 +33,8 @@ def test_readme_metadata_sync():
         "README.md must NOT have 'app_file' — that's a Gradio SDK field, not Docker."
     
     # 4. Must have startup_duration_timeout to prevent HF from killing slow model loads
-    assert re.search(r"^startup_duration_timeout:", content, re.MULTILINE), \
-        "README.md MUST have 'startup_duration_timeout' to prevent HF from killing the container during model loading."
+    assert re.search(r"^startup_duration_timeout: 10m", content, re.MULTILINE), \
+        "README.md MUST have 'startup_duration_timeout: 10m' to prevent HF from killing the container during model loading."
 
 
 def test_app_py_build_safety():
