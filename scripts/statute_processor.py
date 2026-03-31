@@ -17,7 +17,7 @@ Usage:
 import re
 from pathlib import Path
 
-src_path = Path("/tmp/raw_statute.html")
+src_path = Path("/tmp/raw_act.html")
 dest_dir = Path("/home/derek/Repos/vexilon/data/labour_law/02_statutory")
 
 def clean_content(text: str) -> str:
@@ -38,22 +38,28 @@ def process_wca():
 
     content = src_path.read_text(encoding="utf-8")
     
-    # Split by anything that looks like "PART 1" or "Part 1" at a boundary
-    # Handles various HTML structures seen in WCA and OHS Reg
-    parts = re.split(r'(?i)(?:>|\s|\n)(Part\s+\d+\s+[-—–—:\s\w]+)(?=<|\n)', content)
+    # Split by the specific BCLaws Part header class to avoid matching citations
+    # Example: <p class="part" ...>Part 1 — Preliminary</p>
+    chunks = re.split(r'(<p class="part".*?>(?:Part\s+\d+).*?</p>)', content, flags=re.I | re.S)
     
+    # chunks[0] is TOC/Preamble, which we can skip or name "Introduction"
+    if len(chunks) > 0:
+        intro = clean_content(chunks[0])
+        if len(intro) > 100:
+            (dest_dir / "BC Workers Compensation Act - Introduction.md").write_text(f"# BC Workers Compensation Act - Introduction\n\n{intro}", encoding="utf-8")
+
     # Re-assemble partitions
-    for i in range(1, len(parts), 2):
-        if i + 1 >= len(parts): break
+    for i in range(1, len(chunks), 2):
+        if i + 1 >= len(chunks): break
         
-        raw_header = parts[i].strip()
-        raw_body = parts[i+1]
+        raw_header = chunks[i]
+        raw_body = chunks[i+1]
         
         # Clean both
         header = clean_content(raw_header)
         body = clean_content(raw_body)
         
-        # Pull Part Number
+        # Pull Part Number accurately
         num_m = re.search(r'Part\s+(\d+)', header, re.I)
         if num_m:
             p_num = num_m.group(1)
