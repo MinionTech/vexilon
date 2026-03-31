@@ -34,9 +34,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    mem_limit: 3g
+    memswap_limit: 3g
     depends_on:
-      index-refresh:
-        condition: service_completed_successfully
       tests:
         condition: service_completed_successfully
     volumes:
@@ -68,8 +68,10 @@ services:
       HF_HOME: /app/hf_cache
       TRANSFORMERS_OFFLINE: "1"
       PYTHONPATH: "/app"
-    # We use python -m pytest to ensure /app is in the sys.path for module discovery
     command: sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v"
+    depends_on:
+      index-refresh:
+        condition: service_completed_successfully
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
   # Run with: podman-compose run --rm index-refresh
@@ -79,6 +81,8 @@ services:
       context: .
       dockerfile: Containerfile
       target: builder
+    mem_limit: 2g
+    memswap_limit: 2g
     volumes:
       - ./app.py:/app/app.py:ro,z
       - ./data:/app/data:ro,z
@@ -115,9 +119,9 @@ services:
       PORT: "7860"
       HF_HOME: /app/hf_cache
       PATH: "/app/.venv/bin:$PATH"
+    mem_limit: 3g
+    memswap_limit: 3g
     depends_on:
-      index-refresh:
-        condition: service_completed_successfully
       tests:
         condition: service_completed_successfully
     ports:
