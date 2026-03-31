@@ -1509,7 +1509,7 @@ EXAMPLE_QUESTIONS = [
 # Persistent disclaimer about unofficial status and privacy.
 DISCLAIMER_HTML = """
 <div style="background-color:#fff8e1; border-left:4px solid #f59e0b; color:#7c4a00; padding:10px 14px; border-radius:4px; font-size:0.85rem; margin-top:4px; margin-bottom:12px; line-height:1.4;">
-    <span style="font-weight:800 !important; color:#5d3600;">⚠️ Unofficial:</span> Not affiliated with BCGEU. AI-generated responses may contain errors. &nbsp;&bull;&nbsp; <span style="font-weight:800 !important; color:#5d3600;">Privacy:</span> This chat is not saved.
+    Not affiliated with BCGEU. AI-generated responses may contain errors.  This chat is not saved.
 </div>
 """
 
