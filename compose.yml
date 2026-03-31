@@ -68,6 +68,7 @@ services:
       HF_HOME: /app/hf_cache
       TRANSFORMERS_OFFLINE: "1"
       PYTHONPATH: "/app"
+    # We use python -m pytest to ensure /app is in the sys.path for module discovery
     command: sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v"
     depends_on:
       index-refresh:
@@ -105,31 +106,14 @@ services:
   # Use: podman compose up --build dev
   # Builds from source with live reload. Loads pre-computed index if available.
   dev:
+    extends: vexilon
     build:
-      context: .
-      dockerfile: Containerfile
       target: builder
     profiles: ["dev"]
     environment:
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
-      VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
-      HF_TOKEN_PATH: /dev/null
       TRANSFORMERS_OFFLINE: "1"
-      PORT: "7860"
       HF_HOME: /app/hf_cache
       PATH: "/app/.venv/bin:$PATH"
-    mem_limit: 3g
-    memswap_limit: 3g
-    depends_on:
-      tests:
-        condition: service_completed_successfully
-    ports:
-      - "7860:7860"
-    cap_drop:
-      - ALL
-    tmpfs:
-      - /tmp
     volumes:
       - ./app.py:/app/app.py:ro,Z
       - ./style.css:/app/style.css:ro,Z
@@ -138,9 +122,3 @@ services:
       - ./.pdf_cache:/app/.pdf_cache:z
       - ./pyproject.toml:/app/pyproject.toml:ro,Z
     command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7860')\""]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
