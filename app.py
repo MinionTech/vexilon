@@ -1517,7 +1517,8 @@ DISCLAIMER_HTML = (
     "font-size:0.85rem;"
     "margin-bottom:12px;"
     '">'
-    "This project is not affiliated with the BCGEU. AI-generated responses may contain errors."
+    "This project is not affiliated with the BCGEU. AI-generated responses may contain errors. "
+    "This chat is not saved; download as Markdown to preserve your history."
     "</div>"
 )
 
