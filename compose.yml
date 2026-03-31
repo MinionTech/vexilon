@@ -61,6 +61,8 @@ services:
       - ./uv.lock:/app/uv.lock:ro,z
       - ./conftest.py:/app/conftest.py:ro,z
       - ./compose.yml:/app/compose.yml:ro,z
+      - ./README.md:/app/README.md:ro,z
+      - ./Containerfile:/app/Containerfile:ro,z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
