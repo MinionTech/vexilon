@@ -88,3 +88,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: ./.github/scripts/deploy.sh "${{ steps.resolve.outputs.digest }}"
+
+      - name: Verify Space boots successfully
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: ./.github/scripts/verify_deployment.sh "DerekRoberts/landru"
