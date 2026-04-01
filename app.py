@@ -1482,7 +1482,7 @@ def markdown_to_history(file_path: str) -> list[dict]:
 EXAMPLE_QUESTIONS = [
     "What are the just cause requirements for discipline?",
     "What rights do stewards have in investigation meetings?",
-    "What is the nexus test for off-duty conduct?",
+    "What is the nexus test for establishing a link in off-duty conduct cases?",
     "Does my employer have a social media policy?",
 ]
 
