@@ -1735,6 +1735,7 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
+        show_api=False,
         allowed_paths=allowed_paths,
         css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "",
         auth=auth_creds,

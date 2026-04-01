@@ -125,3 +125,18 @@
         height: 18px !important;
     }
 }
+
+/* 6. Clean UI - Hide Gradio Boilerplate */
+footer {
+    display: none !important;
+}
+
+/* Hide floating header elements (Settings/API) if present */
+header {
+    display: none !important;
+}
+
+/* If the header is actually needed for layout, just hide the buttons inside it */
+.show-api, .built-with {
+    display: none !important;
+}
