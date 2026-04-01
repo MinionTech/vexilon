@@ -222,10 +222,11 @@ To prevent unintended public access while running on Hugging Face Spaces or othe
   - If unset, the app remains public (intended for local development).
   - Credentials are checked on every session start.
 
-### Privacy & Data Retention (Updated: #215)
+### Privacy & Data Retention (Updated: #215, #216)
 
-Vexilon is a "content-blind" application designed to protect the privacy of BCGEU stewards and their members. 
+Vexilon is a "content-blind" application designed to protect the privacy of BCGEU stewards and their members. It is specifically built to comply with the British Columbia **Personal Information Protection Act (PIPA)** and its **10 Fair Information Principles**.
 
+- **PIPA Compliance**: For detailed mapping of Vexilon features to PIPA principles, see [docs/PRIVACY.md](docs/PRIVACY.md).
 - **NO Conversation History**: Conversations are ephemeral. Once a browser tab is refreshed or closed, all history is permanently deleted. No conversation data is persisted across sessions.
 - **NO Content Logging**: User queries, condensed search queries, and bot responses are **never** written to disk or any persistent database. 
 - **Minimal Metadata Tracking**: For the purpose of monitoring system health and API costs, Vexilon only logs the following "lite" metadata:

@@ -1120,7 +1120,7 @@ async def rag_stream(
             system=[
                 {
                     "type": "text",
-                    "text": SYSTEM_PROMPT.format(manifest=get_knowledge_manifest()),
+                    "text": SYSTEM_PROMPT.replace("{manifest}", get_knowledge_manifest()).replace("{verify_message}", VERIFY_STEWARD_MESSAGE),
                     "cache_control": {"type": "ephemeral"},
                 },
                 {
@@ -1366,11 +1366,8 @@ async def rag_review_stream(
         if persona_mode in ["Direct", "Defend"]:
             base_prompt = get_persona_prompt(persona_mode)
 
-        # Standardized formatting for all personas
-        formatted_prompt = base_prompt.format(
-            manifest=get_knowledge_manifest(),
-            verify_message=VERIFY_STEWARD_MESSAGE,
-        )
+        # Standardized formatting for all personas (Issue #216 feedback: use .replace for safety)
+        formatted_prompt = base_prompt.replace("{manifest}", get_knowledge_manifest()).replace("{verify_message}", VERIFY_STEWARD_MESSAGE)
 
 
 
@@ -1511,7 +1508,7 @@ EXAMPLE_QUESTIONS = [
 # Persistent disclaimer about unofficial status and privacy.
 DISCLAIMER_HTML = """
 <div style="background-color:#fff8e1; border-left:4px solid #f59e0b; color:#7c4a00; padding:10px 14px; border-radius:4px; font-size:0.85rem; margin-top:4px; margin-bottom:12px; line-height:1.4;">
-    Not affiliated with BCGEU. AI-generated responses may contain errors.  This chat is not saved.
+    Not affiliated with BCGEU. AI-generated responses may contain errors. This chat is ephemeral and not saved. Aligned with PIPA (Privacy Act).
 </div>
 """
 
@@ -1519,7 +1516,9 @@ DISCLAIMER_HTML = """
 
 ATTRIBUTION_HTML = f"""
 <div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
-    <a href='{VEXILON_REPO_URL}' target='_blank' style='color: #005691; text-decoration: none;'>View code or contribute on GitHub</a>
+    <a href='{VEXILON_REPO_URL}' target='_blank' style='color: #005691; text-decoration: none;'>View code on GitHub</a>
+    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+    <a href='/gradio_api/file=docs/PRIVACY.md' target='_blank' style='color: #008542; text-decoration: none;'>Privacy Policy (PIPA)</a>
     <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
     <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon' target='_blank' style='color: #005691; text-decoration: none;'>{VEXILON_VERSION}</a>
 </div>
@@ -1738,7 +1737,7 @@ if __name__ == "__main__":
     # Use relative path for cross-environment compatibility (local dev + Docker container)
     # Note: This allows the entire directory rather than specific files for cross-environment
     # compatibility. The directory only contains PDF files per project structure, so this is acceptable.
-    allowed_paths = [str(LABOUR_LAW_DIR)]
+    allowed_paths = [str(LABOUR_LAW_DIR), str(Path("docs"))]
     
     # ── Final Build Report ──────────────────────────────────────────────────
     print(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
