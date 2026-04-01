@@ -10,16 +10,18 @@ Vexilon is built with a "Privacy-by-Design" architecture, specifically aligned w
 *   **Third-Parties**: Vexilon uses Anthropic (Claude) for processing. All data sent to Anthropic is subject to their standard data processing agreements, which prohibit the use of customer data for training their models.
 
 ### 2. Identifying Purposes
-*   **Purpose**: Vexilon collects user queries for the sole purpose of providing context-aware answers about collective agreements and labour law.
-*   **No Secondary Use**: Data is never used for marketing, profiling, or tracking.
+*   **Purpose**: Vexilon processes user queries for the sole purpose of providing context-aware answers in real-time. 
+*   **Tracking**: We only track non-sensitive metadata (query counts and token consumption) for system health and API billing.
+*   **No Secondary Use**: Data is never used for marketing, profiling, or tracking individual users.
 
 ### 3. Consent
 *   **Implied Consent**: By using the chat interface and submitting queries, users provide implied consent for the processing of those queries.
 *   **Notification**: The UI footer explicitly states that chats are ephemeral and not saved.
 
 ### 4. Limiting Collection
-*   **Content-Blind**: Vexilon does not require registration, login (unless configured for private use), or PII (Personally Identifiable Information) to function.
-*   **Minimal Metadata**: We do not collect device fingerprints, IP addresses (except for active rate-limiting in memory), or location data.
+*   **Minimal Metrics**: Our collection is strictly limited to non-sensitive performance metrics: **query count** and **token consumption**.
+*   **Content-Blind**: Vexilon does not collect user IP addresses (except for active session rate-limiting in memory), device fingerprints, or location data.
+*   **No PII**: We do not require registration or any Personally Identifiable Information (PII) to function.
 
 ### 5. Limiting Use, Disclosure, and Retention
 *   **Ephemeral History**: Chat history exists only in the user's browser session. Refreshing the page permanently deletes the conversation.
