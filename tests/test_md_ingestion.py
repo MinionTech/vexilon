@@ -1,6 +1,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+import src.indexing as indexing
 import app
 
 # ─── Tests for _is_toc_or_index_page() (Restored Parity) ──────────────────────
@@ -15,7 +16,7 @@ class TestIsTocOrIndexPage:
             "8.1 Grievance Procedure ...................................... 15\n"
             "8.2 Step 1 ................................................... 15\n"
         )
-        assert app._is_toc_or_index_page(toc_text) is True
+        assert indexing._is_toc_or_index_page(toc_text) is True
 
     def test_index_style_line_detected(self):
         """A page with index-style 'Topic .......... NN' lines is detected."""
@@ -27,7 +28,7 @@ class TestIsTocOrIndexPage:
             "Acting School Manager, 27.16 ............. 75\n"
             "Additional Paid Holidays, 17.2 ........... 49\n"
         )
-        assert app._is_toc_or_index_page(index_text) is True
+        assert indexing._is_toc_or_index_page(index_text) is True
 
     def test_substantive_article_text_not_detected(self):
         """Actual contract article text is NOT flagged as TOC."""
@@ -36,12 +37,12 @@ class TestIsTocOrIndexPage:
             "8.1 Grievance Procedure\n"
             "(a) The Employer and the Union recognize that grievances may arise concerning:\n"
         )
-        assert app._is_toc_or_index_page(article_text) is False
+        assert indexing._is_toc_or_index_page(article_text) is False
 
     def test_empty_line_not_detected(self):
         """Blank or whitespace-only lines return False."""
-        assert app._is_toc_or_index_page("") is False
-        assert app._is_toc_or_index_page("   \n\n   ") is False
+        assert indexing._is_toc_or_index_page("") is False
+        assert indexing._is_toc_or_index_page("   \n\n   ") is False
 
 
 # ─── Tests for _clean_page_text() (Restored Parity) ───────────────────────
@@ -55,7 +56,7 @@ class TestCleanPageText:
             "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01 15/81\n"
             "Minimum wage is $16.75 per hour.\n"
         )
-        cleaned = app._clean_page_text(raw)
+        cleaned = indexing._clean_page_text(raw)
         assert "bclaws.gov.bc.ca" not in cleaned
         assert "Minimum wage is $16.75 per hour." in cleaned
 
@@ -65,19 +66,19 @@ class TestCleanPageText:
             "17/03/2026, 08:44 Employment Standards Act\n"
             "The director must develop policies.\n"
         )
-        cleaned = app._clean_page_text(raw)
+        cleaned = indexing._clean_page_text(raw)
         assert "17/03/2026" not in cleaned
         assert "The director must develop policies." in cleaned
 
     def test_clean_text_unchanged(self):
         """Text with no artifacts passes through unchanged."""
         clean = "10.1 Burden of Proof\nIn all cases the burden rests with the Employer."
-        assert app._clean_page_text(clean) == clean
+        assert indexing._clean_page_text(clean) == clean
 
     def test_multiple_blank_lines_collapsed(self):
         """Three or more consecutive blank lines are collapsed to one."""
         padded = "Line one.\n\n\n\nLine two."
-        cleaned = app._clean_page_text(padded)
+        cleaned = indexing._clean_page_text(padded)
         assert "\n\n\n" not in cleaned
 
 
@@ -85,13 +86,13 @@ class TestCleanPageText:
 
 def test_load_md_chunks_tracks_headers(tmp_path, monkeypatch):
     """load_md_chunks should detect # headers and track them as breadcrumbs in chunks."""
-    monkeypatch.setattr(app, "CHUNK_SIZE", 5)
-    monkeypatch.setattr(app, "CHUNK_OVERLAP", 0)
+    monkeypatch.setattr(indexing, "CHUNK_SIZE", 5)
+    monkeypatch.setattr(indexing, "CHUNK_OVERLAP", 0)
 
     md_file = tmp_path / "agreement.md"
     md_file.write_text("# ARTICLE 10\n10.1 Content here.\n# ARTICLE 11\n11.1 More content.")
 
-    chunks = app.load_md_chunks(md_file)
+    chunks = indexing.load_md_chunks(md_file)
     
     # Check chunks for Article 10
     art10_chunks = [c for c in chunks if "ARTICLE 10" in c["text"]]
@@ -105,13 +106,13 @@ def test_load_md_chunks_tracks_headers(tmp_path, monkeypatch):
 
 def test_md_toc_blocks_skipped(tmp_path, monkeypatch):
     """load_md_chunks must skip Markdown blocks that look like TOC dot-leaders."""
-    monkeypatch.setattr(app, "CHUNK_SIZE", 100)
-    monkeypatch.setattr(app, "CHUNK_OVERLAP", 25)
+    monkeypatch.setattr(indexing, "CHUNK_SIZE", 100)
+    monkeypatch.setattr(indexing, "CHUNK_OVERLAP", 25)
 
     md_file = tmp_path / "agreement.md"
     md_file.write_text("# TOC\nArticle 1 .......... 5\nArticle 2 .......... 10\nArticle 3 .......... 15\n\n# CONTENT\n## Article 1\nActual policy text is here.")
 
-    chunks = app.load_md_chunks(md_file)
+    chunks = indexing.load_md_chunks(md_file)
     
     # The TOC entries should be filtered out by _is_toc_or_index_page
     full_text = " ".join([c["text"] for c in chunks])
@@ -123,7 +124,7 @@ def test_load_md_chunks_one_based_metadata(tmp_path):
     md_file = tmp_path / "test.md"
     md_file.write_text("Some text.")
     
-    chunks = app.load_md_chunks(md_file)
+    chunks = indexing.load_md_chunks(md_file)
     assert chunks[0]["page"] == 1
     assert chunks[0]["source"] == "Test"
 
@@ -132,10 +133,10 @@ def test_load_md_chunks_skips_whitespace_only(tmp_path):
     md_file = tmp_path / "empty.md"
     md_file.write_text("   \n\n   ")
     
-    chunks = app.load_md_chunks(md_file)
+    chunks = indexing.load_md_chunks(md_file)
     assert len(chunks) == 0
 
 def test_load_md_chunks_handles_missing_file(tmp_path):
     """MD loader should raise FileNotFoundError if file missing."""
     with pytest.raises(FileNotFoundError):
-        app.load_md_chunks(tmp_path / "missing.md")
+        indexing.load_md_chunks(tmp_path / "missing.md")

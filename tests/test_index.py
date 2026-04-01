@@ -8,6 +8,7 @@ import faiss
 import numpy as np
 import pytest
 
+import src.indexing as indexing
 import app
 
 
@@ -35,11 +36,11 @@ def test_build_index_returns_faiss_index(monkeypatch):
     n = 5
     chunks = _make_chunks(n)
     # Use random unit vectors (shape matches EMBED_DIM)
-    vecs = np.random.randn(n, app.EMBED_DIM).astype(np.float32)
+    vecs = np.random.randn(n, indexing.EMBED_DIM).astype(np.float32)
     faiss.normalize_L2(vecs)
 
-    monkeypatch.setattr(app, "embed_texts", _make_embed_fn(vecs))
-    index = app.build_index(chunks)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
 
     assert isinstance(index, faiss.IndexFlatIP)
     assert index.ntotal == n
@@ -49,11 +50,11 @@ def test_build_index_normalises_vectors(monkeypatch):
     """After build_index, searching with an identical vector should produce score ≈ 1.0."""
     n = 3
     chunks = _make_chunks(n)
-    vecs = np.random.randn(n, app.EMBED_DIM).astype(np.float32)
+    vecs = np.random.randn(n, indexing.EMBED_DIM).astype(np.float32)
     faiss.normalize_L2(vecs)
 
-    monkeypatch.setattr(app, "embed_texts", _make_embed_fn(vecs))
-    index = app.build_index(chunks)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
 
     query = vecs[0:1].copy()
     scores, _ = index.search(query, 1)
@@ -67,11 +68,11 @@ def test_search_index_returns_top_k(monkeypatch):
     n = 10
     top_k = 3
     chunks = _make_chunks(n)
-    vecs = np.random.randn(n, app.EMBED_DIM).astype(np.float32)
+    vecs = np.random.randn(n, indexing.EMBED_DIM).astype(np.float32)
     faiss.normalize_L2(vecs)
 
-    monkeypatch.setattr(app, "embed_texts", _make_embed_fn(vecs))
-    index = app.build_index(chunks)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
 
     # For search, embed_texts is called with the single query string
     query_vec = vecs[0:1].copy()
@@ -79,8 +80,8 @@ def test_search_index_returns_top_k(monkeypatch):
     def _embed_search(texts):
         return query_vec.copy()
 
-    monkeypatch.setattr(app, "embed_texts", _embed_search)
-    results = app.search_index(index, chunks, "any query", top_k=top_k)
+    monkeypatch.setattr(indexing, "embed_texts", _embed_search)
+    results = indexing.search_index(index, chunks, "any query", top_k=top_k)
 
     assert len(results) == top_k
 
@@ -89,15 +90,15 @@ def test_search_index_finds_most_similar(monkeypatch):
     """The top result should be the chunk whose vector is closest to the query."""
     n = 4
     chunks = _make_chunks(n)
-    vecs = np.random.randn(n, app.EMBED_DIM).astype(np.float32)
+    vecs = np.random.randn(n, indexing.EMBED_DIM).astype(np.float32)
     faiss.normalize_L2(vecs)
 
-    monkeypatch.setattr(app, "embed_texts", _make_embed_fn(vecs))
-    index = app.build_index(chunks)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
 
     # Query is identical to chunk 2 — it must be the top hit
     target_vec = vecs[2:3].copy()
-    monkeypatch.setattr(app, "embed_texts", lambda _texts: target_vec.copy())
+    monkeypatch.setattr(indexing, "embed_texts", lambda _texts: target_vec.copy())
 
-    results = app.search_index(index, chunks, "irrelevant", top_k=1)
+    results = indexing.search_index(index, chunks, "irrelevant", top_k=1)
     assert results[0] == chunks[2]

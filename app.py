@@ -59,8 +59,12 @@ from src.indexing import (
     PDF_CACHE_DIR, LABOUR_LAW_DIR, INDEX_PATH, CHUNKS_PATH, MANIFEST_PATH,
     EMBED_MODEL, MAX_EMBED_TOKENS, CHUNK_SIZE, CHUNK_OVERLAP, EMBED_DIM,
     get_embed_model, _get_rag_source_files, _get_source_name, 
-    load_md_chunks, build_index, save_index, build_index_from_sources
+    load_md_chunks, build_index, save_index, build_index_from_sources,
+    embed_texts, search_index, load_precomputed_index, _fetch_pdf_cache_if_missing,
+    chunk_text, _is_toc_or_index_page, _clean_page_text
 )
+_embed_model = None
+_anthropic_client = None
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
 _CSS_PATH = Path(__file__).parent / "style.css"
 
@@ -235,11 +239,9 @@ def get_vexilon_info():
     source = "External/CI"
 
     if not version:
-        # Priority 2: Baked-in Build File
-        except FileNotFoundError:
-            # Priority 3: Fallback (Never dev!)
-            version = "unspecified-local"
-            source = "fallback"
+        # Priority 3: Fallback (Never dev!)
+        version = "unspecified-local"
+        source = "fallback"
 
     py_ver = sys.version.split()[0]
     os_info = platform.system()
@@ -312,14 +314,7 @@ def get_embed_model() -> "SentenceTransformer":
 # (Imported from src.indexing)
 
 
-def get_anthropic() -> "anthropic.AsyncAnthropic":
-    global _anthropic_client
-    if _anthropic_client is None:
-        import anthropic
-
-        # Reads ANTHROPIC_API_KEY from environment automatically; raises AuthenticationError if missing
-        _anthropic_client = anthropic.AsyncAnthropic()
-    return _anthropic_client
+# get_anthropic is defined above
 
 
 def _get_download_source_files() -> list[Path]:
@@ -517,11 +512,15 @@ class TestRegistry:
                     lines = text.split("\n")
                     
                     # Simple parser for "Keywords: k1, k2"
-                    keywords = set()
+                    keywords = []
                     content_start = 0
                     for i, line in enumerate(lines):
                         if line.startswith("**Keywords:**"):
                             kw_line = line.replace("**Keywords:**", "").strip()
+                            keywords = [k.strip().lower() for k in kw_line.split(",")]
+                            content_start = i + 1
+                            break
+                    
                     self.tests.append(TestDoctrine(
                         name=f.stem.replace("_", " ").title(),
                         keywords=keywords,
@@ -531,6 +530,7 @@ class TestRegistry:
                 except Exception as e:
                     print(f"[registry] Failed to load {f.name}: {e}")
             print(f"[registry] Loaded {len(self.tests)} tests from {directory.name}")
+            print(f"[debug] Registry Names: {[t.name for t in self.tests]}")
 
     def find_matches(self, query: str) -> list[TestDoctrine]:
         """Find all tests whose keywords appear in the lowercased query."""
@@ -563,19 +563,19 @@ def startup(force_rebuild: bool = False) -> None:
         print("[startup] DEVELOPER_MODE is ACTIVE. Proactive suggestions enabled.")
     _fetch_pdf_cache_if_missing()
     _test_registry.load(TESTS_DIR)
+    # ── Try fast path: load pre-computed index ──────────────────
+    index, chunks = load_precomputed_index()
+    if not force_rebuild and index is not None and chunks is not None:
+        print(f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks.")
+    else:
+        # ── Slow path: delegate to the build function ────────────
+        index, chunks = build_index_from_sources(force=force_rebuild)
 
-    if not force_rebuild:
-        index, chunks = load_precomputed_index()
-        if index is not None and chunks is not None:
-            _index = index
-            _chunks = chunks
-            # Warm the embedding model so the first query isn't slow
-            get_embed_model()
-            print("[startup] Ready.")
-            return
-
-    # ── Slow path: delegate to the API-key-free build function ────────────
-    build_index_from_sources(force=force_rebuild)
+    if index is not None and chunks is not None:
+        _index = index
+        _chunks = chunks
+    
+    get_embed_model() # Warm model
     print("[startup] Ready.")
 
 
@@ -902,7 +902,7 @@ async def rag_review_stream(
     message: str,
     history: list[dict],
     use_reviewer: bool = False,
-    persona_mode: str = "Explorer",
+    persona_mode: str = "Explore",
 ) -> AsyncIterator[str]:
     """
     Retrieve relevant chunks, build the prompt, stream from Bot A (RAG),
@@ -953,7 +953,9 @@ async def rag_review_stream(
 
         # 2. Audit Logic (Issue #161 Refactor)
         if persona_mode != "Explore":
-            matched_tests = _test_registry.find_matches(message + " " + query)
+            test_query = message + " " + query
+            matched_tests = _test_registry.find_matches(test_query)
+            print(f"[debug] Query: {test_query} | Matched: {[t.name for t in matched_tests]}")
             
             # 1. New Registry Tests
             for test in matched_tests:
