@@ -99,14 +99,14 @@
 
 /* 5. Mobile improvements & Chatbot sizing */
 #chatbot {
-    height: calc(100vh - 460px) !important;
+    height: calc(100vh - 380px) !important;
     min-height: 300px !important;
     margin-bottom: 5px !important;
 }
 
 @media (max-width: 540px) {
     #chatbot {
-        height: calc(100vh - 500px) !important;
+        height: calc(100vh - 420px) !important;
     }
     #reviewer_toggle.block {
         min-width: unset !important;
