@@ -467,12 +467,12 @@ GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING) ---
 def get_persona_prompt(mode_name: str) -> str:
     """Helper to load system prompts for different operational modes."""
     paths = {
-        "Direct": Path("./prompts/direct_staff_rep.txt"),
-        "Defend": Path("./prompts/case_builder.txt"),
+        "Direct": PROMPTS_DIR / "direct_staff_rep.txt",
+        "Defend": PROMPTS_DIR / "case_builder.txt",
     }
     fallbacks = {
-        "Direct": "You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.",
-        "Defend": "You are a BCGEU Staff Rep specializing in Grievance Drafting.",
+        "Direct": "You are a BCGEU Staff Rep providing DIRECT OPERATIONAL GUIDANCE.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
+        "Defend": "You are a BCGEU Staff Rep specializing in Grievance Drafting.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
     }
     
     path = paths.get(mode_name)
@@ -1340,11 +1340,13 @@ async def rag_review_stream(
 
     try:
         # 1. Resolve System Prompt based on Persona
-        base_prompt = persona_mode
         if persona_mode == "Explore":
             base_prompt = get_system_prompt(DEVELOPER_MODE)
         elif persona_mode in ["Direct", "Defend"]:
             base_prompt = get_persona_prompt(persona_mode)
+        else:
+            # Catch-all fallback to prevent crashes from unexpected persona_mode values
+            base_prompt = get_system_prompt(DEVELOPER_MODE)
 
         # Standardized formatting for all personas (Issue #216 feedback: use .replace for safety)
         formatted_prompt = base_prompt.replace("{manifest}", get_knowledge_manifest()).replace("{verify_message}", VERIFY_STEWARD_MESSAGE)
