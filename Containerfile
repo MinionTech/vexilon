@@ -36,30 +36,30 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/hf_cache /app/hf_cache
 
-# 2. Copy application code and PDF assets
+# 2. Copy data and scripts early for index building
 COPY data/ ./data/
 COPY scripts/ ./scripts/
-COPY prompts/ ./prompts/
-COPY app.py style.css ./
-RUN chmod +x /app/scripts/*.sh
+RUN chmod +x /app/scripts/*.py /app/scripts/*.sh
 
-# Bake the build timestamp into a file after code is copied
+# 3. Pre-build the FAISS index at image build time.
+# This uses scripts/build_index.py which parses Markdown sources,
+# embeds chunks, and writes .pdf_cache/index.faiss + chunks.json.
+# This layer is only invalidated if data/ or scripts/ change.
+RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
+USER 1001
+RUN python scripts/build_index.py
+
+# 4. Copy application logic last
+USER root
+COPY app.py style.css ./
+COPY prompts/ ./prompts/
 RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt
 
-# ─── Final Environment ────────────────────────────────────────────────────────
-# Set PATH before any RUN steps that invoke Python so they use the venv.
+# ─── Final Environment (Environment variables and PATH) ─────────────────
 ENV HF_HOME=/app/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     PATH="/app/.venv/bin:$PATH"
-
-# 3. Pre-build the FAISS index at image build time.
-# build_index_from_sources() parses PDFs, embeds chunks, and writes
-# .pdf_cache/index.faiss + .pdf_cache/chunks.json — without needing
-# ANTHROPIC_API_KEY (only the local embedding model is used here).
-# Result: container startup loads the index in <1 s instead of 5–10 min.
-RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
 USER 1001
-RUN python -c "from app import build_index_from_sources; build_index_from_sources()"
 
 EXPOSE 7860
 
