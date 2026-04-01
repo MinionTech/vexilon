@@ -326,7 +326,7 @@ Each response must follow this structure:
 | **LLM** | Anthropic Claude (`claude-haiku-4-5-20251001`) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
 | **Embeddings** | `BAAI/bge-small-en-v1.5` via `sentence-transformers` (local CPU) | No API key; no per-query cost; ~90 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
 | **Vector Store** | FAISS (in-memory, pre-computed index on disk) | No server process; index loaded from disk at startup (<1s); pre-computed once per agreement update |
-| **PDF Parsing** | `PyMuPDF` (pymupdf) | High-precision extraction; geometric word-reconstruction prevents "word-splitting" errors seen in government PDFs. |
+| **Markdown-First RAG** | Native Markdown | High-precision extraction via `pdf_to_md.py`; structured MD ensures the highest grounding accuracy and eliminates runtime PDF parsing overhead. |
 | **Forensic Pipeline** | `pdf_to_md.py` | Markdown-First architecture: PDFs are pre-converted to structured Markdown with dual-pass AI verification and integrity auditing. |
 | **Web UI** | Gradio 6.x | HF Spaces native; supports asynchronous handlers for high concurrency |
 | **Hosting** | Hugging Face Spaces | Free tier; Gradio-native; public URL with no infrastructure to manage |

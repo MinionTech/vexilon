@@ -2,7 +2,7 @@
 app.py — BCGEU Steward Assistant
 --------------------------------------------
 Tech stack:
-  - pymupdf             : PDF extraction for Markdown conversion
+  - Markdown-First      : Structured MD for highest grounding accuracy
   - sentence-transformers: Local CPU embeddings (BAAI/bge-small-en-v1.5, no API key)
   - FAISS                : In-memory vector index (no server process)
   - Anthropic            : Claude (claude-haiku-4-5-20251001) for responses
