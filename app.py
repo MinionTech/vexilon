@@ -1511,7 +1511,23 @@ def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
 
-    with gr.Blocks(title="Collective Agreement Explorer") as demo:
+    with gr.Blocks(
+        title="Collective Agreement Explorer",
+        js="""
+        function() {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    const textarea = document.querySelector('#msg_input textarea');
+                    if (textarea && document.activeElement === textarea) {
+                        e.preventDefault();
+                        const sendBtn = document.querySelector('#send_btn');
+                        if (sendBtn) sendBtn.click();
+                    }
+                }
+            });
+        }
+        """,
+    ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("## BCGEU Steward Assistant")
@@ -1536,10 +1552,11 @@ def build_ui() -> "gr.Blocks":
 
         # ── Chat interface ────────────────────────────────────────────────────
         chatbot = gr.Chatbot(
-            height=480,
+            height=600,
             buttons=["copy"],
             render_markdown=True,
             show_label=False,
+            elem_id="chatbot",
         )
 
         # ── Reviewer Toggle & Management ──────────────────────────────────────
@@ -1574,8 +1591,9 @@ def build_ui() -> "gr.Blocks":
                 scale=5,
                 show_label=False,
                 container=False,
+                elem_id="msg_input",
             )
-            send_btn = gr.Button("Send ➤", scale=1, variant="primary")
+            send_btn = gr.Button("Send ➤", scale=1, variant="primary", elem_id="send_btn")
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
@@ -1632,7 +1650,7 @@ def build_ui() -> "gr.Blocks":
             ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
-                yield history, "", hide, gr.update()
+                yield history, gr.update(), hide, gr.update()
 
 
 

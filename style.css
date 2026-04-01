@@ -97,8 +97,16 @@
     min-width: 60px !important;
 }
 
-/* 5. Mobile: collapse Reviewer to checkbox-only */
+/* 5. Mobile improvements & Chatbot sizing */
+#chatbot {
+    height: calc(100vh - 380px) !important;
+    min-height: 500px !important;
+}
+
 @media (max-width: 540px) {
+    #chatbot {
+        height: calc(100vh - 420px) !important;
+    }
     #reviewer_toggle.block {
         min-width: unset !important;
     }
