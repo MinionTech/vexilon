@@ -211,9 +211,13 @@ The sanitization checks for 16+ prompt injection patterns including:
 
 ### Privacy & Data Retention
 
-Vexilon is a "content-blind" application. Conversations are ephemeral and tied only to your current browser session. **We do not log user queries, bot responses, or internal reasoning.** 
+Vexilon is a "content-blind" application designed for maximum privacy and compliance with the British Columbia **Personal Information Protection Act (PIPA)**.
 
-Minimal, non-sensitive metadata (such as token counts and quality scores) is tracked for system health monitoring, but no content data ever reaches persistent storage. For a full technical disclosure of exactly what we track and why, see the [Privacy & Data Retention](SPEC.md#privacy--data-retention-updated-215) section of the project specification. 
+- **Ephemeral Conversations**: Chats are tied only to your current browser session and are permanently deleted upon refresh or closure.
+- **No Content Logging**: We **never** log user queries, bot responses, or search reasoning.
+- **Minimal Metadata**: Non-sensitive data (token counts, quality scores) is tracked for system health but never reaches persistent storage.
+
+For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see our [Privacy Policy (PIPA)](docs/PRIVACY.md) and the [Privacy & Data Retention](SPEC.md#privacy--data-retention-updated-215-216) section of the project specification. 
 
 ## Hugging Face Spaces Deployment
 
