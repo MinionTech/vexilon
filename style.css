@@ -126,6 +126,21 @@
     }
 }
 
+/* 7. Input Row Alignment - Align Textbox and Button heights */
+#input_row {
+    align-items: center !important;
+}
+
+#msg_input textarea {
+    min-height: 60px !important;
+    height: 60px !important;
+}
+
+#send_btn {
+    height: 60px !important;
+    min-height: 60px !important;
+}
+
 /* 6. Clean UI - Hide Gradio Boilerplate */
 footer {
     display: none !important;

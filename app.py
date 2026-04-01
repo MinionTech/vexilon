@@ -1572,7 +1572,7 @@ def build_ui() -> "gr.Blocks":
 
 
         # ── Input row ─────────────────────────────────────────────────────────
-        with gr.Row():
+        with gr.Row(elem_id="input_row"):
             msg_input = gr.Textbox(
                 placeholder="Ask about the collective agreement…",
                 label="",
