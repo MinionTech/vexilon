@@ -36,16 +36,12 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/hf_cache /app/hf_cache
 
-# 2. Copy application code and PDF assets
+# 2. Copy data, internal libraries, and indexing scripts
 COPY data/ ./data/
 COPY docs/ ./docs/
+COPY src/ ./src/
 COPY scripts/ ./scripts/
-COPY prompts/ ./prompts/
-COPY app.py style.css ./
 RUN chmod +x /app/scripts/*.sh
-
-# Bake the build timestamp into a file after code is copied
-RUN TZ="America/Vancouver" date +"%Y-%m-%d %H:%M %Z" > /app/build_version.txt
 
 # ─── Final Environment ────────────────────────────────────────────────────────
 # Set PATH before any RUN steps that invoke Python so they use the venv.
@@ -54,13 +50,16 @@ ENV HF_HOME=/app/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 3. Pre-build the FAISS index at image build time.
-# build_index_from_sources() parses PDFs, embeds chunks, and writes
-# .pdf_cache/index.faiss + .pdf_cache/chunks.json — without needing
-# ANTHROPIC_API_KEY (only the local embedding model is used here).
-# Result: container startup loads the index in <1 s instead of 5–10 min.
+# Pre-building here allows Docker to cache this expensive layer 
+# if the source data (data/) and indexing logic (src/) have not changed.
 RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
 USER 1001
-RUN python -c "from app import build_index_from_sources; build_index_from_sources()"
+RUN python scripts/build_index.py
+
+# 4. Copy application UI and Prompts
+# Changes to prompts/ or app.py will NOT trigger a re-index.
+COPY prompts/ ./prompts/
+COPY app.py style.css ./
 
 EXPOSE 7860
 

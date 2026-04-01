@@ -54,14 +54,14 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
     "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
 )
 
-# Raw URL base for downloading pre-computed index from GitHub.
-# Used by _fetch_pdf_cache_if_missing() for HF Spaces bootstrap.
-PDF_CACHE_DIR = Path("./.pdf_cache")
-LABOUR_LAW_DIR = Path("./data/labour_law")
+# ─── Data & Indexing ─────────────────────────────────────────────────────────
+from src.indexing import (
+    PDF_CACHE_DIR, LABOUR_LAW_DIR, INDEX_PATH, CHUNKS_PATH, MANIFEST_PATH,
+    EMBED_MODEL, MAX_EMBED_TOKENS, CHUNK_SIZE, CHUNK_OVERLAP, EMBED_DIM,
+    get_embed_model, _get_rag_source_files, _get_source_name, 
+    load_md_chunks, build_index, save_index, build_index_from_sources
+)
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
-INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
-CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
-MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
 _CSS_PATH = Path(__file__).parent / "style.css"
 
 # Models
@@ -76,11 +76,7 @@ VERIFY_MODEL = os.getenv("VEXILON_VERIFY_MODEL", DEFAULT_MODEL_LLM)
 RAG_MAX_TOKENS = 4096
 REVIEWER_MAX_TOKENS = 4096
 
-# Brain: Local Embeddings (Search) + Cloud LLM (Claude)
-EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")  # 512-token window
-MAX_EMBED_TOKENS = int(os.getenv("VEXILON_MAX_EMBED_TOKENS", 4096))  # Sane offset-mapping limit
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))  # Sized for BGE-small
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
+# Similarity Top-K
 SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))  # More context depth
 
 # Memory / Context Condensation
@@ -240,10 +236,6 @@ def get_vexilon_info():
 
     if not version:
         # Priority 2: Baked-in Build File
-        try:
-            with open("/app/build_version.txt", "r") as f:
-                version = f.read().strip()
-                source = "Local Build"
         except FileNotFoundError:
             # Priority 3: Fallback (Never dev!)
             version = "unspecified-local"
@@ -279,8 +271,12 @@ if TYPE_CHECKING:
     import gradio as gr
 
 # ─── Clients ─────────────────────────────────────────────────────────────────
-_embed_model: "SentenceTransformer | None" = None
-_anthropic_client: "anthropic.AsyncAnthropic | None" = None
+def get_anthropic() -> "anthropic.AsyncAnthropic":
+    global _anthropic_client
+    if _anthropic_client is None:
+        import anthropic
+        _anthropic_client = anthropic.AsyncAnthropic()
+    return _anthropic_client
 
 
 def get_embed_model() -> "SentenceTransformer":
@@ -312,9 +308,8 @@ def get_embed_model() -> "SentenceTransformer":
     return _embed_model
 
 
-# Embedding dimension (derived from model to prevent FAISS mismatch)
-# Default is 384 for BAAI/bge-small-en-v1.5
-EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
+# Embedding Dimension
+# (Imported from src.indexing)
 
 
 def get_anthropic() -> "anthropic.AsyncAnthropic":
@@ -326,21 +321,6 @@ def get_anthropic() -> "anthropic.AsyncAnthropic":
         _anthropic_client = anthropic.AsyncAnthropic()
     return _anthropic_client
 
-
-def _get_rag_source_files() -> list[Path]:
-    """
-    Recursively scan LABOUR_LAW_DIR for Markdown files ONLY.
-    PDFs and Forensic Integrity Audits are completely ignored for indexing.
-    The tests/ subdirectory is excluded.
-    """
-    if not LABOUR_LAW_DIR.exists():
-        return []
-    tests_dir = LABOUR_LAW_DIR / "tests"
-    mds = [
-        p for p in LABOUR_LAW_DIR.rglob("*.md") 
-        if not p.is_relative_to(tests_dir) and not p.name.endswith(".integrity.md")
-    ]
-    return sorted(mds, key=lambda p: str(p))
 
 def _get_download_source_files() -> list[Path]:
     """
@@ -354,20 +334,7 @@ def _get_download_source_files() -> list[Path]:
     return sorted(pdfs, key=lambda p: str(p))
 
 
-def _get_source_name(stem: str) -> str:
-    """
-    Parse source_name from internal filename convention: [Index]_[Category]_[Title].
-    Also handles [Index]_[Title] and fallback to title-cased filename.
-    """
-    parts = stem.split("_", 2)
-    if len(parts) == 3:
-        # Index_Category_Title
-        return parts[2]
-    elif len(parts) == 2:
-        # Index_Title
-        return parts[1]
-    # Fallback / No underscores
-    return stem.replace("_", " ").title()
+# _get_source_name is imported from src.indexing
 
 
 def get_knowledge_manifest() -> str:
@@ -555,10 +522,6 @@ class TestRegistry:
                     for i, line in enumerate(lines):
                         if line.startswith("**Keywords:**"):
                             kw_line = line.replace("**Keywords:**", "").strip()
-                            keywords = {k.strip().lower() for k in kw_line.split(",") if k.strip()}
-                            content_start = i + 1
-                            break
-                    
                     self.tests.append(TestDoctrine(
                         name=f.stem.replace("_", " ").title(),
                         keywords=keywords,
@@ -577,374 +540,9 @@ class TestRegistry:
 
 _test_registry = TestRegistry()
 
-# ─── Chunking ─────────────────────────────────────────────────────────────────
-
-
-def chunk_text(
-    full_text: str, token_data: list[tuple[int, int, int, str]], source_name: str
-) -> list[dict]:
-    """
-    Split *full_text* into overlapping token-based chunks across the whole document.
-    Uses 'token_data' [(char_start, char_end, page_num, header)] to preserve metadata.
-    Returns list of dicts: {text, page, source, header, chunk_index}.
-    """
-    chunks = []
-    if not token_data:
-        return chunks
-
-    # Safety guard: Ensure the loop always advances. If configuration is
-    # invalid (size <= overlap), we force a minimum step of 1 token.
-    step = max(1, CHUNK_SIZE - CHUNK_OVERLAP)
-
-    idx = 0
-    start = 0
-    while start < len(token_data):
-        end = min(start + CHUNK_SIZE, len(token_data))
-
-        # Get metadata from the first token of the chunk
-        char_start, _, page_num, header = token_data[start]
-        # End Char index is from the last token of the chunk
-        _, char_end, _, _ = token_data[end - 1]
-
-        # Contextual Breadcrumb: Prepend source + header
-        prefix = f"[{source_name} - {header}] " if header else f"[{source_name}] "
-        chunk_text_str = prefix + full_text[char_start:char_end]
-
-        chunks.append(
-            {
-                "text": chunk_text_str,
-                "page": page_num,
-                "source": source_name,
-                "header": header,
-                "chunk_index": idx,
-            }
-        )
-        idx += 1
-        start += step
-    return chunks
-
-
-# ─── PDF Loader ───────────────────────────────────────────────────────────────
-
-
-def _is_toc_or_index_page(page_text: str) -> bool:
-    """
-    Detect whether a page is a Table of Contents or alphabetical Index page.
-
-    These navigational pages mention every article/clause by name but contain
-    no substantive content. Indexing them causes TOC entries to dominate
-    semantic search results, drowning out actual contract text.
-
-    Returns True if the page appears to be TOC/index content.
-    """
-    import re
-
-    lines = [l.strip() for l in page_text.split("\n") if l.strip()]
-    if not lines:
-        return False
-
-    # Heuristic 1: 3+ dot-leader lines (..........) strongly indicates a TOC page
-    dot_leader_count = sum(1 for l in lines if l.count(".") >= 8 and ".." in l)
-    if dot_leader_count >= 3:
-        return True
-
-    # Heuristic 2: >40% of lines match index-style pattern "Some Text ... NN"
-    # e.g. "Abandonment of Position, 10.10 ........ 23"
-    index_line_re = re.compile(r".{10,}\.\s*\d{1,3}\s*$")
-    index_count = sum(1 for l in lines if index_line_re.search(l))
-    if len(lines) >= 5 and index_count / len(lines) > 0.4:
-        return True
-
-    return False
-
-
-def _clean_page_text(page_text: str) -> str:
-    """
-    Remove noise artifacts injected by web-based PDF extraction.
-
-    BC statute PDFs (ESA, Human Rights Code, Labour Relations Code) were
-    exported from bclaws.gov.bc.ca and contain repeated URL lines and
-    date-stamps that waste ~30 tokens per chunk and dilute embedding quality.
-    """
-    import re
-
-    # Remove bclaws.gov.bc.ca URL lines
-    page_text = re.sub(
-        r"https?://www\.bclaws\.gov\.bc\.ca/\S*",
-        "",
-        page_text,
-    )
-    # Remove date/time stamps from web-to-PDF artifacts, e.g.:
-    # "17/03/2026, 08:44 Employment Standards Act"
-    page_text = re.sub(
-        r"\d{2}/\d{2}/\d{4},?\s*\d{2}:\d{2}\s+[A-Z][^\n]*",
-        "",
-        page_text,
-    )
-    # Collapse runs of 3+ blank lines down to a single blank line
-    page_text = re.sub(r"\n{3,}", "\n\n", page_text)
-    return page_text.strip()
-
-
-def load_md_chunks(md_path: Path) -> list[dict]:
-    """
-    Parse a Markdown file into tokens and chunks.
-    Markdown is preferred for structured summaries as it preserves semantic hierarchies
-    better than PDF extraction.
-    """
-    content = md_path.read_text(encoding="utf-8").strip()
-    if not content:
-        return []
-    source_name = _get_source_name(md_path.stem)
-    print(f"[loader] Parsing Markdown '{source_name}'…")
-
-    tokenizer = get_embed_model().tokenizer
-    token_metadata = []
-    
-    # Split into header-delimited sections and filter TOC blocks
-    current_header = ""
-    lines = content.split("\n")
-    
-    # Group lines into sections by header, then filter TOC sections
-    sections: list[tuple[str, list[str]]] = []  # (header, lines)
-    current_lines: list[str] = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("#"):
-            if current_lines:
-                sections.append((current_header, current_lines))
-            current_header = stripped.lstrip("#").strip().upper()
-            current_lines = [line]
-        else:
-            current_lines.append(line)
-    if current_lines:
-        sections.append((current_header, current_lines))
-    
-    # Rebuild content without TOC sections and tokenize
-    filtered_lines: list[str] = []
-    for header, section_lines in sections:
-        section_text = "\n".join(section_lines)
-        if _is_toc_or_index_page(section_text):
-            print(f"[loader]   Skipping TOC/index section: {header or '(untitled)'}")
-            continue
-        filtered_lines.extend(section_lines)
-    
-    filtered_content = "\n".join(filtered_lines)
-    if not filtered_content.strip():
-        return []
-    
-    # Tokenize filtered content
-    current_header = ""
-    char_offset = 0
-    for line in filtered_lines:
-        stripped = line.strip()
-        if stripped.startswith("#"):
-            current_header = stripped.lstrip("#").strip().upper()
-        
-        # Page estimation removed per user request (Issue #177)
-        # Markdown sources are treated as continuous text (Default to p. 1)
-        page_num = 1
-        
-        encoding = tokenizer(
-            line,
-            add_special_tokens=False,
-            return_offsets_mapping=True,
-            truncation=False,
-        )
-        for start_off, end_off in encoding.offset_mapping:
-            token_metadata.append(
-                (char_offset + start_off, char_offset + end_off, page_num, current_header)
-            )
-        
-        char_offset += len(line) + 1  # +1 for newline
-
-    return chunk_text(filtered_content, token_metadata, source_name)
-
-
-# ─── FAISS Index ──────────────────────────────────────────────────────────────
-def embed_texts(texts: list[str]) -> "np.ndarray":
-    """Embed a list of texts using the local sentence-transformers model. Returns (N, EMBED_DIM) float32 array."""
-    import numpy as np
-
-    model = get_embed_model()
-    # encode() handles batching internally; show_progress_bar=False keeps logs clean
-    embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
-    return embeddings.astype(np.float32)
-
-
-def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
-    """
-    Embed all chunks and build a FAISS inner-product index.
-    Vectors are L2-normalised so inner product == cosine similarity.
-    """
-    import faiss
-
-    texts = [c["text"] for c in chunks]
-    print(f"[index] Embedding {len(texts)} chunks locally (may take 30–90 s on CPU)…")
-    t0 = time.time()
-    vectors = embed_texts(texts)
-    print(f"[index] Embeddings complete in {time.time() - t0:.1f}s")
-    # L2-normalise for cosine similarity via inner product
-    faiss.normalize_L2(vectors)
-    index = faiss.IndexFlatIP(EMBED_DIM)
-    index.add(vectors)
-    print(f"[index] FAISS index built — {index.ntotal} vectors")
-    return index
-
-
-def search_index(
-    index: "faiss.IndexFlatIP",
-    chunks: list[dict],
-    query: str,
-    top_k: int = SIMILARITY_TOP_K,
-) -> list[dict]:
-    """Return the top-k most similar chunks for *query*."""
-    import faiss
-
-    query_vec = embed_texts([query])  # (1, EMBED_DIM)
-    faiss.normalize_L2(query_vec)
-    _scores, indices = index.search(query_vec, top_k)
-    return [chunks[i] for i in indices[0] if i < len(chunks)]
-
-
-# ─── RAG App State (module-level, built at startup) ──────────────────────────
+# (RAG app state is now managed via src.indexing)
 _chunks: list[dict] = []
-_index: "faiss.IndexFlatIP | None" = None
-
-
-def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
-    """Persist the FAISS index and chunk metadata to .pdf_cache/ for fast cold starts."""
-    import faiss
-
-    faiss.write_index(index, str(INDEX_PATH))
-    with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
-        json.dump(chunks, f, ensure_ascii=False)
-    print(f"[index] Saved index → {INDEX_PATH} and chunks → {CHUNKS_PATH}")
-
-
-def load_precomputed_index() -> (
-    tuple["faiss.IndexFlatIP", list[dict]] | tuple[None, None]
-):
-    """
-    Load a pre-computed FAISS index and chunks from disk if both exist.
-    Returns (index, chunks) on success, (None, None) if files are missing.
-    """
-    if not INDEX_PATH.exists() or not CHUNKS_PATH.exists():
-        return None, None
-    print(f"[startup] Loading pre-computed index from {INDEX_PATH}…")
-    import faiss
-
-    index = faiss.read_index(str(INDEX_PATH))
-    with open(CHUNKS_PATH, encoding="utf-8") as f:
-        chunks = json.load(f)
-    print(
-        f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks."
-    )
-    return index, chunks
-
-
-def _fetch_pdf_cache_if_missing() -> None:
-    """
-    Download pre-computed index and chunks from GitHub raw if not present locally.
-    This enables fast cold starts on HuggingFace Spaces where PDFs aren't bundled.
-    """
-    import urllib.request
-    import urllib.error
-
-    # Ensure cache directory exists
-    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Check if both files already exist
-    if INDEX_PATH.exists() and CHUNKS_PATH.exists():
-        return
-
-    # Build URLs for the missing files
-    base = _GITHUB_RAW_BASE
-    urls = {}
-    if not INDEX_PATH.exists():
-        urls[INDEX_PATH] = f"{base}/.pdf_cache/index.faiss"
-    if not CHUNKS_PATH.exists():
-        urls[CHUNKS_PATH] = f"{base}/.pdf_cache/chunks.json"
-
-    # Download missing files
-    for dest_path, url in urls.items():
-        print(f"[fetch] Downloading {dest_path.name} from {url}…")
-        try:
-            urllib.request.urlretrieve(url, dest_path)
-            print(f"[fetch] Saved {dest_path}")
-        except (urllib.error.URLError, OSError) as e:
-            print(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")
-
-
-def build_index_from_sources(force: bool = False) -> None:
-    """
-    Parse all source files (PDF and MD) in LABOUR_LAW_DIR, embed them, 
-    and write the pre-built index to .pdf_cache/index.faiss + .pdf_cache/chunks.json.
-
-    Args:
-        force (bool): If True, ignores the existing manifest and rebuilds the
-                      index from scratch. Defaults to False.
-
-    SMART REFRESH: This function generates a manifest.json containing SHA256 hashes
-    of all source files. If the current files match the stored manifest (and the
-    index exists), the expensive embedding process is skipped.
-    """
-    import hashlib
-
-    global _chunks, _index
-
-    all_files = _get_rag_source_files()
-    if not all_files:
-        print("[build] No source files found to index!")
-        return
-
-    # Calculate hashes for the current source set
-    current_manifest = {}
-    for source_file in all_files:
-        hasher = hashlib.sha256()
-        with open(source_file, "rb") as f:
-            while chunk := f.read(65536):
-                hasher.update(chunk)
-        current_manifest[source_file.name] = hasher.hexdigest()
-
-    # Check against stored manifest
-    if not force and MANIFEST_PATH.exists():
-        try:
-            with open(MANIFEST_PATH, "r") as f:
-                stored_manifest = json.load(f)
-            if (
-                stored_manifest == current_manifest
-                and INDEX_PATH.exists()
-                and CHUNKS_PATH.exists()
-            ):
-                print(
-                    "[build] Smart Refresh: No changes detected in data/labour_law/. Skipping indexing."
-                )
-                return
-        except Exception as e:
-            print(f"[build] Failed to read manifest: {e}. Rebuilding anyway.")
-
-    # Ensure cache directory exists before writing
-    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-    print(f"[build] Scanning Sources in {LABOUR_LAW_DIR}…")
-    _chunks = []
-    for f in all_files:
-        if f.suffix.lower() == ".pdf":
-            _chunks.extend(load_pdf_chunks(f))
-        elif f.suffix.lower() == ".md":
-            _chunks.extend(load_md_chunks(f))
-
-    num_chunks = len(_chunks)
-    print(f"[build] Total {num_chunks} chunks loaded from {len(all_files)} files.")
-    _index = build_index(_chunks)
-    save_index(_index, _chunks)
-
-    # Save the new manifest
-    with open(MANIFEST_PATH, "w") as f:
-        json.dump(current_manifest, f, indent=2)
-    print(f"[build] Index and manifest written to {PDF_CACHE_DIR}.")
-    print("[build] Indexing complete.")
+_index: Any = None
 
 
 def startup(force_rebuild: bool = False) -> None:
