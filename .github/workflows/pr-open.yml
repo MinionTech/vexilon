@@ -60,7 +60,7 @@ jobs:
           path: /home/runner/.cache/huggingface
           key: hf-${{ runner.os }}-${{ hashFiles('uv.lock') }}
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --frozen
       - name: Run Integration Tests
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -68,7 +68,7 @@ jobs:
 
   container_build:
     name: Build & Push to GHCR
-    needs: [unit_tests, integration_tests]
+    needs: [unit_tests]
     if: ${{ ! github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -168,11 +168,11 @@ jobs:
 
   trivy:
     name: Trivy Security Scan
-    needs: [unit_tests, integration_tests]
+    needs: [unit_tests]
     if: (! github.event.pull_request.draft)
     permissions:
       security-events: write
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
       - uses: actions/checkout@v6
@@ -195,7 +195,7 @@ jobs:
     name: Results
     needs: [unit_tests, integration_tests, container_build, container_test, trivy]
     if: always()
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     steps:
       - if: contains(needs.*.result, 'failure')||contains(needs.*.result, 'canceled')
         run: echo "At least one job has failed." && exit 1

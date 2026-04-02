@@ -19,47 +19,42 @@ RUN HF_HOME=/app/hf_cache HF_HUB_DISABLE_IMPLICIT_TOKEN=1 UV_LINK_MODE=copy uv r
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS runner
 
-# Build provenance
-ARG VERSION
-ENV VEXILON_VERSION=$VERSION
-
-# Runtime system deps only (libgomp for FAISS, Python-native healthcheck)
+# 1. Runtime system deps and setup (runs once, cached forever)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    useradd --uid 1001 --no-create-home --shell /sbin/nologin vexilon
 
-# Create our non-root user
-RUN useradd --uid 1001 --no-create-home --shell /sbin/nologin vexilon
 WORKDIR /app
 
-# 1. Copy the virtualenv and model cache from the builder
+# 2. Copy the virtualenv and model cache from the builder
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/hf_cache /app/hf_cache
 
-# 2. Copy data, internal libraries, and indexing scripts
+# 3. Copy only what is needed for indexing (expensive step)
 COPY data/ ./data/
-COPY docs/ ./docs/
 COPY src/ ./src/
+COPY scripts/build_index.py ./scripts/
+RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache && \
+    chmod +x /app/scripts/build_index.py
+
+USER 1001
+RUN PATH="/app/.venv/bin:$PATH" python scripts/build_index.py
+
+# 4. Copy the remaining scripts and application code
+# (Changes here won't trigger a re-index)
 COPY scripts/ ./scripts/
 RUN chmod +x /app/scripts/*.sh
+COPY prompts/ ./prompts/
+COPY app.py style.css ./
 
-# ─── Final Environment ────────────────────────────────────────────────────────
-# Set PATH before any RUN steps that invoke Python so they use the venv.
+# ── Final Environment ────────────────────────────────────────────────────────
+# Build provenance (move to end to avoid cache busts on every commit)
+ARG VERSION
+ENV VEXILON_VERSION=$VERSION
 ENV HF_HOME=/app/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     PATH="/app/.venv/bin:$PATH"
-
-# 3. Pre-build the FAISS index at image build time.
-# Pre-building here allows Docker to cache this expensive layer 
-# if the source data (data/) and indexing logic (src/) have not changed.
-RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
-USER 1001
-RUN python scripts/build_index.py
-
-# 4. Copy application UI and Prompts
-# Changes to prompts/ or app.py will NOT trigger a re-index.
-COPY prompts/ ./prompts/
-COPY app.py style.css ./
 
 EXPOSE 7860
 

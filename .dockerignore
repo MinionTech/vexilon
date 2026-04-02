@@ -1,4 +1,6 @@
-# Exclude large cache directories from docker build context
+# Exclude large cache and metadata directories from docker build context
+.git/
+.github/
 hf_cache/
 # The FAISS index and chunks are built inside the image via a RUN step in
 # the Containerfile; they don't need to be in the build context.
