@@ -172,7 +172,7 @@ jobs:
     if: (! github.event.pull_request.draft)
     permissions:
       security-events: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
       - uses: actions/checkout@v6
@@ -195,7 +195,7 @@ jobs:
     name: Results
     needs: [unit_tests, integration_tests, container_build, container_test, trivy]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     steps:
       - if: contains(needs.*.result, 'failure')||contains(needs.*.result, 'canceled')
         run: echo "At least one job has failed." && exit 1
