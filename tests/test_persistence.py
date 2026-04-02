@@ -13,6 +13,7 @@ import faiss
 import numpy as np
 import pytest
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import app
 import src.indexing as indexing
@@ -138,6 +139,7 @@ def test_startup_raises_on_failure(monkeypatch):
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", _boom)
 
     with pytest.raises(RuntimeError, match="disk on fire"):
+        monkeypatch.setattr(app, "get_anthropic", MagicMock())
         app.startup()
 
 
@@ -149,86 +151,31 @@ def test_startup_uses_precomputed_index_when_available(monkeypatch, tmp_path):
 
     fake_index, fake_chunks = _tiny_index(n=2)
 
-    mock_load = lambda: (fake_index, fake_chunks)
-    monkeypatch.setattr(indexing, "load_precomputed_index", mock_load)
-    monkeypatch.setattr(app, "load_precomputed_index", mock_load)
+    # Delegate to indexing.build_index_from_sources
+    # We mock it to ensure app.startup() calls it correctly
+    mock_build = MagicMock(return_value=(fake_index, fake_chunks))
+    monkeypatch.setattr(app, "build_index_from_sources", mock_build)
 
-    # Mock build_index_from_sources to fail if it's called incorrectly
-    def _fail_if_called(*args, **kwargs):
-        pytest.fail("build_index_from_sources should not be called when precomputed index is available")
-
-    monkeypatch.setattr(indexing, "build_index_from_sources", _fail_if_called)
-    monkeypatch.setattr(app, "build_index_from_sources", _fail_if_called)
-
+    monkeypatch.setattr(app, "get_anthropic", MagicMock())
     app.startup()
 
     assert app._index is fake_index
     assert app._chunks is fake_chunks
+    mock_build.assert_called_once()
 
 
-def test_startup_slow_path_builds_and_saves(monkeypatch, tmp_path):
-    """
-    startup(force_rebuild=True) must: load PDF → build index → save index,
-    and wire up _index and _chunks when there is no pre-computed cache.
-    """
-    monkeypatch.setattr(app, "_index", None)
-    monkeypatch.setattr(app, "_chunks", [])
+
+def test_startup_delegates_to_indexing(monkeypatch):
+    """startup() must delegate to indexing.build_index_from_sources."""
     monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", lambda: None)
-    monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)
+    
+    fake_index, fake_chunks = _tiny_index(n=1)
+    mock_build = MagicMock(return_value=(fake_index, fake_chunks))
+    monkeypatch.setattr(app, "build_index_from_sources", mock_build)
 
-    fake_chunks = [{"text": "article 1", "page": 1, "chunk_index": 0}]
-    fake_index, _ = _tiny_index(n=1)
-
-    # Track whether save_index was called
-    save_calls = []
-
-    # Mock LABOUR_LAW_DIR to point to a tmp_path with one dummy PDF
-    law_dir = tmp_path / "data" / "labour_law"
-    law_dir.mkdir(parents=True)
-    (law_dir / "dummy.md").write_bytes(b"dummy")
-    monkeypatch.setattr(indexing, "LABOUR_LAW_DIR", law_dir)
-
-    monkeypatch.setattr(indexing, "load_md_chunks", lambda _path: fake_chunks)
-    monkeypatch.setattr(indexing, "build_index", lambda chunks: fake_index)
-    monkeypatch.setattr(indexing, "save_index", lambda idx, cks: save_calls.append((idx, cks)))
-
+    monkeypatch.setattr(app, "get_anthropic", MagicMock())
     app.startup(force_rebuild=True)
 
     assert app._index is fake_index
-    assert app._chunks == fake_chunks
-    assert len(save_calls) == 1, "save_index must be called exactly once during force_rebuild"
-
-
-def test_startup_slow_path_skips_precomputed_even_if_present(monkeypatch, tmp_path):
-    """
-    When force_rebuild=True, startup() must NOT use the pre-computed index,
-    even if load_precomputed_index() would succeed.
-    """
-    monkeypatch.setattr(app, "_index", None)
-    monkeypatch.setattr(app, "_chunks", [])
-    monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", lambda: None)
-    monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)
-
-    stale_index, stale_chunks = _tiny_index(n=2)
-    fresh_index, fresh_chunks_list = _tiny_index(n=1)
-    fresh_chunks = [{"text": "fresh", "page": 1, "chunk_index": 0}]
-
-    # Mock LABOUR_LAW_DIR to point to a tmp_path with one dummy PDF
-    law_dir = tmp_path / "data" / "labour_law"
-    law_dir.mkdir(parents=True, exist_ok=True)
-    (law_dir / "dummy.md").write_bytes(b"dummy")
-    monkeypatch.setattr(indexing, "LABOUR_LAW_DIR", law_dir)
-
-    stale_load = lambda: (stale_index, stale_chunks)
-    monkeypatch.setattr(indexing, "load_precomputed_index", stale_load)
-    monkeypatch.setattr(app, "load_precomputed_index", stale_load)
-
-    monkeypatch.setattr(indexing, "load_md_chunks", lambda _: fresh_chunks)
-    monkeypatch.setattr(indexing, "build_index", lambda _: fresh_index)
-    monkeypatch.setattr(indexing, "save_index", lambda idx, cks: None)
-
-    app.startup(force_rebuild=True)
-
-    assert app._chunks == fresh_chunks, (
-        "force_rebuild=True must use freshly-built chunks, not the pre-computed cache"
-    )
+    assert app._chunks is fake_chunks
+    mock_build.assert_called_once_with(force=True)

@@ -1,6 +1,6 @@
 import pytest
 from app import _test_registry, TESTS_DIR, rag_review_stream
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from contextlib import asynccontextmanager
 
 def test_ohs_registry_loading():
@@ -50,6 +50,9 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
 
     mock_client = MagicMock()
     mock_client.messages.stream = mock_stream
+    mock_client.messages.create = AsyncMock(return_value=MagicMock(content=[MagicMock(text="unsafe work")]))
+    # Force the mock to behave like a string for the .text attribute
+    mock_client.messages.create.return_value.content[0].text = "unsafe work"
     monkeypatch.setattr("app.get_anthropic", lambda: mock_client)
     
     # Run rag_review_stream with an OHS keyword

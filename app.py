@@ -22,6 +22,8 @@ Index pre-computation (run once after updating the PDF):
 import sys
 import threading
 from src.indexing import (
+    _get_source_name,
+    _get_rag_source_files,
     build_index_from_sources,
     load_precomputed_index,
     search_index,
@@ -289,68 +291,17 @@ if TYPE_CHECKING:
     import gradio as gr
 
 # ─── Clients ─────────────────────────────────────────────────────────────────
-_embed_model: "SentenceTransformer | None" = None
+# get_embed_model, EMBED_DIM, _get_rag_source_files, _get_source_name,
+# and others are imported from src.indexing above.
+
 _anthropic_client: "anthropic.AsyncAnthropic | None" = None
-
-
-def get_embed_model() -> "SentenceTransformer":
-    global _embed_model
-    if _embed_model is None:
-        # Stabilize CPU usage in shared-resource environments (HF Spaces/CI)
-        # We only do this at RUNTIME. Doing this during BUILD causes infinite hangs.
-        if os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI"):
-            for var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS"):
-                os.environ.setdefault(var, "1")
-
-        print(f"[embed] Loading local embedding model '{EMBED_MODEL}'…")
-        
-        # Ensure we are truly offline to avoid lock-file permission errors 
-        # in the root-owned (read-only) hf_cache.
-        if os.getenv("TRANSFORMERS_OFFLINE") == "1":
-             os.environ["HF_HUB_OFFLINE"] = "1"
-
-        from sentence_transformers import SentenceTransformer
-
-        # Use the requested device (cpu) to avoid CUDA detection overhead.
-        _embed_model = SentenceTransformer(EMBED_MODEL, device="cpu")
-
-        # Sane limit for offset mapping (4096 is plenty for any single page).
-        _embed_model.max_seq_length = MAX_EMBED_TOKENS
-        if hasattr(_embed_model, "tokenizer"):
-            _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
-        print("[embed] Embedding model ready.")
-    return _embed_model
-
-
-# Embedding dimension (derived from model to prevent FAISS mismatch)
-# Default is 384 for BAAI/bge-small-en-v1.5
-EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
-
 
 def get_anthropic() -> "anthropic.AsyncAnthropic":
     global _anthropic_client
     if _anthropic_client is None:
         import anthropic
-
-        # Reads ANTHROPIC_API_KEY from environment automatically; raises AuthenticationError if missing
         _anthropic_client = anthropic.AsyncAnthropic()
     return _anthropic_client
-
-
-def _get_rag_source_files() -> list[Path]:
-    """
-    Recursively scan LABOUR_LAW_DIR for Markdown files ONLY.
-    PDFs and Forensic Integrity Audits are completely ignored for indexing.
-    The tests/ subdirectory is excluded.
-    """
-    if not LABOUR_LAW_DIR.exists():
-        return []
-    tests_dir = LABOUR_LAW_DIR / "tests"
-    mds = [
-        p for p in LABOUR_LAW_DIR.rglob("*.md") 
-        if not p.is_relative_to(tests_dir) and not p.name.endswith(".integrity.md")
-    ]
-    return sorted(mds, key=lambda p: str(p))
 
 def _get_download_source_files() -> list[Path]:
     """
@@ -362,22 +313,6 @@ def _get_download_source_files() -> list[Path]:
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(pdfs, key=lambda p: str(p))
-
-
-def _get_source_name(stem: str) -> str:
-    """
-    Parse source_name from internal filename convention: [Index]_[Category]_[Title].
-    Also handles [Index]_[Title] and fallback to title-cased filename.
-    """
-    parts = stem.split("_", 2)
-    if len(parts) == 3:
-        # Index_Category_Title
-        return parts[2]
-    elif len(parts) == 2:
-        # Index_Title
-        return parts[1]
-    # Fallback / No underscores
-    return stem.replace("_", " ").title()
 
 
 def get_knowledge_manifest() -> str:
