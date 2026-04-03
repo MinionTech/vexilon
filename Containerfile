@@ -32,9 +32,9 @@ COPY --from=builder --chown=vexilon:vexilon /app/.venv /app/.venv
 COPY --from=builder /app/hf_cache /app/hf_cache
 
 # 3. Copy only what is needed for indexing (expensive step)
-COPY data/ ./data/
-COPY src/ ./src/
-COPY scripts/build_index.py ./scripts/
+COPY --chown=vexilon:vexilon data/ ./data/
+COPY --chown=vexilon:vexilon src/ ./src/
+COPY --chown=vexilon:vexilon scripts/build_index.py ./scripts/
 RUN mkdir -p /app/.pdf_cache && chown vexilon:vexilon /app/.pdf_cache
 
 USER vexilon
@@ -42,12 +42,9 @@ RUN PATH="/app/.venv/bin:$PATH" python scripts/build_index.py
 
 # 4. Copy the remaining scripts and application code
 # (Changes here won't trigger a re-index)
-COPY scripts/ ./scripts/
-USER root
-RUN chmod +x /app/scripts/*.sh /app/scripts/*.py
-USER vexilon
-COPY prompts/ ./prompts/
-COPY app.py style.css ./
+COPY --chown=vexilon:vexilon scripts/ ./scripts/
+COPY --chown=vexilon:vexilon prompts/ ./prompts/
+COPY --chown=vexilon:vexilon app.py style.css ./
 
 # ── Final Environment ────────────────────────────────────────────────────────
 # Build provenance (move to end to avoid cache busts on every commit)
