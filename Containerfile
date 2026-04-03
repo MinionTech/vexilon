@@ -23,9 +23,15 @@ FROM python:3.14.3-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1001 --no-create-home --shell /sbin/nologin vexilon
+    useradd --uid 1001 --create-home --shell /sbin/nologin vexilon
 
 WORKDIR /app
+
+# ── Environment Configuration ────────────────────────────────────────────────
+# Set these early so they are active during the build-time indexing step.
+ENV HF_HOME=/app/hf_cache \
+    TRANSFORMERS_OFFLINE=1 \
+    PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the virtualenv and model cache from the builder
 COPY --from=builder --chown=vexilon:vexilon /app/.venv /app/.venv
@@ -50,9 +56,6 @@ COPY --chown=vexilon:vexilon app.py style.css ./
 # Build provenance (move to end to avoid cache busts on every commit)
 ARG VERSION
 ENV VEXILON_VERSION=$VERSION
-ENV HF_HOME=/app/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
-    PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 7860
 
