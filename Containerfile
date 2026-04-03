@@ -1,5 +1,5 @@
 # ─── Stage 0: External Binaries ──────────────────────────────────────────────
-FROM ghcr.io/astral-sh/uv:0.11.2 AS uv_source
+FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
 
 # ─── Stage 1: Builder ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS builder
