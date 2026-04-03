@@ -28,23 +28,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # 2. Copy the virtualenv and model cache from the builder
-COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder --chown=vexilon:vexilon /app/.venv /app/.venv
 COPY --from=builder /app/hf_cache /app/hf_cache
 
 # 3. Copy only what is needed for indexing (expensive step)
 COPY data/ ./data/
 COPY src/ ./src/
 COPY scripts/build_index.py ./scripts/
-RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache && \
-    chmod +x /app/scripts/build_index.py
+RUN mkdir -p /app/.pdf_cache && chown vexilon:vexilon /app/.pdf_cache
 
-USER 1001
+USER vexilon
 RUN PATH="/app/.venv/bin:$PATH" python scripts/build_index.py
 
 # 4. Copy the remaining scripts and application code
 # (Changes here won't trigger a re-index)
 COPY scripts/ ./scripts/
-RUN chmod +x /app/scripts/*.sh
+USER root
+RUN chmod +x /app/scripts/*.sh /app/scripts/*.py
+USER vexilon
 COPY prompts/ ./prompts/
 COPY app.py style.css ./
 

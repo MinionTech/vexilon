@@ -20,7 +20,7 @@ jobs:
   unit_tests:
     name: Unit Tests
     if: ${{ ! github.event.pull_request.draft }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -40,7 +40,7 @@ jobs:
   integration_tests:
     name: Integration Tests
     if: ${{ ! github.event.pull_request.draft }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -70,7 +70,7 @@ jobs:
     name: Build & Push to GHCR
     needs: [unit_tests]
     if: ${{ ! github.event.pull_request.draft }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -129,7 +129,7 @@ jobs:
     name: Container Smoke Test
     needs: container_build
     if: ${{ ! github.event.pull_request.draft }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
