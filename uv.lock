@@ -1793,16 +1793,14 @@ dependencies = [
     { name = "anthropic" },
     { name = "faiss-cpu" },
     { name = "gradio" },
+    { name = "pymupdf" },
+    { name = "pymupdf4llm" },
     { name = "sentence-transformers" },
     { name = "torch", version = "2.11.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.11.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 
 [package.dev-dependencies]
-conversion = [
-    { name = "pymupdf" },
-    { name = "pymupdf4llm" },
-]
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1814,15 +1812,13 @@ requires-dist = [
     { name = "anthropic", specifier = ">=0.84.0" },
     { name = "faiss-cpu", specifier = ">=1.8.0" },
     { name = "gradio", specifier = ">=6.7.0" },
+    { name = "pymupdf", specifier = ">=1.27.2.2" },
+    { name = "pymupdf4llm", specifier = ">=1.27.2.2" },
     { name = "sentence-transformers", specifier = ">=5.0.0" },
     { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
 ]
 
 [package.metadata.requires-dev]
-conversion = [
-    { name = "pymupdf", specifier = ">=1.27.2.2" },
-    { name = "pymupdf4llm", specifier = ">=1.27.2.2" },
-]
 dev = [
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },

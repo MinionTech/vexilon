@@ -45,6 +45,9 @@ COPY --chown=vexilon:vexilon data/ ./data/
 COPY --chown=vexilon:vexilon src/ ./src/
 COPY --chown=vexilon:vexilon scripts/build_index.py ./scripts/
 
+# Create persistent directories as root then switch user
+RUN mkdir -p /app/.pdf_cache && chown -R vexilon:vexilon /app
+
 USER vexilon
 # We use a cache mount for .pdf_cache so that 'Smart Refresh' works across builds.
 # We then copy the cache out to a persistent layer so it's available in the final image.

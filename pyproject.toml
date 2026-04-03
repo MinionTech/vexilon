@@ -16,6 +16,9 @@ dependencies = [
     "sentence-transformers>=5.0.0", # BAAI/bge-small-en-v1.5 — runs on CPU
     # ── Vector store ─────────────────────────────────────────────────────────
     "faiss-cpu>=1.8.0",             # In-memory vector index (no server process)
+    # ── PDF processing ───────────────────────────────────────────────────────
+    "pymupdf>=1.27.2.2",
+    "pymupdf4llm>=1.27.2.2",
 ]
 
 [dependency-groups]
@@ -24,11 +27,7 @@ dev = [
     "pytest-asyncio>=1.3.0",
     "pytest-mock>=3.14.0",          # Mocking fixtures (mocker)
 ]
-conversion = [
-    # PDF processing with page number preservation (used for pre-processing only)
-    "pymupdf>=1.27.2.2",
-    "pymupdf4llm>=1.27.2.2",
-]
+
 
 # ── uv index configuration ───────────────────────────────────────────────────
 # Route torch (and only torch) to PyTorch's CPU-only wheel index so uv never
