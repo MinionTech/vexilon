@@ -140,7 +140,7 @@ jobs:
         run: |
           declare -l IMAGE="ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}"
           podman pull $IMAGE
-          podman run -d --rm -p 7860:7860 --name vexilon-app -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
+          podman run -d -p 7860:7860 --name vexilon-app -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
 
       - name: Wait for Healthcheck
         run: |
