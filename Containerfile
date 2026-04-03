@@ -12,9 +12,12 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
-# Pre-download the embedding model into a persistent cache
-RUN HF_HOME=/app/hf_cache HF_HUB_DISABLE_IMPLICIT_TOKEN=1 UV_LINK_MODE=copy uv run python -c \
-    "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
+# Pre-download the embedding model into a persistent image layer (using cache mount for speed)
+RUN --mount=type=cache,target=/root/.cache/huggingface \
+    HF_HOME=/root/.cache/huggingface HF_HUB_DISABLE_IMPLICIT_TOKEN=1 UV_LINK_MODE=copy uv run python -c \
+    "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')" && \
+    mkdir -p /app/hf_cache && \
+    cp -r /root/.cache/huggingface/* /app/hf_cache/
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS runner
@@ -37,14 +40,19 @@ ENV HF_HOME=/app/hf_cache \
 COPY --from=builder --chown=vexilon:vexilon /app/.venv /app/.venv
 COPY --from=builder /app/hf_cache /app/hf_cache
 
-# 3. Copy only what is needed for indexing (expensive step)
+# 3. Create pre-computed index using a cache mount for incremental runs
 COPY --chown=vexilon:vexilon data/ ./data/
 COPY --chown=vexilon:vexilon src/ ./src/
 COPY --chown=vexilon:vexilon scripts/build_index.py ./scripts/
-RUN mkdir -p /app/.pdf_cache && chown vexilon:vexilon /app/.pdf_cache
 
 USER vexilon
-RUN PATH="/app/.venv/bin:$PATH" python scripts/build_index.py
+# We use a cache mount for .pdf_cache so that 'Smart Refresh' works across builds.
+# We then copy the cache out to a persistent layer so it's available in the final image.
+RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
+    mkdir -p /app/.pdf_cache && \
+    cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
+    PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
+    cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 # 4. Copy the remaining scripts and application code
 # (Changes here won't trigger a re-index)

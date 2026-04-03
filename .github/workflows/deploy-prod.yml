@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -65,3 +66,10 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: ./.github/scripts/verify_deployment.sh "DerekRoberts/vexilon"
+      - name: Notify Owners on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "PROD Deployment Failure: Vexilon"
+          labels: "critical,deployment,prod"
