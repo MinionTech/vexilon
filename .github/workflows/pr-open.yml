@@ -95,6 +95,7 @@ jobs:
         id: builder
         uses: bcgov/actions/builder-ghcr@main
         with:
+          package: vexilon
           triggers: "./Containerfile ./pyproject.toml ./src/ ./scripts/"
           build_args: |
             PYTHON_VERSION=3.14.3
