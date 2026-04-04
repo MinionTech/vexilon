@@ -93,7 +93,7 @@ jobs:
 
       - name: Build and Push (Mono-repo)
         id: builder
-        uses: bcgov/actions/builder-ghcr@feat/migrate-builder-ghcr
+        uses: bcgov/actions/builder-ghcr@main
         with:
           triggers: "./Containerfile ./pyproject.toml ./src/ ./scripts/"
           build_args: |
