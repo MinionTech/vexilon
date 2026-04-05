@@ -387,13 +387,16 @@ def get_system_prompt(developer_mode: bool = False) -> str:
     """Load the default system prompt, optionally with developer extensions."""
     path = PROMPTS_DIR / ("developer.txt" if developer_mode else "steward.txt")
     if path.is_file():
-        return path.read_text(encoding="utf-8")
-    # Robust fallback including required formatting placeholders
-    return (
-        "You are Vexilon, a professional assistant for BCGEU union stewards.\n\n"
-        "Knowledge Base:\n{manifest}\n\n"
-        "{verify_message}"
-    )
+        content = path.read_text(encoding="utf-8")
+    else:
+        # Robust fallback including required formatting placeholders
+        content = (
+            "You are Vexilon, a professional assistant for BCGEU union stewards.\n\n"
+            "Knowledge Base:\n{manifest}\n\n"
+            "{verify_message}"
+        )
+    # Always prepend mandatory overriding rules regardless of file content
+    return f"{GLOBAL_MANDATORY_RULES}\n\n{content}"
 
 GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts. If the specific text was not retrieved, suggest the user ask about that section directly. NEVER fabricate contract language.
@@ -1158,7 +1161,7 @@ def build_ui() -> "gr.Blocks":
             use_reviewer: bool,
             persona_mode: str,
             **kwargs,
-        ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
+        ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
             
             # Onboarding visibility logic
