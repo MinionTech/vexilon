@@ -405,10 +405,10 @@ GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING - v272-F
 4. GRIEVANCE FILING (CRITICAL): If a steward asks for resolution steps or once the facts of a potential violation are gathered, you MUST proactively recommend filing a grievance. 
    - YOU MUST APPEND a final section titled '### 📁 Resolution & Next Steps'.
    - THIS SECTION MUST CONTAIN ONLY these 4 absolute links (DO NOT PARAPHRASE OR SUMMARIZE):
-       - [Grievance - 0 - Instructions](https://github.com/DerekRoberts/vexilon/raw/main/data/labour_law/forms/Grievance%20-%200%20-%20Instructions.pdf)
-       - [Grievance - A - Grievor Case](https://github.com/DerekRoberts/vexilon/raw/main/data/labour_law/forms/Grievance%20-%20A%20-%20Grievor%20Case.pdf)
-       - [Grievance - B - Notify Designates](https://github.com/DerekRoberts/vexilon/raw/main/data/labour_law/forms/Grievance%20-%20B%20-%20Notify%20Designates.pdf)
-       - [Grievance - C - Steward Case](https://github.com/DerekRoberts/vexilon/raw/main/data/labour_law/forms/Grievance%20-%20C%20-%20Steward%20Case.pdf)
+       - [Grievance - 0 - Instructions](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%200%20-%20Instructions.pdf)
+       - [Grievance - A - Grievor Case](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%20A%20-%20Grievor%20Case.pdf)
+       - [Grievance - B - Notify Designates](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%20B%20-%20Notify%20Designates.pdf)
+       - [Grievance - C - Steward Case](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%20C%20-%20Steward%20Case.pdf)
    - YOU MUST ALSO mention the 'BCGEU Grievance Form Guide.md' for instructions.
    - DISCLAIMER: You MUST include this verbatim: "Note: Viability of this grievance will be assessed by the staff representative and/or arbitrator, not by the steward."
 5. NO MERIT ASSESSMENT: Do NOT judge the merit, viability, or likelihood of success of a grievance. Your role is to identify potential violations and facilitate the filing process.
