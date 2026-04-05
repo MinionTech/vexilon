@@ -53,7 +53,7 @@ jobs:
 
   integration_tests:
     name: Integration Tests
-    needs: [check]
+    needs: [check, unit_tests]
     if: needs.check.outputs.triggered
     runs-on: ubuntu-24.04
     timeout-minutes: 10
