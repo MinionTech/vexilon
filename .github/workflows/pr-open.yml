@@ -77,7 +77,13 @@ jobs:
       contents: read
       id-token: write
       packages: write
+    outputs:
+      triggered: ${{ steps.builder.outputs.triggered }}
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Build and Push
         id: builder
         uses: bcgov/action-builder-ghcr@v4.2.1
@@ -90,7 +96,7 @@ jobs:
   container_test:
     name: Container Smoke Test
     needs: container_build
-    if: ${{ ! github.event.pull_request.draft }}
+    if: needs.container_build.outputs.triggered == 'true' && !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 10
 
