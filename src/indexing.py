@@ -2,7 +2,7 @@ import os
 import json
 import time
 import hashlib
-import pypdf
+import fitz
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -181,15 +181,15 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
     
     chunks = []
     try:
-        reader = pypdf.PdfReader(str(pdf_path))
+        doc = fitz.open(str(pdf_path))
         tokenizer = get_embed_model().tokenizer
         
         full_text = ""
         token_metadata = []
         char_offset = 0
         
-        for i, page in enumerate(reader.pages):
-            page_text = page.extract_text() or ""
+        for i, page in enumerate(doc):
+            page_text = page.get_text() or ""
             page_text = _clean_page_text(page_text)
             if not page_text.strip() or _is_toc_or_index_page(page_text):
                 continue
