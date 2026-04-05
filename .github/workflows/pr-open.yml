@@ -69,7 +69,6 @@ jobs:
   container_build:
     name: Build & Push to GHCR
     needs: [unit_tests]
-    if: ${{ ! github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -93,7 +92,7 @@ jobs:
   container_test:
     name: Container Smoke Test
     needs: container_build
-    if: needs.container_build.outputs.triggered == 'true' && !github.event.pull_request.draft
+    if: needs.container_build.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
 
