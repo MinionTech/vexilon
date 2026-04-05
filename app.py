@@ -1094,7 +1094,7 @@ def build_ui() -> "gr.Blocks":
     ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## Unofficial Ephemeral BCGEU Steward Assistant")
+        gr.Markdown("# 🚩 VEXILON (WORKTREE 272 - ACTIVE)")
 
         with gr.Accordion("Knowledge Base & Priority", open=False):
             gr.Markdown(
