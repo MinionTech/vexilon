@@ -91,7 +91,7 @@ jobs:
           # Use the real PR head commit, not the synthetic test-merge commit
           echo "commit=${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and Push (Mono-repo)
+      - name: Build and Push (Legacy)
         id: builder
         uses: bcgov/action-builder-ghcr@v4.2.1
         with:
