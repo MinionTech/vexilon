@@ -243,6 +243,9 @@ git push
 
 ### Automated deploy (GitHub Actions)
 
+> [!WARNING]
+> This repository is currently using GitHub Actions pointing to `@main` (e.g., `bcgov/actions/diff-triggers@main`) for testing purposes. This is **not recommended** for production environments as it lacks version stability and can introduce breaking changes without notice.
+
 The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
 the HF Space.
 
