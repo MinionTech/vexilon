@@ -100,7 +100,7 @@ jobs:
     steps:
       - name: Build and Push
         id: builder
-        uses: bcgov/action-builder-ghcr@v4.2.1
+        uses: bcgov/action-builder-ghcr@main
         with:
           package: vexilon
           build_context: .
