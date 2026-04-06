@@ -63,7 +63,7 @@ import tempfile
 # Inside the container (WORKDIR /app), this resolves to /app/hf_cache.
 # Locally, it resolves to ./hf_cache in the repo root.
 if not os.getenv("HF_HOME"):
-    os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
+    os.environ["HF_HOME"] = str((Path(__file__).parent / "hf_cache").absolute())
 
 # ─── Third-party: Deferred Imports ───────────────────────────────────────────
 # (numpy, anthropic, faiss, sentence_transformers, gradio)
@@ -254,7 +254,7 @@ def get_vexilon_info():
     if not version:
         # Priority 2: Baked-in Build File
         try:
-            with open("/app/build_version.txt", "r") as f:
+            with open("/app/build_version.txt", "r", encoding="utf-8") as f:
                 version = f.read().strip()
                 source = "Local Build"
         except FileNotFoundError:
@@ -463,7 +463,7 @@ ESCALATE: [yes/no - only if score < 5]
 
 # Millhaven Factors for Off-Duty Conduct Audit (Issue #154) - DEPRECATED in favor of TestRegistry
 # (kept as fallback constants until logic migration is complete)
-MILLHAVEN_FACTORS_PATH = Path("./prompts/millhaven_audit_criteria.txt")
+MILLHAVEN_FACTORS_PATH = PROMPTS_DIR / "millhaven_audit_criteria.txt"
 MILLHAVEN_FACTORS = ""
 if MILLHAVEN_FACTORS_PATH.is_file():
     MILLHAVEN_FACTORS = MILLHAVEN_FACTORS_PATH.read_text(encoding="utf-8")
@@ -1343,13 +1343,13 @@ if __name__ == "__main__":
     # Use relative path for cross-environment compatibility (local dev + Docker container)
     # Note: This allows the entire directory rather than specific files for cross-environment
     # compatibility. The directory only contains PDF files per project structure, so this is acceptable.
-    allowed_paths = [str(LABOUR_LAW_DIR), str(Path("docs"))]
+    allowed_paths = [str(LABOUR_LAW_DIR), str((Path(__file__).parent / "docs").absolute())]
     
     # ── Final Build Report ──────────────────────────────────────────────────
     print(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
     print(f"[startup] Version: {VEXILON_VERSION} | Threads: {os.getenv('OMP_NUM_THREADS', 'Auto')}")
     
-    css_content = _CSS_PATH.read_text() if _CSS_PATH.exists() else ""
+    css_content = _CSS_PATH.read_text(encoding="utf-8") if _CSS_PATH.exists() else ""
     demo = build_ui(css=css_content)
 
     # ── PWA & FastAPI Wrapper ───────────────────────────────────────────────
@@ -1360,21 +1360,23 @@ if __name__ == "__main__":
 
     fastapi_app = FastAPI()
 
+    ROOT_DIR = Path(__file__).parent.absolute()
+
     @fastapi_app.get("/manifest.json")
     async def get_manifest():
-        return FileResponse("manifest.json")
+        return FileResponse(ROOT_DIR / "manifest.json")
 
     @fastapi_app.get("/sw.js")
     async def get_sw():
-        return FileResponse("sw.js", media_type="application/javascript")
+        return FileResponse(ROOT_DIR / "sw.js", media_type="application/javascript")
 
     @fastapi_app.get("/icon-192.png")
     async def get_icon192():
-        return FileResponse("icon-192.png")
+        return FileResponse(ROOT_DIR / "icon-192.png")
 
     @fastapi_app.get("/icon-512.png")
     async def get_icon512():
-        return FileResponse("icon-512.png")
+        return FileResponse(ROOT_DIR / "icon-512.png")
 
     # Mount Gradio sub-app
     app_final = gr.mount_gradio_app(

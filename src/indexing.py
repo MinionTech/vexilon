@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-PDF_CACHE_DIR = Path("./.pdf_cache")
-LABOUR_LAW_DIR = Path("./data/labour_law")
+PDF_CACHE_DIR = Path(__file__).parent.parent / ".pdf_cache"
+LABOUR_LAW_DIR = Path(__file__).parent.parent / "data" / "labour_law"
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
@@ -303,7 +303,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
     if not force and MANIFEST_PATH.exists():
         try:
-            with open(MANIFEST_PATH, "r") as f:
+            with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
                 stored_manifest = json.load(f)
             if stored_manifest == current_manifest and INDEX_PATH.exists() and CHUNKS_PATH.exists():
                 print("[build] Smart Refresh: No changes detected in sources. Skipping build.")
@@ -326,7 +326,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
     index = build_index(chunks)
     save_index(index, chunks)
-    with open(MANIFEST_PATH, "w") as f:
+    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(current_manifest, f, indent=2)
     return index, chunks
 
