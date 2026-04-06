@@ -387,21 +387,28 @@ def get_system_prompt(developer_mode: bool = False) -> str:
     """Load the default system prompt, optionally with developer extensions."""
     path = PROMPTS_DIR / ("developer.txt" if developer_mode else "steward.txt")
     if path.is_file():
-        return path.read_text(encoding="utf-8")
-    # Robust fallback including required formatting placeholders
-    return (
-        "You are Vexilon, a professional assistant for BCGEU union stewards.\n\n"
-        "Knowledge Base:\n{manifest}\n\n"
-        "{verify_message}"
-    )
+        content = path.read_text(encoding="utf-8")
+    else:
+        # Robust fallback including required formatting placeholders
+        content = (
+            "You are Vexilon, a professional assistant for BCGEU union stewards.\n\n"
+            "Knowledge Base:\n{manifest}\n\n"
+            "{verify_message}"
+        )
+    # Always prepend mandatory overriding rules regardless of file content
+    return f"{GLOBAL_MANDATORY_RULES}\n\n{content}"
 
-GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING) ---
+GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING - v272-FIXED) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts. If the specific text was not retrieved, suggest the user ask about that section directly. NEVER fabricate contract language.
 2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation (Document, Article, Page).
 3. HIERARCHY: Lead with the Collective Agreement. Use Statutes only to reinforce the legal framework.
 4. GRIEVANCE FILING (CRITICAL): If a steward asks for resolution steps or once the facts of a potential violation are gathered, you MUST proactively recommend filing a grievance. 
    - YOU MUST APPEND a final section titled '### 📁 Resolution & Next Steps'.
-   - THIS SECTION MUST CONTAIN this link: [Download BCGEU Grievance Form](/gradio_api/file=data/labour_law/forms/BCGEU%20Grievance%20Form.pdf)
+   - THIS SECTION MUST CONTAIN ONLY these 4 absolute links (DO NOT PARAPHRASE OR SUMMARIZE):
+       - [Grievance - 0 - Instructions](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%200%20-%20Instructions.pdf)
+       - [Grievance - A - Grievor Case](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%20A%20-%20Grievor%20Case.pdf)
+       - [Grievance - B - Notify Designates](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%20B%20-%20Notify%20Designates.pdf)
+       - [Grievance - C - Steward Case](https://github.com/DerekRoberts/vexilon/raw/feat/272/data/labour_law/forms/Grievance%20-%20C%20-%20Steward%20Case.pdf)
    - YOU MUST ALSO mention the 'BCGEU Grievance Form Guide.md' for instructions.
    - DISCLAIMER: You MUST include this verbatim: "Note: Viability of this grievance will be assessed by the staff representative and/or arbitrator, not by the steward."
 5. NO MERIT ASSESSMENT: Do NOT judge the merit, viability, or likelihood of success of a grievance. Your role is to identify potential violations and facilitate the filing process.
@@ -1087,7 +1094,7 @@ def build_ui() -> "gr.Blocks":
     ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         # ── Header ────────────────────────────────────────────────────────────
-        gr.Markdown("## Unofficial Ephemeral BCGEU Steward Assistant")
+        gr.Markdown("# 🚩 VEXILON (WORKTREE 272 - ACTIVE)")
 
         with gr.Accordion("Knowledge Base & Priority", open=False):
             gr.Markdown(
@@ -1138,12 +1145,12 @@ def build_ui() -> "gr.Blocks":
             msg_input = gr.Textbox(
                 placeholder="Ask about the collective agreement…",
                 label="",
-                lines=2,
                 max_lines=6,
                 scale=5,
                 show_label=False,
                 container=False,
                 elem_id="msg_input",
+                lines=1,
             )
             send_btn = gr.Button("Send ➤", scale=1, variant="primary", elem_id="send_btn")
 
@@ -1154,7 +1161,7 @@ def build_ui() -> "gr.Blocks":
             use_reviewer: bool,
             persona_mode: str,
             **kwargs,
-        ) -> AsyncIterator[tuple[list[dict], str, dict, dict]]:
+        ) -> AsyncIterator[tuple[list[dict], str, dict]]:
             import gradio as gr
             
             # Onboarding visibility logic
@@ -1165,7 +1172,7 @@ def build_ui() -> "gr.Blocks":
             hide = gr.update(visible=False)
             show = gr.update(visible=True)
             if not message.strip():
-                yield history, "", show, gr.update()
+                yield history, "", show
                 return
 
             user_id = request.client.host if request else "default"

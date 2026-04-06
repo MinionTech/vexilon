@@ -1,26 +1,33 @@
-# Guide: Individual Grievance Form
+# BCGEU Grievance Form Process Guide
 
-## Purpose
-Use this form when a single member's rights under the Collective Agreement have been violated (e.g., unjust discipline, missed overtime, improper denial of leave).
+The grievance form is divided into four separate parts to ensure privacy, clarify responsibilities, and streamline the filing process.
 
-## Field-by-Field Instructions
-1. **Grievor Name**: Full legal name of the member.
-2. **Classification**: The member's job title/grid level (e.g., Clerk 9, Social Worker 24).
-3. **Article(s) Violated**: Always include "Article 1" and "all other relevant articles" to protect against technical objections.
-4. **Statement of Grievance**: Keep it "forensic." Use the phrase: "The Employer has violated the Collective Agreement including but not limited to Article [X] by [briefly describe the action, e.g., issuing a 3-day suspension without just cause]."
-5. **Remedy Sought**: Use the phrase: "That the member be made whole" to ensure full compensation/restoration of rights is covered.
+## 1. Instructions to Stewards (Part 0)
+**File**: `Grievance - 0 - Instructions.pdf`
+- **Purpose**: General guidance for shop stewards on how to handle the initial intake and filing.
+- **Key Task**: Determining timelines (usually 21 days from incident) and identifying the correct Article violation.
 
-## Submission Details
-- **Deadline**: Generally 21 days from the date of the incident (Check Article 8.3).
-- **Recipient**: The immediate supervisor or designate.
-# Guide: Group Grievance Form
+## 2. Section A - Grievor to Complete
+**File**: `Grievance - A - Grievor Case.pdf`
+- **Purpose**: This is the formal grievance document that the member signs.
+- **AI Questioning Tips**: Before the member signs, the AI should ask:
+    - What is the exact date of the incident?
+    - Which Article(s) were violated (e.g., Article 8, 12, 27)?
+    - What is the specific remedy sought (e.g., "Full redress to make the member whole")?
+- **Forensic Language**: Always include "Article 1 and all other relevant articles."
 
-## Purpose
-Use this form when two or more members in the same department or geographic location share the exact same grievance (e.g., a shared shift schedule grievance).
+## 3. Section B - Steward to Complete
+**File**: `Grievance - B - Notify Designates.pdf`
+- **Purpose**: Tracks Step 1 and Step 2 designations and notifications.
+- **Key Task**: Steward must notify the appropriate Step 1 and Step 2 designates within the specified timelines.
 
-## Field-by-Field Instructions
-- **List of Grievors**: Attach a separate sheet with signatures from all affected members.
-- **Statement**: Focus on the *systemic* nature of the violation affecting the group.
+## 4. Section C - Confidential Steward Fact Sheet
+**File**: `Grievance - C - Steward Case.pdf`
+- **Purpose**: Internal tracking for the Union (not for the Employer).
+- **AI Questioning Tips**: Collect specific evidence:
+    - List of witnesses and contact info.
+    - Summary of the supervisor's response during informal discussion.
+    - Specific documents required (e.g., timesheets, disciplinary letters).
 
-## Submission Details
-- **Filing**: Follows the same Step 1 timeline as an individual grievance, but often processed together for efficiency.
+---
+*Note: These forms must be filed within the timelines established in the Collective Agreement (Article 8).*
