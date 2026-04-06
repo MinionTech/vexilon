@@ -985,14 +985,6 @@ async def rag_review_stream(
     # Extract the primary query for audit logic if needed (backwards compatibility)
     query = queries[0]
 
-    # Build context block from retrieved chunks
-    context_parts = []
-    for chunk in relevant_chunks:
-        context_parts.append(
-            f"[Source: {chunk.get("source", "Unknown")}, Page: {chunk["page"]}]\n{chunk["text"]}"
-        )
-    context = "\n\n---\n\n".join(context_parts)
-
     # Build message list for Claude: prior history + new user message
     messages = []
     for turn in history:
