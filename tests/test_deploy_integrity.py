@@ -93,13 +93,13 @@ def test_enter_key_uses_capture_phase():
     app_path = REPO_ROOT / "app.py"
     content = app_path.read_text()
 
-    # The listener must be registered with capture=true.
-    # Match the pattern: addEventListener('keydown', <fn>, true)
-    # Allows whitespace flexibility but requires the literal `true` flag.
+    # The listener must be registered on document with capture=true (third arg).
+    # Anchor to `document.addEventListener('keydown'` and match only within that
+    # single call — [^)]* refuses to cross a closing paren, preventing a false
+    # positive if a second keydown listener without capture is ever added below.
     assert re.search(
-        r"addEventListener\(\s*['\"]keydown['\"].*?,\s*true\s*\)",
+        r"document\.addEventListener\(\s*['\"]keydown['\"],\s*[^,]+,\s*true\s*\)",
         content,
-        re.DOTALL,
     ), (
         "The keydown listener in build_ui() MUST use capture phase (third arg `true`). "
         "Without it, Gradio's textarea handler fires first and Enter inserts a newline "
