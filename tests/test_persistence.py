@@ -143,17 +143,21 @@ def test_startup_raises_on_failure(monkeypatch):
         app.startup()
 
 
-def test_startup_uses_precomputed_index_when_available(monkeypatch, tmp_path):
+def test_startup_uses_precomputed_index_when_available(monkeypatch):
     """startup() fast path: if a pre-computed index exists, it MUST use it and skip rebuild."""
     monkeypatch.setattr(app, "_chunks", [])
+    monkeypatch.setattr(app, "_index", None)
     monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", lambda: None)
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)
 
     fake_index, fake_chunks = _tiny_index(n=2)
 
-    # Delegate to indexing.build_index_from_sources
-    # We mock it to ensure app.startup() calls it correctly
-    mock_build = MagicMock(return_value=(fake_index, fake_chunks))
+    # Mock load_precomputed_index to return a faked precomputed index
+    mock_load = MagicMock(return_value=(fake_index, fake_chunks))
+    monkeypatch.setattr(app, "load_precomputed_index", mock_load)
+
+    # Ensure build_index_from_sources is NOT called
+    mock_build = MagicMock()
     monkeypatch.setattr(app, "build_index_from_sources", mock_build)
 
     monkeypatch.setattr(app, "get_anthropic", MagicMock())
@@ -161,7 +165,8 @@ def test_startup_uses_precomputed_index_when_available(monkeypatch, tmp_path):
 
     assert app._index is fake_index
     assert app._chunks is fake_chunks
-    mock_build.assert_called_once()
+    mock_load.assert_called_once()
+    mock_build.assert_not_called()
 
 
 
