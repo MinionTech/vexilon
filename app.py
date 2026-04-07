@@ -43,6 +43,8 @@ from src.indexing import (
     CHUNK_SIZE,
     CHUNK_OVERLAP,
     EMBED_DIM,
+    SIMILARITY_TOP_K,
+
 )
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
 _chunks: list[dict] = []
@@ -698,9 +700,11 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
     seen_texts = set()
     
     for q in queries:
-        # Smaller k per query if multiple, to keep total context size reasonable
-        k = 15 if len(queries) > 1 else 40
+        # Smaller k per query if multiple, to keep total context size reasonable.
+        # We target about 1.5x the standard top_k total chunks across all queries.
+        k = max(10, (SIMILARITY_TOP_K * 3) // (2 * len(queries))) if len(queries) > 1 else SIMILARITY_TOP_K
         relevant_chunks = search_index(_index, _chunks, q, top_k=k)
+
         for chunk in relevant_chunks:
             # Deduplicate by direct string comparison (Issue #132 feedback)
             text = chunk["text"]

@@ -25,6 +25,8 @@ MAX_EMBED_TOKENS = int(os.getenv("VEXILON_MAX_EMBED_TOKENS", 4096))
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
 EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
+SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))
+
 
 _embed_model: Any = None
 
@@ -253,9 +255,13 @@ def embed_texts(texts: list[str]) -> "np.ndarray":
     embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
     return embeddings.astype(np.float32)
 
-def search_index(index: "faiss.IndexFlatIP", chunks: list[dict], query: str, top_k: int = 40) -> list[dict]:
+def search_index(index: "faiss.IndexFlatIP", chunks: list[dict], query: str, top_k: int | None = None) -> list[dict]:
     import faiss
+    if top_k is None:
+        top_k = SIMILARITY_TOP_K
+    
     query_vec = embed_texts([query])
+
     faiss.normalize_L2(query_vec)
     _scores, indices = index.search(query_vec, top_k)
     return [chunks[i] for i in indices[0] if i < len(chunks)]
