@@ -71,6 +71,6 @@ ENV VEXILON_VERSION=$VERSION
 EXPOSE 7860
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860/health')" || exit 1
 
 CMD ["/app/scripts/startup.sh"]

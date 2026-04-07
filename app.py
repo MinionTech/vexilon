@@ -1194,6 +1194,8 @@ def build_ui() -> "gr.Blocks":
 
     with gr.Blocks(
         title="Collective Agreement Explorer",
+        js=_CUSTOM_JS, # Move JS here for mounting compatibility
+        css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "", # Move CSS here too
     ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("# BCGEU Steward Assistant")
@@ -1401,26 +1403,30 @@ if __name__ == "__main__":
     print(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
     print(f"[startup] Version: {VEXILON_VERSION} | Threads: {os.getenv('OMP_NUM_THREADS', 'Auto')}")
     
-    # In Gradio 6, we use a FastAPI app to serve /health for container healthchecks.
-    # We then use app.launch() which will automatically handle its own registration.
-    # However, to explicitly add /health, we can either mount it or use the launch() prevent_thread_lock trick.
+    # Use FastAPI to provide a public /health endpoint for container healthchecks
+    from fastapi import FastAPI
+    import uvicorn
     
-    # We'll use the launch() with prevent_thread_lock method to add the healthcheck to the internal app.
-    app.launch(
-        server_name="0.0.0.0",
-        server_port=int(os.getenv("PORT", 7860)),
-        share=False,
-        allowed_paths=allowed_paths,
-        css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "",
+    fastapi_app = FastAPI()
+    
+    @fastapi_app.get("/health", tags=["system"])
+    async def health():
+        """Public healthcheck endpoint for container orchestrators."""
+        return {"status": "ok", "version": VEXILON_VERSION}
+
+    # Mount the Gradio app onto the FastAPI instance. 
+    # This ensures the /health endpoint is public and bypasses Gradio's auth.
+    app_to_launch = gr.mount_gradio_app(
+        fastapi_app,
+        app,
+        path="/",
         auth=auth_creds,
-        js=_CUSTOM_JS,
-        prevent_thread_lock=True # Allow us to add routes after starting
+        allowed_paths=allowed_paths,
     )
     
-    # Add the healthcheck endpoint to the launched FastAPI instance
-    @app.app.get("/health")
-    async def health():
-        return {"status": "ok", "version": VEXILON_VERSION}
-    
-    print("[startup] Healthcheck endpoint added at /health")
-    app.block_until_deleted()
+    uvicorn.run(
+        app_to_launch,
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 7860)),
+        log_level="info"
+    )
