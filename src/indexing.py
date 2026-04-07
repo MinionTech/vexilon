@@ -44,8 +44,18 @@ def get_embed_model() -> "SentenceTransformer":
         from sentence_transformers import SentenceTransformer
         _embed_model = SentenceTransformer(EMBED_MODEL, device="cpu")
         _embed_model.max_seq_length = MAX_EMBED_TOKENS
+        
         if hasattr(_embed_model, "tokenizer"):
+            # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
+            # Most modern models (including BGE) have fast variants.
+            if not getattr(_embed_model.tokenizer, "is_fast", False):
+                # We log a warning but don't hard-crash yet, though offset mapping may fail.
+                # In the future, this could be a hard RequirementError.
+                print(f"[embed] WARNING: Tokenizer for {EMBED_MODEL} is NOT a 'Fast' tokenizer. "
+                      "Character-offset alignment may be degraded.")
+            
             _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
+            
         print("[embed] Embedding model ready.")
     return _embed_model
 
@@ -170,27 +180,20 @@ def load_md_chunks(md_path: Path) -> list[dict]:
             current_header = stripped.lstrip("#").strip().upper()
         
         page_num = 1
-        # Safe tokenization: some 'slow' tokenizers do not support offset mapping
-        try:
-            encoding = tokenizer(
-                line,
-                add_special_tokens=False,
-                return_offsets_mapping=True,
-                truncation=False,
-            )
-            mapping = encoding.get("offset_mapping", [])
-        except (TypeError, ValueError):
-            # Fallback if mapping is not supported
-            mapping = []
+        # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
+        # This replaces the legacy try-except/char-length fallback blocks.
+        encoding = tokenizer(
+            line,
+            add_special_tokens=False,
+            return_offsets_mapping=True,
+            truncation=False,
+        )
+        mapping = encoding.get("offset_mapping", [])
 
-        if mapping:
-            for start_off, end_off in mapping:
-                token_metadata.append(
-                    (char_offset + start_off, char_offset + end_off, page_num, current_header)
-                )
-        else:
-            # Fallback metadata if mapping is unavailable
-            token_metadata.append((char_offset, char_offset + len(line), page_num, current_header))
+        for start_off, end_off in mapping:
+            token_metadata.append(
+                (char_offset + start_off, char_offset + end_off, page_num, current_header)
+            )
             
         char_offset += len(line) + 1
 
@@ -218,25 +221,20 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
             page_num = i + 1
             full_text += page_text + "\n"
             
-            # Simple token attribution to pages with safe mapping
-            try:
-                encoding = tokenizer(
-                    page_text,
-                    add_special_tokens=False,
-                    return_offsets_mapping=True,
-                    truncation=False,
-                )
-                mapping = encoding.get("offset_mapping", [])
-            except (TypeError, ValueError):
-                mapping = []
+            # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
+            # This replaces the legacy try-except/char-length fallback blocks.
+            encoding = tokenizer(
+                page_text,
+                add_special_tokens=False,
+                return_offsets_mapping=True,
+                truncation=False,
+            )
+            mapping = encoding.get("offset_mapping", [])
 
-            if mapping:
-                for start_off, end_off in mapping:
-                    token_metadata.append(
-                        (char_offset + start_off, char_offset + end_off, page_num, "")
-                    )
-            else:
-                token_metadata.append((char_offset, char_offset + len(page_text), page_num, ""))
+            for start_off, end_off in mapping:
+                token_metadata.append(
+                    (char_offset + start_off, char_offset + end_off, page_num, "")
+                )
 
             char_offset += len(page_text) + 1
             
