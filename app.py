@@ -636,6 +636,91 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return message
 
 
+async def generate_perspective_queries(message: str, history: list[dict]) -> list[str]:
+    """
+    Analyze if the query is complex and generate multiple perspectives if so.
+    Returns a list of queries (at least one, the original/condensed one).
+    Integrated Complexity Detection & Multi-Query Generation (Issue #132).
+    """
+    condensed = await condense_query(message, history)
+    
+    # Analyze complexity and generate perspectives in one go
+    prompt = (
+        "Analyze if the following search query for a BCGEU Steward Assistant is 'complex'. "
+        "A query is complex if it involves potential conflicts between contract articles, "
+        "exceptions, multiple different documents (statutes vs agreement), or "
+        "nuanced topics like off-duty conduct or seniority disputes.\n\n"
+        "If it is NOT complex, simply return the query itself without any changes, prefixes, or commentary.\n\n"
+        "If it IS complex, generate 3-5 distinct search queries from different 'angles' or perspectives "
+        "(e.g., employer rights, employee obligations, specific exceptions, related precedents). "
+        "Provide each query on a new line started with a hyphen (-). "
+        "Do NOT provide any opening or closing commentary, just the hyphenated queries if complex, "
+        "or the single query if simple.\n\n"
+        f"Query: {condensed}\n\n"
+        "Response:"
+    )
+
+    client = get_anthropic()
+    try:
+        response = await client.messages.create(
+            model=CONDENSE_MODEL,
+            max_tokens=250,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        resp_text = response.content[0].text.strip()
+        
+        # Robust parsing: extract any line starting with a hyphen (Issue #132 feedback)
+        perspective_queries = [
+            line.strip().lstrip("-").strip().strip('"')
+            for line in resp_text.split("\n")
+            if line.strip().startswith("-")
+        ]
+        
+        if not perspective_queries:
+            return [condensed]
+            
+        print(f"[rag] Complex query detected. Generated {len(perspective_queries)} perspectives.")
+        return perspective_queries
+    except Exception as exc:
+        print(f"[rag] Multi-perspective generation failed: {exc}. Using condensed query.")
+        return [condensed]
+
+
+async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
+    """
+    Generate multiple perspectives for complex queries, search the index,
+    and aggregate deduplicated chunks. Returns (queries, context_string).
+    Shared helper for rag_stream, rag_review_stream, and get_rag_context (Issue #132).
+    """
+    queries = await generate_perspective_queries(message, history)
+    
+    all_hits = []
+    seen_texts = set()
+    
+    for q in queries:
+        # Smaller k per query if multiple, to keep total context size reasonable
+        k = 15 if len(queries) > 1 else 40
+        relevant_chunks = search_index(_index, _chunks, q, top_k=k)
+        for chunk in relevant_chunks:
+            # Deduplicate by direct string comparison (Issue #132 feedback)
+            text = chunk["text"]
+            if text not in seen_texts:
+                seen_texts.add(text)
+                all_hits.append(chunk)
+
+    # Limit total aggregated context to prevent token overflows
+    relevant_chunks = all_hits[:50]
+    
+    context_parts = []
+    for chunk in relevant_chunks:
+        context_parts.append(
+            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
+        )
+    context = "\n\n---\n\n".join(context_parts)
+    
+    return queries, context
+
+
 
 # ─── Export / Import Functions ────────────────────────────────────────────────
 MAX_IMPORT_SIZE_BYTES = 500 * 1024  # 500KB limit
@@ -658,17 +743,8 @@ async def rag_stream(
         )
         return
 
-    # Rewrite query for RAG if there is history
-    query = await condense_query(message, history)
-    relevant_chunks = search_index(_index, _chunks, query)
-
-    # Build context block from retrieved chunks
-    context_parts = []
-    for chunk in relevant_chunks:
-        context_parts.append(
-            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
-        )
-    context = "\n\n---\n\n".join(context_parts)
+    # Issue #132: Multi-perspective retrieval for complex topics (Shared Refactor)
+    queries, context = await get_multi_perspective_context(message, history)
 
     # Build message list for Claude: prior history + new user message
     messages = []
@@ -728,17 +804,10 @@ async def rag_stream(
 
 
 async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str]:
-    """Get context (excerpts) for a query without generating a response."""
-    query = await condense_query(message, history)
-    relevant_chunks = search_index(_index, _chunks, query)
-
-    context_parts = []
-    for chunk in relevant_chunks:
-        context_parts.append(
-            f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
-        )
-    context = "\n\n---\n\n".join(context_parts)
-    return query, context
+    """Get context (excerpts) for a query without generating a response. Consistent with Issue #132."""
+    queries, context = await get_multi_perspective_context(message, history)
+    query_display = " | ".join(queries) if len(queries) > 1 else queries[0]
+    return query_display, context
 
 
 async def verify_response(assistant_response: str, context: str) -> str:
@@ -911,17 +980,10 @@ async def rag_review_stream(
         yield "⚠️ The index is not ready yet. Please wait a moment and try again."
         return
 
-    # Rewrite query for RAG if there is history
-    query = await condense_query(message, history)
-    relevant_chunks = search_index(_index, _chunks, query)
-
-    # Build context block from retrieved chunks
-    context_parts = []
-    for chunk in relevant_chunks:
-        context_parts.append(
-            f"[Source: {chunk.get("source", "Unknown")}, Page: {chunk["page"]}]\n{chunk["text"]}"
-        )
-    context = "\n\n---\n\n".join(context_parts)
+    # Issue #132: Multi-perspective retrieval for complex topics
+    queries, context = await get_multi_perspective_context(message, history)
+    # Extract the primary query for audit logic if needed (backwards compatibility)
+    query = queries[0]
 
     # Build message list for Claude: prior history + new user message
     messages = []
