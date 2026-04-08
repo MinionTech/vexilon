@@ -58,6 +58,7 @@ USER vexilon
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
+    python scripts/generate_source_manifest.py && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
