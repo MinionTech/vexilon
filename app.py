@@ -26,6 +26,7 @@ from src.indexing import (
     _get_source_name,
     _get_rag_source_files,
     build_index_from_sources,
+    get_integrity_report,
     load_precomputed_index,
     search_index,
     _fetch_pdf_cache_if_missing,
@@ -235,6 +236,9 @@ class RateLimiter:
 _rate_limiter = RateLimiter(
     max_per_minute=RATE_LIMIT_PER_MINUTE, max_per_hour=RATE_LIMIT_PER_HOUR
 )
+
+# Build Integrity Warning (populated at startup)
+INTEGRITY_WARNING: str | None = None
 
 # Two-Bot Self-Review Pipeline (Issue #104)
 USE_REVIEWER = os.getenv("USE_REVIEWER", "false").lower() == "true"
@@ -544,7 +548,7 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     Initialise the vector index and load document chunks.
     Attempts cold-start from pre-computed index first.
     """
-    global _chunks, _index
+    global _chunks, _index, INTEGRITY_WARNING
     get_anthropic()
     
     # 1. Basic Metadata
@@ -576,6 +580,15 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
 
     if _index is not None and _chunks:
         print("[startup] Ready.")
+        # 4. Integrity Reporting
+        report = get_integrity_report()
+        if report.get("failed_files"):
+            failed = report["failed_files"]
+            INTEGRITY_WARNING = (
+                f"⚠️ **INDEX INTEGRITY WARNING:** {len(failed)} document(s) failed to index "
+                f"(e.g., {', '.join(failed[:2])}). Knowledge base may be incomplete."
+            )
+            print(f"[integrity] Found {len(failed)} failures.")
     else:
         print("[startup] ERROR: Knowledge base failed to load.")
 
@@ -1197,6 +1210,8 @@ def build_ui() -> "gr.Blocks":
     ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("# BCGEU Steward Assistant")
+        if INTEGRITY_WARNING:
+            gr.Markdown(INTEGRITY_WARNING)
 
         with gr.Accordion("Knowledge Base & Priority", open=False):
             gr.Markdown(

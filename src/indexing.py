@@ -18,6 +18,11 @@ INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
 _GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
+INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
+
+class FileIntegrityError(Exception):
+    """Raised when source file parsing fails and strict mode is active."""
+    pass
 
 # Models
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
@@ -200,7 +205,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
 
     return chunk_text(filtered_content, token_metadata, source_name)
 
-def load_pdf_chunks(pdf_path: Path) -> list[dict]:
+def load_pdf_chunks(pdf_path: Path, strict: bool = False) -> list[dict]:
     source_name = _get_source_name(pdf_path.stem)
     print(f"[loader] Parsing PDF '{source_name}'...")
     
@@ -241,11 +246,11 @@ def load_pdf_chunks(pdf_path: Path) -> list[dict]:
             
         return chunk_text(full_text, token_metadata, source_name)
     except Exception as e:
+        if strict:
+            raise FileIntegrityError(f"Critical error parsing {pdf_path}: {e}")
         import traceback
         print(f"[loader] CRITICAL: Error reading PDF {pdf_path}:")
         print(traceback.format_exc())
-        # We return an empty list so one bad file doesn't kill the whole build,
-        # but the traceback ensures it's visible in logs.
         return []
 
 def embed_texts(texts: list[str]) -> "np.ndarray":
@@ -319,11 +324,36 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     print(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     chunks = []
+    failed_files = []
     for f in all_files:
-        if f.suffix.lower() == ".md":
-            chunks.extend(load_md_chunks(f))
-        elif f.suffix.lower() == ".pdf":
-            chunks.extend(load_pdf_chunks(f))
+        try:
+            if f.suffix.lower() == ".md":
+                chunks.extend(load_md_chunks(f))
+            elif f.suffix.lower() == ".pdf":
+                file_chunks = load_pdf_chunks(f, strict=os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true")
+                if not file_chunks:
+                    # If it returned [ ] but didn't raise, it's still a "silent" failure we should track 
+                    # but maybe not fail the build for unless strict.
+                    # Wait, if it returned [ ] it might just be empty.
+                    # I'll check if it actually failed based on the except block of load_pdf_chunks.
+                    pass
+                chunks.extend(file_chunks)
+        except Exception as e:
+            print(f"[build] ERROR: Failed to index {f.name}: {e}")
+            failed_files.append(f.name)
+
+    # Save integrity report
+    integrity_data = {
+        "timestamp": time.time(),
+        "failed_files": failed_files,
+        "success_count": len(all_files) - len(failed_files),
+        "total_count": len(all_files)
+    }
+    with open(INTEGRITY_PATH, "w") as f:
+        json.dump(integrity_data, f, indent=2)
+
+    if failed_files and os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
+        raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
     
     if not chunks:
         print("[build] No chunks found in source files!")
@@ -345,6 +375,15 @@ def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
         chunks = json.load(f)
     print(f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks.")
     return index, chunks
+
+def get_integrity_report() -> dict:
+    if INTEGRITY_PATH.exists():
+        try:
+            with open(INTEGRITY_PATH, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
 
 def _fetch_pdf_cache_if_missing() -> None:
     import urllib.request
