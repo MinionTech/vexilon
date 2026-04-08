@@ -22,6 +22,16 @@ Index pre-computation (run once after updating the PDF):
 # ─── Standard Library ────────────────────────────────────────────────────────
 import sys
 import threading
+import logging
+
+# Configure structured logging (Issue #196)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
+
 from src.indexing import (
     _get_source_name,
     _get_rag_source_files,
@@ -50,7 +60,7 @@ TESTS_DIR = LABOUR_LAW_DIR / "tests"
 _chunks: list[dict] = []
 _index: "faiss.IndexFlatIP | None" = None
 
-print("[boot] Python started, importing stdlib...", flush=True)
+logger.info("[boot] Python started, importing stdlib...")
 import json
 import os
 import re
@@ -70,7 +80,7 @@ if not os.getenv("HF_HOME"):
 # ─── Third-party: Deferred Imports ───────────────────────────────────────────
 # (numpy, anthropic, faiss, sentence_transformers, gradio)
 # are imported inside functions to keep startup and test-loading fast.
-print("[boot] All boilerplate complete.", flush=True)
+logger.info("[boot] All boilerplate complete.")
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
@@ -103,7 +113,8 @@ CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
 CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN", 200))
 
 import re
-import logging
+
+# Input Sanitization (for prompt injection prevention)
 
 # Input Sanitization (for prompt injection prevention)
 MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", 10000))
@@ -271,11 +282,11 @@ def get_vexilon_info():
     os_info = platform.system()
 
     # The Banner
-    print("=" * 50)
-    print(f" VEXILON VERSION : {version} ({source})")
-    print(f" PYTHON VERSION  : {py_ver}")
-    print(f" RUNTIME OS      : {os_info}")
-    print("=" * 50, flush=True)
+    logger.info("=" * 50)
+    logger.info(f" VEXILON VERSION : {version} ({source})")
+    logger.info(f" PYTHON VERSION  : {py_ver}")
+    logger.info(f" RUNTIME OS      : {os_info}")
+    logger.info("=" * 50)
 
     return {"ver": version, "src": source, "py": py_ver, "os": os_info}
 
@@ -501,7 +512,7 @@ class TestRegistry:
     def load(self, directory: Path) -> None:
         """Scan directory for .md files and parse them into the registry."""
         if not directory.exists():
-            print(f"[registry] Warning: {directory} does not exist.")
+            logger.warning(f"[registry] Warning: {directory} does not exist.")
             return
 
         with self._lock:
@@ -530,8 +541,8 @@ class TestRegistry:
                         file_path=f
                     ))
                 except Exception as e:
-                    print(f"[registry] Failed to load {f.name}: {e}")
-            print(f"[registry] Loaded {len(self.tests)} tests from {directory.name}")
+                    logger.error(f"[registry] Failed to load {f.name}: {e}")
+            logger.info(f"[registry] Loaded {len(self.tests)} tests from {directory.name}")
 
     def find_matches(self, query: str) -> list[TestDoctrine]:
         """Find all tests whose keywords appear in the lowercased query."""
@@ -555,9 +566,9 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     
     # 1. Basic Metadata
     if os.getenv("VEXILON_QUIET", "").lower() not in ("1", "true"):
-        print(f"[startup] Starting Vexilon {VEXILON_VERSION}…")
+        logger.info(f"[startup] Starting Vexilon {VEXILON_VERSION}…")
     if DEVELOPER_MODE:
-        print("[startup] DEVELOPER_MODE is ACTIVE.")
+        logger.info("[startup] DEVELOPER_MODE is ACTIVE.")
     
     # 2. Local Knowledge Bases
     _test_registry.load(TESTS_DIR)
@@ -572,7 +583,7 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     
     # Rebuild only if forced OR if loading failed (missing/corrupt files)
     if _index is None or _chunks is None or force_rebuild:
-        print("[startup] Pre-computed index missing or forced rebuild. Refreshing from sources...")
+        logger.info("[startup] Pre-computed index missing or forced rebuild. Refreshing from sources...")
         # If we're here as a fallback (not a manual force), we MUST force the rebuild 
         # to ensure it doesn't just re-read the same corrupt/empty files.
         _index, _chunks = build_index_from_sources(force=True)
@@ -581,7 +592,7 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
         pass
 
     if _index is not None and _chunks:
-        print("[startup] Ready.")
+        logger.info("[startup] Ready.")
         # 4. Integrity Reporting
         report = get_integrity_report()
         if report.get("failed_files"):
@@ -590,9 +601,9 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
                 f"⚠️ **INDEX INTEGRITY WARNING:** {len(failed)} document(s) failed to index "
                 f"(e.g., {', '.join(failed[:2])}). Knowledge base may be incomplete."
             )
-            print(f"[integrity] Found {len(failed)} failures.")
+            logger.warning(f"[integrity] Found {len(failed)} failures.")
     else:
-        print("[startup] ERROR: Knowledge base failed to load.")
+        logger.error("[startup] ERROR: Knowledge base failed to load.")
 
 
 # ─── RAG Query ────────────────────────────────────────────────────────────────
@@ -652,7 +663,7 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return condensed
     except Exception as exc:
         # We catch generic Exception here since anthropic is deferredly imported
-        print(f"[rag] Query condensation failed: {exc}. Using raw message.")
+        logger.error(f"[rag] Query condensation failed: {exc}. Using raw message.")
         return message
 
 
@@ -699,10 +710,10 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
         if not perspective_queries:
             return [condensed]
             
-        print(f"[rag] Complex query detected. Generated {len(perspective_queries)} perspectives.")
+        logger.info(f"[rag] Complex query detected. Generated {len(perspective_queries)} perspectives.")
         return perspective_queries
     except Exception as exc:
-        print(f"[rag] Multi-perspective generation failed: {exc}. Using condensed query.")
+        logger.error(f"[rag] Multi-perspective generation failed: {exc}. Using condensed query.")
         return [condensed]
 
 
@@ -814,9 +825,9 @@ async def rag_stream(
             usage = final.usage
             cache_created = usage.cache_creation_input_tokens or 0
             cache_read = usage.cache_read_input_tokens or 0
-            print(
+            logger.info(
                 f"[rag] Tokens — input: {usage.input_tokens}, "
-                f"cache_create: {cache_created}, cache_read: {cache_read}, "
+                f"cache_create: {cache_created or 0}, cache_read: {cache_read or 0}, "
                 f"output: {usage.output_tokens}"
             )
             if final.stop_reason == "max_tokens":
@@ -979,7 +990,7 @@ GROUND TRUTH CONTEXT (FOR VERIFICATION):
                 score = int(score_match.group(1))
 
             # Log the review
-            print(f"[review] Score: {score}/10")
+            logger.info(f"[review] Score: {score}/10")
     except Exception as exc:
         yield f"\n\n⚠️ Review error: {exc}"
 
@@ -1090,7 +1101,7 @@ async def rag_review_stream(
                 yield text_chunk
             final = await stream.get_final_message()
             usage = final.usage
-            print(
+            logger.info(
                 f"[rag] Tokens — input: {usage.input_tokens}, "
                 f"output: {usage.output_tokens}"
             )
@@ -1428,8 +1439,8 @@ if __name__ == "__main__":
     allowed_paths = [str(LABOUR_LAW_DIR), str(Path("docs"))]
     
     # ── Final Build Report ──────────────────────────────────────────────────
-    print(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
-    print(f"[startup] Version: {VEXILON_VERSION} | Threads: {os.getenv('OMP_NUM_THREADS', 'Auto')}")
+    logger.info(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
+    logger.info(f"[startup] Version: {VEXILON_VERSION} | Threads: {os.getenv('OMP_NUM_THREADS', 'Auto')}")
     
     app.launch(
         server_name="0.0.0.0",

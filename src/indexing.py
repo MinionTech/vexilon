@@ -3,8 +3,11 @@ import json
 import time
 import hashlib
 import fitz
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     import numpy as np
@@ -64,7 +67,7 @@ def get_embed_model() -> "SentenceTransformer":
             
             _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
             
-        print(f"[embed] Embedding model '{current_model_name}' ready.")
+        logger.info(f"[embed] Embedding model '{current_model_name}' ready.")
     return _embed_model
 
 def _get_rag_source_files() -> list[Path]:
@@ -148,7 +151,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     if not content:
         return []
     source_name = _get_source_name(md_path.stem)
-    print(f"[loader] Parsing Markdown '{source_name}'...")
+    logger.info(f"[loader] Parsing Markdown '{source_name}'...")
     tokenizer = get_embed_model().tokenizer
     token_metadata = []
     current_header = ""
@@ -208,7 +211,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
 
 def load_pdf_chunks(pdf_path: Path, strict: bool = False) -> list[dict]:
     source_name = _get_source_name(pdf_path.stem)
-    print(f"[loader] Parsing PDF '{source_name}'...")
+    logger.info(f"[loader] Parsing PDF '{source_name}'...")
     
     chunks = []
     try:
@@ -250,8 +253,8 @@ def load_pdf_chunks(pdf_path: Path, strict: bool = False) -> list[dict]:
         if strict:
             raise FileIntegrityError(f"Critical error parsing {pdf_path}: {e}")
         import traceback
-        print(f"[loader] CRITICAL: Error reading PDF {pdf_path}:")
-        print(traceback.format_exc())
+        logger.error(f"[loader] CRITICAL: Error reading PDF {pdf_path}:")
+        logger.error(traceback.format_exc())
         return []
 
 def embed_texts(texts: list[str]) -> "np.ndarray":
@@ -275,11 +278,11 @@ def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
     import faiss
     import numpy as np
     texts = [c["text"] for c in chunks]
-    print("[index] Indexing... Please expect a wait (this can take 5-10 minutes on CPU).")
-    print(f"[index] Embedding {len(texts)} chunks locally...")
+    logger.info("[index] Indexing... Please expect a wait (this can take 5-10 minutes on CPU).")
+    logger.info(f"[index] Embedding {len(texts)} chunks locally...")
     t0 = time.time()
     vectors = embed_texts(texts)
-    print(f"[index] Embeddings complete in {time.time() - t0:.1f}s")
+    logger.info(f"[index] Embeddings complete in {time.time() - t0:.1f}s")
     faiss.normalize_L2(vectors)
     index = faiss.IndexFlatIP(EMBED_DIM)
     index.add(vectors)
@@ -291,7 +294,7 @@ def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
     faiss.write_index(index, str(INDEX_PATH))
     with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False)
-    print(f"[index] Saved index to {INDEX_PATH}")
+    logger.info(f"[index] Saved index to {INDEX_PATH}")
 
 def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[None, None]:
     """
@@ -301,13 +304,13 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     """
     all_files = _get_rag_source_files()
     if not all_files:
-        print("[build] No source files found!")
+        logger.warning("[build] No source files found!")
         return None, None
 
     if SOURCE_MANIFEST_PATH.exists():
         with open(SOURCE_MANIFEST_PATH, "r") as f:
             current_manifest = json.load(f)
-        print(f"[build] Using pre-generated source manifest from {SOURCE_MANIFEST_PATH}")
+        logger.info(f"[build] Using pre-generated source manifest from {SOURCE_MANIFEST_PATH}")
     else:
         current_manifest = {}
         for source_file in all_files:
@@ -324,12 +327,12 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
             with open(MANIFEST_PATH, "r") as f:
                 stored_manifest = json.load(f)
             if stored_manifest == current_manifest and INDEX_PATH.exists() and CHUNKS_PATH.exists():
-                print("[build] Smart Refresh: No changes detected in sources. Skipping build.")
+                logger.info("[build] Smart Refresh: No changes detected in sources. Skipping build.")
                 return load_precomputed_index()
         except Exception:
             pass
 
-    print(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
+    logger.info(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     chunks = []
     failed_files = []
@@ -347,7 +350,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
                     pass
                 chunks.extend(file_chunks)
         except Exception as e:
-            print(f"[build] ERROR: Failed to index {f.name}: {e}")
+            logger.error(f"[build] ERROR: Failed to index {f.name}: {e}")
             failed_files.append(f.name)
 
     # Save integrity report
@@ -364,7 +367,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
         raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
     
     if not chunks:
-        print("[build] No chunks found in source files!")
+        logger.error("[build] No chunks found in source files!")
         return None, None
 
     index = build_index(chunks)
@@ -376,12 +379,12 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
     if not INDEX_PATH.exists() or not CHUNKS_PATH.exists():
         return None, None
-    print(f"[startup] Loading pre-computed index from {INDEX_PATH}...")
+    logger.info(f"[startup] Loading pre-computed index from {INDEX_PATH}...")
     import faiss
     index = faiss.read_index(str(INDEX_PATH))
     with open(CHUNKS_PATH, encoding="utf-8") as f:
         chunks = json.load(f)
-    print(f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks.")
+    logger.info(f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks.")
     return index, chunks
 
 def get_integrity_report() -> dict:
