@@ -2,13 +2,13 @@
 import sys
 from pathlib import Path
 
-# Add project root to sys.path to import from src/
+# Add project root to sys.path to import from vexilon/
 sys.path.append(str(Path(__file__).parent.parent))
 
 try:
-    from src.indexing import build_index_from_sources
+    from vexilon.indexing import build_index_from_sources
 except ImportError:
-    # Handle environment where src/ is not yet in Python path correctly
+    # Handle environment where vexilon/ is not yet in Python path correctly
     sys.path.append(str(Path(__file__).parent.parent / "src"))
     from indexing import build_index_from_sources
 

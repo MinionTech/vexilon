@@ -46,7 +46,7 @@ COPY --from=model_fetcher /model_cache /app/hf_cache
 
 # 3. Create pre-computed index using a cache mount for incremental runs
 COPY --chown=vexilon:vexilon data/ ./data/
-COPY --chown=vexilon:vexilon src/ ./src/
+COPY --chown=vexilon:vexilon vexilon/ ./vexilon/
 COPY --chown=vexilon:vexilon scripts/build_index.py ./scripts/
 
 # Create ONLY the persistent cache directory as root before dropping privileges

@@ -32,7 +32,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from src.indexing import (
+from vexilon.indexing import (
     _get_source_name,
     _get_rag_source_files,
     build_index_from_sources,
@@ -309,7 +309,7 @@ if TYPE_CHECKING:
 
 # ─── Clients ─────────────────────────────────────────────────────────────────
 # get_embed_model, EMBED_DIM, _get_rag_source_files, _get_source_name,
-# and others are imported from src.indexing above.
+# and others are imported from vexilon.indexing above.
 
 _anthropic_client: "anthropic.AsyncAnthropic | None" = None
 
@@ -1420,17 +1420,18 @@ if __name__ == "__main__":
 
     if args.rebuild_index:
         startup(force_rebuild=True)
-        print("[startup] Index rebuild complete. Exiting (--rebuild-index specified).")
+        logger.info("[startup] Index rebuild complete. Exiting (--rebuild-index specified).")
         sys.exit(0)
 
     # Standard startup sequence
     startup(force_rebuild=False)
     app = build_ui()
     # Enable authentication if a password is set in the environment.
+    VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
     auth_creds = None
     if VEXILON_PASSWORD:
-        auth_creds = (VEXILON_USERNAME, VEXILON_PASSWORD)
-        print(f"[startup] Authentication enabled for user '{VEXILON_USERNAME}'")
+        auth_creds = [(VEXILON_USERNAME, VEXILON_PASSWORD)]
+        logger.info(f"[startup] Authentication enabled for user '{VEXILON_USERNAME}'")
 
     # Build allowed_paths: allow labour_law directory for PDF downloads
     # Use relative path for cross-environment compatibility (local dev + Docker container)
