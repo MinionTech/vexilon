@@ -507,6 +507,8 @@ class TestRegistry:
         with self._lock:
             self.tests = []
             for f in directory.glob("*.md"):
+                if f.name == "index.md":
+                    continue
                 try:
                     text = f.read_text(encoding="utf-8")
                     lines = text.split("\n")
@@ -1034,9 +1036,21 @@ async def rag_review_stream(
             
             # 1. New Registry Tests
             for test in matched_tests:
+                # Detect if user is specifically asking for the RAW factors or "show me"
+                show_request = any(k in message.lower() for k in ["show me", "what are the factors", "list the criteria", "what is the test for", "give me the test"])
+                
+                if show_request:
+                    formatted_prompt += f"\n\n--- USER REQUESTED TEST: {test.name.upper()} ---\n"
+                    formatted_prompt += f"The user asked to see this test. You MUST start your response by displaying the following factor list/criteria EXACTLY as written here:\n{test.content}\n"
+                    formatted_prompt += f"After displaying it, ask the user if they want you to apply it to their specific facts.\n"
+                
                 formatted_prompt += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-                formatted_prompt += f"This case involves potential {test.name}. You MUST follow these criteria and apply them to the facts:\n{test.content}\n"
-                formatted_prompt += f"In your response, follow the strategic guidance and instructions in the {test.name} module, specifically identifying any criteria or factors that have not been met or proven."
+                formatted_prompt += f"This case involves potential {test.name}. You MUST follow this pattern:\n"
+                formatted_prompt += "1. EXPLAIN: Briefly explain the test factors.\n"
+                formatted_prompt += "2. QUESTION: If any facts are missing from the user's query to satisfy these factors, ASK those specific questions now.\n"
+                formatted_prompt += "3. APPLY: Once facts are known, apply these factors to the scenario and identify which ones management HAS or HAS NOT proven.\n"
+                formatted_prompt += "4. CITE: Point to the specific articles or documents that support or limit the employer's position.\n"
+                formatted_prompt += f"CRITERIA:\n{test.content}\n"
 
             # 2. Legacy Millhaven Fallback (if registry doesn't catch it)
             if not matched_tests and MILLHAVEN_FACTORS:
@@ -1158,6 +1172,7 @@ EXAMPLE_QUESTIONS = [
     "What are the just cause requirements for discipline?",
     "What rights do stewards have in investigation meetings?",
     "What is the nexus test for establishing a link in off-duty conduct cases?",
+    "Show me the Harassment Threshold test.",
     "Does my employer have a social media policy?",
 ]
 
