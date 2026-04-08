@@ -49,10 +49,10 @@ def get_embed_model() -> "SentenceTransformer":
             # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
             # Most modern models (including BGE) have fast variants.
             if not getattr(_embed_model.tokenizer, "is_fast", False):
-                # We log a warning but don't hard-crash yet, though offset mapping may fail.
-                # In the future, this could be a hard RequirementError.
-                print(f"[embed] WARNING: Tokenizer for {EMBED_MODEL} is NOT a 'Fast' tokenizer. "
-                      "Character-offset alignment may be degraded.")
+                raise RuntimeError(
+                    f"Tokenizer for {EMBED_MODEL} is NOT a 'Fast' tokenizer. "
+                    "Vexilon requires 'Fast' tokenizers for reliable character-offset mapping."
+                )
             
             _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
             
