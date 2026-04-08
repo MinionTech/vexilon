@@ -1,5 +1,5 @@
 import pytest
-from src.indexing import get_embed_model
+from vexilon.indexing import get_embed_model
 
 def test_tokenizer_is_fast():
     """Vexilon requires 'Fast' tokenizers for character-offset mapping."""

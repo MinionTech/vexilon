@@ -409,9 +409,9 @@ def _fetch_pdf_cache_if_missing() -> None:
     if not CHUNKS_PATH.exists():
         urls[CHUNKS_PATH] = f"{base}/.pdf_cache/chunks.json"
     for dest_path, url in urls.items():
-        print(f"[fetch] Downloading {dest_path.name} from {url}...")
+        logger.info(f"[fetch] Downloading {dest_path.name} from {url}...")
         try:
             urllib.request.urlretrieve(url, dest_path)
-            print(f"[fetch] Saved {dest_path}")
+            logger.info(f"[fetch] Saved {dest_path}")
         except (urllib.error.URLError, OSError) as e:
-            print(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")
+            logger.warning(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")

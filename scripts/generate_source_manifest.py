@@ -1,7 +1,11 @@
 import hashlib
 import json
 import sys
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 # Adjust paths to be relative to project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -19,10 +23,10 @@ def get_source_files() -> list[Path]:
     return sorted(files, key=lambda p: str(p))
 
 def main():
-    print(f"[manifest] Generating source manifest for {SOURCE_DIR}...")
+    logger.info(f"[manifest] Generating source manifest for {SOURCE_DIR}...")
     files = get_source_files()
     if not files:
-        print("[manifest] No source files found.")
+        logger.warning("[manifest] No source files found.")
         sys.exit(0)
 
     manifest = {}
@@ -38,7 +42,7 @@ def main():
     with open(MANIFEST_PATH, "w") as f:
         json.dump(manifest, f, indent=2)
     
-    print(f"[manifest] Saved manifest with {len(manifest)} files to {MANIFEST_PATH}")
+    logger.info(f"[manifest] Saved manifest with {len(manifest)} files to {MANIFEST_PATH}")
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-import src.indexing as indexing
+import vexilon.indexing as indexing
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
