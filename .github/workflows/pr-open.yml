@@ -123,7 +123,7 @@ jobs:
         run: |
           declare -l IMAGE="ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}"
           podman pull $IMAGE
-          podman run -d --rm -p 7860:7860 --name vexilon-app -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
+          podman run -d --rm -p 7860:7860 --name vexilon -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
 
       - name: Wait for Healthcheck
         run: |
@@ -133,9 +133,9 @@ jobs:
               exit 0
             fi
             
-            if ! podman inspect vexilon-app --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
+            if ! podman inspect vexilon --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
               echo "Container died! Logs:"
-              podman logs vexilon-app
+              podman logs vexilon
               exit 1
             fi
 
@@ -147,7 +147,7 @@ jobs:
 
       - name: Dump Logs on Failure
         if: failure()
-        run: podman logs vexilon-app
+        run: podman logs vexilon
 
   trivy:
     name: Trivy Security Scan
