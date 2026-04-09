@@ -5,18 +5,18 @@ FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
 # This stage only re-runs if the model name changes.
 FROM python:3.14.3-slim AS model_fetcher
 
-# Prevent auth attempts for public models
-ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
-
 COPY --from=uv_source /uv /usr/local/bin/uv
 
-# Install huggingface_hub with [cli] extra
-RUN uv pip install --system "huggingface_hub[cli]"
+# Install huggingface_hub
+RUN uv pip install --system huggingface_hub
 
-# Fetch model into a dedicated folder for copying
+# Fetch model directly into /model_cache using the Python API.
+# This avoids shell PATH issues and wildcard copy bloat.
+# We keep the HF_HUB_DISABLE_IMPLICIT_TOKEN local to this command to satisfy security scanners.
 RUN --mount=type=cache,target=/root/.cache/huggingface \
-    HF_HOME=/root/.cache/huggingface python -m huggingface_hub cli download BAAI/bge-small-en-v1.5 --quiet && \
-    mkdir -p /model_cache && cp -r /root/.cache/huggingface/hub /model_cache/
+    HF_HOME=/root/.cache/huggingface \
+    HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
+    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache')"
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS builder
