@@ -47,8 +47,9 @@ ENV HF_HOME=/app/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the virtualenv and model cache
+# CRITICAL: We MUST chown the hf_cache so the 'vexilon' user can touch it (lock files, etc.)
 COPY --from=builder --chown=vexilon:vexilon /app/.venv /app/.venv
-COPY --from=model_fetcher /model_cache /app/hf_cache
+COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /app/hf_cache
 
 # 3. Create pre-computed index using a cache mount for incremental runs
 COPY --chown=vexilon:vexilon data/ ./data/
