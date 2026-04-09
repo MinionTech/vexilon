@@ -64,4 +64,4 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     system_prompt = captured_kwargs["system"][0]["text"]
     assert "--- MANDATORY LOGIC CHECK: OHS SAFETY REFERRAL ---" in system_prompt
     assert "1-888-621-7233" in system_prompt
-    assert "You MUST follow these criteria and apply them to the facts" in system_prompt
+    assert "YOU MUST immediately advise" in system_prompt
