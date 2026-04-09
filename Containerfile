@@ -12,11 +12,10 @@ RUN uv pip install --system huggingface_hub
 
 # Fetch model directly into /model_cache using the Python API.
 # This avoids shell PATH issues and wildcard copy bloat.
-# We keep the HF_HUB_DISABLE_IMPLICIT_TOKEN local to this command to satisfy security scanners.
+# We use token=False to prevent auth attempts and satisfy security scanners.
 RUN --mount=type=cache,target=/root/.cache/huggingface \
     HF_HOME=/root/.cache/huggingface \
-    HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
-    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache')"
+    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False)"
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS builder
