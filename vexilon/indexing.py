@@ -255,7 +255,7 @@ def load_pdf_chunks(pdf_path: Path, strict: bool = False) -> list[dict]:
         import traceback
         logger.error(f"[loader] CRITICAL: Error reading PDF {pdf_path}:")
         logger.error(traceback.format_exc())
-        return []
+        raise e
 
 def embed_texts(texts: list[str]) -> "np.ndarray":
     import numpy as np
@@ -342,16 +342,12 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
                 chunks.extend(load_md_chunks(f))
             elif f.suffix.lower() == ".pdf":
                 file_chunks = load_pdf_chunks(f, strict=os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true")
-                if not file_chunks:
-                    # If it returned [ ] but didn't raise, it's still a "silent" failure we should track 
-                    # but maybe not fail the build for unless strict.
-                    # Wait, if it returned [ ] it might just be empty.
-                    # I'll check if it actually failed based on the except block of load_pdf_chunks.
-                    pass
                 chunks.extend(file_chunks)
         except Exception as e:
             logger.error(f"[build] ERROR: Failed to index {f.name}: {e}")
             failed_files.append(f.name)
+            if os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
+                raise
 
     # Save integrity report
     integrity_data = {

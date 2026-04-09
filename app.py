@@ -114,7 +114,6 @@ CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN",
 
 import re
 
-# Input Sanitization (for prompt injection prevention)
 
 # Input Sanitization (for prompt injection prevention)
 MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", 10000))
