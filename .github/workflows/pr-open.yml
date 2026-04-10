@@ -30,7 +30,7 @@ jobs:
       - id: diff
         uses: bcgov/actions/diff-triggers@main
         with:
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/"]'
+          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
 
   unit_tests:
     name: Unit Tests
