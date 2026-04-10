@@ -8,6 +8,7 @@ changes the on-disk format would sail straight through undetected.
 """
 
 import json
+import pickle
 import os
 import faiss
 import numpy as np
@@ -37,7 +38,7 @@ def _tiny_index(n: int = 3) -> tuple[faiss.IndexFlatIP, list[dict]]:
 def test_save_and_load_roundtrip(tmp_path, monkeypatch):
     """save_index() → load_precomputed_index() must restore the index and chunks intact."""
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.pkl")
     monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
 
     index, chunks = _tiny_index()
@@ -53,7 +54,7 @@ def test_save_and_load_roundtrip(tmp_path, monkeypatch):
 def test_load_returns_none_none_when_both_files_missing(tmp_path, monkeypatch):
     """load_precomputed_index() must return (None, None) if neither file exists."""
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "absent.faiss")
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "absent.json")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "absent.pkl")
     monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "absent.manifest")
 
     assert indexing.load_precomputed_index() == (None, None)
@@ -63,7 +64,7 @@ def test_load_returns_none_none_when_only_index_exists(tmp_path, monkeypatch):
     """load_precomputed_index() requires BOTH files — partial presence must not succeed."""
     index_path = tmp_path / "index.faiss"
     monkeypatch.setattr(indexing, "INDEX_PATH", index_path)
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "absent.json")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "absent.pkl")
     monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "absent.manifest")
 
     index, _ = _tiny_index()
@@ -74,19 +75,20 @@ def test_load_returns_none_none_when_only_index_exists(tmp_path, monkeypatch):
 
 def test_load_returns_none_none_when_only_chunks_exist(tmp_path, monkeypatch):
     """load_precomputed_index() requires BOTH files — chunks alone must not succeed."""
-    chunks_path = tmp_path / "chunks.json"
+    chunks_path = tmp_path / "chunks.pkl"
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "absent.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", chunks_path)
     monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "absent.manifest")
 
-    chunks_path.write_text(json.dumps([{"text": "a", "page": 1, "chunk_index": 0}]))
+    with open(chunks_path, "wb") as f:
+        pickle.dump([{"text": "a", "page": 1, "chunk_index": 0}], f)
 
     assert indexing.load_precomputed_index() == (None, None)
 
 
-def test_save_index_writes_valid_json_chunks(tmp_path, monkeypatch):
-    """Chunks saved by save_index() must be valid JSON with the expected keys."""
-    chunks_path = tmp_path / "chunks.json"
+def test_save_index_writes_valid_pickle_chunks(tmp_path, monkeypatch):
+    """Chunks saved by save_index() must be a valid Pickle with the expected keys."""
+    chunks_path = tmp_path / "chunks.pkl"
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", chunks_path)
     monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
@@ -94,8 +96,8 @@ def test_save_index_writes_valid_json_chunks(tmp_path, monkeypatch):
     index, chunks = _tiny_index()
     indexing.save_index(index, chunks)
 
-    with open(chunks_path, encoding="utf-8") as f:
-        loaded = json.load(f)
+    with open(chunks_path, "rb") as f:
+        loaded = pickle.load(f)
 
     assert isinstance(loaded, list)
     assert len(loaded) == len(chunks)
@@ -105,7 +107,7 @@ def test_save_index_writes_valid_json_chunks(tmp_path, monkeypatch):
 def test_loaded_index_is_searchable(tmp_path, monkeypatch):
     """An index restored from disk must still return valid search results."""
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.pkl")
     monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
 
     index, chunks = _tiny_index(n=5)
