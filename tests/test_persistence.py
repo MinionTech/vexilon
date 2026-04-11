@@ -39,7 +39,7 @@ def test_save_and_load_roundtrip(tmp_path, monkeypatch):
     """save_index() → load_precomputed_index() must restore the index and chunks intact."""
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.pkl")
-    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
+    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.pkl")
 
     index, chunks = _tiny_index()
     indexing.save_index(index, chunks)
@@ -91,7 +91,7 @@ def test_save_index_writes_valid_pickle_chunks(tmp_path, monkeypatch):
     chunks_path = tmp_path / "chunks.pkl"
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", chunks_path)
-    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
+    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.pkl")
 
     index, chunks = _tiny_index()
     indexing.save_index(index, chunks)
@@ -108,7 +108,7 @@ def test_loaded_index_is_searchable(tmp_path, monkeypatch):
     """An index restored from disk must still return valid search results."""
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.pkl")
-    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
+    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.pkl")
 
     index, chunks = _tiny_index(n=5)
     indexing.save_index(index, chunks)

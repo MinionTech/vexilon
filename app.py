@@ -734,13 +734,14 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
         return [condensed]
 
 
-async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
+async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str, bool]:
     """
     Generate multiple perspectives for complex queries, search the index,
-    and aggregate deduplicated chunks. Returns (queries, context_string).
+    and aggregate deduplicated chunks. Returns (queries, context_string, is_complex).
     Shared helper for rag_stream, rag_review_stream, and get_rag_context (Issue #132).
     """
     queries = await generate_perspective_queries(message, history)
+    is_complex = len(queries) > 1
     
     all_hits = []
     seen_texts = set()
@@ -768,7 +769,7 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
         )
     context = "\n\n---\n\n".join(context_parts)
     
-    return queries, context
+    return queries, context, is_complex
 
 
 
@@ -794,7 +795,7 @@ async def rag_stream(
         return
 
     # Issue #132: Multi-perspective retrieval for complex topics (Shared Refactor)
-    queries, context = await get_multi_perspective_context(message, history)
+    queries, context, _ = await get_multi_perspective_context(message, history)
 
     # Build message list for Claude: prior history + new user message
     messages = []
@@ -853,11 +854,11 @@ async def rag_stream(
         yield (f"\n\n⚠️ API error: {exc}", "")
 
 
-async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str]:
+async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str, bool]:
     """Get context (excerpts) for a query without generating a response. Consistent with Issue #132."""
-    queries, context = await get_multi_perspective_context(message, history)
+    queries, context, is_complex = await get_multi_perspective_context(message, history)
     query_display = " | ".join(queries) if len(queries) > 1 else queries[0]
-    return query_display, context
+    return query_display, context, is_complex
 
 
 async def verify_response(assistant_response: str, context: str) -> str:
@@ -1060,7 +1061,6 @@ async def refine_stream(
 async def rag_review_stream(
     message: str,
     history: list[dict],
-    use_reviewer: bool = False,
     persona_mode: str = "Explorer",
     all_chunks: list[dict] = None,
 ) -> AsyncIterator[str]:
@@ -1074,7 +1074,7 @@ async def rag_review_stream(
         return
 
     # Issue #132: Multi-perspective retrieval for complex topics
-    queries, context = await get_multi_perspective_context(message, history)
+    queries, context, is_complex = await get_multi_perspective_context(message, history)
     query = queries[0]
 
     messages = []
@@ -1123,8 +1123,10 @@ async def rag_review_stream(
                     formatted_prompt += f"This case involves potential off-duty conduct. You MUST audit the facts against these 5 factors:\n{MILLHAVEN_FACTORS}\n"
                     formatted_prompt += "In your response, identify which factors management HAS NOT PROVEN."
 
-        # 3. Step 1: Steward Draft (Bot A) - SILENT
-        yield "🧠 Vexilon is analyzing the collective agreement and drafting a response..."
+        # 3. Stage 1: Steward Draft (Bot A)
+        if is_complex:
+            yield "### 🧠 Initial Steward Draft\n"
+        
         raw_response = ""
         async with client.messages.stream(
             model=CLAUDE_MODEL,
@@ -1137,6 +1139,9 @@ async def rag_review_stream(
         ) as stream:
             async for text_chunk in stream.text_stream:
                 raw_response += text_chunk
+                # Stream the draft only if the reviewer is going to participate next
+                if is_complex:
+                    yield text_chunk
             
             final_draft = await stream.get_final_message()
             logger.info(f"[rag] Draft tokens — input: {final_draft.usage.input_tokens}, output: {final_draft.usage.output_tokens}")
@@ -1144,19 +1149,19 @@ async def rag_review_stream(
             if final_draft.stop_reason == "max_tokens":
                 raw_response += "\n\n⚠️ Response truncated during drafting phase. Synthesis results may be incomplete."
             
-            # If no reviewer, we just stream Bot A's response (with a clean break)
-            if not use_reviewer:
-                yield "\n\n---\n\n"
+            # If no reviewer, we just yield the clean draft
+            if not is_complex:
                 yield raw_response
 
-        # 4. Step 2 & 3: Collaborative Refinement (Bot B + Bot A)
-        if use_reviewer:
-            yield "\n\n🕵️ Senior Rep is auditing the response for forensic accuracy..."
+        # 4. Stage 2 & 3: Collaborative Refinement (Bot B + Bot A)
+        if is_complex:
+            yield "\n\n---\n\n### 🧠 COMPLEX QUERY DETECTED\n*Engaging Senior Rep audit for maximum policy accuracy...*\n\n"
             
-            # Silent Audit (Bot B)
+            # Visible Audit (Bot B) - STREAMED
             review_text = ""
             async for review_chunk in review_stream(raw_response, query, context):
                 review_text += review_chunk
+                yield review_chunk
             
             # Fetch ground_truth from Bot B's logic to pass to refiner
             # Use provided chunks or fall back to global _chunks
@@ -1164,7 +1169,7 @@ async def rag_review_stream(
             ground_truth = get_ground_truth_for_review(raw_response, target_chunks) or context
             
             # Synthesis Phase (Step 3) - STREAMED
-            yield "\n\n---\n\n✨ **VEXILON RECOMMENDATION**\n\n"
+            yield "\n\n---\n\n### ✨ Final Refined Recommendation\n\n"
             async for refined_chunk in refine_stream(raw_response, review_text, ground_truth):
                 yield refined_chunk
 
@@ -1325,13 +1330,6 @@ def build_ui() -> "gr.Blocks":
                 scale=3,
                 elem_id="persona_selector",
             )
-            reviewer_toggle = gr.Checkbox(
-                label="Reviewer",
-                value=USE_REVIEWER,
-                container=False,
-                scale=1,
-                elem_id="reviewer_toggle",
-            )
             export_btn = gr.DownloadButton("⬇️ Save", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
             import_btn = gr.UploadButton("⬆️ Load", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
 
@@ -1355,7 +1353,6 @@ def build_ui() -> "gr.Blocks":
         async def submit(
             message: str,
             history: list[dict],
-            use_reviewer: bool,
             persona_mode: str,
             **kwargs,
         ) -> AsyncIterator[tuple[list[dict], str, dict]]:
@@ -1401,7 +1398,7 @@ def build_ui() -> "gr.Blocks":
             # Stream tokens from RAG; accumulate into the assistant bubble
             accumulated = ""
             async for chunk in rag_review_stream(
-                message, prior_history, use_reviewer, persona_mode, _chunks
+                message, history=prior_history, persona_mode=persona_mode
             ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
@@ -1409,7 +1406,7 @@ def build_ui() -> "gr.Blocks":
 
 
 
-        submit_inputs = [msg_input, chatbot, reviewer_toggle, persona_selector]
+        submit_inputs = [msg_input, chatbot, persona_selector]
         submit_outputs = [chatbot, msg_input, chip_row]
 
         send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
