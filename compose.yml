@@ -69,7 +69,6 @@ services:
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
-      EMBED_MODEL: /app/hf_cache
       TRANSFORMERS_OFFLINE: "1"
       PYTHONPATH: "/app"
     # We use python -m pytest to ensure /app is in the sys.path for module discovery
@@ -101,7 +100,6 @@ services:
       HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
       PYTHONPATH: "/app"
-      EMBED_MODEL: /app/hf_cache
     command: python scripts/build_index.py
 
   # ── Troubleshooting Version ────────────────────────────────────────────────
