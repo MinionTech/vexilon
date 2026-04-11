@@ -63,7 +63,7 @@ services:
       - ./compose.yml:/app/compose.yml:ro,z
       - ./README.md:/app/README.md:ro,z
       - ./Containerfile:/app/Containerfile:ro,z
-      - ./src:/app/src:ro,z
+      - ./vexilon:/app/vexilon:ro,z
       - ./scripts:/app/scripts:ro,z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
@@ -88,7 +88,7 @@ services:
     memswap_limit: 2g
     volumes:
       - ./app.py:/app/app.py:ro,z
-      - ./src:/app/src:ro,z
+      - ./vexilon:/app/vexilon:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
       - ./.pdf_cache:/app/.pdf_cache:z
@@ -97,6 +97,7 @@ services:
       # Prevent HuggingFace token lookup permission errors
       HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
+      PYTHONPATH: "/app"
     command: python scripts/build_index.py
 
   # ── Troubleshooting Version ────────────────────────────────────────────────
@@ -123,7 +124,7 @@ services:
       - ./style.css:/app/style.css:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
-      - ./src:/app/src:ro,z
+      - ./vexilon:/app/vexilon:ro,z
       - ./.pdf_cache:/app/.pdf_cache:z
       - ./pyproject.toml:/app/pyproject.toml:ro,z
       - ./uv.lock:/app/uv.lock:ro,z
