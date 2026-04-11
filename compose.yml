@@ -50,7 +50,7 @@ services:
     build:
       context: .
       dockerfile: Containerfile
-      target: builder
+      target: test_builder
     mem_limit: 3g         # Integration tests load the real 800 MB embedding model;
     memswap_limit: 3g     # match mem_limit to disable swap — clean OOM, not host thrash
     volumes:
@@ -63,8 +63,9 @@ services:
       - ./compose.yml:/app/compose.yml:ro,z
       - ./README.md:/app/README.md:ro,z
       - ./Containerfile:/app/Containerfile:ro,z
-      - ./src:/app/src:ro,z
+      - ./vexilon:/app/vexilon:ro,z
       - ./scripts:/app/scripts:ro,z
+      - ./hf_cache:/app/hf_cache:ro,z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
@@ -88,15 +89,17 @@ services:
     memswap_limit: 2g
     volumes:
       - ./app.py:/app/app.py:ro,z
-      - ./src:/app/src:ro,z
+      - ./vexilon:/app/vexilon:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
       - ./.pdf_cache:/app/.pdf_cache:z
+      - ./hf_cache:/app/hf_cache:ro,z
     environment:
       HF_HOME: /app/hf_cache
       # Prevent HuggingFace token lookup permission errors
       HF_TOKEN_PATH: /dev/null
       PATH: "/app/.venv/bin:$PATH"
+      PYTHONPATH: "/app"
     command: python scripts/build_index.py
 
   # ── Troubleshooting Version ────────────────────────────────────────────────
@@ -123,7 +126,7 @@ services:
       - ./style.css:/app/style.css:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
-      - ./src:/app/src:ro,z
+      - ./vexilon:/app/vexilon:ro,z
       - ./.pdf_cache:/app/.pdf_cache:z
       - ./pyproject.toml:/app/pyproject.toml:ro,z
       - ./uv.lock:/app/uv.lock:ro,z

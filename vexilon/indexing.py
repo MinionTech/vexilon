@@ -4,6 +4,7 @@ import time
 import hashlib
 import fitz
 import logging
+import pickle
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 PDF_CACHE_DIR = Path("./.pdf_cache")
 LABOUR_LAW_DIR = Path("./data/labour_law")
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
-CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
+CHUNKS_PATH = PDF_CACHE_DIR / "chunks.pkl"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
 _GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
 INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
@@ -292,8 +293,8 @@ def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
     import faiss
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     faiss.write_index(index, str(INDEX_PATH))
-    with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
-        json.dump(chunks, f, ensure_ascii=False)
+    with open(CHUNKS_PATH, "wb") as f:
+        pickle.dump(chunks, f, protocol=pickle.HIGHEST_PROTOCOL)
     logger.info(f"[index] Saved index to {INDEX_PATH}")
 
 def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[None, None]:
@@ -373,8 +374,8 @@ def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
     logger.info(f"[startup] Loading pre-computed index from {INDEX_PATH}...")
     import faiss
     index = faiss.read_index(str(INDEX_PATH))
-    with open(CHUNKS_PATH, encoding="utf-8") as f:
-        chunks = json.load(f)
+    with open(CHUNKS_PATH, "rb") as f:
+        chunks = pickle.load(f)
     logger.info(f"[startup] Pre-computed index loaded — {index.ntotal} vectors, {len(chunks)} chunks.")
     return index, chunks
 
@@ -398,7 +399,7 @@ def _fetch_pdf_cache_if_missing() -> None:
     if not INDEX_PATH.exists():
         urls[INDEX_PATH] = f"{base}/.pdf_cache/index.faiss"
     if not CHUNKS_PATH.exists():
-        urls[CHUNKS_PATH] = f"{base}/.pdf_cache/chunks.json"
+        urls[CHUNKS_PATH] = f"{base}/.pdf_cache/chunks.pkl"
     for dest_path, url in urls.items():
         logger.info(f"[fetch] Downloading {dest_path.name} from {url}...")
         try:

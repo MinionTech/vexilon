@@ -8,3 +8,9 @@ data/labour_law/**/*.md linguist-generated=true
 
 # Keep PDFs as binary so they are handled correctly
 data/labour_law/**/*.pdf binary
+
+# Track RAG binary artifacts via Git LFS (Issue #239)
+# Current storage targets: FAISS index and Pickle chunk storage
+.pdf_cache/*.faiss filter=lfs diff=lfs merge=lfs -text
+.pdf_cache/*.pkl filter=lfs diff=lfs merge=lfs -text
+.pdf_cache/*.json filter=lfs diff=lfs merge=lfs -text

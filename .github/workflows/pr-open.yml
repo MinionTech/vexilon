@@ -25,10 +25,12 @@ jobs:
       triggered: ${{ steps.diff.outputs.triggered }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          lfs: true
       - id: diff
         uses: bcgov/actions/diff-triggers@main
         with:
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/"]'
+          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
 
   unit_tests:
     name: Unit Tests
@@ -41,6 +43,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          lfs: true
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -64,6 +68,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          lfs: true
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -165,6 +171,8 @@ jobs:
     timeout-minutes: 1
     steps:
       - uses: actions/checkout@v6
+        with:
+          lfs: true
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:

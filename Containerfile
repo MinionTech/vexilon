@@ -28,6 +28,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
 
+# ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
+# This stage adds dev dependencies (like pytest) for the 'tests' compose service.
+FROM builder AS test_builder
+RUN --mount=type=cache,target=/root/.cache/uv \
+    UV_LINK_MODE=copy uv sync --frozen --no-install-project
+
+
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14.3-slim AS runner
 
