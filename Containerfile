@@ -27,14 +27,16 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
-# 2. Copy application code and generate manifest
+# 2. Generate source manifest (Data layer)
 COPY data/ ./data/
+COPY scripts/generate_source_manifest.py ./scripts/
+RUN PATH="/app/.venv/bin:$PATH" python scripts/generate_source_manifest.py
+
+# 3. Copy application code and test suite
 COPY vexilon/ ./vexilon/
-COPY scripts/ ./scripts/
 COPY prompts/ ./prompts/
 COPY app.py style.css conftest.py ./
-
-RUN PATH="/app/.venv/bin:$PATH" python scripts/generate_source_manifest.py
+COPY scripts/ ./scripts/
 
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────

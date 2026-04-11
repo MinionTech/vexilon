@@ -1,5 +1,5 @@
 import hashlib
-import pickle
+import json
 import sys
 import logging
 from pathlib import Path
@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 # Adjust paths to be relative to project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_DIR = PROJECT_ROOT / "data" / "labour_law"
-MANIFEST_PATH = SOURCE_DIR / "manifest.pkl"
+MANIFEST_PATH = SOURCE_DIR / "manifest.json"
 
 def get_source_files() -> list[Path]:
     files = []
@@ -39,10 +39,10 @@ def main():
         rel_path = source_file.relative_to(SOURCE_DIR)
         manifest[str(rel_path)] = hasher.hexdigest()
 
-    with open(MANIFEST_PATH, "wb") as f:
-        pickle.dump(manifest, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(MANIFEST_PATH, "w") as f:
+        json.dump(manifest, f, indent=2)
     
-    logger.info(f"[manifest] Saved binary manifest with {len(manifest)} files to {MANIFEST_PATH}")
+    logger.info(f"[manifest] Saved JSON manifest with {len(manifest)} files to {MANIFEST_PATH}")
 
 if __name__ == "__main__":
     main()
