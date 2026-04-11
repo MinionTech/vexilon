@@ -14,12 +14,10 @@ services:
       VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
       VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
 
-      # Allow downloading models if cache is empty (e.g., after volume mount overwrites it)
-      # Prevent HuggingFace token lookup permission errors
-      # Set HF_TOKEN_PATH to /dev/null so it fails gracefully instead of hitting permission errors
+      # Enforce strict offline mode for models baked into the image.
       HF_TOKEN_PATH: /dev/null
-      # Override the build-time offline mode to allow downloading when cache is empty
-      TRANSFORMERS_OFFLINE: "0"
+      TRANSFORMERS_OFFLINE: "1"
+      HF_HUB_OFFLINE: "1"
 
       PORT: "7860"
     ports:
@@ -54,18 +52,7 @@ services:
     mem_limit: 3g         # Integration tests load the real 800 MB embedding model;
     memswap_limit: 3g     # match mem_limit to disable swap — clean OOM, not host thrash
     volumes:
-      - ./app.py:/app/app.py:ro,z
-      - ./tests:/app/tests:ro,z
-      - ./data:/app/data:ro,z
-      - ./pyproject.toml:/app/pyproject.toml:ro,z
-      - ./uv.lock:/app/uv.lock:ro,z
-      - ./conftest.py:/app/conftest.py:ro,z
-      - ./compose.yml:/app/compose.yml:ro,z
-      - ./README.md:/app/README.md:ro,z
-      - ./Containerfile:/app/Containerfile:ro,z
-      - ./vexilon:/app/vexilon:ro,z
-      - ./scripts:/app/scripts:ro,z
-      - ./hf_cache:/app/hf_cache:ro,z
+      - ./.pdf_cache:/app/.pdf_cache:z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
@@ -88,12 +75,7 @@ services:
     mem_limit: 2g
     memswap_limit: 2g
     volumes:
-      - ./app.py:/app/app.py:ro,z
-      - ./vexilon:/app/vexilon:ro,z
-      - ./scripts:/app/scripts:ro,z
-      - ./data:/app/data:ro,z
       - ./.pdf_cache:/app/.pdf_cache:z
-      - ./hf_cache:/app/hf_cache:ro,z
     environment:
       HF_HOME: /app/hf_cache
       # Prevent HuggingFace token lookup permission errors

@@ -20,10 +20,10 @@ PDF_CACHE_DIR = Path("./.pdf_cache")
 LABOUR_LAW_DIR = Path("./data/labour_law")
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.pkl"
-MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
+MANIFEST_PATH = PDF_CACHE_DIR / "manifest.pkl"
 _GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
-INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
-SOURCE_MANIFEST_PATH = LABOUR_LAW_DIR / "manifest.json"
+INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.pkl"
+SOURCE_MANIFEST_PATH = LABOUR_LAW_DIR / "manifest.pkl"
 
 class FileIntegrityError(Exception):
     """Raised when source file parsing fails and strict mode is active."""
@@ -320,8 +320,8 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
     if not force and MANIFEST_PATH.exists():
         try:
-            with open(MANIFEST_PATH, "r") as f:
-                stored_manifest = json.load(f)
+            with open(MANIFEST_PATH, "rb") as f:
+                stored_manifest = pickle.load(f)
             if stored_manifest == current_manifest and INDEX_PATH.exists() and CHUNKS_PATH.exists():
                 logger.info("[build] Smart Refresh: No changes detected in sources. Skipping build.")
                 return load_precomputed_index()
@@ -352,8 +352,8 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
         "success_count": len(all_files) - len(failed_files),
         "total_count": len(all_files)
     }
-    with open(INTEGRITY_PATH, "w") as f:
-        json.dump(integrity_data, f, indent=2)
+    with open(INTEGRITY_PATH, "wb") as f:
+        pickle.dump(integrity_data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     if failed_files and os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
         raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
@@ -364,8 +364,8 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
     index = build_index(chunks)
     save_index(index, chunks)
-    with open(MANIFEST_PATH, "w") as f:
-        json.dump(current_manifest, f, indent=2)
+    with open(MANIFEST_PATH, "wb") as f:
+        pickle.dump(current_manifest, f, protocol=pickle.HIGHEST_PROTOCOL)
     return index, chunks
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
@@ -382,8 +382,8 @@ def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
 def get_integrity_report() -> dict:
     if INTEGRITY_PATH.exists():
         try:
-            with open(INTEGRITY_PATH, "r") as f:
-                return json.load(f)
+            with open(INTEGRITY_PATH, "rb") as f:
+                return pickle.load(f)
         except Exception:
             pass
     return {}
