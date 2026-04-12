@@ -1275,8 +1275,6 @@ def _is_grievance_related(message: str, response: str) -> bool:
 def _get_area_contacts_section(message: str) -> str:
     """Generate area office contact section for grievance handoff."""
     # Try to extract location from message
-    import re
-    
     # Common location patterns
     location_patterns = [
         r"in\s+([A-Za-z\s]+(?:BC|British Columbia))?",
@@ -1295,8 +1293,9 @@ def _get_area_contacts_section(message: str) -> str:
     
     try:
         return get_grievance_handoff_message(location)
-    except Exception:
-        # Fallback if data file is missing
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+        # Fallback if data file is missing or malformed
+        logger.warning(f"[area_contacts] Could not load contact data: {e}")
         return """\n\n---\n\n## 📤 Next Steps: Contact Your BCGEU Area Office\n\n**Find your area office:** https://www.bcgeu.ca/full_contact\n\n**Toll-Free:** 1-800-663-2526\n\nYour area office will assign a staff representative to review your grievance."""
 
 
