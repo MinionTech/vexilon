@@ -27,37 +27,32 @@ jobs:
         with:
           fetch-depth: 50
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-
-      - name: Resolve and verify image
+      - name: Resolve image
         id: resolve
         uses: bcgov/actions/commit-to-package@main
         with:
           package: vexilon
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_depth: 50
+          token: ${{ github.token }}
 
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          RESOLVED_SHA=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
-          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
-          
-          # Use manual override if provided, otherwise the resolved SHA
-          DEPLOY_TAG="${IMAGE_TAG:-$RESOLVED_SHA}"
-          
-          if [ -z "$DEPLOY_TAG" ] || [ "$DEPLOY_TAG" == "null" ]; then
-            echo "::error::Could not resolve a tag for deployment."
-            exit 1
-          fi
-          
-          ./.github/scripts/deploy.sh "$DEPLOY_TAG"
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
+          ./.github/scripts/deploy.sh "$TAG"
 
       - name: Verify Space boots successfully
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: ./.github/scripts/verify_deployment.sh "DerekRoberts/landru"
+
       - name: Notify Owners on Failure
         if: failure()
         uses: bcgov/actions/workflow-notifier@main
