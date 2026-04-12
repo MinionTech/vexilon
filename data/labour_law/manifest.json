@@ -1,0 +1,262 @@
+{
+  "generated_at": "2026-04-12T20:35:36.798906+00:00",
+  "version": "1.0",
+  "sources": {
+    "01_primary/BC Labour Relations Code.md": {
+      "hash": "dfd271ae4a4566c908e846525be987938dbedb816455f030b793f2e87c8de13f",
+      "size_bytes": 170143
+    },
+    "01_primary/BC Labour Relations Code.pdf": {
+      "hash": "b486c60160ab9eaa7b8b4d75d67e49f2482d127ff24dca9a925da0dc4eb37ebc",
+      "size_bytes": 20525888
+    },
+    "01_primary/BCGEU 19th Main Agreement.md": {
+      "hash": "fa58d818e31e1541aacaab1bd164f6e53e4b938d95923106bf2ff4bb4ca12648",
+      "size_bytes": 597844
+    },
+    "01_primary/BCGEU 19th Main Agreement.pdf": {
+      "hash": "539aaf69982512e8cc7331b632ac691df1925b59027f06f482a91668488c2ef2",
+      "size_bytes": 1883466
+    },
+    "02_statutory/BC Employment Standards Act.md": {
+      "hash": "ae43f3f5c9b1ec40ab4fdf752d91be6c921b4fdb2c86d513b5b61baf9d59c09c",
+      "size_bytes": 163078
+    },
+    "02_statutory/BC Human Rights Code.md": {
+      "hash": "b422e829dc855b64d9814627de0e4eabb6bbec5aa6f4109116fcfe8239eae294",
+      "size_bytes": 51234
+    },
+    "02_statutory/BC OHS Regulation - Introduction.md": {
+      "hash": "5b5111b651d9c15dfe7f518172e53b889dee1b806299b18f1787e5da0b1a1d54",
+      "size_bytes": 61701
+    },
+    "02_statutory/BC OHS Regulation - Part 01.md": {
+      "hash": "21cf4e4951ebd94deaee6688bff9bfec57998ca8670e99ea25aecf0182729e60",
+      "size_bytes": 7437
+    },
+    "02_statutory/BC OHS Regulation - Part 02.md": {
+      "hash": "668be7d09e9a43db32715417f4e55fa8d87db05829246a252d18cfe53b68ff86",
+      "size_bytes": 2744
+    },
+    "02_statutory/BC OHS Regulation - Part 03.md": {
+      "hash": "eff91fab39ed7bd5ff36c697e4960d3d2316add6c7b4bfdf9461aaf9c56571ff",
+      "size_bytes": 44846
+    },
+    "02_statutory/BC OHS Regulation - Part 04.md": {
+      "hash": "cad36bdb434d3340024d2a6c7c994666435278a1c0d8638d15d9e46fe0d8dc8e",
+      "size_bytes": 70449
+    },
+    "02_statutory/BC OHS Regulation - Part 05.md": {
+      "hash": "2d4ea3be7db57ba0584f139200b473a1a3b096eabe5ca11c0e1682a67cf79f64",
+      "size_bytes": 79655
+    },
+    "02_statutory/BC OHS Regulation - Part 06.md": {
+      "hash": "063e46c1694de0568ba020e4b708d9cfe885f74e35fa1a8e1f4963c332db3574",
+      "size_bytes": 116860
+    },
+    "02_statutory/BC OHS Regulation - Part 07.md": {
+      "hash": "fffab977c16252b3d61ef72307c6201a3abbcb0069a7dfcd07ff817da3ae3f76",
+      "size_bytes": 23411
+    },
+    "02_statutory/BC OHS Regulation - Part 08.md": {
+      "hash": "655560d33cf6a2845bcb2ed8ae40c4c6a2543e67b1476e19305f7a4bce25308b",
+      "size_bytes": 40362
+    },
+    "02_statutory/BC OHS Regulation - Part 09.md": {
+      "hash": "b8dd0b8cefc0401b917e3cba2f4ff537b789616429f6494817e9ee4345382973",
+      "size_bytes": 31293
+    },
+    "02_statutory/BC OHS Regulation - Part 10.md": {
+      "hash": "7f95132e05acfc3252205781d5a20b7b0d67c3a3d3aecf57508090b902eb4b49",
+      "size_bytes": 8494
+    },
+    "02_statutory/BC OHS Regulation - Part 11.md": {
+      "hash": "0b57e9209a203c7976020847a2e24eebe1445803dd015ab5fa7676238a92ca1a",
+      "size_bytes": 8730
+    },
+    "02_statutory/BC OHS Regulation - Part 12.md": {
+      "hash": "df327207aa058cdf2e3035288304d464f51eced1aca7fbd0c8ebaec29d839b25",
+      "size_bytes": 72223
+    },
+    "02_statutory/BC OHS Regulation - Part 13.md": {
+      "hash": "fb2a2d92215f8837c11b089e3a1ee3a5587003c8d100f0340db3fb11b2943ef3",
+      "size_bytes": 26699
+    },
+    "02_statutory/BC OHS Regulation - Part 14.md": {
+      "hash": "735a82f778f8bdf838db56d482a1fc69093a8e2cc8df4ac5e075cc5bc2061373",
+      "size_bytes": 82690
+    },
+    "02_statutory/BC OHS Regulation - Part 15.md": {
+      "hash": "5f72b8261032a479443566a2c1689974e125d8963d6f988018d34442c250d4db",
+      "size_bytes": 20716
+    },
+    "02_statutory/BC OHS Regulation - Part 16.md": {
+      "hash": "99adcdbe0fc6756b8b03c715c9f83009fa1602a59ce86b469059173a72e17e91",
+      "size_bytes": 56456
+    },
+    "02_statutory/BC OHS Regulation - Part 17.md": {
+      "hash": "13366af6313f3132dc519f09c8fcf186af43465838e886b259c5f3316ecd38e2",
+      "size_bytes": 11377
+    },
+    "02_statutory/BC OHS Regulation - Part 18.md": {
+      "hash": "cefcb33ecab9091ffdbddab21641db8020f9fd7ce56870d170fef6e3d5d88878",
+      "size_bytes": 20900
+    },
+    "02_statutory/BC OHS Regulation - Part 19.md": {
+      "hash": "248f491c2ba72880296c49dedc5e8233f08e93ef55dfc2cea218843198fb3de1",
+      "size_bytes": 37974
+    },
+    "02_statutory/BC OHS Regulation - Part 20.md": {
+      "hash": "8c72bd156fd3dc16b13f038f2fbe19cc8d2a3cc212ae31059d6e71ccc7894720",
+      "size_bytes": 90720
+    },
+    "02_statutory/BC OHS Regulation - Part 21.md": {
+      "hash": "f8d553b50d40cc2edf12a463bed999e39e94581d4270cdb32206d158e232bd39",
+      "size_bytes": 52084
+    },
+    "02_statutory/BC OHS Regulation - Part 22.md": {
+      "hash": "00a4e3f6ddd766c02934b39656f9c1a9db743901b7cd3efac52c37a5febb0f4f",
+      "size_bytes": 79264
+    },
+    "02_statutory/BC OHS Regulation - Part 23.md": {
+      "hash": "5c8a9142085506930f777dd684b7f4058c119373b2c0908145f98d0de1f1bdb1",
+      "size_bytes": 55007
+    },
+    "02_statutory/BC OHS Regulation - Part 24.md": {
+      "hash": "3a797d9f5e11d52bd4ccc9cbe63bc19893b310ee80bb24ca7908f9b786115392",
+      "size_bytes": 72703
+    },
+    "02_statutory/BC OHS Regulation - Part 25.md": {
+      "hash": "ba12767344eff390c94b840da05ba61947a4bf95af88869820f853ce498daa82",
+      "size_bytes": 495
+    },
+    "02_statutory/BC OHS Regulation - Part 26.md": {
+      "hash": "0ac7a83f36801624947c0d71ae57dbff161c1c1bba4a518c585cc6ca25f488ed",
+      "size_bytes": 99807
+    },
+    "02_statutory/BC OHS Regulation - Part 27.md": {
+      "hash": "b5ba95c047d620a0950eaaf58f5c3297feabe5c3ec0b27352e7c77ab1abf5c68",
+      "size_bytes": 20648
+    },
+    "02_statutory/BC OHS Regulation - Part 28.md": {
+      "hash": "5f62d60ecb39d8b06a7f9c229872e89f2e31baf8da93d85d56ce20b03f5925d5",
+      "size_bytes": 16906
+    },
+    "02_statutory/BC OHS Regulation - Part 29.md": {
+      "hash": "1291371dd0241cf489799f8f89066d7f72e8ffba57b6c90a5a43709f995fa011",
+      "size_bytes": 3354
+    },
+    "02_statutory/BC OHS Regulation - Part 30.md": {
+      "hash": "6d71d6eace56d120f3e28bcb223f4a89df542a8043f0041b8bd376c695f38a4d",
+      "size_bytes": 21345
+    },
+    "02_statutory/BC OHS Regulation - Part 31.md": {
+      "hash": "85fbd00eae926ac96837fd761d33dff23609fb8b6cea775daac29ce4e360a0d5",
+      "size_bytes": 15872
+    },
+    "02_statutory/BC OHS Regulation - Part 32.md": {
+      "hash": "7f8f8946fbe0c8e1ba1dcbcadfc2272b3ba360cceed016e7abef7bfba8949981",
+      "size_bytes": 3880
+    },
+    "02_statutory/BC OHS Regulation - Part 33.md": {
+      "hash": "8dc0d5dc2948a140a154935c47a0e0d498bfce4069b5c4079fcde7282139f931",
+      "size_bytes": 71
+    },
+    "02_statutory/BC OHS Regulation - Part 34.md": {
+      "hash": "1b91e506fe64c98f6b8e37f67f2ec58ab621f9decdd7474fb21162d8ff1427f8",
+      "size_bytes": 16181
+    },
+    "02_statutory/BC Workers Compensation Act - Introduction.md": {
+      "hash": "5c5e9ed3f69fedef78a7c4c4cccdca90729d5c3e905a79f18698fc8c8985391a",
+      "size_bytes": 23547
+    },
+    "02_statutory/BC Workers Compensation Act - Part 01.md": {
+      "hash": "e32fb551b484fe1141b91f4867f3792f7bbefebedb40a08dfa2cbb628bb10300",
+      "size_bytes": 25738
+    },
+    "02_statutory/BC Workers Compensation Act - Part 02.md": {
+      "hash": "b24bb909f1888deb0ab98ce0df563278641bf88da17e5cbae20f312dec1f8752",
+      "size_bytes": 124088
+    },
+    "02_statutory/BC Workers Compensation Act - Part 03.md": {
+      "hash": "42c930da37d5c28e431ab3f5df6438582e72906866952a4137d88aaeb29066cf",
+      "size_bytes": 13235
+    },
+    "02_statutory/BC Workers Compensation Act - Part 04.md": {
+      "hash": "60dfcc678199c06f7628826dba10ebf5a5475145db9bcac26054f74af0deb64f",
+      "size_bytes": 119254
+    },
+    "02_statutory/BC Workers Compensation Act - Part 05.md": {
+      "hash": "bd2cfcfed1a7c23ac55d1ac0fa3cc8774bd733b79d699ea2a9308942012208a0",
+      "size_bytes": 34990
+    },
+    "02_statutory/BC Workers Compensation Act - Part 06.md": {
+      "hash": "36a993ebe54a7c803abff26969e2bbce34ffdc1698bc3bf205857f9e8afd5414",
+      "size_bytes": 13307
+    },
+    "02_statutory/BC Workers Compensation Act - Part 07.md": {
+      "hash": "afbfd7ae1cfe6998a6f3a61bde80a27d359209046632251cb4189506d09f2ff1",
+      "size_bytes": 46516
+    },
+    "02_statutory/BC Workers Compensation Act - Part 08.md": {
+      "hash": "72313cf3f25074da3a76cbeebc461f7b2f21c8804578785968c659de07da4e3c",
+      "size_bytes": 47896
+    },
+    "03_resources/BC Social Media Guidance for Public Service Employees.md": {
+      "hash": "f27116574c4e6eb56804176666af965b8ffe1b9e1641bce126bd543d5122fbfb",
+      "size_bytes": 49392
+    },
+    "03_resources/BC Social Media Guidance for Public Service Employees.pdf": {
+      "hash": "c3c449ca43d478a78c5fe9129b23e51e55c9cc48999c68e7f64c069c2115df9e",
+      "size_bytes": 259141
+    },
+    "03_resources/BCGEU Steward Resources.md": {
+      "hash": "73f1e7ca9982dcab4fbb5dbb58917c6e500afb1486732166d36bbd7840d2e295",
+      "size_bytes": 84819
+    },
+    "03_resources/BCGEU Steward Resources.pdf": {
+      "hash": "749556ef8a40fe4a3d85b2b7a3e75e8580879ecbddbe633a3cca02412b62355c",
+      "size_bytes": 7458493
+    },
+    "03_resources/Gov BC Standards of Conduct.md": {
+      "hash": "decf3e1688a4409e9b6c5792dbcda485776eeb3b78c120ab86b74e31a354fec1",
+      "size_bytes": 29886
+    },
+    "03_resources/Gov BC Standards of Conduct.pdf": {
+      "hash": "4dd04a0d1f1022e031b98919fa9b1f9bc3ff6017dc705947a78d2b026ddd9ecb",
+      "size_bytes": 142108
+    },
+    "04_jurisprudence/Nexus Test and Off-Duty Conduct.md": {
+      "hash": "046df1349b82779be1aff9c91ac72931754069813d56efa39ca28f1ae69b6565",
+      "size_bytes": 2672
+    },
+    "04_jurisprudence/Nexus Test and Off-Duty Conduct.pdf": {
+      "hash": "5440afde97167a3555e7ce2c5f0bfc4be624cb4e58cacf90ea8dcd764a9673ec",
+      "size_bytes": 22482
+    },
+    "forms/BCGEU Grievance Form Guide.md": {
+      "hash": "a22c2f219a48346e9fe30f83cc857a6c9444455b592a798139130ee8784d059b",
+      "size_bytes": 1787
+    },
+    "forms/Grievance - 0 - Instructions.pdf": {
+      "hash": "381eeaa4b18c152777b8edee20a040eb05d6ce4f4c2b1fc1de9f825e9dcacd22",
+      "size_bytes": 139818
+    },
+    "forms/Grievance - A - Grievor Case.pdf": {
+      "hash": "21d8abf56d8b4ebbfab35033eb9d8e68a30624a2784ae2c7bdd4cb317660508a",
+      "size_bytes": 73309
+    },
+    "forms/Grievance - B - Notify Designates.pdf": {
+      "hash": "d6beb10231aac7cdfb30a4e3d432585ea162b38221881bfa707e861e23cf89ff",
+      "size_bytes": 56645
+    },
+    "forms/Grievance - C - Steward Case.pdf": {
+      "hash": "166757f7bdbe344312c6713f50e83ec06bfb237d679eb59d0718e9010396a588",
+      "size_bytes": 161792
+    },
+    "forms/Policy Grievance Form Guide.md": {
+      "hash": "ece8d8f92b9086fac04aa0859a07bc738e409d31fb01aecf538fcb5ccde582e3",
+      "size_bytes": 475
+    }
+  }
+}
