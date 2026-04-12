@@ -32,9 +32,36 @@ jobs:
         with:
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
 
+  cache_validation:
+    name: Validate FAISS Cache
+    needs: [check]
+    if: needs.check.outputs.triggered == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Validate Cache Manifest
+        run: |
+          echo "Validating FAISS cache against source files..."
+          if ! python scripts/generate_cache_manifest.py validate; then
+            echo ""
+            echo "ERROR: Cache is out of sync with data/labour_law/ directory."
+            echo "Run 'python scripts/generate_cache_manifest.py' to regenerate."
+            exit 1
+          fi
+
   tests:
     name: Tests and Analysis
-    needs: [check]
+    needs: [check, cache_validation]
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15

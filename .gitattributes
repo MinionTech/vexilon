@@ -11,6 +11,6 @@ data/labour_law/**/*.pdf binary
 
 # Track RAG binary artifacts via Git LFS (Issue #239)
 # Current storage targets: FAISS index and Pickle chunk storage
+# Note: manifest.json is NOT in LFS - tracked in standard git for auditability
 .pdf_cache/*.faiss filter=lfs diff=lfs merge=lfs -text
 .pdf_cache/*.pkl filter=lfs diff=lfs merge=lfs -text
-.pdf_cache/*.json filter=lfs diff=lfs merge=lfs -text
