@@ -53,6 +53,11 @@ services:
     memswap_limit: 3g     # match mem_limit to disable swap — clean OOM, not host thrash
     volumes:
       - ./.pdf_cache:/app/.pdf_cache:z
+      - ./app.py:/app/app.py:ro,z
+      - ./tests:/app/tests:ro,z
+      - ./data:/app/data:ro,z
+      - ./vexilon:/app/vexilon:ro,z
+      - ./scripts:/app/scripts:ro,z
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
@@ -76,6 +81,10 @@ services:
     memswap_limit: 2g
     volumes:
       - ./.pdf_cache:/app/.pdf_cache:z
+      - ./app.py:/app/app.py:ro,z
+      - ./vexilon:/app/vexilon:ro,z
+      - ./scripts:/app/scripts:ro,z
+      - ./data:/app/data:ro,z
     environment:
       HF_HOME: /app/hf_cache
       # Prevent HuggingFace token lookup permission errors
