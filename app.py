@@ -16,7 +16,7 @@ Quick start:
 
 Index pre-computation (run once after updating the PDF):
   python -c "from app import startup; startup(force_rebuild=True)"
-  # Saves .pdf_cache/index.faiss + .pdf_cache/chunks.json for fast cold starts.
+  # Saves .pdf_cache/index.faiss + .pdf_cache/chunks.pkl for fast cold starts.
 """
 
 # ─── Standard Library ────────────────────────────────────────────────────────
@@ -976,7 +976,7 @@ def get_ground_truth_for_review(response: str, all_chunks: list[dict]) -> str:
 
 # ─── Two-Bot Review Stream (Bot B) ─────────────────────────────────────────────
 async def review_stream(
-    raw_response: str, query: str, context: str
+    raw_response: str, query: str, context: str, all_chunks: list[dict] = None
 ) -> AsyncIterator[str]:
     """
     Bot B: Senior BCGEU rep reviewing Bot A's (steward) output.
@@ -985,7 +985,7 @@ async def review_stream(
     client = get_anthropic()
     # Independent re-retrieval for Bot B (Issue #183)
     # Extracts cited articles from Bot A's response and fetches ground truth context.
-    ground_truth = get_ground_truth_for_review(raw_response, _chunks)
+    ground_truth = get_ground_truth_for_review(raw_response, all_chunks or _chunks)
     if not ground_truth:
         # Fallback to Bot A's context if no citations were generated or re-retrieval failed
         ground_truth = context
@@ -1171,7 +1171,7 @@ async def rag_review_stream(
             
             # Silent Audit (Bot B)
             review_text = ""
-            async for review_chunk in review_stream(raw_response, query, context):
+            async for review_chunk in review_stream(raw_response, query, context, all_chunks=all_chunks):
                 review_text += review_chunk
             
             # Fetch ground_truth from Bot B's logic to pass to refiner

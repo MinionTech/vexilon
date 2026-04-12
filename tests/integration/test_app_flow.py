@@ -34,7 +34,7 @@ async def test_full_rag_flow_integration(monkeypatch, mock_anthropic, tmp_path):
     monkeypatch.setattr(app, "TESTS_DIR", test_data_dir / "tests")
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", cache_dir)
     monkeypatch.setattr(indexing, "INDEX_PATH", cache_dir / "index.faiss")
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", cache_dir / "chunks.json")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", cache_dir / "chunks.pkl")
     monkeypatch.setattr(indexing, "MANIFEST_PATH", cache_dir / "manifest.json")
     monkeypatch.setattr(indexing, "INTEGRITY_PATH", cache_dir / "integrity.json")
 

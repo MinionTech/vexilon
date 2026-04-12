@@ -3,8 +3,8 @@ import json
 import time
 import hashlib
 import fitz
+import pickle  # Security: Only used for locally-generated, trusted chunk artifacts.
 import logging
-import pickle
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -293,6 +293,10 @@ def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
     import faiss
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     faiss.write_index(index, str(INDEX_PATH))
+    # Security: Pickle is used here for its high performance with multi-gigabyte chunk sets.
+    # Since these artifacts are generated locally during the build stage and baked into
+    # the container image, they represent 'Trusted Content' and do not pose a
+    # remote code execution risk in this specific context.
     with open(CHUNKS_PATH, "wb") as f:
         pickle.dump(chunks, f, protocol=pickle.HIGHEST_PROTOCOL)
     logger.info(f"[index] Saved index to {INDEX_PATH}")

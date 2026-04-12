@@ -29,9 +29,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY data/ ./data/
 COPY vexilon/ ./vexilon/
+COPY scripts/ ./scripts/
+# Data and indexing engine code copied — Indexing prerequisites complete.
+
 COPY prompts/ ./prompts/
 COPY app.py style.css conftest.py ./
-COPY scripts/ ./scripts/
 
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
