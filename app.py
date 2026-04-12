@@ -399,6 +399,11 @@ DEVELOPER_MODE = os.getenv("DEVELOPER_MODE", "false").lower() == "true"
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
+def get_mandatory_header() -> str:
+    """Centralized helper for standard prompt headers (Date + Rules)."""
+    today = datetime.datetime.now().strftime("%A, %B %d, %Y")
+    return f"Current Date: {today}\n{GLOBAL_MANDATORY_RULES}\n\n"
+
 def get_system_prompt(developer_mode: bool = False) -> str:
     """Load the default system prompt, optionally with developer extensions."""
     path = PROMPTS_DIR / ("developer.txt" if developer_mode else "steward.txt")
@@ -411,10 +416,8 @@ def get_system_prompt(developer_mode: bool = False) -> str:
             "Knowledge Base:\n{manifest}\n\n"
             "{verify_message}"
         )
-    # Always prepend mandatory overriding rules regardless of file content
-    today = datetime.datetime.now().strftime("%A, %B %d, %Y")
-    today_str = f"Current Date: {today}\n"
-    return f"{today_str}{GLOBAL_MANDATORY_RULES}\n\n{content}"
+    # Prepend mandatory header (Date + Rules)
+    return f"{get_mandatory_header()}{content}"
 
 GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING - v272-FIXED) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts. If the specific text was not retrieved, suggest the user ask about that section directly. NEVER fabricate contract language.
@@ -451,11 +454,15 @@ def get_persona_prompt(mode_name: str) -> str:
     }
     
     path = paths.get(mode_name)
-    content = path.read_text(encoding="utf-8") if path and path.is_file() else fallbacks.get(mode_name, get_system_prompt(DEVELOPER_MODE))
+    if path and path.is_file():
+        content = path.read_text(encoding="utf-8")
+    elif mode_name in fallbacks:
+        content = fallbacks[mode_name]
+    else:
+        # Falls back to get_system_prompt which already handles get_mandatory_header()
+        return get_system_prompt(DEVELOPER_MODE)
         
-    today = datetime.datetime.now().strftime("%A, %B %d, %Y")
-    today_str = f"Current Date: {today}\n"
-    return f"{today_str}{GLOBAL_MANDATORY_RULES}\n\n{content}"
+    return f"{get_mandatory_header()}{content}"
 
 
 
@@ -591,7 +598,7 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     if DEVELOPER_MODE:
         logger.info("[startup] DEVELOPER_MODE is ACTIVE.")
     
-    # Check for missing model cache
+    # Check for missing model cache (Issue #267)
     hf_home = Path(os.getenv("HF_HOME", "./hf_cache"))
     if not hf_home.exists() and not (os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI")):
         logger.warning(f"⚠️ [startup] Model cache directory '{hf_home}' not found. Vexilon is in offline mode and may fail to start.")
