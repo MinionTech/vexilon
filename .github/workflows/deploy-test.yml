@@ -33,7 +33,7 @@ jobs:
         id: resolve
         uses: bcgov/actions/commit-to-package@main
         with:
-          images: "vexilon=ghcr.io/${{ github.repository }}"
+          package: vexilon
           token: ${{ secrets.GITHUB_TOKEN }}
           max_depth: 50
 
@@ -41,8 +41,18 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          DIGEST=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
-          ./.github/scripts/deploy.sh "$DIGEST"
+          RESOLVED_SHA=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
+          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          
+          # Use manual override if provided, otherwise the resolved SHA
+          DEPLOY_TAG="${IMAGE_TAG:-$RESOLVED_SHA}"
+          
+          if [ -z "$DEPLOY_TAG" ] || [ "$DEPLOY_TAG" == "null" ]; then
+            echo "::error::Could not resolve a tag for deployment."
+            exit 1
+          fi
+          
+          ./.github/scripts/deploy.sh "$DEPLOY_TAG"
 
       - name: Verify Space boots successfully
         env:
