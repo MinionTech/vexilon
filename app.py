@@ -591,7 +591,7 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     if DEVELOPER_MODE:
         logger.info("[startup] DEVELOPER_MODE is ACTIVE.")
     
-    # Check for missing model cache (Issue #267)
+    # Check for missing model cache
     hf_home = Path(os.getenv("HF_HOME", "./hf_cache"))
     if not hf_home.exists() and not (os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI")):
         logger.warning(f"⚠️ [startup] Model cache directory '{hf_home}' not found. Vexilon is in offline mode and may fail to start.")
