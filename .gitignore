@@ -21,9 +21,16 @@ build/
 .ipynb_checkpoints/
 
 # ─── App runtime data (do NOT commit) ────────────────────────────────────────
-# The FAISS index and metadata are built during image build and persisted locally
-# via podman-compose volumes. They are NOT tracked in git. 
-.pdf_cache/
+# The FAISS binary cache files are built during image build and tracked via Git LFS.
+# The manifest.json IS tracked in git to validate cache freshness.
+.pdf_cache/*.faiss
+.pdf_cache/*.pkl
+.tmp/
+chroma_db/          # Local vector store data
+gradio_cached_examples/
+flagged/
+# HuggingFace model weight cache (baked into image, not repo)
+hf_cache/
 .tmp/
 chroma_db/          # Local vector store data
 gradio_cached_examples/
