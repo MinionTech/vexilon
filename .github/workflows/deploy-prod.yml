@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      pull-requests: read
       issues: write
     steps:
       - name: Checkout
@@ -32,6 +33,7 @@ jobs:
         uses: bcgov/actions/commit-to-package@main
         with:
           images: "vexilon=ghcr.io/${{ github.repository_owner }}/vexilon"
+          token: ${{ secrets.GITHUB_TOKEN }}
           max_depth: 50
 
       - name: Push image-based stub to Hugging Face Space
