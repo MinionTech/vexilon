@@ -1257,7 +1257,6 @@ def build_ui() -> "gr.Blocks":
         )
 
         # ── Reviewer Toggle & Management ──────────────────────────────────────
-        # ── Reviewer Toggle & Management ──────────────────────────────────────
         with gr.Row(variant="compact", elem_classes="compact-row"):
             persona_selector = gr.Radio(
                 choices=["Explore", "Direct", "Defend"],
@@ -1275,10 +1274,9 @@ def build_ui() -> "gr.Blocks":
                 scale=1,
                 elem_id="reviewer_toggle",
             )
-            export_btn = gr.DownloadButton("⬇️ Save Chat", variant="secondary", size="sm", scale=1, elem_classes="sm-btn", interactive=True)
+            export_btn = gr.DownloadButton("⬇️ Save Chat", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
             import_btn = gr.UploadButton("⬆️ Load Chat", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
 
-        # ── Input row ─────────────────────────────────────────────────────────
         # ── Input row ─────────────────────────────────────────────────────────
         with gr.Row(elem_id="input_row"):
             msg_input = gr.Textbox(
