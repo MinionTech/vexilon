@@ -37,17 +37,8 @@ COPY app.py style.css conftest.py ./
 
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
-# This stage adds dev dependencies, test suite, and model for the 'tests' service.
+# This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
-
-# Copy model from model_fetcher so tests can load it
-# sentence-transformers expects models in sentence-transformers/ subdirectory
-COPY --from=model_fetcher /model_cache /app/hf_cache/sentence-transformers/BAAI_bge-small-en-v1.5
-ENV HF_HOME=/app/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
-    HF_HUB_OFFLINE=1 \
-    EMBED_MODEL=BAAI/bge-small-en-v1.5
-
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
 
@@ -69,14 +60,12 @@ WORKDIR /app
 ENV HF_HOME=/app/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
-    EMBED_MODEL=BAAI/bge-small-en-v1.5 \
+    EMBED_MODEL=/app/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the prepared environment and code from builder
 COPY --from=builder --chown=vexilon:vexilon /app /app
-# Copy the pre-downloaded model into the final image
-# sentence-transformers expects models in sentence-transformers/ subdirectory
-COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /app/hf_cache/sentence-transformers/BAAI_bge-small-en-v1.5
+COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /app/hf_cache
 
 # 3. Build index
 # Create persistent cache directory

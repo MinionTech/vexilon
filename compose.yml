@@ -39,7 +39,6 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./.pdf_cache:/app/.pdf_cache:z
-      # NOTE: hf_cache is baked into image; don't mount volume here
     # Production-optimized: Uses the CMD defined in the Containerfile
     # (No 'uv' or 'gradio' CLI required in the final image)
 
@@ -59,7 +58,6 @@ services:
       - ./data:/app/data:ro,z
       - ./vexilon:/app/vexilon:ro,z
       - ./scripts:/app/scripts:ro,z
-      # NOTE: hf_cache is baked into image; don't mount volume here
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_HOME: /app/hf_cache
@@ -87,7 +85,6 @@ services:
       - ./vexilon:/app/vexilon:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
-      # NOTE: hf_cache is baked into image; don't mount volume here
     environment:
       HF_HOME: /app/hf_cache
       # Prevent HuggingFace token lookup permission errors
@@ -124,8 +121,4 @@ services:
       - ./.pdf_cache:/app/.pdf_cache:z
       - ./pyproject.toml:/app/pyproject.toml:ro,z
       - ./uv.lock:/app/uv.lock:ro,z
-      # NOTE: hf_cache is baked into image; don't mount volume here
     command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."
-
-# ── Named Volumes ──────────────────────────────────────────────────────────────
-# (No named volumes - HuggingFace cache is baked into image)
