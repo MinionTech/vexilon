@@ -39,6 +39,10 @@ COPY app.py style.css conftest.py ./
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
+
+# Copy model from model_fetcher so tests can load it
+COPY --from=model_fetcher /model_cache /app/hf_cache
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
 
