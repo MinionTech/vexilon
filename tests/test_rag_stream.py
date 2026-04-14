@@ -99,10 +99,10 @@ async def test_rag_stream_yields_tokens_from_claude(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
 
-    def mock_search(*a, **kw):
-        return _fake_chunks()
+    def mock_search_batch(index, chunks, queries, top_ks):
+        return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index", mock_search)
+    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
     mock_client = MagicMock()
     mock_client.messages.stream = _stream_yielding(["Hello", " there", "!"])
@@ -122,10 +122,10 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
 
-    def mock_search(*a, **kw):
-        return _fake_chunks()
+    def mock_search_batch(index, chunks, queries, top_ks):
+        return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index", mock_search)
+    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
     captured = {}
 
@@ -177,10 +177,10 @@ async def test_rag_stream_appends_user_message_last(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
 
-    def mock_search(*a, **kw):
-        return _fake_chunks()
+    def mock_search_batch(index, chunks, queries, top_ks):
+        return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index", mock_search)
+    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
     captured = {}
 
@@ -218,10 +218,10 @@ async def test_rag_stream_api_error_yields_error_message(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", _fake_chunks())
 
-    def mock_search(*a, **kw):
-        return _fake_chunks()
+    def mock_search_batch(index, chunks, queries, top_ks):
+        return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index", mock_search)
+    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
     @asynccontextmanager
     async def _raising_stream(**kwargs):

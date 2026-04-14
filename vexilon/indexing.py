@@ -275,6 +275,33 @@ def search_index(index: "faiss.IndexFlatIP", chunks: list[dict], query: str, top
     _scores, indices = index.search(query_vec, top_k)
     return [chunks[i] for i in indices[0] if i < len(chunks)]
 
+def search_index_batch(index: "faiss.IndexFlatIP", chunks: list[dict], queries: list[str], top_ks: list[int]) -> list[list[dict]]:
+    """
+    Search multiple queries in a single embedding pass to reduce CPU overhead.
+    Uses FAISS's native batch search for maximum efficiency (#323).
+    """
+    import faiss
+    import numpy as np
+    
+    if not queries:
+        return []
+
+    # 1. Batch Embed (already optimized in SentenceTransformer)
+    query_vecs = embed_texts(queries)
+    faiss.normalize_L2(query_vecs)
+    
+    # 2. Batch Search (FAISS native multi-vector search)
+    max_k = max(top_ks)
+    _scores, all_indices = index.search(query_vecs, max_k)
+    
+    results = []
+    for i, indices in enumerate(all_indices):
+        # Truncate to the specific top_k for this query perspective
+        k = top_ks[i]
+        results.append([chunks[idx] for idx in indices[:k] if idx < len(chunks)])
+        
+    return results
+
 def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
     import faiss
     import numpy as np
