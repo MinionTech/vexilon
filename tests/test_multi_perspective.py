@@ -65,14 +65,13 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
     monkeypatch.setattr(app, "generate_perspective_queries", AsyncMock(side_effect=mock_generate_perspectives))
 
     search_calls = []
-    def mock_search(index, chunks, query, top_k):
-        search_calls.append(query)
-        if query == "query1":
-            return [chunk1]
-        else:
-            return [chunk1, chunk2] # overlapping chunk1
+    def mock_search_batch(index, chunks, queries, top_ks):
+        for q in queries:
+            search_calls.append(q)
+        # Return a list of lists (one list of chunks per query)
+        return [[chunk1], [chunk1, chunk2]]
 
-    monkeypatch.setattr(app, "search_index", mock_search)
+    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
     # Mock Anthropic stream
     mock_client = MagicMock()

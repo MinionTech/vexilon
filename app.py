@@ -23,6 +23,7 @@ Index pre-computation (run once after updating the PDF):
 import sys
 import threading
 import logging
+import asyncio
 
 # Configure structured logging (Issue #196)
 logging.basicConfig(
@@ -39,6 +40,7 @@ from vexilon.indexing import (
     get_integrity_report,
     load_precomputed_index,
     search_index,
+    search_index_batch,
     _fetch_pdf_cache_if_missing,
     embed_texts,
     build_index,
@@ -663,6 +665,28 @@ async def condense_query(message: str, history: list[dict]) -> str:
         # We catch generic Exception here since anthropic is deferredly imported
         logger.error(f"[rag] Query condensation failed: {exc}. Using raw message.")
         return message
+def is_query_complex_heuristic(query: str) -> bool:
+    """
+    Fast-path heuristic to determine if a query needs multi-perspective retrieval.
+    Returns True if the query is likely complex, False if it's a simple lookup.
+    """
+    # 1. Length-based: Very short queries are never complex.
+    if len(query) < 20:
+        return False
+        
+    # 2. Pattern-based: Direct article/section lookups are simple.
+    # Matches "Article 10", "Section 5.1", "Appendix A", etc.
+    if re.search(r"^(?:article|section|clause|appendix|item)\s+[\d\w\.]+$", query.strip(), re.IGNORECASE):
+        return False
+        
+    # 3. Keyword-based: Simple factual lookups (phone, address, list of files)
+    simple_keywords = {"phone", "number", "address", "email", "contact", "list", "documents", "files", "who", "are", "you"}
+    tokens = set(re.findall(r"\w+", query.lower()))
+    if tokens.issubset(simple_keywords) or (len(tokens) <= 3 and any(k in tokens for k in simple_keywords)):
+        return False
+
+    return True
+
 async def generate_perspective_queries(message: str, history: list[dict]) -> list[str]:
     """
     Analyze if the query is complex and generate multiple perspectives if so.
@@ -671,6 +695,11 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
     """
     condensed = await condense_query(message, history)
     
+    # Heuristic Bypass (#324): Skip LLM complexity check for simple queries
+    if not is_query_complex_heuristic(condensed):
+        logger.info(f"[rag] Simple query detected via heuristic: '{condensed}'. Skipping perspectives.")
+        return [condensed]
+
     # Analyze complexity and generate perspectives in one go
     prompt = (
         "Analyze if the following search query for a BCGEU Steward Assistant is 'complex'. "
@@ -719,15 +748,19 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
     """
     queries = await generate_perspective_queries(message, history)
     
+    # Calculate top_ks for all queries in one pass
+    top_ks = [
+        max(10, (SIMILARITY_TOP_K * 3) // (2 * len(queries))) if len(queries) > 1 else SIMILARITY_TOP_K
+        for _ in queries
+    ]
+    
+    # ── OPTIMIZATION: Threaded Batch search (#323) ─────
+    # Running in thread to avoid blocking the event loop during embedding/search
+    all_relevant_chunks = await asyncio.to_thread(search_index_batch, _index, _chunks, queries, top_ks)
+
     all_hits = []
     seen_texts = set()
-    
-    for q in queries:
-        # Smaller k per query if multiple, to keep total context size reasonable.
-        # We target about 1.5x the standard top_k total chunks across all queries.
-        k = max(10, (SIMILARITY_TOP_K * 3) // (2 * len(queries))) if len(queries) > 1 else SIMILARITY_TOP_K
-        relevant_chunks = search_index(_index, _chunks, q, top_k=k)
-
+    for relevant_chunks in all_relevant_chunks:
         for chunk in relevant_chunks:
             # Deduplicate by direct string comparison (Issue #132 feedback)
             text = chunk["text"]
@@ -735,8 +768,9 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 seen_texts.add(text)
                 all_hits.append(chunk)
 
-    # Limit total aggregated context to prevent token overflows
-    relevant_chunks = all_hits[:50]
+    # Limit total aggregated context to prevent token overflows and speed up inference.
+    # 35 chunks represents about 12-15k tokens, balancing cost and forensic fidelity.
+    relevant_chunks = all_hits[:35]
     
     context_parts = []
     for chunk in relevant_chunks:
@@ -858,83 +892,17 @@ SOURCE CITATIONS AND CONTEXT:
         return verify_resp.content[0].text
     except Exception as exc:
         return f"⚠️ Verification unavailable: {exc}"
-# ─── Verification Bot (for reducing hallucinations) ───────────────────────────
-def get_ground_truth_for_review(response: str, all_chunks: list[dict]) -> str:
-    """
-    Extract cited articles from Bot A's response and fetch their full text from context.
-    This prevents circular verification (Issue #183) by giving Bot B independent context.
-    Improved robustness (dashes, plurals, header matching) based on PR feedback.
-    """
-    # 1. Match formal Bot A citations (handles various dashes and optional brackets)
-    # e.g., '— [Doc Name], Article 10.4' or '- Doc Name, Section 5'
-    formal_regex = re.compile(
-        r"(?:[-–—]\s*)?(?:\[(?P<doc>[^\]]+)\]|(?P<doc_raw>[^,]+)),\s*(?:Article|Section|Clause|Appendix)\s*(?P<art>[\w\d.]+)", 
-        re.IGNORECASE
-    )
-    # 2. Match informal mentions in text: 'Article 10.4'
-    informal_regex = re.compile(
-        r"(?:Article|Section|Clause|Appendix)\s+(?P<art>[\w\d.]+)", 
-        re.IGNORECASE
-    )
-    
-    cited_targets = []
-    # Extract from formal citations first
-    for m in formal_regex.finditer(response):
-        doc_hint = (m.group("doc") or m.group("doc_raw")).strip().lower()
-        art_root = m.group("art").split(".")[0].upper()
-        cited_targets.append((doc_hint, art_root))
-    
-    # Supplement with informal mentions
-    for m in informal_regex.finditer(response):
-        art_root = m.group("art").split(".")[0].upper()
-        if not any(t[1] == art_root for t in cited_targets):
-            cited_targets.append((None, art_root))
-            
-    if not cited_targets:
-        return ""
-        
-    truth_parts = []
-    seen_chunk_ids = set()
-    
-    # 3. Pulll chunks matching these targets (using regex for robust header parsing)
-    header_num_re = re.compile(r"(?:ARTICLE|SECTION|APPENDIX|CLAUSE)\s+(?P<num>[\w\d.]+)", re.IGNORECASE)
-    
-    for doc_hint, art_num in cited_targets:
-        for chunk in all_chunks:
-            cid = (chunk["source"], chunk["chunk_index"])
-            if cid in seen_chunk_ids:
-                continue
-            
-            header = chunk.get("header", "").upper()
-            m_header = header_num_re.search(header)
-            
-            match_header = m_header and m_header.group("num") == art_num
-            match_doc = (doc_hint is None) or (doc_hint in chunk["source"].lower())
-            
-            if match_header and match_doc:
-                truth_parts.append(
-                    f"[Source: {chunk['source']}, Page: {chunk['page']}]\n{chunk['text']}"
-                )
-                seen_chunk_ids.add(cid)
-                
-    # Limit to 15 chunks (roughly 6k-8k tokens) for performance and window safety
-    return "\n\n---\n\n".join(truth_parts[:15])
 # ─── Two-Bot Review Stream (Bot B) ─────────────────────────────────────────────
 async def review_stream(
     raw_response: str, query: str, context: str, all_chunks: list[dict] = None
 ) -> AsyncIterator[str]:
     """
     Bot B: Senior BCGEU rep reviewing Bot A's (steward) output.
-    Yields the review result with score and verified steps.
+    Recycles Bot A's context directly to avoid redundant retrieval (#325).
     """
     client = get_anthropic()
-    # Independent re-retrieval for Bot B (Issue #183)
-    # Extracts cited articles from Bot A's response and fetches ground truth context.
-    ground_truth = get_ground_truth_for_review(raw_response, all_chunks or _chunks)
-    if not ground_truth:
-        # Fallback to Bot A's context if no citations were generated or re-retrieval failed
-        ground_truth = context
-
+    
+    # Context Recycling (#325): Prioritize the provided context to speed up logic.
     review_prompt = f"""Review the following steward's response for accuracy and completeness using the provided GROUND TRUTH context.
 
 QUERY: {query}
@@ -943,7 +911,7 @@ STEWARD'S RESPONSE:
 {raw_response}
 
 GROUND TRUTH CONTEXT (FOR VERIFICATION):
-{ground_truth[:4000]}
+{context[:60000]}
 
 {REVIEWER_SYSTEM_PROMPT}
 """
@@ -961,13 +929,10 @@ GROUND TRUTH CONTEXT (FOR VERIFICATION):
 
             # Parse score from response
             score = 5  # default
-            import re
-
             score_match = re.search(r"SCORE:\s*(\d+)", review_text, re.IGNORECASE)
             if score_match:
                 score = int(score_match.group(1))
 
-            # Log the review
             logger.info(f"[review] Score: {score}/10")
     except Exception as exc:
         yield f"\n\n⚠️ Review error: {exc}"
@@ -1080,8 +1045,10 @@ async def rag_review_stream(
                     formatted_prompt += f"This case involves potential off-duty conduct. You MUST audit the facts against these 5 factors:\n{MILLHAVEN_FACTORS}\n"
                     formatted_prompt += "In your response, identify which factors management HAS NOT PROVEN."
 
-        # 3. Step 1: Steward Draft (Bot A) - SILENT
-        yield "🧠 Vexilon is analyzing the collective agreement and drafting a response..."
+        # 3. Step 1: Steward Draft (Bot A) - STREAMED for TTFB optimization
+        if use_reviewer:
+            yield "🧠 **VEXILON INITIAL DRAFT** (Review in progress...)\n\n"
+        
         raw_response = ""
         async with client.messages.stream(
             model=CLAUDE_MODEL,
@@ -1094,17 +1061,14 @@ async def rag_review_stream(
         ) as stream:
             async for text_chunk in stream.text_stream:
                 raw_response += text_chunk
+                yield text_chunk
             
             final_draft = await stream.get_final_message()
             logger.info(f"[rag] Draft tokens — input: {final_draft.usage.input_tokens}, output: {final_draft.usage.output_tokens}")
             
             if final_draft.stop_reason == "max_tokens":
                 raw_response += "\n\n⚠️ Response truncated during drafting phase. Synthesis results may be incomplete."
-            
-            # If no reviewer, we just stream Bot A's response (with a clean break)
-            if not use_reviewer:
-                yield "\n\n---\n\n"
-                yield raw_response
+                yield "\n\n⚠️ Response truncated."
 
         # 4. Step 2 & 3: Collaborative Refinement (Bot B + Bot A)
         if use_reviewer:
@@ -1115,10 +1079,8 @@ async def rag_review_stream(
             async for review_chunk in review_stream(raw_response, query, context, all_chunks=all_chunks):
                 review_text += review_chunk
             
-            # Fetch ground_truth from Bot B's logic to pass to refiner
-            # Use provided chunks or fall back to global _chunks
-            target_chunks = all_chunks if all_chunks is not None else _chunks
-            ground_truth = get_ground_truth_for_review(raw_response, target_chunks) or context
+            # Fetch ground_truth from Bot A's retrieval to pass to refiner (#325)
+            ground_truth = context
             
             # Synthesis Phase (Step 3) - STREAMED
             yield "\n\n---\n\n✨ **VEXILON RECOMMENDATION**\n\n"
@@ -1204,7 +1166,7 @@ ATTRIBUTION_HTML = f"""
 </div>
 """
 _CUSTOM_JS = """
-function() {
+(() => {
     // Use capture phase (true) so this fires before Gradio's element-level
     // textarea handler, preventing Enter from inserting a newline (#276).
     document.addEventListener('keydown', function(e) {
@@ -1217,7 +1179,7 @@ function() {
             }
         }
     }, true);
-}
+})()
 """
 
 def build_ui() -> "gr.Blocks":
