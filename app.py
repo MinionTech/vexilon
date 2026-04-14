@@ -680,7 +680,7 @@ def is_query_complex_heuristic(query: str) -> bool:
         return False
         
     # 3. Keyword-based: Simple factual lookups (phone, address, list of files)
-    simple_keywords = {"phone", "number", "address", "email", "contact", "list", "documents", "files", "who are you"}
+    simple_keywords = {"phone", "number", "address", "email", "contact", "list", "documents", "files", "who", "are", "you"}
     tokens = set(re.findall(r"\w+", query.lower()))
     if tokens.issubset(simple_keywords) or (len(tokens) <= 3 and any(k in tokens for k in simple_keywords)):
         return False
@@ -911,7 +911,7 @@ STEWARD'S RESPONSE:
 {raw_response}
 
 GROUND TRUTH CONTEXT (FOR VERIFICATION):
-{context[:12000]}
+{context[:60000]}
 
 {REVIEWER_SYSTEM_PROMPT}
 """

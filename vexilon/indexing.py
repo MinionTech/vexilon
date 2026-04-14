@@ -298,7 +298,7 @@ def search_index_batch(index: "faiss.IndexFlatIP", chunks: list[dict], queries: 
     for i, indices in enumerate(all_indices):
         # Truncate to the specific top_k for this query perspective
         k = top_ks[i]
-        results.append([chunks[idx] for idx in indices[:k] if idx < len(chunks)])
+        results.append([chunks[idx] for idx in indices[:k] if 0 <= idx < len(chunks)])
         
     return results
 
