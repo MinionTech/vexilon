@@ -417,12 +417,13 @@ GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING - v272-F
 """
 def get_persona_prompt(mode_name: str) -> str:
     """Helper to load system prompts for different operational modes."""
-    # Forensic Rep merges legacy 'Direct' and 'Defend' modes for #327
     paths = {
-        "Forensic Rep": PROMPTS_DIR / "case_builder.txt",
+        "Lookup Mode": PROMPTS_DIR / "direct_staff_rep.txt",
+        "Grieve Mode": PROMPTS_DIR / "case_builder.txt",
     }
     fallbacks = {
-        "Forensic Rep": "You are a Senior BCGEU Staff Rep specializing in Forensic Case Building.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
+        "Lookup Mode": "You are a BCGEU Steward Navigator. Your goal is to find specific clauses and provide literal guidance.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
+        "Grieve Mode": "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor. Your goal is to build air-tight cases while objectively identifying any liability.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
     }
     
     path = paths.get(mode_name)
@@ -431,10 +432,19 @@ def get_persona_prompt(mode_name: str) -> str:
     elif mode_name in fallbacks:
         content = fallbacks[mode_name]
     else:
-        # Defaults to Junior Steward (get_system_prompt)
+        # Defaults to Lookup Mode (get_system_prompt handles header)
         return get_system_prompt(DEVELOPER_MODE)
         
-    return f"{get_mandatory_header()}{content}"
+    prompt = f"{get_mandatory_header()}{content}"
+    
+    # Smart Auditor Injection for Grieve Mode (#327)
+    if mode_name == "Grieve Mode":
+        prompt += "\n\n--- AUDITOR MISSION ---\n"
+        prompt += "1. ADVERSARIAL SKEPTICISM: Assume management is procedurally incompetent until proven otherwise. Hunt for missed timelines (Art 8, 9), lack of representation, or lack of just cause.\n"
+        prompt += "2. OBJECTIVE LIABILITY: Do not sugarcoat member failures. If the member is at fault, identify it as a 'Critical Liability' and pivot to Mitigation (remedy reduction).\n"
+        prompt += "3. BAD FAITH AUDIT: Look for patterns of disparate treatment or procedural bad faith."
+        
+    return prompt
 
 VERIFY_STEWARD_MESSAGE = os.getenv(
     "STEWARD_VERIFY_MESSAGE", "Verify w/ Area Office: 604-291-9611"
@@ -981,7 +991,7 @@ GROUND TRUTH CONTEXT (FOR VERIFICATION):
 async def rag_review_stream(
     message: str,
     history: list[dict],
-    persona_mode: str = "Junior Steward",
+    persona_mode: str = "Lookup Mode",
     all_chunks: list[dict] = None,
 ) -> AsyncIterator[str]:
     """
@@ -1000,17 +1010,19 @@ async def rag_review_stream(
     query = queries[0]
     
     # ── Autonomous Review Steering (#327) ────────────────────────────────────
-    # 1. Forensic Rep ALWAYS uses a reviewer.
-    # 2. Junior Steward only uses a reviewer if the query is complex (multi-perspective).
-    # We use len(queries) > 1 because generate_perspective_queries already does the complexity check.
-    is_complex = len(queries) > 1
-    use_reviewer = (persona_mode == "Forensic Rep") or is_complex
+    # 1. Grieve Mode ALWAYS uses a reviewer for forensic accuracy.
+    # 2. Lookup Mode only uses a reviewer if the query is complex (multi-perspective).
+    if persona_mode == "Grieve Mode":
+        use_reviewer = True
+    else:
+        # Lookup mode uses len(queries) > 1 as complexity heuristic
+        use_reviewer = len(queries) > 1
     
     if use_reviewer:
-        trigger_reason = "Forensic mode active" if persona_mode == "Forensic Rep" else "Complex query detected"
+        trigger_reason = "Grieve mode active" if persona_mode == "Grieve Mode" else "Complex query detected"
         logger.info(f"[rag] Autonomous Review active. Reason: {trigger_reason}")
     else:
-        logger.info(f"[rag] Simple query path. No review needed.")
+        logger.info(f"[rag] Simple lookup path. No review needed.")
 
     messages = []
     for turn in history:
@@ -1022,7 +1034,7 @@ async def rag_review_stream(
 
     try:
         # 1. Resolve System Prompt based on Persona
-        if persona_mode == "Forensic Rep":
+        if persona_mode == "Grieve Mode":
             base_prompt = get_persona_prompt(persona_mode)
         else:
             base_prompt = get_system_prompt(DEVELOPER_MODE)
@@ -1030,7 +1042,7 @@ async def rag_review_stream(
         formatted_prompt = base_prompt.replace("{manifest}", get_knowledge_manifest()).replace("{verify_message}", VERIFY_STEWARD_MESSAGE)
 
         # 2. Audit Logic (Issue #161 Refactor) - INJECT INTO PROMPT
-        if persona_mode == "Forensic Rep":
+        if persona_mode == "Grieve Mode":
             matched_tests = _test_registry.find_matches(message + " " + query)
             for test in matched_tests:
                 show_request = any(k in message.lower() for k in ["show me", "what are the factors", "list the criteria", "what is the test for", "give me the test"])
@@ -1231,9 +1243,9 @@ def build_ui() -> "gr.Blocks":
         # ── Autonomous Review Orchestration (#327) ─────────────────────────────
         with gr.Row(variant="compact", elem_classes="compact-row"):
             persona_selector = gr.Radio(
-                choices=["Junior Steward", "Forensic Rep"],
-                value="Junior Steward",
-                label="Operational Mode",
+                choices=["Lookup Mode", "Grieve Mode"],
+                value="Lookup Mode",
+                label="Operational Role",
                 show_label=False,
                 container=False,
                 scale=4,
