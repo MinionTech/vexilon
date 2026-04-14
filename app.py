@@ -1242,6 +1242,7 @@ def build_ui() -> "gr.Blocks":
 
     with gr.Blocks(
         title="Collective Agreement Explorer",
+        fill_height=True,
     ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("# BCGEU Steward Assistant")
@@ -1263,7 +1264,6 @@ def build_ui() -> "gr.Blocks":
 
         # ── Chat interface ────────────────────────────────────────────────────
         chatbot = gr.Chatbot(
-            height=600,
             buttons=["copy"],
             render_markdown=True,
             label="Chat Messages",

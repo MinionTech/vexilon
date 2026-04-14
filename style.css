@@ -134,6 +134,7 @@ html {
 
 #chatbot {
     margin-bottom: 0.3125rem !important; /* 5px */
+    height: calc(100vh - 18rem) !important; /* Responsive height */
 }
 
 /* 6. Input Row Alignment - Align Textbox and Button heights */
