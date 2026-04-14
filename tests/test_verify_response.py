@@ -108,10 +108,10 @@ async def test_rag_stream_yields_context(monkeypatch):
     monkeypatch.setattr(app, "_index", fake_index)
     monkeypatch.setattr(app, "_chunks", fake_chunks)
 
-    def mock_search(*a, **kw):
-        return fake_chunks
+    def mock_search_batch(*a, **kw):
+        return [fake_chunks]
 
-    monkeypatch.setattr(app, "search_index", mock_search)
+    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
     @asynccontextmanager
     async def _stream_ctx(*args, **kwargs):
@@ -140,6 +140,10 @@ async def test_rag_stream_yields_context(monkeypatch):
     mock_client = MagicMock()
     mock_client.messages.stream = _stream_ctx
     monkeypatch.setattr(app, "get_anthropic", lambda: mock_client)
+
+    # Mock generate_perspective_queries to avoid hitting the API in this test
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr(app, "generate_perspective_queries", AsyncMock(return_value=["Question"]))
 
     yielded_contexts = []
     async for chunk, ctx in app.rag_stream("Question", []):

@@ -1,6 +1,6 @@
 import pytest
 from app import _test_registry, TESTS_DIR, rag_review_stream
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from contextlib import asynccontextmanager
 
 def test_wca_registry_loading():
@@ -22,15 +22,15 @@ async def test_rag_review_stream_triggers_wca_logic(monkeypatch):
     fake_chunks = [{"text": "WCA text", "page": 1, "source": "Act", "chunk_index": 0}]
     monkeypatch.setattr("app._chunks", fake_chunks)
     
-    def mock_search(*a, **kw):
-        return fake_chunks
-    monkeypatch.setattr("app.search_index", mock_search)
+    def mock_search_batch(*a, **kw):
+        return [fake_chunks]
+    monkeypatch.setattr("app.search_index_batch", mock_search_batch)
     
-    captured_kwargs = {}
+    all_captured_kwargs = []
     
     @asynccontextmanager
     async def mock_stream(**kwargs):
-        captured_kwargs.update(kwargs)
+        all_captured_kwargs.append(kwargs)
         mock_s = MagicMock()
         
         async def _gen():
@@ -52,13 +52,22 @@ async def test_rag_review_stream_triggers_wca_logic(monkeypatch):
     mock_client.messages.stream = mock_stream
     monkeypatch.setattr("app.get_anthropic", lambda: mock_client)
     
+    # Mock generate_perspective_queries to avoid hitting the API in this test
+    monkeypatch.setattr("app.generate_perspective_queries", AsyncMock(return_value=["I have a back injury and need to file a WCB claim"]))
+    
     # Run rag_review_stream with a WCA keyword
-    async for chunk in rag_review_stream("I have a back injury and need to file a WCB claim", [], persona_mode="Direct", all_chunks=fake_chunks):
+    async for chunk in rag_review_stream("I have a back injury and need to file a WCB claim", [], persona_mode="Grieve Mode", all_chunks=fake_chunks):
         pass
 
-    # Verify the system prompt contains the WCA referral
-    system_prompt = captured_kwargs["system"][0]["text"]
-    assert "WCA CLAIMS REFERRAL" in system_prompt
-    assert "90 days" in system_prompt
-    assert "Review Division" in system_prompt
-    assert "Request for Review" in system_prompt
+    # Verify the system prompt in ANY of the calls contains the WCA referral
+    found_wca = False
+    for call_kwargs in all_captured_kwargs:
+        system = call_kwargs.get("system", [])
+        if system and isinstance(system, list) and "WCA CLAIMS REFERRAL" in system[0]["text"]:
+            found_wca = True
+            assert "90 days" in system[0]["text"]
+            assert "Review Division" in system[0]["text"]
+            assert "Request for Review" in system[0]["text"]
+            break
+    
+    assert found_wca, "WCA Claims Referral was not found in any system prompt"
