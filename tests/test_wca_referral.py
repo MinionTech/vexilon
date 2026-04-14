@@ -56,7 +56,7 @@ async def test_rag_review_stream_triggers_wca_logic(monkeypatch):
     monkeypatch.setattr("app.generate_perspective_queries", AsyncMock(return_value=["I have a back injury and need to file a WCB claim"]))
     
     # Run rag_review_stream with a WCA keyword
-    async for chunk in rag_review_stream("I have a back injury and need to file a WCB claim", [], persona_mode="Grieve Mode", all_chunks=fake_chunks):
+    async for chunk in rag_review_stream("I have a back injury and need to file a WCB claim", [], persona_mode="Grieve", all_chunks=fake_chunks):
         pass
 
     # Verify the system prompt in ANY of the calls contains the WCA referral

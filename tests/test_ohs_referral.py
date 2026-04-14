@@ -59,8 +59,8 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     monkeypatch.setattr("app.generate_perspective_queries", AsyncMock(return_value=["I need to refuse unsafe work"]))
     
     # Run rag_review_stream with an OHS keyword
-    # persona_mode must be 'Grieve Mode' to trigger Audit Logic
-    async for chunk in rag_review_stream("I need to refuse unsafe work", [], persona_mode="Grieve Mode", all_chunks=fake_chunks):
+    # persona_mode must be 'Grieve' to trigger Audit Logic
+    async for chunk in rag_review_stream("I need to refuse unsafe work", [], persona_mode="Grieve", all_chunks=fake_chunks):
         pass
 
     # Verify the system prompt in ANY of the calls contains the OHS referral
