@@ -5,6 +5,8 @@ FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
 # This stage only re-runs if the model name changes.
 FROM python:3.14.3-slim AS model_fetcher
 
+# Prevent auth attempts for public models
+ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
 COPY --from=uv_source /uv /usr/local/bin/uv
 
 # Install huggingface_hub
@@ -71,8 +73,9 @@ ENV HF_HOME=/app/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the prepared environment and code from builder
+# We chown the entire /app so the 'vexilon' user can touch lock files and cache.
 COPY --from=builder --chown=vexilon:vexilon /app /app
-COPY --from=model_fetcher /model_cache /app/hf_cache
+COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /app/hf_cache
 
 # 3. Build index
 # Create persistent cache directory
