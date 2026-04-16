@@ -134,7 +134,7 @@ html {
 
 #chatbot {
     margin-bottom: 0.3125rem !important; /* 5px */
-    height: calc(100vh - 32rem) !important; /* Increased offset to prevent page scroll */
+    height: calc(100vh - 21rem) !important; /* Optimized offset for new UI components */
 }
 
 /* 6. Input Row Alignment - Align Textbox and Button heights */
@@ -172,7 +172,7 @@ html {
         height: 1.125rem !important;
     }
     #chatbot {
-        height: 50vh !important; /* Fixed percentage for small screens */
+        height: 65vh !important; /* Fixed percentage for small screens */
     }
 }
 
