@@ -1369,7 +1369,7 @@ def build_ui() -> "gr.Blocks":
             ):
                 accumulated += chunk
                 history[-1]["content"] = accumulated
-                yield history, ""
+                yield history, gr.update()
 
         submit_inputs = [msg_input, chatbot, persona_selector]
         submit_outputs = [chatbot, msg_input]
@@ -1383,7 +1383,7 @@ def build_ui() -> "gr.Blocks":
                 fn=lambda q: q,
                 inputs=[chip],
                 outputs=[msg_input],
-                js="() => { document.querySelector('#resource_accordion button.label-wrap')?.click(); return q; }"
+                js="(q) => { document.querySelector('#resource_accordion button.label-wrap')?.click(); return q; }"
             ).then(
                 fn=submit,
                 inputs=submit_inputs,
@@ -1416,9 +1416,7 @@ def build_ui() -> "gr.Blocks":
                 logging.error("[ui] Import failed", exc_info=True)
                 return gr.update()
 
-        import_btn.upload(
-            fn=handle_import, inputs=[import_btn], outputs=[chatbot]
-        )
+        import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
 
         # ── Attribution Footer ────────────────────────────────────────────────
         gr.HTML(ATTRIBUTION_HTML)
