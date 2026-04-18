@@ -4,5 +4,5 @@
   "extends": [
     "github>bcgov/renovate-config#2025.10.1"
   ],
-  "minimumReleaseAge": "0 days"
+  "minimumReleaseAge": "3 days"
 }
