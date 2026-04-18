@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     # ── Web UI ──────────────────────────────────────────────────────────────
     "gradio>=6.7.0",
+    "python-multipart==0.0.26",
     # ── LLM ─────────────────────────────────────────────────────────────────
     "anthropic>=0.84.0",            # Claude API client
     # ── Embeddings (local CPU, no API key required) ──────────────────────────
