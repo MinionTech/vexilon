@@ -1285,7 +1285,7 @@ def build_ui() -> "gr.Blocks":
                 with gr.Accordion("📚 Questions & Resources", open=False, elem_id="resource_accordion") as resource_accordion:
                     if INTEGRITY_WARNING:
                         gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-                    with gr.Row(elem_id="chip_grid"):
+                    with gr.Column(elem_id="chip_column"):
                         chip_btns = [gr.Button(q, size="sm", elem_classes="chip-btn") for q in EXAMPLE_QUESTIONS]
                     gr.HTML(build_pdf_download_links())
                     gr.Markdown(

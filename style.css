@@ -227,17 +227,14 @@ header {
     max-height: 70vh !important;
 }
 
-#chip_grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
+#chip_column {
     gap: 0.5rem !important;
     margin-bottom: 1rem !important;
 }
 
 .chip-btn {
-    flex: 1 1 45% !important; /* 2 per row roughly */
-    min-width: 8rem !important;
-    font-size: 0.75rem !important;
+    width: 100% !important;
+    font-size: 0.85rem !important;
     padding: 0.5rem !important;
     text-align: left !important;
     justify-content: flex-start !important;
