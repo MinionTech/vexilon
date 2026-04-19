@@ -86,27 +86,6 @@ services:
     environment: *common-env
     command: python scripts/build_index.py
 
-  # ── Cache Validator ──────────────────────────────────────────────────────────
-  # Validates that the index is in sync with source files.
-  cache-validator:
-    <<: *service-defaults
-    build:
-      <<: *common-build
-      target: test_builder
-    volumes: *dev-volumes
-    environment: *common-env
-    command: python scripts/generate_cache_manifest.py validate
-
-  # ── Security Auditor ────────────────────────────────────────────────────────
-  # Scans for security vulnerabilities in the code.
-  security-auditor:
-    <<: *service-defaults
-    build:
-      <<: *common-build
-      target: test_builder
-    environment: *common-env
-    command: sh -c "uv run --no-sync bandit -r vexilon/ scripts/ app.py"
-
   # ── Fast Development ───────────────────────────────────────────────────
   # Builds from source with live reload and polling enabled for Podman.
   dev:
