@@ -1257,9 +1257,12 @@ _CUSTOM_JS = """
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     import gradio as gr
+    css_code = _CSS_PATH.read_text() if _CSS_PATH.exists() else ""
 
     with gr.Blocks(
         title="Collective Agreement Explorer",
+        css=css_code,
+        js=_CUSTOM_JS
     ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         with gr.Row(elem_classes="compact-row"):
