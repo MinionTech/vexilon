@@ -9,16 +9,24 @@ x-common-env: &common-env
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
   TRANSFORMERS_OFFLINE: "1"
   HF_HUB_OFFLINE: "1"
-  HF_TOKEN_PATH: /dev/null
+  HF_TOKEN_PATH: /dev/null # Prevent HuggingFace token lookup permission errors
 
 # Reusable build configuration
 x-common-build: &common-build
   context: .
   dockerfile: Containerfile
 
-# Simple source mounting for development/testing
+# Explicit source mounting (avoiding .git and system junk)
 x-source-volumes: &source-volumes
-  - .:/app:z
+  - ./app.py:/app/app.py:ro,z
+  - ./style.css:/app/style.css:ro,z
+  - ./tests:/app/tests:ro,z
+  - ./data:/app/data:ro,z
+  - ./vexilon:/app/vexilon:ro,z
+  - ./scripts:/app/scripts:ro,z
+  - ./.pdf_cache:/app/.pdf_cache:z
+  - ./pyproject.toml:/app/pyproject.toml:ro,z
+  - ./uv.lock:/app/uv.lock:ro,z
 
 services:
 
@@ -36,13 +44,14 @@ services:
     cap_drop: [ALL]
     tmpfs: [/tmp]
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7860')\""]
+      # Use the PORT env var to ensure consistency
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.getenv('PORT', '7860'))\""]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     mem_limit: *MEM_LIMIT
-    memswap_limit: *MEM_LIMIT
+    memswap_limit: *MEM_LIMIT # Match mem_limit to disable swap and prevent host thrashing
     depends_on:
       tests:
         condition: service_completed_successfully
@@ -56,7 +65,7 @@ services:
       <<: *common-build
       target: test_builder
     mem_limit: *MEM_LIMIT
-    memswap_limit: *MEM_LIMIT
+    memswap_limit: *MEM_LIMIT # Match mem_limit to disable swap and prevent host thrashing
     volumes: *source-volumes
     environment:
       <<: *common-env
@@ -89,7 +98,7 @@ services:
   app:
     extends: vexilon
     profiles: ["app"]
-    depends_on: []
+    depends_on: [] # Overrides and removes default dependencies from 'vexilon'
 
   # ── Fast Development ───────────────────────────────────────────────────
   # Builds from source with live reload. Loads pre-computed index if available.
