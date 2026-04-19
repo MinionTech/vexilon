@@ -34,7 +34,7 @@ jobs:
 
   cache_validation:
     name: Validate FAISS Cache
-    needs: [check]
+    needs: [check, compose_validation]
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     steps:
@@ -42,21 +42,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           lfs: true
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
       - name: Validate Cache Manifest
-        run: |
-          echo "Validating FAISS cache against source files..."
-          if ! uv run scripts/generate_cache_manifest.py validate; then
-            echo ""
-            echo "ERROR: Cache is out of sync with data/labour_law/ directory."
-            echo "Run 'python scripts/generate_cache_manifest.py' to regenerate."
-            exit 1
-          fi
+        run: podman compose run --rm cache-validator
 
   compose_validation:
     name: Compose Validation
@@ -66,6 +55,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
       - name: Validate Compose File
         run: podman compose config
 
@@ -83,6 +74,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           lfs: true
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
 
       - name: Run Tests and Analysis
         uses: bcgov/action-test-and-analyse@main
@@ -93,9 +86,18 @@ jobs:
           # Consistent test execution via podman-compose
           commands: |
             export ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY || 'sk-dummy-key-for-predictability' }}
+            mkdir -p reports
             podman compose run --rm tests
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
           sonar_token: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: Upload Test and Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexilon-reports
+          path: reports/
+          retention-days: 5
 
   container_build:
     name: Build & Push to GHCR
@@ -199,9 +201,35 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
+  semgrep:
+    name: Semgrep Security Scan
+    needs: [check]
+    if: needs.check.outputs.triggered == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/python
+            p/security-audit
+            p/secrets
+            p/owasp-top-10
+          generateSarif: "1"
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: semgrep.sarif
+
   results:
     name: Results
-    needs: [check, tests, container_build, container_test]
+    needs: [check, tests, container_build, container_test, trivy, semgrep]
     if: always()
     runs-on: ubuntu-slim
     steps:
