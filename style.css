@@ -280,15 +280,18 @@ header {
     }
     #resource_accordion b {
         display: block !important;
-        margin-left: 0 !important;
+        margin-left: 1.1rem !important;
         padding-left: 0 !important;
     }
-    #resource_accordion ul, #resource_accordion li {
+    #resource_accordion ul {
         font-size: 0.85rem !important;
         line-height: 1.5 !important;
         list-style-type: disc !important;
-        list-style-position: inside !important;
+        list-style-position: outside !important;
         padding-left: 0 !important;
-        margin-left: 0 !important;
+        margin-left: 1.1rem !important;
+    }
+    #resource_accordion li {
+        margin-bottom: 0.25rem !important;
     }
 }
