@@ -30,7 +30,7 @@ x-service-defaults: &service-defaults
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
-  - .:/app:ro,z
+  - .:/app:z
   - ./.pdf_cache:/app/.pdf_cache:z
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
@@ -71,9 +71,7 @@ services:
       <<: *common-build
       target: test_builder
     volumes: *dev-volumes # Overrides x-service-defaults
-    environment:
-      <<: *common-env
-      COVERAGE_FILE: reports/.coverage
+    environment: *common-env
     command: >
       sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
       --junitxml=reports/junit.xml 
