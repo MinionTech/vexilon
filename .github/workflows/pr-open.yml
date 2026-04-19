@@ -93,9 +93,19 @@ jobs:
           # Consistent test execution via podman-compose
           commands: |
             export ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY || 'sk-dummy-key-for-predictability' }}
+            mkdir -p reports
             podman compose run --rm tests
+            podman compose run --rm security-auditor
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
           sonar_token: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: Upload Test and Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexilon-reports
+          path: reports/
+          retention-days: 5
 
   container_build:
     name: Build & Push to GHCR

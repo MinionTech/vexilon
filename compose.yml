@@ -32,6 +32,7 @@ x-service-defaults: &service-defaults
 x-dev-volumes: &dev-volumes
   - .:/app:ro,z
   - ./.pdf_cache:/app/.pdf_cache:z
+  - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
   - /app/hf_cache      # Lifeboat for the model
   - /app/.pytest_cache # Lifeboat for test metadata
@@ -71,7 +72,10 @@ services:
       target: test_builder
     volumes: *dev-volumes # Overrides x-service-defaults
     environment: *common-env
-    command: sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v"
+    command: >
+      sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
+      --junitxml=reports/junit.xml 
+      --cov=vexilon --cov=app --cov-report=xml:reports/coverage.xml"
     depends_on:
       index-refresh:
         condition: service_completed_successfully
@@ -100,3 +104,14 @@ services:
       <<: *common-env
       WATCHFILES_FORCE_POLLING: "true"
     command: uv run --no-sync gradio app.py --watch-dirs .
+
+  # ── Security Auditor ────────────────────────────────────────────────────────
+  # Runs Bandit against the source code to identify vulnerabilities.
+  security-auditor:
+    <<: *service-defaults
+    build:
+      <<: *common-build
+      target: test_builder
+    volumes: *dev-volumes
+    environment: *common-env
+    command: uv run --no-sync bandit -r vexilon app.py -f json -o reports/bandit.json
