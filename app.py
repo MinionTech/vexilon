@@ -1239,11 +1239,11 @@ _SAFE_VEXILON_VERSION = html.escape(VEXILON_VERSION)
 _URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
 
 ATTRIBUTION_HTML = f"""
-<div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem; padding-bottom: 2rem;'>
-    <a href='{VEXILON_REPO_URL}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>View code on GitHub</a>
-    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
-    <a href='{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md' target='_blank' rel='noopener noreferrer' style='color: #008542; text-decoration: none;'>Privacy Policy (PIPA)</a>
-    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+<div style='text-align: center; color: #6b7280; font-size: 0.75rem; margin-top: 1rem; padding-bottom: 2rem;'>
+    <a href='{VEXILON_REPO_URL}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>GitHub</a>
+    <span style='margin: 0 0.3rem; opacity: 0.5;'>•</span>
+    <a href='{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md' target='_blank' rel='noopener noreferrer' style='color: #008542; text-decoration: none;'>Privacy</a>
+    <span style='margin: 0 0.3rem; opacity: 0.5;'>•</span>
     <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>{_SAFE_VEXILON_VERSION}</a>
 </div>
 """
@@ -1312,7 +1312,7 @@ def build_ui() -> "gr.Blocks":
         # ── Input row ─────────────────────────────────────────────────────────
         with gr.Row(elem_id="input_row"):
             msg_input = gr.Textbox(
-                placeholder="Ask about the collective agreement...",
+                placeholder="Ask about the agreement...",
                 label="Your Question",
                 max_lines=6,
                 scale=5,
