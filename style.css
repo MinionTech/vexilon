@@ -309,5 +309,14 @@ header {
         line-height: 1.5 !important;
     }
 }
+}
 
+.gradio-container {
+    min-height: auto !important;
+}
+
+.footer-markdown {
+    margin: 0 !important;
+    padding: 0.5rem 0 !important;
+    text-align: center !important;
 }
