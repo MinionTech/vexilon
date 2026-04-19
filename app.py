@@ -1289,7 +1289,7 @@ def build_ui() -> "gr.Blocks":
                     gr.Markdown(
                         f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
                     )
-                    with gr.Row():
+                    with gr.Column(elem_id="chip_column"):
                         chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
 
         # ── Chat interface ────────────────────────────────────────────────────
@@ -1312,8 +1312,8 @@ def build_ui() -> "gr.Blocks":
                 scale=4,
                 elem_id="persona_selector",
             )
-            export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
-            import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
+            export_btn = gr.DownloadButton("⬇️ Save", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
+            import_btn = gr.UploadButton("⬆️ Load", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
 
         # ── Input row ─────────────────────────────────────────────────────────
         with gr.Row(elem_id="input_row"):
