@@ -366,10 +366,16 @@ def build_pdf_download_links() -> str:
         else:
             display_name = source_name
 
+        # Shorten common names for cleaner UI
+        display_name = html.escape(display_name)
+        display_name = display_name.replace("BCGEU ", "").replace("Bcgeu ", "")
+        display_name = display_name.replace("Main Agreement", "Agreement")
+        display_name = display_name.replace("Labour Relations Code", "Labour Code")
+
         # Use relative path for Gradio's /gradio_api/file= endpoint (works in both local and container)
         file_path = str(f.relative_to(Path(".")))
         lines.append(
-            f'<li><a href="/gradio_api/file={file_path}" target="_blank">{html.escape(display_name)}</a></li>'
+            f'<li><a href="/gradio_api/file={file_path}" target="_blank">{display_name}</a></li>'
         )
 
     lines.append("</ul>")
