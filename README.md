@@ -85,7 +85,7 @@ Docker deployments.
 
 ### Prerequisites
 
-- **Container Engine**: [Podman](https://podman.io/docs/installation) (recommended) or [Docker](https://docs.docker.com/get-docker/)
+- **Container Engine**: [Podman](https://podman.io/docs/installation) (recommended) or [Docker](https://docs.docker.com/get-docker/) — **must include Compose support**
 - **Anthropic API key**: An active key exported as `ANTHROPIC_API_KEY`
 
 ### Run
