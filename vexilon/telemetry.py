@@ -1,6 +1,7 @@
 import os
 import logging
 import httpx
+import hashlib
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -26,8 +27,11 @@ async def log_interaction(
 
     key = os.getenv("TELEMETRY_KEY")
     
+    # Anonymize user_id to respect steward privacy (PIPA compliance)
+    steward_fingerprint = hashlib.sha256(user_id.encode()).hexdigest()[:12]
+
     payload = {
-        "steward_id": user_id,
+        "steward_id": steward_fingerprint,
         "persona": persona,
         "score": score,
         "tokens_in": input_tokens,

@@ -231,6 +231,7 @@ Vexilon is a "content-blind" application designed to protect the privacy of BCGE
 - **NO Content Logging**: User queries, condensed search queries, and bot responses are **never** written to disk or any persistent database. 
 - **Persistence**: Interaction metadata (tokens, latency, score) is optionally sent to an external HTTP endpoint via `TELEMETRY_URL`. If the variable is missing, telemetry is silently disabled.
 - **Content Blind**: Telemetry **never** includes user queries, bot responses, or search terms. Only numerical and categorical metadata is logged.
+- **Anonymized Identity**: The `steward_id` (IP or username) is hashed using SHA256 and truncated to 12 characters before being sent to the external provider.
 
 ### Input Sanitization
 
