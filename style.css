@@ -138,10 +138,17 @@ html {
     height: calc(100vh - 21rem) !important; /* Optimized offset for new UI components */
 }
 
-/* 6. Input Row Alignment - Align Textbox and Button heights */
 #input_row {
     align-items: center !important;
     flex-wrap: nowrap !important; /* Prevent wrapping on mobile */
+    margin-bottom: 0 !important;
+}
+
+.footer-markdown {
+    margin: 0 !important;
+    padding: 1.2rem 0 !important; /* Symmetrical pads */
+    text-align: center !important;
+    line-height: 1 !important;
 }
 
 #msg_input textarea {
@@ -303,7 +310,4 @@ header {
     }
 }
 
-.footer-markdown {
-    margin: 1.5rem 0 !important;
-    text-align: center !important;
 }
