@@ -352,8 +352,9 @@ def build_pdf_download_links() -> str:
         stem = f.stem
         source_name = _get_source_name(stem)
 
-        # Shorten common names for cleaner UI
+        # Shorten common names and fix capitalization for cleaner UI
         display_name = source_name.replace("BCGEU ", "").replace("Bcgeu ", "")
+        display_name = display_name.replace("Bc ", "BC ")
         display_name = display_name.replace("Main Agreement", "Agreement")
         display_name = display_name.replace("Labour Relations Code", "Labour Code")
 
