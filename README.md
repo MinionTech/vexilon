@@ -92,14 +92,14 @@ Docker deployments.
 ### Run
 
 > [!TIP]
-> **Docker users**: `docker compose` can be used as a drop-in replacement for `podman-compose` in all examples below.
+> **Docker users**: `docker compose` can be used as a drop-in replacement for `podman compose` in all examples below.
 
 **1. Production Smoke Test (Immutable Code)**
 Run the app exactly as it will behave in production. Changes to your local files **will not** be reflected.
 
 ```bash
 export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
-podman-compose up --build
+podman compose up --build
 ```
 
 **2. Local Development (Live Reload)**
@@ -107,7 +107,7 @@ Run the **`watch`** service to enable hot-reloading. When you modify `app.py`, `
 
 ```bash
 export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
-podman-compose up --build watch
+podman compose up --build watch
 ```
 
 The container uses a multi-stage build and pre-indexes the agreement at build time for zero-downtime startup.
@@ -304,20 +304,20 @@ Vexilon uses a **Quality Gate** pattern in `compose.yml` — the app will not st
 uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
 
 # Run full suite (unit + integration) inside the memory-capped container
-podman-compose run --rm tests
+podman compose run --rm tests
 
 # Gated startup — tests must pass before Vexilon launches
 export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
-podman-compose up
+podman compose up
 
 # Live Development — launch with hot-reload and volumes
-podman-compose up watch
+podman compose up watch
 
 # Skip the gate — useful for rapid UI iteration (no volumes)
-podman-compose up vexilon
+podman compose up vexilon
 
 # Smoke tests — verifies real Anthropic API connectivity
-podman-compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
+podman compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
 ````
 
 > [!NOTE]
