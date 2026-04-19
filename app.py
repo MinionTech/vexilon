@@ -1406,8 +1406,11 @@ def build_ui() -> "gr.Blocks":
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
 
-        # ── Attribution Footer ────────────────────────────────────────────────
-        gr.HTML(ATTRIBUTION_HTML)
+        # ── Footer ────────────────────────────────────────────────────────────
+        gr.Markdown(
+            f"[GitHub]({VEXILON_REPO_URL})   •   [Privacy]({VEXILON_REPO_URL}/blob/main/PRIVACY.md)   •   {GIT_REF_NAME}",
+            elem_classes="vanilla-footer"
+        )
 
     return demo
 # ─── Entry Point ──────────────────────────────────────────────────────────────

@@ -311,12 +311,7 @@ header {
 }
 }
 
-.gradio-container {
-    min-height: auto !important;
-}
-
-.footer-markdown {
-    margin: 0 !important;
-    padding: 0.5rem 0 !important;
+.vanilla-footer {
     text-align: center !important;
+    font-size: 0.8rem !important;
 }
