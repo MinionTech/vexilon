@@ -128,9 +128,9 @@ html {
 .sm-btn {
     height: 2rem !important; /* 32px */
     min-height: 2rem !important;
-    padding: 0 0.625rem !important;
+    padding: 0 !important;
     font-size: 0.875rem !important;
-    min-width: 3.75rem !important; /* 60px */
+    min-width: 2rem !important; /* Square 32px */
 }
 
 /* Ensure buttons have sufficient contrast */
