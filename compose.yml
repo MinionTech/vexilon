@@ -95,5 +95,6 @@ services:
     environment:
       <<: *common-env
       PATH: "/app/.venv/bin:$PATH"
+      WATCHFILES_FORCE_POLLING: "true" # Force polling for reliable reload in Podman
     volumes: *source-volumes
     command: sh -c "uv sync --frozen && uv run gradio app.py --watch-dirs ."
