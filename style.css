@@ -278,26 +278,4 @@ header {
         max-height: 80vh !important;
         padding: 0.75rem !important;
     }
-    #resource_accordion b {
-        display: block !important;
-        margin-left: 0 !important;
-        padding-left: 0 !important;
-    }
-    #resource_accordion ul {
-        font-size: 0.85rem !important;
-        line-height: 1.5 !important;
-        list-style-type: none !important;
-        padding-left: 1rem !important;
-        margin-left: 0 !important;
-    }
-    #resource_accordion li {
-        text-indent: -1rem !important;
-        margin-bottom: 0.25rem !important;
-    }
-    #resource_accordion li::before {
-        content: "• " !important;
-        font-weight: bold !important;
-        display: inline-block !important;
-        width: 1rem !important;
-    }
 }

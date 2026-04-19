@@ -341,44 +341,34 @@ def get_knowledge_manifest() -> str:
 
     return "\n".join(lines)
 def build_pdf_download_links() -> str:
-    """
-    Generate HTML for individual PDF and MD download links using Gradio's /gradio_api/file= endpoint.
-    Returns HTML-formatted links for each source in the labour_law directory.
-    """
-    import html
-
-    files = _get_download_source_files()
-    if not files:
+    """Scan knowledge_base for PDFs and return a Markdown list of download links."""
+    kb_path = Path("knowledge_base")
+    if not kb_path.exists():
         return ""
 
-    # Use relative path for cross-environment compatibility (local dev + Docker container)
-    lines = ["<b>Download Documents:</b>", "<ul>"]
-    for f in files:
+    pdf_files = sorted(list(kb_path.glob("*.pdf")))
+    if not pdf_files:
+        return ""
+
+    lines = ["**Download Documents:**"]
+    for f in pdf_files:
         stem = f.stem
+        # Try to get a pretty name from the registry
         source_name = _get_source_name(stem)
-        parts = stem.split("_", 2)
-        if len(parts) == 3:
-            idx, cat, _ = parts
-            display_name = f"{idx}. {source_name} ({cat})"
-        elif len(parts) == 2:
-            idx, _ = parts
-            display_name = f"{idx}. {source_name} (Reference)"
+        if source_name == stem:
+            display_name = stem.replace("_", " ").title()
         else:
             display_name = source_name
 
         # Shorten common names for cleaner UI
-        display_name = html.escape(display_name)
         display_name = display_name.replace("BCGEU ", "").replace("Bcgeu ", "")
         display_name = display_name.replace("Main Agreement", "Agreement")
         display_name = display_name.replace("Labour Relations Code", "Labour Code")
 
-        # Use relative path for Gradio's /gradio_api/file= endpoint (works in both local and container)
+        # Use relative path for Gradio's /gradio_api/file= endpoint
         file_path = str(f.relative_to(Path(".")))
-        lines.append(
-            f'<li><a href="/gradio_api/file={file_path}" target="_blank">{display_name}</a></li>'
-        )
+        lines.append(f"* [{display_name}](/gradio_api/file={file_path})")
 
-    lines.append("</ul>")
     return "\n".join(lines)
 DEVELOPER_MODE = os.getenv("DEVELOPER_MODE", "false").lower() == "true"
 
@@ -1287,7 +1277,7 @@ def build_ui() -> "gr.Blocks":
                         gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
                     with gr.Column(elem_id="chip_column"):
                         chip_btns = [gr.Button(q, size="sm", elem_classes="chip-btn") for q in EXAMPLE_QUESTIONS]
-                    gr.HTML(build_pdf_download_links())
+                    gr.Markdown(build_pdf_download_links())
                     gr.Markdown(
                         f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
                     )
