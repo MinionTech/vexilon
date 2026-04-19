@@ -135,7 +135,7 @@ html {
 
 #chatbot {
     margin-bottom: 0.3125rem !important; /* 5px */
-    height: calc(100vh - 13rem) !important; /* Reclaimed space from footer */
+    height: calc(100vh - 18.2rem) !important; /* Precision offset for laptop */
 }
 
 #input_row {
@@ -278,7 +278,7 @@ header {
         height: 1.125rem !important;
     }
     #chatbot {
-        height: 60vh !important;
+        height: calc(100vh - 15.4rem) !important; /* Precision offset for mobile */
     }
     #send_btn {
         min-width: 5rem !important;
