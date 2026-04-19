@@ -24,6 +24,7 @@ import sys
 import threading
 import logging
 import asyncio
+import urllib.parse
 from collections import OrderedDict
 
 # Configure structured logging (Issue #196)
@@ -358,7 +359,8 @@ def build_pdf_download_links() -> str:
 
         # Use relative path for Gradio's /gradio_api/file= endpoint
         file_path = str(f.relative_to(Path(".")))
-        lines.append(f"* [{display_name}](/gradio_api/file={file_path})")
+        encoded_path = urllib.parse.quote(file_path)
+        lines.append(f"* [{display_name}](/gradio_api/file={encoded_path})")
 
     return "\n".join(lines)
 DEVELOPER_MODE = os.getenv("DEVELOPER_MODE", "false").lower() == "true"
