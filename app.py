@@ -1305,6 +1305,16 @@ def build_ui() -> "gr.Blocks":
         with gr.Tabs() as tabs:
             with gr.Tab("Assistant", id="chat_tab"):
 
+                # ── Role Selector ─────────────────────────────────────────────────────
+                persona_selector = gr.Dropdown(
+                    choices=["Lookup", "Grieve", "Manage"],
+                    value="Lookup",
+                    label="Operational Role",
+                    show_label=False,
+                    container=False,
+                    elem_id="persona_selector",
+                )
+
                 # ── Chat interface ────────────────────────────────────────────────────
                 chatbot = gr.Chatbot(
                     label="Steward Assistant",
@@ -1312,17 +1322,6 @@ def build_ui() -> "gr.Blocks":
                     scale=1,
                     height="calc(100vh - 18rem)",
                 )
-
-                # ── Persona Row ───────────────────────────────────────────────────────
-                with gr.Row():
-                    persona_selector = gr.Radio(
-                        choices=["Lookup", "Grieve", "Manage"],
-                        value="Lookup",
-                        label="Operational Role",
-                        show_label=False,
-                        container=False,
-                        elem_id="persona_selector",
-                    )
 
         # ── Input row ─────────────────────────────────────────────────────────
                 with gr.Row(elem_classes="compact-row"):
