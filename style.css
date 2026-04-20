@@ -5,7 +5,12 @@ html {
     font-size: 100%; /* 16px base, respects user preferences */
 }
 
-/* 2. Reduced motion preference */
+/* 2. Unified row alignment */
+.compact-row {
+    flex-wrap: nowrap !important;
+}
+
+/* 3. Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -16,7 +21,7 @@ html {
     }
 }
 
-/* 3. Clean UI - Hide Gradio Boilerplate */
+/* 4. Clean UI - Hide Gradio Boilerplate */
 footer {
     display: none !important;
 }

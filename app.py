@@ -1228,10 +1228,14 @@ import urllib.parse
 _SAFE_VEXILON_VERSION = html.escape(VEXILON_VERSION)
 _URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
 
-ATTRIBUTION_MD = f"""
-<center style="color: #6b7280; font-size: 0.85rem; padding-bottom: env(safe-area-inset-bottom, 1rem);">
-[GitHub (code)]({VEXILON_REPO_URL}) &nbsp;&bull;&nbsp; [Privacy (PIPA)]({VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md) &nbsp;&bull;&nbsp; [{_SAFE_VEXILON_VERSION}]({VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION})
-</center>
+ATTRIBUTION_HTML = f"""
+<div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding-bottom: env(safe-area-inset-bottom, 1rem);">
+    <a href='{VEXILON_REPO_URL}' target='_blank' rel='noopener noreferrer' style='color: #2563eb; text-decoration: none;'>GitHub (code)</a>
+    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+    <a href='{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md' target='_blank' rel='noopener noreferrer' style='color: #2563eb; text-decoration: none; margin-left: 0.5rem;'>Privacy (PIPA)</a>
+    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+    <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}' target='_blank' rel='noopener noreferrer' style='color: #2563eb; text-decoration: none; margin-left: 0.5rem;'>{_SAFE_VEXILON_VERSION}</a>
+</div>
 """
 _CUSTOM_JS = """
 (() => {
@@ -1279,7 +1283,7 @@ def build_ui() -> "gr.Blocks":
                 )
 
                 # ── Persona & Export Row ──────────────────────────────────────────────
-                with gr.Row():
+                with gr.Row(elem_classes="compact-row"):
                     persona_selector = gr.Radio(
                         choices=["Lookup", "Grieve", "Manage"],
                         value="Lookup",
@@ -1287,13 +1291,14 @@ def build_ui() -> "gr.Blocks":
                         show_label=False,
                         container=False,
                         scale=4,
+                        min_width=100,
                         elem_id="persona_selector",
                     )
-                    export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, elem_id="export_btn")
-                    import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_id="import_btn")
+                    export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, min_width=32, elem_id="export_btn")
+                    import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, min_width=32, elem_id="import_btn")
 
         # ── Input row ─────────────────────────────────────────────────────────
-                with gr.Row():
+                with gr.Row(elem_classes="compact-row"):
                     msg_input = gr.Textbox(
                         placeholder="Ask about the agreement...",
                         label="Your Question",
@@ -1304,7 +1309,7 @@ def build_ui() -> "gr.Blocks":
                         lines=1,
                         elem_id="msg_input",
                     )
-                    send_btn = gr.Button("Send", scale=1, variant="primary", elem_id="send_btn")
+                    send_btn = gr.Button("Send", scale=1, variant="primary", min_width=64, elem_id="send_btn")
 
             with gr.Tab("📚 Resources & Examples", id="resources_tab"):
                 if INTEGRITY_WARNING:
@@ -1410,7 +1415,7 @@ def build_ui() -> "gr.Blocks":
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
         
         # ── Footer ────────────────────────────────────────────────────────────
-        gr.Markdown(ATTRIBUTION_MD)
+        gr.HTML(ATTRIBUTION_HTML)
 
 
     return demo
