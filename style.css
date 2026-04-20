@@ -30,34 +30,3 @@ header {
 .show-api, .built-with {
     display: none !important;
 }
-
-/* Ensure footer links don't change color after being visited */
-.footer-links {
-    text-align: center !important;
-    color: #6b7280 !important;
-    font-size: 0.85rem !important;
-    margin-top: 1rem !important;
-    padding-bottom: env(safe-area-inset-bottom, 1rem) !important;
-}
-
-.footer-links a {
-    color: #2563eb !important;
-    text-decoration: none !important;
-}
-
-.footer-links span {
-    margin-left: 0.5rem !important;
-    opacity: 0.7 !important;
-}
-
-.footer-links a:visited {
-    color: #2563eb !important;
-    text-decoration: underline !important;
-}
-
-.footer-markdown {
-    margin: 0 !important;
-    padding: 1.2rem 0 !important; /* Symmetrical pads */
-    text-align: center !important;
-    line-height: 1 !important;
-}
