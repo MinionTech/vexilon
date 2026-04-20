@@ -1278,7 +1278,6 @@ def build_ui() -> "gr.Blocks":
                 chatbot = gr.Chatbot(
                     label="Steward Assistant",
                     show_label=False,
-                    avatar_images=(None, "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/assets/steward_avatar.png"),
                     scale=1,
                 )
 
