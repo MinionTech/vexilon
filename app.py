@@ -1282,7 +1282,7 @@ def build_ui() -> "gr.Blocks":
                     scale=1,
                 )
 
-                # ── Persona & Export Row ──────────────────────────────────────────────
+                # ── Persona Row ───────────────────────────────────────────────────────
                 with gr.Row():
                     persona_selector = gr.Radio(
                         choices=["Lookup", "Grieve", "Manage"],
@@ -1290,12 +1290,8 @@ def build_ui() -> "gr.Blocks":
                         label="Operational Role",
                         show_label=False,
                         container=False,
-                        scale=4,
-                        min_width=100,
                         elem_id="persona_selector",
                     )
-                    export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, min_width=32, elem_id="export_btn")
-                    import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, min_width=32, elem_id="import_btn")
 
         # ── Input row ─────────────────────────────────────────────────────────
                 with gr.Row(elem_classes="compact-row"):
@@ -1314,6 +1310,12 @@ def build_ui() -> "gr.Blocks":
             with gr.Tab("📚 Resources & Examples", id="resources_tab"):
                 if INTEGRITY_WARNING:
                     gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
+                
+                gr.Markdown("#### Conversation Utilities")
+                with gr.Row():
+                    export_btn = gr.DownloadButton("💾 Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
+                    import_btn = gr.UploadButton("📂 Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
+
                 gr.Markdown("#### Quick Questions")
                 chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
                 gr.Markdown("#### Documents")
