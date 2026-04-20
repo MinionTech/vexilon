@@ -1270,10 +1270,10 @@ def build_ui() -> "gr.Blocks":
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
         # ── Header ────────────────────────────────────────────────────────────
         with gr.Row(elem_classes="compact-row"):
-            with gr.Column(scale=1, min_width=200):
-                gr.Markdown("### 🛡️ BCGEU Steward Assistant")
-            with gr.Column(scale=1, min_width=250):
-                with gr.Accordion("📚 Questions & Resources", open=False, elem_id="resource_accordion") as resource_accordion:
+            with gr.Column(scale=1, min_width=0):
+                gr.Markdown("### 🛡️ BCGEU Steward Assistant", elem_id="header_title")
+            with gr.Column(scale=0, min_width=240):
+                with gr.Accordion("📚 Resources & Examples", open=False, elem_id="resource_accordion") as resource_accordion:
                     if INTEGRITY_WARNING:
                         gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
                     with gr.Column(elem_id="chip_column"):

@@ -12,10 +12,18 @@ html {
     flex-wrap: nowrap !important;
     overflow: visible !important;
     position: relative !important;
+    justify-content: space-between !important;
 }
 
 .compact-row > .column {
     overflow: visible !important;
+}
+
+#header_title {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
 }
 
 /* 3. Persona Segmented Control (Pill style) */
