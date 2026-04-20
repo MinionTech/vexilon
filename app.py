@@ -1267,7 +1267,7 @@ def build_ui() -> "gr.Blocks":
     import gradio as gr
     css_code = _CSS_PATH.read_text() if _CSS_PATH.exists() else ""
 
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("### 🛡️ BCGEU Steward Assistant")
 
@@ -1279,6 +1279,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
+                    height="65vh",
                 )
 
                 # ── Persona Row ───────────────────────────────────────────────────────
