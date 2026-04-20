@@ -263,7 +263,7 @@ def get_vexilon_info():
                 source = "Local Build"
         except FileNotFoundError:
             # Priority 3: Fallback (Never dev!)
-            version = "unspecified-local"
+            version = "Development build"
             source = "fallback"
 
     py_ver = sys.version.split()[0]
@@ -315,7 +315,7 @@ def _get_download_source_files() -> list[Path]:
         return []
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
-    return sorted(pdfs, key=lambda p: str(p))
+    return sorted(list(set(pdfs)), key=lambda p: str(p))
 def get_knowledge_manifest() -> str:
     """
     Dynamically scan the labour_law directory and build a formatted list for the system prompt.
@@ -1229,18 +1229,17 @@ _SAFE_VEXILON_VERSION = html.escape(VEXILON_VERSION)
 _URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
 
 ATTRIBUTION_HTML = f"""
-<div style='text-align: center; color: #6b7280; font-size: 0.75rem; margin-top: 1rem; padding-bottom: 2rem;'>
-    <a href='{VEXILON_REPO_URL}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>GitHub</a>
-    <span style='margin: 0 0.3rem; opacity: 0.5;'>•</span>
-    <a href='{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md' target='_blank' rel='noopener noreferrer' style='color: #008542; text-decoration: none;'>Privacy</a>
-    <span style='margin: 0 0.3rem; opacity: 0.5;'>•</span>
-    <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>{_SAFE_VEXILON_VERSION}</a>
+<div class='footer-links' style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
+    <a href='{VEXILON_REPO_URL}' target='_blank' rel='noopener noreferrer' style='color: #2563eb; text-decoration: none;'>GitHub (code)</a>
+    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+    <a href='{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md' target='_blank' rel='noopener noreferrer' style='color: #2563eb; text-decoration: none;'>Privacy (PIPA)</a>
+    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
+    <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}' target='_blank' rel='noopener noreferrer' style='color: #2563eb; text-decoration: none;'>{_SAFE_VEXILON_VERSION}</a>
 </div>
 """
 _CUSTOM_JS = """
 (() => {
-    // Use capture phase (true) so this fires before Gradio's element-level
-    // textarea handler, preventing Enter from inserting a newline (#276).
+    // 1. Handle Enter key submission
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             const textarea = document.querySelector('#msg_input textarea');
@@ -1251,6 +1250,15 @@ _CUSTOM_JS = """
             }
         }
     }, true);
+
+    // 2. Inject Accessibility Titles (Workaround for Gradio 6.0 constraints)
+    const observer = new MutationObserver(() => {
+        const exportBtn = document.querySelector('#export_btn');
+        const importBtn = document.querySelector('#import_btn');
+        if (exportBtn && !exportBtn.title) exportBtn.title = "Save agreement to file";
+        if (importBtn && !importBtn.title) importBtn.title = "Load agreement from file";
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 })()
 """
 
@@ -1262,9 +1270,9 @@ def build_ui() -> "gr.Blocks":
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
         # ── Header ────────────────────────────────────────────────────────────
         with gr.Row(elem_classes="compact-row"):
-            with gr.Column(scale=3):
+            with gr.Column(scale=1, min_width=200):
                 gr.Markdown("### 🛡️ BCGEU Steward Assistant")
-            with gr.Column(scale=1):
+            with gr.Column(scale=1, min_width=250):
                 with gr.Accordion("📚 Questions & Resources", open=False, elem_id="resource_accordion") as resource_accordion:
                     if INTEGRITY_WARNING:
                         gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
@@ -1273,10 +1281,6 @@ def build_ui() -> "gr.Blocks":
                     gr.Markdown(build_pdf_download_links())
                     gr.Markdown(
                         f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
-                    )
-                    gr.Markdown(
-                        f"--- \n"
-                        f"[GitHub]({VEXILON_REPO_URL})   •   [Privacy]({VEXILON_REPO_URL}/blob/main/PRIVACY.md)   •   [{_SAFE_VEXILON_VERSION}]({VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION})"
                     )
 
         # ── Chat interface ────────────────────────────────────────────────────
@@ -1298,8 +1302,8 @@ def build_ui() -> "gr.Blocks":
                 scale=4,
                 elem_id="persona_selector",
             )
-            export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
-            import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
+            export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, elem_classes="sm-btn", elem_id="export_btn")
+            import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn", elem_id="import_btn")
 
         # ── Input row ─────────────────────────────────────────────────────────
         with gr.Row(elem_id="input_row"):
@@ -1409,6 +1413,9 @@ def build_ui() -> "gr.Blocks":
                 return gr.update()
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
+        
+        # ── Footer ────────────────────────────────────────────────────────────
+        gr.HTML(ATTRIBUTION_HTML)
 
 
     return demo
@@ -1452,6 +1459,7 @@ if __name__ == "__main__":
         share=False,
         allowed_paths=allowed_paths,
         css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "",
+        theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         auth=auth_creds,
         js=_CUSTOM_JS,
     )

@@ -14,6 +14,10 @@ html {
     position: relative !important;
 }
 
+.compact-row > .column {
+    overflow: visible !important;
+}
+
 /* 3. Persona Segmented Control (Pill style) */
 #persona_selector.block {
     background: transparent !important;
@@ -135,7 +139,7 @@ html {
 
 #chatbot {
     margin-bottom: 0.3125rem !important; /* 5px */
-    height: calc(100vh - 18.2rem) !important; /* Precision offset for laptop */
+    height: calc(100vh - 21rem) !important; /* Optimized offset for new UI components */
 }
 
 #input_row {
@@ -213,10 +217,22 @@ header {
     display: none !important;
 }
 
+/* Ensure footer links don't change color after being visited */
+.footer-links a:visited, #resource_accordion a, #resource_accordion a:visited {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+}
+
 /* 11. Floating Resource Accordion Overlay */
 #resource_accordion {
     position: relative !important;
     overflow: visible !important;
+    min-width: 14rem !important; /* Ensure label doesn't truncate */
+    margin-right: 1rem !important; /* Safety margin from right edge */
+}
+
+#resource_accordion > .label-wrap {
+    white-space: nowrap !important;
 }
 
 #resource_accordion > div:last-child {
@@ -278,7 +294,7 @@ header {
         height: 1.125rem !important;
     }
     #chatbot {
-        height: calc(100vh - 15.4rem) !important; /* Precision offset for mobile */
+        height: 65vh !important; /* Fixed percentage for small screens */
     }
     #send_btn {
         min-width: 5rem !important;
@@ -308,6 +324,5 @@ header {
         margin-bottom: 0.4rem !important;
         line-height: 1.5 !important;
     }
-}
 }
 
