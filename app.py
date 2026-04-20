@@ -1267,32 +1267,29 @@ def build_ui() -> "gr.Blocks":
     import gradio as gr
     css_code = _CSS_PATH.read_text() if _CSS_PATH.exists() else ""
 
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
+        # ── Sidebar Resources ─────────────────────────────────────────────────
+        with gr.Sidebar(open=False) as resource_sidebar:
+            gr.Markdown("### 📚 Resources & Examples")
+            if INTEGRITY_WARNING:
+                gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
+            chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
+            gr.Markdown(build_pdf_download_links())
+            gr.Markdown(f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+
         # ── Header ────────────────────────────────────────────────────────────
-        with gr.Row(elem_classes="compact-row"):
-            with gr.Column(scale=1, min_width=0):
-                gr.Markdown("### 🛡️ BCGEU Steward Assistant", elem_id="header_title")
-            with gr.Column(scale=0, min_width=240):
-                with gr.Accordion("📚 Resources & Examples", open=False, elem_id="resource_accordion") as resource_accordion:
-                    if INTEGRITY_WARNING:
-                        gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-                    with gr.Column(elem_id="chip_column"):
-                        chip_btns = [gr.Button(q, size="sm", elem_classes="chip-btn") for q in EXAMPLE_QUESTIONS]
-                    gr.Markdown(build_pdf_download_links())
-                    gr.Markdown(
-                        f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
-                    )
+        gr.Markdown("### 🛡️ BCGEU Steward Assistant")
 
         # ── Chat interface ────────────────────────────────────────────────────
         chatbot = gr.Chatbot(
             label="Steward Assistant",
             show_label=False,
             avatar_images=(None, "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/assets/steward_avatar.png"),
-            elem_id="chatbot",
+            scale=1,
         )
 
         # ── Persona & Export Row ──────────────────────────────────────────────
-        with gr.Row(variant="compact", elem_classes="compact-row"):
+        with gr.Row():
             persona_selector = gr.Radio(
                 choices=["Lookup", "Grieve", "Manage"],
                 value="Lookup",
@@ -1302,11 +1299,11 @@ def build_ui() -> "gr.Blocks":
                 scale=4,
                 elem_id="persona_selector",
             )
-            export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1, elem_classes="sm-btn", elem_id="export_btn")
-            import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn", elem_id="import_btn")
+            export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1)
+            import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1)
 
         # ── Input row ─────────────────────────────────────────────────────────
-        with gr.Row(elem_id="input_row"):
+        with gr.Row():
             msg_input = gr.Textbox(
                 placeholder="Ask about the agreement...",
                 label="Your Question",
@@ -1314,10 +1311,9 @@ def build_ui() -> "gr.Blocks":
                 scale=5,
                 show_label=False,
                 container=False,
-                elem_id="msg_input",
                 lines=1,
             )
-            send_btn = gr.Button("Send", scale=1, variant="primary", elem_id="send_btn")
+            send_btn = gr.Button("Send", scale=1, variant="primary")
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
