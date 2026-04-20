@@ -1342,16 +1342,19 @@ def build_ui() -> "gr.Blocks":
                 if INTEGRITY_WARNING:
                     gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
                 
-                gr.Markdown("#### Conversation Utilities")
-                with gr.Row():
-                    export_btn = gr.DownloadButton("💾 Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
-                    import_btn = gr.UploadButton("📂 Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
-
                 gr.Markdown("#### Quick Questions")
-                chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
-                gr.Markdown("#### Documents")
-                gr.Markdown(build_pdf_download_links())
-                gr.Markdown(f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+                with gr.Row():
+                    chip_btns = [gr.Button(q, size="sm", min_width=150) for q in EXAMPLE_QUESTIONS]
+                
+                with gr.Accordion("📂 Reference Documents", open=False):
+                    gr.Markdown(build_pdf_download_links())
+                    gr.Markdown(f"[🔗 Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+                
+                with gr.Accordion("⚙️ Conversation Utilities", open=False):
+                    gr.Markdown("Save your current chat history or load a previous session.")
+                    with gr.Row():
+                        export_btn = gr.DownloadButton("💾 Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
+                        import_btn = gr.UploadButton("📂 Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
