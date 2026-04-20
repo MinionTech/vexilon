@@ -1350,11 +1350,11 @@ def build_ui() -> "gr.Blocks":
                     gr.Markdown(build_pdf_download_links())
                     gr.Markdown(f"[🔗 Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
                 
-                with gr.Accordion("⚙️ Conversation Utilities", open=False):
-                    gr.Markdown("Save your current chat history or load a previous session.")
-                    with gr.Row():
-                        export_btn = gr.DownloadButton("💾 Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
-                        import_btn = gr.UploadButton("📂 Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
+                gr.Markdown("#### ⚙️ Conversation Utilities")
+                gr.Markdown("Save your current chat history or load a previous session.")
+                with gr.Row():
+                    export_btn = gr.DownloadButton("💾 Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
+                    import_btn = gr.UploadButton("📂 Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
