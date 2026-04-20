@@ -3,7 +3,7 @@ FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
 
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 # This stage only re-runs if the model name changes.
-FROM python:3.14.3-slim AS model_fetcher
+FROM python:3.14.4-slim AS model_fetcher
 
 # Prevent auth attempts for public models
 ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
     python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False, local_dir_use_symlinks=False)"
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
-FROM python:3.14.3-slim AS builder
+FROM python:3.14.4-slim AS builder
 
 COPY --from=uv_source /uv /usr/local/bin/uv
 WORKDIR /app
@@ -55,7 +55,7 @@ COPY tests/ ./tests/
 
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.14.3-slim AS runner
+FROM python:3.14.4-slim AS runner
 
 # 1. Runtime system deps and setup
 RUN apt-get update && apt-get install -y --no-install-recommends \
