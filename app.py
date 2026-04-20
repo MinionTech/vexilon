@@ -1268,52 +1268,55 @@ def build_ui() -> "gr.Blocks":
     css_code = _CSS_PATH.read_text() if _CSS_PATH.exists() else ""
 
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
-        # ── Sidebar Resources ─────────────────────────────────────────────────
-        with gr.Sidebar(open=False) as resource_sidebar:
-            gr.Markdown("### 📚 Resources & Examples")
-            if INTEGRITY_WARNING:
-                gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-            chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
-            gr.Markdown(build_pdf_download_links())
-            gr.Markdown(f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
-
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("### 🛡️ BCGEU Steward Assistant")
 
-        # ── Chat interface ────────────────────────────────────────────────────
-        chatbot = gr.Chatbot(
-            label="Steward Assistant",
-            show_label=False,
-            avatar_images=(None, "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/assets/steward_avatar.png"),
-            scale=1,
-        )
+        with gr.Tabs() as tabs:
+            with gr.Tab("💬 Assistant", id="chat_tab"):
 
-        # ── Persona & Export Row ──────────────────────────────────────────────
-        with gr.Row():
-            persona_selector = gr.Radio(
-                choices=["Lookup", "Grieve", "Manage"],
-                value="Lookup",
-                label="Operational Role",
-                show_label=False,
-                container=False,
-                scale=4,
-                elem_id="persona_selector",
-            )
-            export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1)
-            import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1)
+                # ── Chat interface ────────────────────────────────────────────────────
+                chatbot = gr.Chatbot(
+                    label="Steward Assistant",
+                    show_label=False,
+                    avatar_images=(None, "https://raw.githubusercontent.com/DerekRoberts/vexilon/main/assets/steward_avatar.png"),
+                    scale=1,
+                )
+
+                # ── Persona & Export Row ──────────────────────────────────────────────
+                with gr.Row():
+                    persona_selector = gr.Radio(
+                        choices=["Lookup", "Grieve", "Manage"],
+                        value="Lookup",
+                        label="Operational Role",
+                        show_label=False,
+                        container=False,
+                        scale=4,
+                        elem_id="persona_selector",
+                    )
+                    export_btn = gr.DownloadButton("⬇️", variant="secondary", size="sm", scale=1)
+                    import_btn = gr.UploadButton("⬆️", file_types=[".md"], variant="secondary", size="sm", scale=1)
 
         # ── Input row ─────────────────────────────────────────────────────────
-        with gr.Row():
-            msg_input = gr.Textbox(
-                placeholder="Ask about the agreement...",
-                label="Your Question",
-                max_lines=6,
-                scale=5,
-                show_label=False,
-                container=False,
-                lines=1,
-            )
-            send_btn = gr.Button("Send", scale=1, variant="primary")
+                with gr.Row():
+                    msg_input = gr.Textbox(
+                        placeholder="Ask about the agreement...",
+                        label="Your Question",
+                        max_lines=6,
+                        scale=5,
+                        show_label=False,
+                        container=False,
+                        lines=1,
+                    )
+                    send_btn = gr.Button("Send", scale=1, variant="primary")
+
+            with gr.Tab("📚 Resources & Examples", id="resources_tab"):
+                if INTEGRITY_WARNING:
+                    gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
+                gr.Markdown("#### Quick Questions")
+                chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
+                gr.Markdown("#### Documents")
+                gr.Markdown(build_pdf_download_links())
+                gr.Markdown(f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
@@ -1372,10 +1375,9 @@ def build_ui() -> "gr.Blocks":
         # ── Chip click handlers — populate input and auto-submit ──────────────
         for chip in chip_btns:
             chip.click(
-                fn=lambda q: q,
+                fn=lambda q: (q, gr.Tabs(selected="chat_tab")),
                 inputs=[chip],
-                outputs=[msg_input],
-                js="(q) => { document.querySelector('#resource_accordion button.label-wrap')?.click(); return q; }"
+                outputs=[msg_input, tabs],
             ).then(
                 fn=submit,
                 inputs=submit_inputs,

@@ -12,14 +12,16 @@ def test_manager_mode_in_selector(monkeypatch, mock_anthropic):
     demo = app.build_ui()
     
     # Find the persona selector
-    radio = None
-    for child in demo.children:
-        if isinstance(child, gr.Row):
-            for sub in child.children:
-                if isinstance(sub, gr.Radio) and sub.elem_id == "persona_selector":
-                    radio = sub
-        elif isinstance(child, gr.Radio) and child.elem_id == "persona_selector":
-            radio = child
+    def find_persona_selector(parent):
+        for child in getattr(parent, "children", []):
+            if isinstance(child, gr.Radio) and child.elem_id == "persona_selector":
+                return child
+            found = find_persona_selector(child)
+            if found:
+                return found
+        return None
+
+    radio = find_persona_selector(demo)
             
     assert radio is not None, "Persona selector (Radio) not found in UI"
     # Gradio Radio choices can be a list of tuples (label, value)

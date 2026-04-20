@@ -24,17 +24,17 @@ def test_ui_builds_correctly(monkeypatch, mock_anthropic):
     assert len(demo.children) > 0
     
     # Verify expected components are present
-    chatbot = next((c for c in demo.children if isinstance(c, gr.Chatbot)), None)
+    def find_component(parent, comp_type):
+        for child in getattr(parent, "children", []):
+            if isinstance(child, comp_type):
+                return child
+            found = find_component(child, comp_type)
+            if found:
+                return found
+        return None
+
+    chatbot = find_component(demo, gr.Chatbot)
     assert chatbot is not None
     
-    textbox = None
-    for child in demo.children:
-        if isinstance(child, gr.Textbox):
-            textbox = child
-        elif isinstance(child, gr.Row):
-            # Textbox is inside a Row in app.py
-            for sub in child.children:
-                if isinstance(sub, gr.Textbox):
-                    textbox = sub
-    
+    textbox = find_component(demo, gr.Textbox)
     assert textbox is not None
