@@ -1283,7 +1283,7 @@ def build_ui() -> "gr.Blocks":
                 )
 
                 # ── Persona & Export Row ──────────────────────────────────────────────
-                with gr.Row(elem_classes="compact-row"):
+                with gr.Row():
                     persona_selector = gr.Radio(
                         choices=["Lookup", "Grieve", "Manage"],
                         value="Lookup",
