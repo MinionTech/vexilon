@@ -107,19 +107,23 @@ _CUSTOM_JS = """
 """
 
 _CUSTOM_CSS = """
-#chatbot, #chatbot > .wrapper, #chatbot .message-list {
+#chatbot {
     height: calc(100dvh - 21rem) !important;
     max-height: calc(100dvh - 21rem) !important;
+    overflow: hidden !important;
+}
+#chatbot .message-list {
     overflow-y: auto !important;
+    max-height: 100% !important;
 }
 """
-
 
 
 # ─── Vexilon Version Info ───────────────────────────────────────────────────
 def get_vexilon_info():
     """Extract version and runtime info for the UI and logs."""
     import platform
+
     try:
         # Try to get version from environment or fallback
         version = os.getenv("VEXILON_VERSION", "Development build (fallback)")
@@ -132,6 +136,7 @@ def get_vexilon_info():
     os_info = platform.system()
 
     return {"ver": version, "src": source, "py": py_ver, "os": os_info}
+
 
 _info = get_vexilon_info()
 VEXILON_VERSION = _info["ver"]
@@ -150,8 +155,13 @@ ATTRIBUTION_HTML = f"""
 
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
-_GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
+VEXILON_REPO_URL = os.getenv(
+    "VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon"
+)
+_GITHUB_RAW_BASE = os.getenv(
+    "VEXILON_RAW_URL_BASE",
+    "https://raw.githubusercontent.com/DerekRoberts/vexilon/main",
+)
 VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
 VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
 
@@ -180,6 +190,7 @@ CONDENSE_QUERY_HISTORY_TURNS = int(os.getenv("CONDENSE_QUERY_HISTORY_TURNS", 3))
 CONDENSE_QUERY_CONTENT_MAX_LEN = int(os.getenv("CONDENSE_QUERY_CONTENT_MAX_LEN", 200))
 
 import re
+
 # Input Sanitization (for prompt injection prevention)
 MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", 10000))
 LOG_SUSPICIOUS_INPUTS = os.getenv("LOG_SUSPICIOUS_INPUTS", "true").lower() == "true"
@@ -205,6 +216,8 @@ PROMPT_INJECTION_PATTERNS = [
         r"discard\s+.*instructions",
     ]
 ]
+
+
 def sanitize_input(user_input: str) -> tuple[str, bool]:
     """
     Check for prompt injection patterns and length limits.
@@ -233,6 +246,8 @@ def sanitize_input(user_input: str) -> tuple[str, bool]:
     sanitized = user_input[:MAX_INPUT_LENGTH]
 
     return sanitized, flagged
+
+
 # Verification Bot (for reducing hallucinations)
 VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
 
@@ -256,6 +271,8 @@ If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 _SECONDS_IN_MINUTE = 60
 _SECONDS_IN_HOUR = 3600
+
+
 class RateLimiter:
     """Simple in-memory rate limiter for request throttling."""
 
@@ -298,6 +315,8 @@ class RateLimiter:
 
             self.requests.setdefault(user_id, []).append(now)
             return True, ""
+
+
 _rate_limiter = RateLimiter(
     max_per_minute=RATE_LIMIT_PER_MINUTE, max_per_hour=RATE_LIMIT_PER_HOUR
 )
@@ -324,12 +343,15 @@ if TYPE_CHECKING:
 
 _anthropic_client: "anthropic.AsyncAnthropic | None" = None
 
+
 def get_anthropic() -> "anthropic.AsyncAnthropic":
     global _anthropic_client
     if _anthropic_client is None:
         import anthropic
+
         _anthropic_client = anthropic.AsyncAnthropic()
     return _anthropic_client
+
 
 def _get_download_source_files() -> list[Path]:
     """
@@ -341,6 +363,8 @@ def _get_download_source_files() -> list[Path]:
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(list(set(pdfs)), key=lambda p: str(p))
+
+
 def get_knowledge_manifest() -> str:
     """
     Dynamically scan the labour_law directory and build a formatted list for the system prompt.
@@ -366,6 +390,8 @@ def get_knowledge_manifest() -> str:
             lines.append(f"- {source_name} (Uncategorized)")
 
     return "\n".join(lines)
+
+
 def build_pdf_download_links() -> str:
     """Scan labour_law for PDFs and return a Markdown list of download links."""
     files = _get_download_source_files()
@@ -378,7 +404,7 @@ def build_pdf_download_links() -> str:
         display_name = f.stem.replace("_", " ").title()
         display_name = display_name.replace("Bcgeu", "BCGEU")
         display_name = display_name.replace("Main Agreement", "Agreement")
-        
+
         # URL encode the relative path for Gradio's internal file serving
         rel_path = f.relative_to(Path("."))
         encoded_path = urllib.parse.quote(str(rel_path))
@@ -386,19 +412,23 @@ def build_pdf_download_links() -> str:
 
     return "\n".join(lines)
 
+
 DEVELOPER_MODE = os.getenv("DEVELOPER_MODE", "false").lower() == "true"
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
+
 
 def get_mandatory_header() -> str:
     """Centralized helper for standard prompt headers (Date + Rules)."""
     today = datetime.datetime.now().strftime("%A, %B %d, %Y")
     return f"Current Date: {today}\n{GLOBAL_MANDATORY_RULES}\n\n"
 
+
 def get_manager_header() -> str:
     """Management-specific header without union grievance rules."""
     today = datetime.datetime.now().strftime("%A, %B %d, %Y")
     return f"Current Date: {today}\n{MANAGER_MANDATORY_RULES}\n\n"
+
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT - v272-FIXED) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts. If the specific text was not retrieved, suggest the user ask about that section directly. NEVER fabricate contract language.
@@ -410,6 +440,7 @@ MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT - v272-
 7. TONE: Professional, strategic, and solution-oriented.
 ----------------------------------
 """
+
 
 def get_system_prompt(developer_mode: bool = False) -> str:
     """Load the default system prompt, optionally with developer extensions."""
@@ -425,6 +456,7 @@ def get_system_prompt(developer_mode: bool = False) -> str:
         )
     # Prepend mandatory header (Date + Rules)
     return f"{get_mandatory_header()}{content}"
+
 
 GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING - v272-FIXED) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts. If the specific text was not retrieved, suggest the user ask about that section directly. NEVER fabricate contract language.
@@ -447,6 +479,8 @@ GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (OVERRIDING - v272-F
 7. TONE: Professional, authoritative, and forensic.
 ----------------------------------
 """
+
+
 def get_persona_prompt(mode_name: str) -> str:
     """Helper to load system prompts for different operational modes."""
     paths = {
@@ -459,7 +493,7 @@ def get_persona_prompt(mode_name: str) -> str:
         "Grieve": "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor. Your goal is to build air-tight cases while objectively identifying any liability.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
         "Manage": "You are a Senior Strategic Management Consultant. Your goal is to minimize risk and operational debt by ensuring 100% compliance with the Operational Framework.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}",
     }
-    
+
     path = paths.get(mode_name)
     if path and path.is_file():
         content = path.read_text(encoding="utf-8")
@@ -468,13 +502,13 @@ def get_persona_prompt(mode_name: str) -> str:
     else:
         # Defaults to Lookup Mode (get_system_prompt handles header)
         return get_system_prompt(DEVELOPER_MODE)
-        
+
     # Use management-specific rules for Manager Mode to avoid union/steward conflicts
     if mode_name == "Manage":
         prompt = f"{get_manager_header()}{content}"
     else:
         prompt = f"{get_mandatory_header()}{content}"
-    
+
     # Smart Auditor Injection for Grieve Mode (#327)
     if mode_name == "Grieve":
         prompt += "\n\n--- ADVERSARIAL AUDITOR MISSION ---\n"
@@ -482,8 +516,9 @@ def get_persona_prompt(mode_name: str) -> str:
         prompt += "2. BURDEN OF PROOF: Frame requirements as 'Management Gaps.' Instead of 'Management needs to prove X,' say 'Management has failed to establish X, which is a critical fatal flaw in their position.'\n"
         prompt += "3. OBJECTIVE LIABILITY: Do not sugarcoat member failures, but always pivot them toward a 'Defense & Mitigation' strategy for the union.\n"
         prompt += "4. CONCISE WEAPONRY: State the violation clearly and concisely. Your output should be a tool for a union steward to challenge management, not a guide for management to improve."
-        
+
     return prompt
+
 
 VERIFY_STEWARD_MESSAGE = os.getenv(
     "STEWARD_VERIFY_MESSAGE", "Verify w/ Area Office: 604-291-9611"
@@ -492,6 +527,37 @@ VERIFY_STEWARD_MESSAGE = os.getenv(
 VERIFY_MANAGER_MESSAGE = os.getenv(
     "MANAGER_VERIFY_MESSAGE", "Verify with HR or Legal before acting on guidance."
 )
+
+# Query complexity detection constants (Issue #361)
+_SIMPLE_KEYWORDS = {
+    "phone",
+    "number",
+    "address",
+    "email",
+    "contact",
+    "list",
+    "documents",
+    "files",
+    "who",
+    "are",
+    "you",
+    "hello",
+    "hi",
+    "thanks",
+    "thank",
+}
+_JOKE_KEYWORDS = {
+    "joke",
+    "funny",
+    "nose",
+    "pick",
+    "mad",
+    "angry",
+    "boss",
+    "dumb",
+    "stupid",
+}
+_ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
 # ─── Two-Bot Review Prompt (Bot B) ──────────────────────────────────────────────
 REVIEWER_SYSTEM_PROMPT = """You are a Senior BCGEU Staff Representative reviewing a junior steward's output for accuracy and completeness.
@@ -533,22 +599,38 @@ if MILLHAVEN_FACTORS_PATH.is_file():
     MILLHAVEN_FACTORS = MILLHAVEN_FACTORS_PATH.read_text(encoding="utf-8")
 
 OFF_DUTY_KEYWORDS = {
-    "off-duty", "personal conduct", "nexus", "outside of work", "facebook",
-    "reddit", "social media", "arrest", "charged", "personal life",
-    "instagram", "twitter", "tiktok", "personal blog", "off-site"
+    "off-duty",
+    "personal conduct",
+    "nexus",
+    "outside of work",
+    "facebook",
+    "reddit",
+    "social media",
+    "arrest",
+    "charged",
+    "personal life",
+    "instagram",
+    "twitter",
+    "tiktok",
+    "personal blog",
+    "off-site",
 }
+
 
 # ─── Test Registry (Issue #160) ────────────────────────────────────────────────
 class TestDoctrine:
     """A labour law test or doctrine with trigger keywords and logic excerpts."""
+
     def __init__(self, name: str, keywords: set[str], content: str, file_path: Path):
         self.name = name
         self.keywords = keywords
         self.content = content
         self.file_path = file_path
 
+
 class TestRegistry:
     """Registry for modular labour-law tests/doctrines."""
+
     def __init__(self):
         self.tests: list[TestDoctrine] = []
         self._lock = threading.Lock()
@@ -567,36 +649,48 @@ class TestRegistry:
                 try:
                     text = f.read_text(encoding="utf-8")
                     lines = text.split("\n")
-                    
+
                     # Simple parser for "Keywords: k1, k2"
                     keywords = set()
                     content_start = 0
                     for i, line in enumerate(lines):
                         if line.startswith("**Keywords:**"):
                             kw_line = line.replace("**Keywords:**", "").strip()
-                            keywords = {k.strip().lower() for k in kw_line.split(",") if k.strip()}
+                            keywords = {
+                                k.strip().lower()
+                                for k in kw_line.split(",")
+                                if k.strip()
+                            }
                             content_start = i + 1
                             break
-                    
-                    self.tests.append(TestDoctrine(
-                        name=f.stem.replace("_", " ").title(),
-                        keywords=keywords,
-                        content="\n".join(lines[content_start:]).strip(),
-                        file_path=f
-                    ))
+
+                    self.tests.append(
+                        TestDoctrine(
+                            name=f.stem.replace("_", " ").title(),
+                            keywords=keywords,
+                            content="\n".join(lines[content_start:]).strip(),
+                            file_path=f,
+                        )
+                    )
                 except Exception as e:
                     logger.error(f"[registry] Failed to load {f.name}: {e}")
-            logger.info(f"[registry] Loaded {len(self.tests)} tests from {directory.name}")
+            logger.info(
+                f"[registry] Loaded {len(self.tests)} tests from {directory.name}"
+            )
 
     def find_matches(self, query: str) -> list[TestDoctrine]:
         """Find all tests whose keywords appear in the lowercased query."""
         q_lower = query.lower()
         with self._lock:
-            return [test for test in self.tests if any(k in q_lower for k in test.keywords)]
+            return [
+                test for test in self.tests if any(k in q_lower for k in test.keywords)
+            ]
+
 
 _test_registry = TestRegistry()
 
 # ─── Chunking ─────────────────────────────────────────────────────────────────
+
 
 def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     """
@@ -605,18 +699,22 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     """
     global _chunks, _index, INTEGRITY_WARNING
     get_anthropic()
-    
+
     # 1. Basic Metadata
     if os.getenv("VEXILON_QUIET", "").lower() not in ("1", "true"):
         logger.info(f"[startup] Starting Vexilon {VEXILON_VERSION}…")
     if DEVELOPER_MODE:
         logger.info("[startup] DEVELOPER_MODE is ACTIVE.")
-    
+
     # Check for missing model cache
     hf_home = Path(os.getenv("HF_HOME", "./hf_cache"))
-    if not hf_home.exists() and not (os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI")):
-        logger.warning(f"⚠️ [startup] Model cache directory '{hf_home}' not found. Vexilon is in offline mode and may fail to start.")
-    
+    if not hf_home.exists() and not (
+        os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI")
+    ):
+        logger.warning(
+            f"⚠️ [startup] Model cache directory '{hf_home}' not found. Vexilon is in offline mode and may fail to start."
+        )
+
     # 2. Local Knowledge Bases
     _test_registry.load(TESTS_DIR)
 
@@ -627,11 +725,13 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
     # Attempt to load precomputed first if not forcing
     if not force_rebuild:
         _index, _chunks = load_precomputed_index()
-    
+
     # Rebuild only if forced OR if loading failed (missing/corrupt files)
     if _index is None or _chunks is None or force_rebuild:
-        logger.info("[startup] Pre-computed index missing or forced rebuild. Refreshing from sources...")
-        # If we're here as a fallback (not a manual force), we MUST force the rebuild 
+        logger.info(
+            "[startup] Pre-computed index missing or forced rebuild. Refreshing from sources..."
+        )
+        # If we're here as a fallback (not a manual force), we MUST force the rebuild
         # to ensure it doesn't just re-read the same corrupt/empty files.
         _index, _chunks = build_index_from_sources(force=True)
     else:
@@ -651,6 +751,8 @@ def startup(force_rebuild: bool = False, skip_pdf_fetch: bool = False) -> None:
             logger.warning(f"[integrity] Found {len(failed)} failures.")
     else:
         logger.error("[startup] ERROR: Knowledge base failed to load.")
+
+
 # ─── RAG Query ────────────────────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
     """
@@ -710,6 +812,8 @@ async def condense_query(message: str, history: list[dict]) -> str:
         # We catch generic Exception here since anthropic is deferredly imported
         logger.error(f"[rag] Query condensation failed: {exc}. Using raw message.")
         return message
+
+
 def is_query_complex_heuristic(query: str) -> bool:
     """
     Fast-path heuristic to determine if a query needs multi-perspective retrieval.
@@ -718,23 +822,26 @@ def is_query_complex_heuristic(query: str) -> bool:
     # 1. Length-based: Very short queries are never complex.
     if len(query) < 20:
         return False
-        
+
     # 2. Pattern-based: Direct article/section lookups are simple.
     # Matches "Article 10", "Section 5.1", "Appendix A", etc.
-    if re.search(r"^(?:article|section|clause|appendix|item)\s+[\d\w\.]+$", query.strip(), re.IGNORECASE):
+    if re.search(
+        r"^(?:article|section|clause|appendix|item)\s+[\d\w\.]+$",
+        query.strip(),
+        re.IGNORECASE,
+    ):
         return False
-        
+
     # 3. Keyword-based: Simple factual lookups or social chitchat
-    simple_keywords = {"phone", "number", "address", "email", "contact", "list", "documents", "files", "who", "are", "you", "hello", "hi", "thanks", "thank"}
-    joke_keywords = {"joke", "funny", "nose", "pick", "mad", "angry", "boss", "dumb", "stupid"}
-    
-    all_simple = simple_keywords | joke_keywords
     tokens = set(re.findall(r"\w+", query.lower()))
-    
-    if tokens.issubset(all_simple) or (len(tokens) <= 5 and any(k in tokens for k in all_simple)):
+
+    if tokens.issubset(_ALL_SIMPLE_KEYWORDS) or (
+        len(tokens) <= 5 and any(k in tokens for k in _ALL_SIMPLE_KEYWORDS)
+    ):
         return False
 
     return True
+
 
 async def generate_perspective_queries(message: str, history: list[dict]) -> list[str]:
     """
@@ -742,6 +849,7 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
     Returns a list of queries (at least one, the original/condensed one).
     Integrated Complexity Detection & Multi-Query Generation (Issue #132).
     """
+
     # 1. Sanitize input to create a hashable cache key (recursive helper for G6 multi-modal)
     def _to_hashable(val):
         if isinstance(val, dict):
@@ -760,10 +868,12 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
             return _PERSPECTIVE_CACHE[cache_key]
 
     condensed = await condense_query(message, history)
-    
+
     # Heuristic Bypass (#324): Skip LLM complexity check for simple queries
     if not is_query_complex_heuristic(condensed):
-        logger.info(f"[rag] Simple query detected via heuristic: '{condensed}'. Skipping perspectives.")
+        logger.info(
+            f"[rag] Simple query detected via heuristic: '{condensed}'. Skipping perspectives."
+        )
         return [condensed]
 
     # Analyze complexity and generate perspectives in one go
@@ -790,46 +900,58 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
             messages=[{"role": "user", "content": prompt}],
         )
         resp_text = response.content[0].text.strip()
-        
+
         # Robust parsing: extract any line starting with a hyphen (Issue #132 feedback)
         perspective_queries = [
             line.strip().lstrip("-").strip().strip('"')
             for line in resp_text.split("\n")
             if line.strip().startswith("-")
         ]
-        
+
         if not perspective_queries:
             return [condensed]
-            
-        logger.info(f"[rag] Complex query detected. Generated {len(perspective_queries)} perspectives.")
-        
+
+        logger.info(
+            f"[rag] Complex query detected. Generated {len(perspective_queries)} perspectives."
+        )
+
         # 6. Cache hydration with simple LRU logic (evict first entry if full)
         with _PERSPECTIVE_CACHE_LOCK:
             if len(_PERSPECTIVE_CACHE) >= _MAX_PERSPECTIVE_CACHE_SIZE:
                 _PERSPECTIVE_CACHE.popitem(last=False)
             _PERSPECTIVE_CACHE[cache_key] = perspective_queries
-        
+
         return perspective_queries
     except Exception as exc:
-        logger.error(f"[rag] Multi-perspective generation failed: {exc}. Using condensed query.")
+        logger.error(
+            f"[rag] Multi-perspective generation failed: {exc}. Using condensed query."
+        )
         return [condensed]
-async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
+
+
+async def get_multi_perspective_context(
+    message: str, history: list[dict]
+) -> tuple[list[str], str]:
     """
     Generate multiple perspectives for complex queries, search the index,
     and aggregate deduplicated chunks. Returns (queries, context_string).
     Shared helper for rag_stream, rag_review_stream, and get_rag_context (Issue #132).
     """
     queries = await generate_perspective_queries(message, history)
-    
+
     # Calculate top_ks for all queries in one pass
     top_ks = [
-        max(10, (SIMILARITY_TOP_K * 3) // (2 * len(queries))) if len(queries) > 1 else SIMILARITY_TOP_K
+        max(10, (SIMILARITY_TOP_K * 3) // (2 * len(queries)))
+        if len(queries) > 1
+        else SIMILARITY_TOP_K
         for _ in queries
     ]
-    
+
     # ── OPTIMIZATION: Threaded Batch search (#323) ─────
     # Running in thread to avoid blocking the event loop during embedding/search
-    all_relevant_chunks = await asyncio.to_thread(search_index_batch, _index, _chunks, queries, top_ks)
+    all_relevant_chunks = await asyncio.to_thread(
+        search_index_batch, _index, _chunks, queries, top_ks
+    )
 
     all_hits = []
     seen_texts = set()
@@ -844,18 +966,20 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
     # Limit total aggregated context to prevent token overflows and speed up inference.
     # 35 chunks represents about 12-15k tokens, balancing cost and forensic fidelity.
     relevant_chunks = all_hits[:35]
-    
+
     context_parts = []
     for chunk in relevant_chunks:
         context_parts.append(
             f"[Source: {chunk.get('source', 'Unknown')}, Page: {chunk['page']}]\n{chunk['text']}"
         )
     context = "\n\n---\n\n".join(context_parts)
-    
+
     return queries, context
+
 
 # ─── Export / Import Functions ────────────────────────────────────────────────
 MAX_IMPORT_SIZE_BYTES = 500 * 1024  # 500KB limit
+
 
 async def rag_stream(
     message: str, history: list[dict]
@@ -926,14 +1050,21 @@ async def rag_stream(
                 f"output: {usage.output_tokens}"
             )
             if final.stop_reason == "max_tokens":
-                yield ("\n\n⚠️ Response truncated. Please ask for the rest of the answer.", "")
+                yield (
+                    "\n\n⚠️ Response truncated. Please ask for the rest of the answer.",
+                    "",
+                )
     except Exception as exc:
         yield (f"\n\n⚠️ API error: {exc}", "")
+
+
 async def get_rag_context(message: str, history: list[dict]) -> tuple[str, str]:
     """Get context (excerpts) for a query without generating a response. Consistent with Issue #132."""
     queries, context = await get_multi_perspective_context(message, history)
     query_display = " | ".join(queries) if len(queries) > 1 else queries[0]
     return query_display, context
+
+
 async def verify_response(assistant_response: str, context: str) -> str:
     """
     Use a second bot to verify that the claims in the response are supported
@@ -965,6 +1096,8 @@ SOURCE CITATIONS AND CONTEXT:
         return verify_resp.content[0].text
     except Exception as exc:
         return f"⚠️ Verification unavailable: {exc}"
+
+
 # ─── Two-Bot Review Stream (Bot B) ─────────────────────────────────────────────
 async def refine_stream(
     draft: str, critique: str, ground_truth: str
@@ -973,7 +1106,7 @@ async def refine_stream(
     Step 3: Refiner Bot (Claude) synthesizes draft + critique into a final polished answer.
     """
     client = get_anthropic()
-    
+
     prompt = textwrap.dedent(f"""
         DRAFT:
         {draft}
@@ -1000,14 +1133,17 @@ async def refine_stream(
         ) as stream:
             async for text_chunk in stream.text_stream:
                 yield text_chunk
-            
+
             final_refine = await stream.get_final_message()
-            logger.info(f"[refine] Tokens — input: {final_refine.usage.input_tokens}, output: {final_refine.usage.output_tokens}")
+            logger.info(
+                f"[refine] Tokens — input: {final_refine.usage.input_tokens}, output: {final_refine.usage.output_tokens}"
+            )
 
             if final_refine.stop_reason == "max_tokens":
                 yield "\n\n⚠️ Response truncated. Please ask for the rest of the answer."
     except Exception as exc:
         yield f"\n\n⚠️ Refinement error: {exc}"
+
 
 async def review_stream(
     raw_response: str, query: str, context: str, all_chunks: list[dict] = None
@@ -1017,7 +1153,7 @@ async def review_stream(
     Recycles Bot A's context directly to avoid redundant retrieval (#325).
     """
     client = get_anthropic()
-    
+
     # Context Recycling (#325): Prioritize the provided context to speed up logic.
     review_prompt = f"""Review the following steward's response for accuracy and completeness using the provided GROUND TRUTH context.
 
@@ -1052,6 +1188,7 @@ GROUND TRUTH CONTEXT (FOR VERIFICATION):
     except Exception as exc:
         yield f"\n\n⚠️ Review error: {exc}"
 
+
 async def rag_review_stream(
     message: str,
     history: list[dict],
@@ -1072,7 +1209,7 @@ async def rag_review_stream(
     # Use the helper to avoid duplication as spotted by the "geniuses" in code review.
     queries, context = await get_multi_perspective_context(message, history)
     query = queries[0]
-    
+
     # ── Autonomous Review Steering (#327) ────────────────────────────────────
     # 1. Grieve Mode ALWAYS uses a reviewer for forensic accuracy.
     # 2. Manager Mode does NOT use reviewer (avoids persona collapse - union reviewer vs management consultant).
@@ -1083,9 +1220,13 @@ async def rag_review_stream(
         # Lookup mode uses len(queries) > 1 as complexity heuristic
         # Manager Mode explicitly disabled from review pipeline
         use_reviewer = len(queries) > 1 and persona_mode != "Manage"
-    
+
     if use_reviewer:
-        trigger_reason = f"{persona_mode} active" if persona_mode == "Grieve" else "Complex query detected"
+        trigger_reason = (
+            f"{persona_mode} active"
+            if persona_mode == "Grieve"
+            else "Complex query detected"
+        )
         logger.info(f"[rag] Autonomous Review active. Reason: {trigger_reason}")
     else:
         logger.info(f"[rag] Simple lookup path. No review needed.")
@@ -1104,22 +1245,40 @@ async def rag_review_stream(
             base_prompt = get_persona_prompt(persona_mode)
         else:
             base_prompt = get_system_prompt(DEVELOPER_MODE)
-            
+
         # Use appropriate verification message based on persona
-        verify_msg = VERIFY_MANAGER_MESSAGE if persona_mode == "Manage" else VERIFY_STEWARD_MESSAGE
-        formatted_prompt = base_prompt.replace("{manifest}", get_knowledge_manifest()).replace("{verify_message}", verify_msg)
+        verify_msg = (
+            VERIFY_MANAGER_MESSAGE
+            if persona_mode == "Manage"
+            else VERIFY_STEWARD_MESSAGE
+        )
+        formatted_prompt = base_prompt.replace(
+            "{manifest}", get_knowledge_manifest()
+        ).replace("{verify_message}", verify_msg)
 
         # 2. Audit Logic (Issue #161 Refactor) - INJECT INTO PROMPT
         if persona_mode in ("Grieve", "Manage"):
             matched_tests = _test_registry.find_matches(message + " " + query)
+            msg_lower = message.lower()
+            show_phrases = {
+                "show me",
+                "what are the factors",
+                "list the criteria",
+                "what is the test for",
+                "give me the test",
+            }
             for test in matched_tests:
-                show_request = any(k in message.lower() for k in ["show me", "what are the factors", "list the criteria", "what is the test for", "give me the test"])
+                show_request = any(k in msg_lower for k in show_phrases)
                 if show_request:
-                    formatted_prompt += f"\n\n--- USER REQUESTED TEST: {test.name.upper()} ---\n"
+                    formatted_prompt += (
+                        f"\n\n--- USER REQUESTED TEST: {test.name.upper()} ---\n"
+                    )
                     formatted_prompt += f"The user asked to see this test. You MUST start your response by displaying the following factor list/criteria EXACTLY as written here:\n{test.content}\n"
                     formatted_prompt += f"After displaying it, ask the user if they want you to apply it to their specific facts.\n"
-                
-                formatted_prompt += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+
+                formatted_prompt += (
+                    f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+                )
                 formatted_prompt += f"This case involves potential {test.name}. You MUST follow this pattern:\n"
                 formatted_prompt += "1. EXPLAIN: Briefly explain the test factors.\n"
                 formatted_prompt += "2. QUESTION: If any facts are missing from the user's query to satisfy these factors, ASK those specific questions now.\n"
@@ -1128,11 +1287,14 @@ async def rag_review_stream(
                 formatted_prompt += f"CRITERIA:\n{test.content}\n"
 
             if not matched_tests and MILLHAVEN_FACTORS:
-                msg_lower = message.lower()
                 query_lower = query.lower()
-                is_off_duty = any(k in msg_lower or k in query_lower for k in OFF_DUTY_KEYWORDS)
+                is_off_duty = any(
+                    k in msg_lower or k in query_lower for k in OFF_DUTY_KEYWORDS
+                )
                 if is_off_duty:
-                    formatted_prompt += f"\n\n--- MANDATORY LOGIC CHECK: MILLHAVEN AUDIT ---\n"
+                    formatted_prompt += (
+                        f"\n\n--- MANDATORY LOGIC CHECK: MILLHAVEN AUDIT ---\n"
+                    )
                     formatted_prompt += f"This case involves potential off-duty conduct. You MUST audit the facts against these 5 factors:\n{MILLHAVEN_FACTORS}\n"
                     if persona_mode == "Manage":
                         formatted_prompt += "In your response, identify which factors are already proven and which ones represent an 'Operational Risk' (not yet proven)."
@@ -1142,24 +1304,38 @@ async def rag_review_stream(
         # 3. Step 1: Steward Draft (Bot A) - STREAMED for TTFB optimization
         if use_reviewer:
             yield "🧠 **VEXILON INITIAL DRAFT** (Review in progress...)\n\n"
-        
+
         raw_response = ""
         async with client.messages.stream(
             model=CLAUDE_MODEL,
             max_tokens=RAG_MAX_TOKENS,
             system=[
-                {"type": "text", "text": formatted_prompt, "cache_control": {"type": "ephemeral"}},
-                {"type": "text", "text": ("--- AGREEMENT EXCERPTS ---\n\n" + context + "\n\n--- END EXCERPTS ---"), "cache_control": {"type": "ephemeral"}}
+                {
+                    "type": "text",
+                    "text": formatted_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        "--- AGREEMENT EXCERPTS ---\n\n"
+                        + context
+                        + "\n\n--- END EXCERPTS ---"
+                    ),
+                    "cache_control": {"type": "ephemeral"},
+                },
             ],
             messages=messages,
         ) as stream:
             async for text_chunk in stream.text_stream:
                 raw_response += text_chunk
                 yield text_chunk
-            
+
             final_draft = await stream.get_final_message()
-            logger.info(f"[rag] Draft tokens — input: {final_draft.usage.input_tokens}, output: {final_draft.usage.output_tokens}")
-            
+            logger.info(
+                f"[rag] Draft tokens — input: {final_draft.usage.input_tokens}, output: {final_draft.usage.output_tokens}"
+            )
+
             if final_draft.stop_reason == "max_tokens":
                 raw_response += "\n\n⚠️ Response truncated during drafting phase. Synthesis results may be incomplete."
                 yield "\n\n⚠️ Response truncated."
@@ -1167,22 +1343,28 @@ async def rag_review_stream(
         # 4. Step 2 & 3: Collaborative Refinement (Bot B + Bot A)
         if use_reviewer:
             yield "\n\n🕵️ Senior Rep is auditing the response for forensic accuracy..."
-            
+
             # Silent Audit (Bot B)
             review_text = ""
-            async for review_chunk in review_stream(raw_response, query, context, all_chunks=all_chunks):
+            async for review_chunk in review_stream(
+                raw_response, query, context, all_chunks=all_chunks
+            ):
                 review_text += review_chunk
-            
+
             # Fetch ground_truth from Bot A's retrieval to pass to refiner (#325)
             ground_truth = context
-            
+
             # Synthesis Phase (Step 3) - STREAMED
             yield "\n\n---\n\n✨ **VEXILON RECOMMENDATION**\n\n"
-            async for refined_chunk in refine_stream(raw_response, review_text, ground_truth):
+            async for refined_chunk in refine_stream(
+                raw_response, review_text, ground_truth
+            ):
                 yield refined_chunk
 
     except Exception as exc:
         yield f"\n\n⚠️ API error: {exc}"
+
+
 # ─── Export & Import ──────────────────────────────────────────────────────────
 def history_to_markdown(history: list[dict]) -> str:
     """Convert chat history to a Markdown string."""
@@ -1204,6 +1386,8 @@ def history_to_markdown(history: list[dict]) -> str:
         md += f"### {role}\n{content}\n\n"
 
     return md
+
+
 def markdown_to_history(file_path: str) -> list[dict]:
     """Parse a Markdown conversation file back into a list of dicts."""
     with open(file_path, "r", encoding="utf-8") as f:
@@ -1223,7 +1407,10 @@ def markdown_to_history(file_path: str) -> list[dict]:
         if new_role:
             if current_role:
                 history.append(
-                    {"role": current_role, "content": "\n".join(current_content).strip()}
+                    {
+                        "role": current_role,
+                        "content": "\n".join(current_content).strip(),
+                    }
                 )
             current_role = new_role
             current_content = []
@@ -1238,6 +1425,7 @@ def markdown_to_history(file_path: str) -> list[dict]:
 
     return history
 
+
 EXAMPLE_QUESTIONS = [
     "What are the just cause requirements for discipline?",
     "What rights do stewards have in investigation meetings?",
@@ -1245,7 +1433,6 @@ EXAMPLE_QUESTIONS = [
     "Show me the Harassment Threshold test.",
     "Does my employer have a social media policy?",
 ]
-
 
 
 def build_ui() -> "gr.Blocks":
@@ -1257,7 +1444,6 @@ def build_ui() -> "gr.Blocks":
 
         with gr.Tabs() as tabs:
             with gr.Tab("Assistant", id="chat_tab"):
-
                 # ── Role Selector ─────────────────────────────────────────────────────
                 persona_selector = gr.Dropdown(
                     choices=["Lookup", "Grieve", "Manage"],
@@ -1273,10 +1459,11 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 18rem)",
+                    height="calc(100dvh - 21rem)",
+                    elem_id="chatbot",
                 )
 
-        # ── Input row ─────────────────────────────────────────────────────────
+                # ── Input row ─────────────────────────────────────────────────────────
                 with gr.Row(elem_classes="compact-row"):
                     msg_input = gr.Textbox(
                         placeholder="Ask about the agreement...",
@@ -1288,25 +1475,49 @@ def build_ui() -> "gr.Blocks":
                         lines=1,
                         elem_id="msg_input",
                     )
-                    send_btn = gr.Button("Send", scale=1, variant="primary", min_width=64, elem_id="send_btn")
+                    send_btn = gr.Button(
+                        "Send",
+                        scale=1,
+                        variant="primary",
+                        min_width=64,
+                        elem_id="send_btn",
+                    )
 
             with gr.Tab("Resources", id="resources_tab"):
                 if INTEGRITY_WARNING:
                     gr.Markdown(f"{INTEGRITY_WARNING}")
-                
+
                 gr.Markdown("#### Quick Questions")
                 with gr.Row():
-                    chip_btns = [gr.Button(q, size="sm", min_width=150) for q in EXAMPLE_QUESTIONS]
-                
+                    chip_btns = [
+                        gr.Button(q, size="sm", min_width=150)
+                        for q in EXAMPLE_QUESTIONS
+                    ]
+
                 with gr.Accordion("Reference Documents", open=False):
                     gr.Markdown(build_pdf_download_links())
-                    gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
-                
+                    gr.Markdown(
+                        f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
+                    )
+
                 with gr.Accordion("Conversation Utilities", open=False):
-                    gr.Markdown("Save your current chat history or load a previous session.")
+                    gr.Markdown(
+                        "Save your current chat history or load a previous session."
+                    )
                     with gr.Row():
-                        export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
-                        import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
+                        export_btn = gr.DownloadButton(
+                            "Save Conversation",
+                            variant="secondary",
+                            size="sm",
+                            elem_id="export_btn",
+                        )
+                        import_btn = gr.UploadButton(
+                            "Load Conversation",
+                            file_types=[".md"],
+                            variant="secondary",
+                            size="sm",
+                            elem_id="import_btn",
+                        )
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
@@ -1315,7 +1526,7 @@ def build_ui() -> "gr.Blocks":
             persona_mode: str,
             **kwargs,
         ) -> AsyncIterator[tuple[list[dict], str]]:
-            
+
             # Persistent UI — no hiding components
             request = kwargs.get("request")
             if not message.strip():
@@ -1383,7 +1594,9 @@ def build_ui() -> "gr.Blocks":
             save_path = os.path.join(tempfile.gettempdir(), filename)
             with open(save_path, "w", encoding="utf-8") as f:
                 f.write(md_str)
-            threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
+            threading.Timer(
+                600, lambda: os.path.exists(save_path) and os.remove(save_path)
+            ).start()
             return save_path
 
         export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
@@ -1400,24 +1613,30 @@ def build_ui() -> "gr.Blocks":
                 return gr.update()
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-        
+
         # ── Footer ────────────────────────────────────────────────────────────
         gr.HTML(ATTRIBUTION_HTML)
 
-
     return demo
+
+
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Vexilon RAG Service")
     parser.add_argument(
-        "--rebuild-index", action="store_true", help="Force rebuild of FAISS index from sources"
+        "--rebuild-index",
+        action="store_true",
+        help="Force rebuild of FAISS index from sources",
     )
     args = parser.parse_args()
 
     if args.rebuild_index:
         startup(force_rebuild=True)
-        logger.info("[startup] Index rebuild complete. Exiting (--rebuild-index specified).")
+        logger.info(
+            "[startup] Index rebuild complete. Exiting (--rebuild-index specified)."
+        )
         sys.exit(0)
 
     # Standard startup sequence
@@ -1435,11 +1654,15 @@ if __name__ == "__main__":
     # Note: This allows the entire directory rather than specific files for cross-environment
     # compatibility. The directory only contains PDF files per project structure, so this is acceptable.
     allowed_paths = [str(LABOUR_LAW_DIR), str(Path("docs"))]
-    
+
     # ── Final Build Report ──────────────────────────────────────────────────
-    logger.info(f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}.")
-    logger.info(f"[startup] Version: {VEXILON_VERSION} | Threads: {os.getenv('OMP_NUM_THREADS', 'Auto')}")
-    
+    logger.info(
+        f"[startup] Vexilon UI initialized. Ready to serve at port {os.getenv('PORT', 7860)}."
+    )
+    logger.info(
+        f"[startup] Version: {VEXILON_VERSION} | Threads: {os.getenv('OMP_NUM_THREADS', 'Auto')}"
+    )
+
     app.launch(
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", 7860)),
