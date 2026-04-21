@@ -1248,13 +1248,7 @@ EXAMPLE_QUESTIONS = [
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
 
-    with gr.Blocks(
-        title="Vexilon: BCGEU Steward Assistant",
-        footer_links=[
-            {"GitHub (code)": "https://github.com/DerekRoberts/vexilon"},
-            {"Privacy (PIPA)": "https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md"},
-        ],
-    ) as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("### BCGEU Steward Assistant")
 
@@ -1448,6 +1442,10 @@ if __name__ == "__main__":
         allowed_paths=allowed_paths,
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         css=_CUSTOM_CSS,
+        footer_links=[
+            {"GitHub (code)": "https://github.com/DerekRoberts/vexilon"},
+            {"Privacy (PIPA)": "https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md"},
+        ],
         auth=auth_creds,
         js=_CUSTOM_JS,
     )
