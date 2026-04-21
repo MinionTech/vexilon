@@ -149,7 +149,7 @@ ATTRIBUTION_HTML = f"""
     &nbsp;&nbsp;•&nbsp;&nbsp;
     <a href="https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md" target="_blank" style="color: #3b82f6; text-decoration: none;">Privacy</a>
     &nbsp;&nbsp;•&nbsp;&nbsp;
-    <a href="https://github.com/DerekRoberts/vexilon/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}" target="_blank" style="color: #3b82f6; text-decoration: none; margin-left: 0.5rem;">{_SAFE_VEXILON_VERSION}</a>
+    <a href="https://github.com/DerekRoberts/vexilon/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}" target="_blank" style="color: #3b82f6; text-decoration: none;">{_SAFE_VEXILON_VERSION}</a>
 </div>
 """
 
