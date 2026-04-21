@@ -1671,4 +1671,5 @@ if __name__ == "__main__":
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         auth=auth_creds,
         js=_CUSTOM_JS,
+        pwa=True,
     )
