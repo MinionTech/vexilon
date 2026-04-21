@@ -106,7 +106,13 @@ _CUSTOM_JS = """
 })()
 """
 
-_CUSTOM_CSS = ""
+_CUSTOM_CSS = """
+#chatbot, #chatbot > .wrapper, #chatbot .message-list {
+    height: calc(100dvh - 21rem) !important;
+    max-height: calc(100dvh - 21rem) !important;
+    overflow-y: auto !important;
+}
+"""
 
 
 
