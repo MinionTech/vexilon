@@ -116,11 +116,6 @@ jobs:
       triggered: ${{ steps.builder.outputs.triggered }}
 
     steps:
-      - name: Set short SHA
-        run: echo "SHORT_SHA=${IMAGE_SHA:0:7}" >> $GITHUB_ENV
-        env:
-          IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-
       - name: Build and Push
         id: builder
         uses: bcgov/action-builder-ghcr@main
@@ -129,7 +124,7 @@ jobs:
           build_context: .
           build_file: Containerfile
           tags: sha-${{ env.IMAGE_SHA }}
-          build_args: VERSION=sha-${{ env.SHORT_SHA }}
+          build_args: VERSION=sha-${{ env.IMAGE_SHA }}
 
   container_test:
     name: Container Smoke Test

@@ -129,7 +129,7 @@ def get_vexilon_info():
         version = os.getenv("VEXILON_VERSION", "Dev build")
         source = "env" if "VEXILON_VERSION" in os.environ else "fallback"
     except Exception:
-        version = "Development build (error)"
+        version = "Dev build (error)"
         source = "error"
 
     py_ver = sys.version.split()[0]
@@ -143,21 +143,34 @@ VEXILON_VERSION = _info["ver"]
 _SAFE_VEXILON_VERSION = html.escape(VEXILON_VERSION)
 _URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
 
-ATTRIBUTION_HTML = f"""
-<div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding-bottom: env(safe-area-inset-bottom, 1rem);">
-    <a href="https://github.com/DerekRoberts/vexilon" target="_blank" style="color: #3b82f6; text-decoration: none;">GitHub</a>
-    &nbsp;&nbsp;•&nbsp;&nbsp;
-    <a href="https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md" target="_blank" style="color: #3b82f6; text-decoration: none;">Privacy</a>
-    &nbsp;&nbsp;•&nbsp;&nbsp;
-    <a href="https://github.com/DerekRoberts/vexilon/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}" target="_blank" style="color: #3b82f6; text-decoration: none;">{_SAFE_VEXILON_VERSION}</a>
-</div>
-"""
-
-
 # ─── Configuration ───────────────────────────────────────────────────────────
+# Must be defined before ATTRIBUTION_HTML below
 VEXILON_REPO_URL = os.getenv(
     "VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon"
 )
+
+_privacy_url = f"{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md"
+_container_url = f"{VEXILON_REPO_URL}/pkgs/container/vexilon/versions"
+
+_attribution_parts = [
+    f'<a href="{VEXILON_REPO_URL}" target="_blank" style="color: #3b82f6; text-decoration: none;">GitHub</a>',
+    "&nbsp;&nbsp;•&nbsp;&nbsp;",
+    f'<a href="{_privacy_url}" target="_blank" style="color: #3b82f6; text-decoration: none;">Privacy</a>',
+]
+
+if VEXILON_VERSION != "Dev build":
+    _attribution_parts.append("&nbsp;&nbsp;•&nbsp;&nbsp;")
+    _attribution_parts.append(
+        f'<a href="{_container_url}?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}" '
+        f'target="_blank" style="color: #3b82f6; text-decoration: none;">{_SAFE_VEXILON_VERSION}</a>'
+    )
+
+ATTRIBUTION_HTML = f"""
+<div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding-bottom: env(safe-area-inset-bottom, 1rem);">
+    {"".join(_attribution_parts)}
+</div>
+"""
+
 _GITHUB_RAW_BASE = os.getenv(
     "VEXILON_RAW_URL_BASE",
     "https://raw.githubusercontent.com/DerekRoberts/vexilon/main",
