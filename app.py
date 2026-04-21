@@ -1248,7 +1248,13 @@ EXAMPLE_QUESTIONS = [
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
 
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
+    with gr.Blocks(
+        title="Vexilon: BCGEU Steward Assistant",
+        footer_links=[
+            {"GitHub (code)": "https://github.com/DerekRoberts/vexilon"},
+            {"Privacy (PIPA)": "https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md"},
+        ],
+    ) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("### BCGEU Steward Assistant")
 
@@ -1398,9 +1404,6 @@ def build_ui() -> "gr.Blocks":
                 return gr.update()
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-
-        # ── Footer ────────────────────────────────────────────────────────────
-        gr.HTML(ATTRIBUTION_HTML)
 
 
     return demo
