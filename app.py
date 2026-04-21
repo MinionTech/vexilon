@@ -1399,6 +1399,10 @@ def build_ui() -> "gr.Blocks":
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
 
+    demo.footer_links = [
+        {"GitHub (code)": "https://github.com/DerekRoberts/vexilon"},
+        {"Privacy (PIPA)": "https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md"},
+    ]
 
     return demo
 # ─── Entry Point ──────────────────────────────────────────────────────────────
@@ -1442,10 +1446,6 @@ if __name__ == "__main__":
         allowed_paths=allowed_paths,
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         css=_CUSTOM_CSS,
-        footer_links=[
-            {"GitHub (code)": "https://github.com/DerekRoberts/vexilon"},
-            {"Privacy (PIPA)": "https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md"},
-        ],
         auth=auth_creds,
         js=_CUSTOM_JS,
     )
