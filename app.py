@@ -106,17 +106,8 @@ _CUSTOM_JS = """
 })()
 """
 
-_CUSTOM_CSS = """
-#chatbot {
-    height: calc(100dvh - 21rem) !important;
-    max-height: calc(100dvh - 21rem) !important;
-    overflow: hidden !important;
-}
-#chatbot .message-list {
-    overflow-y: auto !important;
-    max-height: 100% !important;
-}
-"""
+_CUSTOM_CSS = ""
+
 
 
 # ─── Vexilon Version Info ───────────────────────────────────────────────────
@@ -1472,8 +1463,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100dvh - 21rem)",
-                    elem_id="chatbot",
+                    height="calc(100vh - 18rem)",
                 )
 
                 # ── Input row ─────────────────────────────────────────────────────────
@@ -1486,14 +1476,12 @@ def build_ui() -> "gr.Blocks":
                         show_label=False,
                         container=False,
                         lines=1,
-                        elem_id="msg_input",
                     )
                     send_btn = gr.Button(
                         "Send",
                         scale=1,
                         variant="primary",
                         min_width=64,
-                        elem_id="send_btn",
                     )
 
             with gr.Tab("Resources", id="resources_tab"):
@@ -1522,14 +1510,12 @@ def build_ui() -> "gr.Blocks":
                             "Save Conversation",
                             variant="secondary",
                             size="sm",
-                            elem_id="export_btn",
                         )
                         import_btn = gr.UploadButton(
                             "Load Conversation",
                             file_types=[".md"],
                             variant="secondary",
                             size="sm",
-                            elem_id="import_btn",
                         )
 
         # ── Submit handlers ───────────────────────────────────────────────────
@@ -1685,5 +1671,4 @@ if __name__ == "__main__":
         auth=auth_creds,
         js=_CUSTOM_JS,
         pwa=True,
-        show_footer=False,
     )
