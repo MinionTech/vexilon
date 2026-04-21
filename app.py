@@ -108,7 +108,7 @@ _CUSTOM_JS = """
 
 _CUSTOM_CSS = """
 #chatbot {
-    height: calc(100vh - 21rem) !important;
+    height: calc(100dvh - 21rem) !important;
 }
 """
 
@@ -1271,7 +1271,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 21rem)",
+                    height="calc(100dvh - 21rem)",
                     elem_id="chatbot",
                 )
 
