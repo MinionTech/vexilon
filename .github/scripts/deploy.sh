@@ -1,6 +1,6 @@
 # Usage: ./.github/scripts/deploy.sh <image_ref> [--prod] [--dry-run]
 # <image_ref> can be a tag (e.g. 'sha-abc123') or a digest (e.g. 'sha256:abc123...')
-# Default: Targets "DerekRoberts/landru" (TEST).
+# Default: Targets "DerekRoberts/vexilon-test" (PROD).
 # Use --prod as second argument to target "DerekRoberts/vexilon".
 
 # Strict mode + Trace
@@ -15,7 +15,7 @@ if [ -z "$IMAGE_REF" ]; then
     exit 1
 fi
 
-SPACE_NAME="DerekRoberts/landru"
+SPACE_NAME="DerekRoberts/vexilon"
 if [[ "$MODE" == "--prod" ]]; then
     echo "[safety] Production mode enabled."
     SPACE_NAME="DerekRoberts/vexilon"
