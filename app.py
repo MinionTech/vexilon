@@ -1695,5 +1695,33 @@ if __name__ == "__main__":
         auth=auth_creds,
         js=_CUSTOM_JS,
         css=_CUSTOM_CSS,
+        head="""
+        <script>
+        window.addEventListener('load', function() {
+            // Detect if we are trapped in an iframe (e.g. Hugging Face)
+            const isIframe = window.self !== window.top;
+            
+            const lockViewport = function() {
+                const container = document.querySelector('.gradio-container');
+                if (container) {
+                    const height = window.innerHeight;
+                    container.style.height = height + 'px';
+                    container.style.maxHeight = height + 'px';
+                    container.style.overflow = 'auto';
+                    console.log("[Vexilon] Viewport " + (isIframe ? "LOCKED" : "synced") + " at " + height + "px");
+                }
+            };
+            
+            // 500ms delay ensures Gradio flex-layout is stable before we freeze the frame
+            setTimeout(lockViewport, 500);
+            
+            // Only re-sync on resize if NOT in an iframe. 
+            // In an iframe, resizing is often a symptom of the growth loop we are trying to kill.
+            if (!isIframe) {
+                window.addEventListener('resize', lockViewport);
+            }
+        });
+        </script>
+        """,
         pwa=True,
     )
