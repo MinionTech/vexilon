@@ -1,17 +1,17 @@
-# Usage: ./.github/scripts/deploy.sh <image_ref> <space_name> [--dry-run]
+# Usage: ./.github/scripts/deploy.sh <image_ref> [space_name] [--dry-run]
 # <image_ref>  : Tag (e.g. 'sha-abc123') or digest (e.g. 'sha256:abc123...')
-# <space_name> : Hugging Face Space ID (e.g. 'DerekRoberts/vexilon')
+# [space_name] : Hugging Face Space ID (Default: DerekRoberts/vexilon)
 
 # Strict mode + Trace
 set -euo pipefail
 
 IMAGE_REF="${1:-}"
-SPACE_NAME="${2:-}"
+SPACE_NAME="${2:-DerekRoberts/vexilon}"
 DRY_RUN=false
 
-if [ -z "$IMAGE_REF" ] || [ -z "$SPACE_NAME" ]; then
-    echo "Error: Both image reference and space name must be provided."
-    echo "Usage: $0 <image_ref> <space_name> [--dry-run]"
+if [ -z "$IMAGE_REF" ]; then
+    echo "Error: Image reference (e.g. 'sha-abc123' or 'sha256:abc123...') must be provided."
+    echo "Usage: $0 <image_ref> [space_name] [--dry-run]"
     exit 1
 fi
 
