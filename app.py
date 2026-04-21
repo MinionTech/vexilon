@@ -106,7 +106,11 @@ _CUSTOM_JS = """
 })()
 """
 
-_CUSTOM_CSS = ""
+_CUSTOM_CSS = """
+#chatbot {
+    height: calc(100vh - 21rem) !important;
+}
+"""
 
 
 
@@ -1267,7 +1271,8 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 18rem)",
+                    height="calc(100vh - 21rem)",
+                    elem_id="chatbot",
                 )
 
         # ── Input row ─────────────────────────────────────────────────────────
@@ -1440,6 +1445,7 @@ if __name__ == "__main__":
         share=False,
         allowed_paths=allowed_paths,
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
+        css=_CUSTOM_CSS,
         auth=auth_creds,
         js=_CUSTOM_JS,
     )
