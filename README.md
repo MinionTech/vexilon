@@ -172,7 +172,7 @@ All settings are optional — defaults match the product specification.
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-haiku-4-7-20260416` | Claude model for responses |
+| `VEXILON_CLAUDE_MODEL` | `claude-haiku-4-7-20260416` | Claude model for responses |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
@@ -186,7 +186,7 @@ Vexilon includes a second AI bot that verifies responses against source citation
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
-| `VERIFY_MODEL` | `claude-haiku-4-7-20260416` | Claude model for verification |
+| `VEXILON_VERIFY_MODEL` | `claude-haiku-4-7-20260416` | Claude model for verification |
 
 When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
 

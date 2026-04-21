@@ -431,7 +431,7 @@ To reduce hallucinations, Vexilon includes an optional verification bot that rev
    | Variable | Default | Description |
    |---|---|---|
    | `VERIFY_ENABLED` | `true` | Enable verification bot |
-   | `VERIFY_MODEL` | `claude-haiku-4-7-20260416` | Model for verification (can use cheaper model) |
+   | `VEXILON_VERIFY_MODEL` | `claude-haiku-4-7-20260416` | Model for verification (can use cheaper model) |
 
 **Note:** The verification bot provides limited additional value since it uses the same context as the main bot. It may catch obvious issues (wrong page numbers, misquoted text) but cannot detect when relevant text was simply not retrieved. Future improvements may include multi-perspective retrieval for complex topics.
 
@@ -477,7 +477,7 @@ Open `http://localhost:7860`.
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-haiku-4-7-20260416` | Claude model for responses |
+| `VEXILON_CLAUDE_MODEL` | `claude-haiku-4-7-20260416` | Claude model for responses |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
@@ -486,7 +486,7 @@ Open `http://localhost:7860`.
 | `CONDENSE_QUERY_HISTORY_TURNS` | `3` | Number of previous turns used for context condensation |
 | `CONDENSE_QUERY_CONTENT_MAX_LEN` | `200` | Max character length of historical messages in condensation prompt |
 | `VERIFY_ENABLED` | `true` | Enable verification bot |
-| `VERIFY_MODEL` | `claude-haiku-4-7-20260416` | Claude model for verification |
+| `VEXILON_VERIFY_MODEL` | `claude-haiku-4-7-20260416` | Claude model for verification |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Max requests per minute per client IP |
 | `RATE_LIMIT_PER_HOUR` | `100` | Max requests per hour per client IP |
 | `MAX_INPUT_LENGTH` | `10000` | Max characters per user message |
