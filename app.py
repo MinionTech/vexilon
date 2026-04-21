@@ -117,9 +117,9 @@ html, body {
     padding: 0 !important;
 }
 .gradio-container {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: auto !important;
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -1486,7 +1486,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 18rem)",
+                    height="calc(100dvh - 18rem)",
                     elem_id="chatbot",
                 )
 
