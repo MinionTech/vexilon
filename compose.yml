@@ -1,7 +1,6 @@
 # ── Reusable Variables ───────────────────────────────────────────────────────
 x-var:
-  - &PORT "7861"
-  - &MIRROR_PORT "7860"
+  - &PORT "7860"
   - &MEM_LIMIT 3g
 
 # Reusable environment for all services
@@ -45,13 +44,14 @@ services:
   # Uses code baked into the image for maximum performance/reliability.
   vexilon:
     <<: *service-defaults
+    profiles: [prod]
     build: *common-build
     environment:
       <<: *common-env
       VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
       VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
       PORT: *PORT
-    ports: ["7861:7861"]
+    ports: ["7860:7860"]
     cap_drop: [ALL]
     tmpfs: [/tmp]
     healthcheck:
@@ -116,23 +116,3 @@ services:
     volumes: *dev-volumes
     environment: *common-env
     command: uv run --no-sync python scripts/generate_cache_manifest.py validate
-
-  # ── HF Mirror ───────────────────────────────────────────────────────────────
-  # Simulates the Hugging Face iframe environment locally.
-  # This is the primary entry point for development.
-  hf-mirror:
-    <<: *service-defaults
-    build:
-      <<: *common-build
-      target: test_builder
-    profiles: ["dev", "prod"]
-    volumes: *dev-volumes
-    environment:
-      <<: *common-env
-      TARGET_URL: http://vexilon:7861
-      MIRROR_PORT: *MIRROR_PORT
-    ports: ["7860:7860"]
-    command: python scripts/hf_mirror.py
-    depends_on:
-      vexilon:
-        condition: service_healthy
