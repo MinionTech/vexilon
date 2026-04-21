@@ -127,10 +127,6 @@ _CUSTOM_CSS = """
         max-height: 65vh !important;
     }
 }
-
-/* Hide Gradio boilerplate for a premium feel */
-footer { display: none !important; }
-.show-api, .built-with { display: none !important; }
 """
 
 
