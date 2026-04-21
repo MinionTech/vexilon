@@ -90,17 +90,18 @@ html_content = f"""
 """
 
 def run():
-    # Ensure scripts directory exists
-    Path("scripts").mkdir(exist_ok=True)
+    # Create a dedicated temp directory for the mirror
+    mirror_dir = Path(".tmp_mirror")
+    mirror_dir.mkdir(exist_ok=True)
     
-    # Create the mirror file
-    with open("scripts/hf_mirror.html", "w") as f:
+    # Create the index.html for automatic loading
+    with open(mirror_dir / "index.html", "w") as f:
         f.write(html_content)
     
-    os.chdir("scripts")
+    os.chdir(mirror_dir)
     Handler = http.server.SimpleHTTPRequestHandler
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print(f"\n🚀 HF Local Mirror ready at: http://localhost:{PORT}/hf_mirror.html")
+        print(f"\n🚀 HF Local Mirror ready at: http://localhost:{PORT}")
         print(f"👉 Pointing to your app at: {APP_URL}")
         print("Press Ctrl+C to stop.")
         httpd.serve_forever()
