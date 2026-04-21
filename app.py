@@ -135,10 +135,8 @@ def get_vexilon_info():
 
 _info = get_vexilon_info()
 VEXILON_VERSION = _info["ver"]
-# UI Display logic: Abbreviate full SHAs to 7 chars
-_display_version = VEXILON_VERSION
-if len(VEXILON_VERSION) > 10 and all(c in "0123456789abcdefABCDEF" for c in VEXILON_VERSION[:10]):
-    _display_version = VEXILON_VERSION[:7]
+# UI Display logic: Hard cap at 12 chars to prevent UI blowout
+_display_version = VEXILON_VERSION[:12] if len(VEXILON_VERSION) > 12 else VEXILON_VERSION
 
 _SAFE_VEXILON_VERSION = html.escape(_display_version)
 _URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
