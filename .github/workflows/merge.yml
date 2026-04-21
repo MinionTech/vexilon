@@ -43,7 +43,7 @@ jobs:
           [ -z "$TAG" ] && TAG="sha-${{ github.sha }}"
 
           echo "Deploying: $TAG"
-          ./.github/scripts/deploy.sh "$TAG" --prod
+          ./.github/scripts/deploy.sh "$TAG" "DerekRoberts/vexilon"
 
       - name: Verify Space boots successfully
         env:
