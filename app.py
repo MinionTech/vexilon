@@ -146,7 +146,26 @@ ATTRIBUTION_HTML = f"""
 </div>
 """
 
-
+# Replace the Gradio-injected footer with our own attribution links.
+# json.dumps() safely escapes the HTML for embedding in the JS string literal.
+_FOOTER_JS = f"""
+(() => {{
+    const html = {json.dumps(ATTRIBUTION_HTML)};
+    function inject() {{
+        const footer = document.querySelector('footer, .gradio-footer');
+        if (footer && !footer.dataset.replaced) {{
+            footer.innerHTML = html;
+            footer.dataset.replaced = '1';
+            return true;
+        }}
+        return false;
+    }}
+    if (!inject()) {{
+        const mo = new MutationObserver(() => {{ if (inject()) mo.disconnect(); }});
+        mo.observe(document.body, {{ childList: true, subtree: true }});
+    }}
+}})();
+"""
 # ─── Configuration ───────────────────────────────────────────────────────────
 VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
 _GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
@@ -1399,9 +1418,6 @@ def build_ui() -> "gr.Blocks":
                 return gr.update()
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-        
-        # ── Footer ────────────────────────────────────────────────────────────
-        gr.HTML(ATTRIBUTION_HTML)
 
 
     return demo
@@ -1447,5 +1463,5 @@ if __name__ == "__main__":
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         css=_CUSTOM_CSS,
         auth=auth_creds,
-        js=_CUSTOM_JS,
+        js=_CUSTOM_JS + _FOOTER_JS,
     )
