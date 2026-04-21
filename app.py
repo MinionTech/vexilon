@@ -1610,6 +1610,8 @@ def build_ui() -> "gr.Blocks":
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
 
+        gr.Markdown(ATTRIBUTION_HTML)
+
     return demo
 
 
