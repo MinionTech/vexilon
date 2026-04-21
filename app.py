@@ -6,7 +6,7 @@ Tech stack:
   - pymupdf             : PDF extraction for Markdown conversion
   - sentence-transformers: Local CPU embeddings (BAAI/bge-small-en-v1.5, no API key)
   - FAISS                : In-memory vector index (no server process)
-  - Anthropic            : Claude (claude-haiku-4-5-20251001) for responses
+  - Anthropic            : Claude (claude-haiku-4-7-20260416) for responses
   - Gradio 6             : Web UI at http://localhost:7860
 
 Quick start:
@@ -199,7 +199,7 @@ _MAX_PERSPECTIVE_CACHE_SIZE = 1000
 _PERSPECTIVE_CACHE_LOCK = threading.Lock()
 
 # Models
-DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", "claude-haiku-4-5-20251001")
+DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", "claude-haiku-4-7-20260416")
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
 REVIEWER_MODEL = os.getenv("VEXILON_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
 CONDENSE_MODEL = os.getenv("VEXILON_CONDENSE_MODEL", DEFAULT_MODEL_LLM)

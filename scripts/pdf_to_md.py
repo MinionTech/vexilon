@@ -96,7 +96,7 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
     
     # Selection based on user request for "best outcome"
     primary_model = os.getenv("CONVERT_MODEL", "claude-sonnet-4-6")
-    secondary_model = os.getenv("CONSENSUS_MODEL", "claude-haiku-4-5-20251001") # Fast consensus model
+    secondary_model = os.getenv("CONSENSUS_MODEL", "claude-haiku-4-7-20260416") # Fast consensus model
     
     print(f"[*] Primary Model:   {primary_model}")
     if verify:
