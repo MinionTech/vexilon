@@ -110,13 +110,51 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
+
 html, body {
+    height: 100dvh !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important;
 }
+
 .gradio-container {
+    height: 100dvh !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure tabs container fills remaining space */
+.tabs {
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure individual tab content fills the tab container */
+.tabitem {
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure the chatbot component expands to fill its parent */
+#chatbot {
+    flex-grow: 1 !important;
+}
+
+/* Keep the input row compact */
+.compact-row {
+    padding: 0.25rem 0 !important;
+}
+
+/* Tighten the header */
+h3 {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
 }
 """
 
@@ -1460,7 +1498,7 @@ EXAMPLE_QUESTIONS = [
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
 
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=False) as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("### BCGEU Steward Assistant")
 
@@ -1481,7 +1519,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height=700,
+                    fill_height=True,
                     elem_id="chatbot",
                 )
 
