@@ -62,10 +62,15 @@ html_content = f"""
         <div class="status-badge">IFRAME ACTIVE</div>
     </div>
     <div id="container">
-        <iframe id="hf_iframe" src="{APP_URL}"></iframe>
+        <iframe id="hf_iframe" src=""></iframe>
     </div>
     <script>
         const iframe = document.getElementById('hf_iframe');
+        
+        // Dynamically point to the app on port 7861 based on the current hostname
+        const appUrl = window.location.protocol + "//" + window.location.hostname + ":7861";
+        iframe.src = appUrl;
+        console.log("[Mirror] Pointing iframe to: " + appUrl);
         
         // Mocking the HF auto-resizer loop
         // This is the specific logic that causes the 'Infinite Growth' bug
