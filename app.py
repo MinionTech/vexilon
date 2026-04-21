@@ -109,13 +109,22 @@ _CUSTOM_JS = """
 _CUSTOM_CSS = """
 #chatbot {
     margin-bottom: 0.3125rem !important;
-    height: calc(100vh - 18rem) !important;
+    height: calc(100vh - 21rem) !important;
+    max-height: calc(100vh - 21rem) !important;
+    overflow-y: auto !important;
+}
+
+/* Enforce height on the internal Gradio message container */
+#chatbot > .wrapper {
+    max-height: 100% !important;
+    overflow-y: auto !important;
 }
 
 /* Mobile responsiveness: use fixed percentage height to prevent overflow */
 @media (max-width: 33.75rem) {
     #chatbot {
-        height: 60vh !important;
+        height: 65vh !important;
+        max-height: 65vh !important;
     }
 }
 
@@ -1283,7 +1292,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 18rem)",
+                    height="calc(100vh - 21rem)",
                     elem_id="chatbot",
                 )
 
