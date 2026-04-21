@@ -12,19 +12,21 @@ def test_manager_mode_in_selector(monkeypatch, mock_anthropic):
     demo = app.build_ui()
     
     # Find the persona selector
-    radio = None
-    for child in demo.children:
-        if isinstance(child, gr.Row):
-            for sub in child.children:
-                if isinstance(sub, gr.Radio) and sub.elem_id == "persona_selector":
-                    radio = sub
-        elif isinstance(child, gr.Radio) and child.elem_id == "persona_selector":
-            radio = child
+    def find_persona_selector(parent):
+        for child in getattr(parent, "children", []):
+            if isinstance(child, gr.Dropdown) and child.elem_id == "persona_selector":
+                return child
+            found = find_persona_selector(child)
+            if found:
+                return found
+        return None
+
+    selector = find_persona_selector(demo)
             
-    assert radio is not None, "Persona selector (Radio) not found in UI"
+    assert selector is not None, "Persona selector (Dropdown) not found in UI"
     # Gradio Radio choices can be a list of tuples (label, value)
-    choice_values = [c[1] if isinstance(c, tuple) else c for c in radio.choices]
-    assert "Manage" in choice_values, f"'Manage' not found in choices: {radio.choices}"
+    choice_values = [c[1] if isinstance(c, tuple) else c for c in selector.choices]
+    assert "Manage" in choice_values, f"'Manage' not found in choices: {selector.choices}"
 
 def test_manager_persona_prompt(monkeypatch):
     """

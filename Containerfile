@@ -35,7 +35,7 @@ COPY scripts/ ./scripts/
 # Data and indexing engine code copied — Indexing prerequisites complete.
 
 COPY prompts/ ./prompts/
-COPY app.py style.css conftest.py ./
+COPY app.py conftest.py ./
 
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────

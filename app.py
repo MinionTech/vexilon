@@ -24,7 +24,30 @@ import sys
 import threading
 import logging
 import asyncio
+import urllib.parse
+import html
+import json
+import os
+import re
+import time
+import datetime
+import tempfile
+import textwrap
 from collections import OrderedDict
+from collections.abc import AsyncIterator, Iterator
+from pathlib import Path
+
+# ─── Third-party ─────────────────────────────────────────────────────────────
+import numpy as np
+import anthropic
+import faiss
+import gradio as gr
+
+# Ensure the HuggingFace model cache is writable and persistent.
+# Inside the container (WORKDIR /app), this resolves to /app/hf_cache.
+# Locally, it resolves to ./hf_cache in the repo root.
+if not os.getenv("HF_HOME"):
+    os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
 
 # Configure structured logging (Issue #196)
 logging.basicConfig(
@@ -64,30 +87,67 @@ TESTS_DIR = LABOUR_LAW_DIR / "tests"
 _chunks: list[dict] = []
 _index: "faiss.IndexFlatIP | None" = None
 
-logger.info("[boot] Python started, importing stdlib...")
-import json
-import os
-import re
-import time
-from collections.abc import AsyncIterator, Iterator
-from pathlib import Path
-import datetime
-import tempfile
-import textwrap
-# Ensure the HuggingFace model cache is writable and persistent.
-# Inside the container (WORKDIR /app), this resolves to /app/hf_cache.
-# Locally, it resolves to ./hf_cache in the repo root.
-if not os.getenv("HF_HOME"):
-    os.environ["HF_HOME"] = str(Path("./hf_cache").absolute())
+logger.info("[boot] Vexilon initializing...")
 
-# ─── Third-party: Deferred Imports ───────────────────────────────────────────
-# (numpy, anthropic, faiss, sentence_transformers, gradio)
-# are imported inside functions to keep startup and test-loading fast.
-logger.info("[boot] All boilerplate complete.")
+# ─── UI Assets ────────────────────────────────────────────────────────────────
+_CUSTOM_JS = """
+(() => {
+    // 1. Handle Enter key submission
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const textarea = document.querySelector('#msg_input textarea');
+            if (textarea && document.activeElement === textarea) {
+                e.preventDefault();
+                const sendBtn = document.querySelector('#send_btn');
+                if (sendBtn) sendBtn.click();
+            }
+        }
+    }, true);
+})()
+"""
+
+_CUSTOM_CSS = ""
+
+
+
+# ─── Vexilon Version Info ───────────────────────────────────────────────────
+def get_vexilon_info():
+    """Extract version and runtime info for the UI and logs."""
+    import platform
+    try:
+        # Try to get version from environment or fallback
+        version = os.getenv("VEXILON_VERSION", "Development build (fallback)")
+        source = "env" if "VEXILON_VERSION" in os.environ else "fallback"
+    except Exception:
+        version = "Development build (error)"
+        source = "error"
+
+    py_ver = sys.version.split()[0]
+    os_info = platform.system()
+
+    return {"ver": version, "src": source, "py": py_ver, "os": os_info}
+
+_info = get_vexilon_info()
+VEXILON_VERSION = _info["ver"]
+_SAFE_VEXILON_VERSION = html.escape(VEXILON_VERSION)
+_URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
+
+ATTRIBUTION_HTML = f"""
+<div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding-bottom: env(safe-area-inset-bottom, 1rem);">
+    <a href="https://github.com/DerekRoberts/vexilon" target="_blank" style="color: #3b82f6; text-decoration: none;">GitHub (code)</a>
+    &nbsp;&nbsp;•&nbsp;&nbsp;
+    <a href="https://github.com/DerekRoberts/vexilon/blob/main/docs/PRIVACY.md" target="_blank" style="color: #3b82f6; text-decoration: none;">Privacy (PIPA)</a>
+    &nbsp;&nbsp;•&nbsp;&nbsp;
+    <a href="https://github.com/DerekRoberts/vexilon/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}" target="_blank" style="color: #3b82f6; text-decoration: none; margin-left: 0.5rem;">{_SAFE_VEXILON_VERSION}</a>
+</div>
+"""
+
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
 _GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
+VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
+VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
 
 # Public GitHub raw URL base for labour_law PDFs.
 # Used for folder/file links in the UI.
@@ -95,8 +155,7 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
     "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
 )
 
-# Raw URL base for downloading pre-computed index from GitHub.
-_CSS_PATH = Path(__file__).parent / "style.css"
+# Perspective Query Cache
 _PERSPECTIVE_CACHE = OrderedDict()
 _MAX_PERSPECTIVE_CACHE_SIZE = 1000
 _PERSPECTIVE_CACHE_LOCK = threading.Lock()
@@ -242,45 +301,6 @@ INTEGRITY_WARNING: str | None = None
 
 # Two-Bot Self-Review Pipeline (Issue #104)
 USE_REVIEWER = os.getenv("USE_REVIEWER", "false").lower() == "true"
-def get_vexilon_info():
-    """
-    1. Get Version (Priority: Env Var -> Baked File -> Fallback)
-    2. Get Python and OS metadata
-    3. Print a beautiful startup banner
-    """
-    import platform
-
-    # Priority 1: Env Var
-    version = os.getenv("VEXILON_VERSION")
-    source = "External/CI"
-
-    if not version:
-        # Priority 2: Baked-in Build File
-        try:
-            with open("/app/build_version.txt", "r") as f:
-                version = f.read().strip()
-                source = "Local Build"
-        except FileNotFoundError:
-            # Priority 3: Fallback (Never dev!)
-            version = "unspecified-local"
-            source = "fallback"
-
-    py_ver = sys.version.split()[0]
-    os_info = platform.system()
-
-    # The Banner
-    logger.info("=" * 50)
-    logger.info(f" VEXILON VERSION : {version} ({source})")
-    logger.info(f" PYTHON VERSION  : {py_ver}")
-    logger.info(f" RUNTIME OS      : {os_info}")
-    logger.info("=" * 50)
-
-    return {"ver": version, "src": source, "py": py_ver, "os": os_info}
-# Initialise version and logging at imports
-_info = get_vexilon_info()
-VEXILON_VERSION = _info["ver"]
-VEXILON_USERNAME = os.getenv("VEXILON_USERNAME", "admin")
-VEXILON_PASSWORD = os.getenv("VEXILON_PASSWORD")
 
 # ─── Typing ──────────────────────────────────────────────────────────────────
 from typing import TYPE_CHECKING
@@ -314,7 +334,7 @@ def _get_download_source_files() -> list[Path]:
         return []
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
-    return sorted(pdfs, key=lambda p: str(p))
+    return sorted(list(set(pdfs)), key=lambda p: str(p))
 def get_knowledge_manifest() -> str:
     """
     Dynamically scan the labour_law directory and build a formatted list for the system prompt.
@@ -341,39 +361,25 @@ def get_knowledge_manifest() -> str:
 
     return "\n".join(lines)
 def build_pdf_download_links() -> str:
-    """
-    Generate HTML for individual PDF and MD download links using Gradio's /gradio_api/file= endpoint.
-    Returns HTML-formatted links for each source in the labour_law directory.
-    """
-    import html
-
+    """Scan labour_law for PDFs and return a Markdown list of download links."""
     files = _get_download_source_files()
     if not files:
         return ""
 
-    # Use relative path for cross-environment compatibility (local dev + Docker container)
-    lines = ["<b>Download Documents:</b>", "<ul>"]
+    lines = ["**Download Documents:**"]
     for f in files:
-        stem = f.stem
-        source_name = _get_source_name(stem)
-        parts = stem.split("_", 2)
-        if len(parts) == 3:
-            idx, cat, _ = parts
-            display_name = f"{idx}. {source_name} ({cat})"
-        elif len(parts) == 2:
-            idx, _ = parts
-            display_name = f"{idx}. {source_name} (Reference)"
-        else:
-            display_name = source_name
+        # Use pathlib to get cleaner names and resolve Gradio's /file= path
+        display_name = f.stem.replace("_", " ").title()
+        display_name = display_name.replace("Bcgeu", "BCGEU")
+        display_name = display_name.replace("Main Agreement", "Agreement")
+        
+        # URL encode the relative path for Gradio's internal file serving
+        rel_path = f.relative_to(Path("."))
+        encoded_path = urllib.parse.quote(str(rel_path))
+        lines.append(f"* [{display_name}](/file={encoded_path})")
 
-        # Use relative path for Gradio's /gradio_api/file= endpoint (works in both local and container)
-        file_path = str(f.relative_to(Path(".")))
-        lines.append(
-            f'<li><a href="/gradio_api/file={file_path}" target="_blank">{html.escape(display_name)}</a></li>'
-        )
-
-    lines.append("</ul>")
     return "\n".join(lines)
+
 DEVELOPER_MODE = os.getenv("DEVELOPER_MODE", "false").lower() == "true"
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
@@ -1233,95 +1239,68 @@ EXAMPLE_QUESTIONS = [
     "Show me the Harassment Threshold test.",
     "Does my employer have a social media policy?",
 ]
-import html
-import urllib.parse
-_SAFE_VEXILON_VERSION = html.escape(VEXILON_VERSION)
-_URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
 
-ATTRIBUTION_HTML = f"""
-<div style='text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1rem;'>
-    <a href='{VEXILON_REPO_URL}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>View code on GitHub</a>
-    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
-    <a href='{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md' target='_blank' rel='noopener noreferrer' style='color: #008542; text-decoration: none;'>Privacy Policy (PIPA)</a>
-    <span style='margin-left: 0.5rem; opacity: 0.7;'>•</span>
-    <a href='{VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}' target='_blank' rel='noopener noreferrer' style='color: #005691; text-decoration: none;'>{_SAFE_VEXILON_VERSION}</a>
-</div>
-"""
-_CUSTOM_JS = """
-(() => {
-    // Use capture phase (true) so this fires before Gradio's element-level
-    // textarea handler, preventing Enter from inserting a newline (#276).
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            const textarea = document.querySelector('#msg_input textarea');
-            if (textarea && document.activeElement === textarea) {
-                e.preventDefault();
-                const sendBtn = document.querySelector('#send_btn');
-                if (sendBtn) sendBtn.click();
-            }
-        }
-    }, true);
-})()
-"""
+
 
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
-    import gradio as gr
 
-    with gr.Blocks(
-        title="Collective Agreement Explorer",
-    ) as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
         # ── Header ────────────────────────────────────────────────────────────
-        with gr.Row(elem_classes="compact-row"):
-            with gr.Column(scale=3):
-                gr.Markdown("### 🛡️ BCGEU Steward Assistant")
-            with gr.Column(scale=1):
-                with gr.Accordion("📚 Resources & Examples", open=False, elem_id="resource_accordion") as resource_accordion:
-                    if INTEGRITY_WARNING:
-                        gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-                    gr.HTML(build_pdf_download_links())
-                    gr.Markdown(
-                        f"[📁 Browse Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
-                    )
-                    with gr.Row():
-                        chip_btns = [gr.Button(q, size="sm") for q in EXAMPLE_QUESTIONS]
+        gr.Markdown("### BCGEU Steward Assistant")
 
-        # ── Chat interface ────────────────────────────────────────────────────
-        chatbot = gr.Chatbot(
-            buttons=["copy"],
-            render_markdown=True,
-            label="Chat Messages",
-            show_label=False,
-            elem_id="chatbot",
-        )
+        with gr.Tabs() as tabs:
+            with gr.Tab("Assistant", id="chat_tab"):
 
-        # ── Persona & Export Row ──────────────────────────────────────────────
-        with gr.Row(variant="compact", elem_classes="compact-row"):
-            persona_selector = gr.Radio(
-                choices=["Lookup", "Grieve", "Manage"],
-                value="Lookup",
-                label="Operational Role",
-                show_label=False,
-                container=False,
-                scale=4,
-                elem_id="persona_selector",
-            )
-            export_btn = gr.DownloadButton("⬇️ Save", variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
-            import_btn = gr.UploadButton("⬆️ Load", file_types=[".md"], variant="secondary", size="sm", scale=1, elem_classes="sm-btn")
+                # ── Role Selector ─────────────────────────────────────────────────────
+                persona_selector = gr.Dropdown(
+                    choices=["Lookup", "Grieve", "Manage"],
+                    value="Lookup",
+                    label="Operational Role",
+                    show_label=False,
+                    container=False,
+                    elem_id="persona_selector",
+                )
+
+                # ── Chat interface ────────────────────────────────────────────────────
+                chatbot = gr.Chatbot(
+                    label="Steward Assistant",
+                    show_label=False,
+                    scale=1,
+                    height="calc(100vh - 18rem)",
+                )
 
         # ── Input row ─────────────────────────────────────────────────────────
-        with gr.Row(elem_id="input_row"):
-            msg_input = gr.Textbox(
-                placeholder="Ask about the collective agreement...",
-                label="Your Question",
-                max_lines=6,
-                scale=5,
-                show_label=False,
-                container=False,
-                elem_id="msg_input",
-                lines=1,
-            )
-            send_btn = gr.Button("Send", scale=1, variant="primary", elem_id="send_btn")
+                with gr.Row(elem_classes="compact-row"):
+                    msg_input = gr.Textbox(
+                        placeholder="Ask about the agreement...",
+                        label="Your Question",
+                        max_lines=6,
+                        scale=5,
+                        show_label=False,
+                        container=False,
+                        lines=1,
+                        elem_id="msg_input",
+                    )
+                    send_btn = gr.Button("Send", scale=1, variant="primary", min_width=64, elem_id="send_btn")
+
+            with gr.Tab("Resources", id="resources_tab"):
+                if INTEGRITY_WARNING:
+                    gr.Markdown(f"{INTEGRITY_WARNING}")
+                
+                gr.Markdown("#### Quick Questions")
+                with gr.Row():
+                    chip_btns = [gr.Button(q, size="sm", min_width=150) for q in EXAMPLE_QUESTIONS]
+                
+                with gr.Accordion("Reference Documents", open=False):
+                    gr.Markdown(build_pdf_download_links())
+                    gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+                
+                with gr.Accordion("Conversation Utilities", open=False):
+                    gr.Markdown("Save your current chat history or load a previous session.")
+                    with gr.Row():
+                        export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm", elem_id="export_btn")
+                        import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm", elem_id="import_btn")
 
         # ── Submit handlers ───────────────────────────────────────────────────
         async def submit(
@@ -1330,7 +1309,6 @@ def build_ui() -> "gr.Blocks":
             persona_mode: str,
             **kwargs,
         ) -> AsyncIterator[tuple[list[dict], str]]:
-            import gradio as gr
             
             # Persistent UI — no hiding components
             request = kwargs.get("request")
@@ -1380,10 +1358,9 @@ def build_ui() -> "gr.Blocks":
         # ── Chip click handlers — populate input and auto-submit ──────────────
         for chip in chip_btns:
             chip.click(
-                fn=lambda q: q,
+                fn=lambda q: (q, gr.update(selected="chat_tab")),
                 inputs=[chip],
-                outputs=[msg_input],
-                js="(q) => { document.querySelector('#resource_accordion button.label-wrap')?.click(); return q; }"
+                outputs=[msg_input, tabs],
             ).then(
                 fn=submit,
                 inputs=submit_inputs,
@@ -1417,9 +1394,10 @@ def build_ui() -> "gr.Blocks":
                 return gr.update()
 
         import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-
-        # ── Attribution Footer ────────────────────────────────────────────────
+        
+        # ── Footer ────────────────────────────────────────────────────────────
         gr.HTML(ATTRIBUTION_HTML)
+
 
     return demo
 # ─── Entry Point ──────────────────────────────────────────────────────────────
@@ -1461,7 +1439,7 @@ if __name__ == "__main__":
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
         allowed_paths=allowed_paths,
-        css=_CSS_PATH.read_text() if _CSS_PATH.exists() else "",
+        theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         auth=auth_creds,
         js=_CUSTOM_JS,
     )
