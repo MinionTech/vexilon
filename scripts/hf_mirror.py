@@ -3,8 +3,8 @@ import socketserver
 import os
 from pathlib import Path
 
-PORT = 8888
-APP_URL = "http://localhost:7860"
+PORT = int(os.getenv("MIRROR_PORT", 8888))
+APP_URL = os.getenv("TARGET_URL", "http://localhost:7860")
 
 html_content = f"""
 <!DOCTYPE html>
