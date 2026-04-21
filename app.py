@@ -106,56 +106,9 @@ _CUSTOM_JS = """
 })()
 """
 
-_CUSTOM_CSS = """
-/* Vexilon Accessibility Styles (WCAG 2.1 AA Compliant) */
+_CUSTOM_CSS = ""
 
-/* 1. Root font size for relative units */
-html {
-    font-size: 100%; /* 16px base, respects user preferences */
-}
 
-/* 2. Unified row alignment */
-.compact-row {
-    flex-wrap: nowrap !important;
-}
-
-/* 3. Reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* 4. Clean UI - Hide Gradio Boilerplate and eliminate the 'Massive Footer Void' */
-footer {
-    display: none !important;
-}
-
-.gradio-container {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-/* Remove the specific padding Gradio adds to the bottom of the block container */
-.gap.gradio-container > div:last-child {
-    padding-bottom: 0 !important;
-}
-
-/* Hide floating header elements (Settings/API) if present */
-header {
-    display: none !important;
-}
-
-/* If the header is actually needed for layout, just hide the buttons inside it */
-.show-api, .built-with {
-    display: none !important;
-}
-"""
 
 # ─── Vexilon Version Info ───────────────────────────────────────────────────
 def get_vexilon_info():
@@ -1314,7 +1267,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 15rem)",
+                    height="calc(100vh - 18rem)",
                 )
 
         # ── Input row ─────────────────────────────────────────────────────────
@@ -1486,7 +1439,6 @@ if __name__ == "__main__":
         server_port=int(os.getenv("PORT", 7860)),
         share=False,
         allowed_paths=allowed_paths,
-        css=_CUSTOM_CSS,
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         auth=auth_creds,
         js=_CUSTOM_JS,
