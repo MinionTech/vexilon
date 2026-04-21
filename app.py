@@ -130,9 +130,20 @@ html {
     }
 }
 
-/* 4. Clean UI - Hide Gradio Boilerplate */
+/* 4. Clean UI - Hide Gradio Boilerplate and eliminate the 'Massive Footer Void' */
 footer {
     display: none !important;
+}
+
+.gradio-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Remove the specific padding Gradio adds to the bottom of the block container */
+.gap.gradio-container > div:last-child {
+    padding-bottom: 0 !important;
 }
 
 /* Hide floating header elements (Settings/API) if present */
@@ -1303,7 +1314,7 @@ def build_ui() -> "gr.Blocks":
                     label="Steward Assistant",
                     show_label=False,
                     scale=1,
-                    height="calc(100vh - 18rem)",
+                    height="calc(100vh - 15rem)",
                 )
 
         # ── Input row ─────────────────────────────────────────────────────────
