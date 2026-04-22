@@ -110,6 +110,21 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
+
+html, body {
+    height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.gradio-container {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
 """
 
 
@@ -1472,7 +1487,8 @@ def build_ui() -> "gr.Blocks":
                 chatbot = gr.Chatbot(
                     label="Steward Assistant",
                     show_label=False,
-                    height="calc(100vh - 300px)",
+                    scale=1,
+                    height="calc(100dvh - 21rem)",
                     elem_id="chatbot",
                 )
 
