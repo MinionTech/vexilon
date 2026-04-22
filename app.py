@@ -1482,42 +1482,38 @@ async def chat_fn(message: str, history: list[dict], persona_mode: str, request:
         yield accumulated
 
 
+# ─── UI Assets ────────────────────────────────────────────────────────────────
+_CUSTOM_JS = ""
+_CUSTOM_CSS = ""
+
+
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     
-    # We wrap in Blocks so we can still provide the custom header and footer utilities
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
-        with gr.Row(elem_classes="compact-row"):
-            gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Steward Assistant</h3></div>")
-            persona_selector = gr.Dropdown(
-                choices=["Lookup", "Grieve", "Manage"],
-                value="Lookup",
-                label="Operational Role",
-                show_label=False,
-                container=False,
-                scale=1,
-                elem_id="persona_selector",
-            )
+        gr.Markdown("# BCGEU Steward Assistant")
+        
+        persona_selector = gr.Dropdown(
+            choices=["Lookup", "Grieve", "Manage"],
+            value="Lookup",
+            label="Operational Role",
+            elem_id="persona_selector",
+        )
 
-        if INTEGRITY_WARNING:
-            gr.Markdown(f"{INTEGRITY_WARNING}")
-            
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
-            chatbot=gr.Chatbot(show_label=False, elem_id="chatbot", scale=1, render=False),
             additional_inputs=[persona_selector],
-            title=None,
             fill_height=True,
         )
         
-        with gr.Accordion("Quick Questions", open=False):
-            with gr.Row(elem_classes="examples-row"):
+        with gr.Accordion("Quick Questions", open=False) as quick_questions:
+            with gr.Row():
                 for q in EXAMPLE_QUESTIONS:
-                    btn = gr.Button(q, size="sm", variant="secondary")
+                    btn = gr.Button(q, size="sm")
                     btn.click(
-                        fn=lambda text: text,
+                        fn=lambda x: (x, gr.update(open=False)),
                         inputs=[gr.State(q)],
-                        outputs=[chat_interface.textbox]
+                        outputs=[chat_interface.textbox, quick_questions]
                     )
         
         with gr.Accordion("Reference Documents & Utilities", open=False):
