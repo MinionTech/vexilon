@@ -81,7 +81,11 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, examples_accordion])
     submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, examples_accordion])
     # Connect the examples handler to the same closure logic
-    examples_handler.dataset.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, examples_accordion])
+    examples_handler.dataset.click(
+        chat_fn, 
+        [msg, chatbot, persona], 
+        [msg, chatbot, examples_accordion]
+    ).then(lambda: gr.update(open=False), None, examples_accordion)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
