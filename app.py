@@ -1473,9 +1473,9 @@ def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     
     # We wrap in Blocks so we can still provide the custom header and footer utilities
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Navigator") as demo:
         with gr.Row(elem_classes="compact-row"):
-            gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Steward Assistant</h3></div>")
+            gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
             persona_selector = gr.Dropdown(
                 choices=["Lookup", "Grieve", "Manage"],
                 value="Lookup",
@@ -1492,7 +1492,8 @@ def build_ui() -> "gr.Blocks":
             fn=chat_fn,
             additional_inputs=[persona_selector],
             title=None,
-            fill_height=True,
+            chatbot=gr.Chatbot(show_label=False, height=600),
+            textbox=gr.Textbox(show_label=False)
         )
         
         with gr.Accordion("Quick Questions", open=False) as quick_questions:
