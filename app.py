@@ -1490,6 +1490,7 @@ def build_ui() -> "gr.Blocks":
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
+            chatbot=gr.Chatbot(show_label=False, elem_id="chatbot"),
             additional_inputs=[persona_selector],
             examples=[[q, "Lookup"] for q in EXAMPLE_QUESTIONS],
             title=None,
