@@ -213,7 +213,10 @@ CLOSE_ACCORDION_JS = """
 }
 """
 
-_CSS = "footer {display: none !important;} .chatbot .icon-button:not([aria-label]) {display: none !important;}"
+_CSS = """
+footer { display: none !important; }
+button.icon-button:not([aria-label]):not([title]) { display: none !important; }
+"""
 
 with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     with gr.Row():
