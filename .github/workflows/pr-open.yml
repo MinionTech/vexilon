@@ -116,15 +116,24 @@ jobs:
       triggered: ${{ steps.builder.outputs.triggered }}
 
     steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:buildx-build-stable-1
+
       - name: Build and Push
         id: builder
-        uses: bcgov/action-builder-ghcr@main
+        uses: docker/build-push-action@v6
         with:
-          package: vexilon
-          build_context: .
-          build_file: Containerfile
-          tags: sha-${{ env.IMAGE_SHA }}
-          build_args: VERSION=sha-${{ env.IMAGE_SHA }}
+          context: .
+          file: ./Containerfile
+          tags: |
+            ghcr.io/${{ github.repository }}:sha-${{ env.IMAGE_SHA }}
+          build-args: VERSION=sha-${{ env.IMAGE_SHA }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
 
   container_test:
     name: Container Smoke Test

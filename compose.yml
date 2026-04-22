@@ -42,9 +42,10 @@ services:
   # ── Vexilon app ───────────────────────────────────────────────────────────────
   # Production-ready entry point. Uses code baked into the image for maximum performance/reliability.
   # For dev/watch mode, use: podman compose up --profile dev watch
+  # To run without tests: podman compose up --profile app vexilon
   vexilon:
     <<: *service-defaults
-    profiles: [prod]
+    profiles: [prod, app]
     build: *common-build
     environment:
       <<: *common-env
