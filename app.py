@@ -14,14 +14,13 @@ def chat_fn(message, history, persona):
     history.append({"role": "user", "content": message})
     response = f"BCGEU Navigator ({persona} Mode) received: {message}"
     history.append({"role": "assistant", "content": response})
-    # Return empty message, updated history, and an update to close the accordion
     return "", history, gr.update(open=False)
 
 VEXILON_VERSION = get_vexilon_info()
 VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
 _version_url = f"{VEXILON_REPO_URL}/pkgs/container/vexilon/versions"
 
-# Simplified list for manual gr.Examples
+# Standard example questions
 EXAMPLES = [
     "What are the steps for a Step 1 grievance?",
     "How do I report a safety hazard?",
@@ -58,13 +57,16 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         )
         submit = gr.Button("Send", variant="primary", scale=1)
 
-    # 4. Standard Examples (in a compact accordion)
+    # 4. Proven Manual Example Buttons (from backup)
     with gr.Accordion("Quick Questions", open=False) as examples_accordion:
-        examples_handler = gr.Examples(
-            examples=EXAMPLES,
-            inputs=msg,
-            label=None
-        )
+        with gr.Row():
+            for q in EXAMPLES:
+                example_btn = gr.Button(q, size="sm", variant="secondary")
+                example_btn.click(
+                    chat_fn, 
+                    [gr.State(q), chatbot, persona], 
+                    [msg, chatbot, examples_accordion]
+                )
 
     # 5. Clean Footer
     gr.HTML(f"""
@@ -77,15 +79,9 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    # Event handlers
+    # Event handlers for manual input
     msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, examples_accordion])
     submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, examples_accordion])
-    # Connect the examples handler to the same closure logic
-    examples_handler.dataset.click(
-        chat_fn, 
-        [msg, chatbot, persona], 
-        [msg, chatbot, examples_accordion]
-    ).then(lambda: gr.update(open=False), None, examples_accordion)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
