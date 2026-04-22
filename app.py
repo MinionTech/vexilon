@@ -110,6 +110,11 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
+
+/* Hide ONLY the Chatbot label to prevent breaking other interactive elements */
+div[data-testid="chatbot"] .label-wrap {
+    display: none !important;
+}
 """
 
 
@@ -1493,22 +1498,12 @@ def build_ui() -> "gr.Blocks":
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
-            chatbot=gr.Chatbot(show_label=False, scale=1, render=False),
             additional_inputs=[persona_selector],
+            examples=[[q, "Lookup"] for q in EXAMPLE_QUESTIONS],
             title=None,
             fill_height=True,
         )
         
-        with gr.Accordion("Quick Questions", open=False):
-            with gr.Row(elem_classes="examples-row"):
-                for q in EXAMPLE_QUESTIONS:
-                    btn = gr.Button(q, size="sm", variant="secondary")
-                    btn.click(
-                        fn=lambda text: text,
-                        inputs=[gr.State(q)],
-                        outputs=[chat_interface.textbox]
-                    )
-
         with gr.Accordion("Reference Documents & Utilities", open=False):
             gr.Markdown(build_pdf_download_links())
             gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
