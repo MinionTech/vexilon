@@ -14,7 +14,7 @@ import app
 
 
 def _fake_verify_response(
-    model: str = "claude-haiku-4-7-20260416",
+    model: str = "claude-haiku-4-5-20251001",
     max_tokens: int = 512,
     system: list = None,
     messages: list = None,
