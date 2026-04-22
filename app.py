@@ -111,9 +111,9 @@ footer {
     display: none !important;
 }
 
-/* Hide ONLY the Chatbot label to prevent breaking other interactive elements */
-div[data-testid="chatbot"] .label-wrap {
-    display: none !important;
+/* Allow Chatbot to squish infinitely on short monitors to prevent clipping */
+.chatbot {
+    min-height: 0 !important;
 }
 """
 
@@ -1498,6 +1498,7 @@ def build_ui() -> "gr.Blocks":
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
+            chatbot=gr.Chatbot(show_label=False, scale=1, render=False),
             additional_inputs=[persona_selector],
             examples=[[q, "Lookup"] for q in EXAMPLE_QUESTIONS],
             title=None,
