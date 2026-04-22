@@ -1475,7 +1475,7 @@ def build_ui() -> "gr.Blocks":
     # We wrap in Blocks so we can still provide the custom header and footer utilities
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
         with gr.Row(elem_classes="compact-row"):
-            gr.Markdown("<div style='display: flex; align-items: center; height: 100%;'><h3 style='margin: 0;'>BCGEU Steward Assistant</h3></div>")
+            gr.HTML("<h3 style='margin: 0; padding-top: 8px;'>BCGEU Steward Assistant</h3>")
             persona_selector = gr.Dropdown(
                 choices=["Lookup", "Grieve", "Manage"],
                 value="Lookup",
