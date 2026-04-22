@@ -120,13 +120,14 @@ GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES ---
 3. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
 """
 
-REVIEWER_SYSTEM_PROMPT = """You are a Senior BCGEU Staff Representative reviewing a junior steward's output for accuracy and completeness.
-SCORE: [1-10]
-VERIFIED STEPS: [final safe instructions]
-ISSUES: [specific errors]
-"""
-
-REFINER_SYSTEM_PROMPT = "You are a Senior BCGEU Expert Rep. Synthesize the draft and critique into a final response."
+def get_persona_prompt(mode_name: str) -> str:
+    """Load specific operational guidelines for different modes."""
+    fallbacks = {
+        "Lookup": "You are a BCGEU Steward Navigator. Your goal is to find specific clauses and provide literal guidance.",
+        "Grieve": "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor. Your goal is to build air-tight cases while objectively identifying any liability.",
+        "Manage": "You are a Senior Strategic Management Consultant. Your goal is to minimize risk and operational debt by ensuring 100% compliance.",
+    }
+    return fallbacks.get(mode_name, fallbacks["Lookup"])
 
 # ─── RAG Pipeline Functions ─────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
@@ -161,10 +162,12 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
     client = anthropic.AsyncAnthropic()
     prompt = f"Mode: {persona_mode}\nContext: {context}\nQuestion: {message}"
     
+    system_prompt = f"{GLOBAL_MANDATORY_RULES}\n\n{get_persona_prompt(persona_mode)}"
+    
     async with client.messages.stream(
         model=CLAUDE_MODEL,
         max_tokens=2048,
-        system=GLOBAL_MANDATORY_RULES,
+        system=system_prompt,
         messages=[{"role": "user", "content": prompt}],
     ) as stream:
         async for text in stream.text_stream:
