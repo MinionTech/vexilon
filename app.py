@@ -90,27 +90,7 @@ _index: "faiss.IndexFlatIP | None" = None
 logger.info("[boot] Vexilon initializing...")
 
 # ─── UI Assets ────────────────────────────────────────────────────────────────
-_CUSTOM_JS = """
-(() => {
-    // 1. Handle Enter key submission
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            const textarea = document.querySelector('#msg_input textarea');
-            if (textarea && document.activeElement === textarea) {
-                e.preventDefault();
-                const sendBtn = document.querySelector('#send_btn');
-                if (sendBtn) sendBtn.click();
-            }
-        }
-    }, true);
-})()
-"""
 
-_CUSTOM_CSS = """
-footer {
-    display: none !important;
-}
-"""
 
 
 
@@ -1473,76 +1453,81 @@ def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     
     # We wrap in Blocks so we can still provide the custom header and footer utilities
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
-        with gr.Row(elem_classes="compact-row"):
-            gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Steward Assistant</h3></div>")
-            persona_selector = gr.Dropdown(
-                choices=["Lookup", "Grieve", "Manage"],
-                value="Lookup",
-                label="Operational Role",
-                show_label=False,
-                container=False,
-                scale=1,
-            )
-
-        if INTEGRITY_WARNING:
-            gr.Markdown(f"{INTEGRITY_WARNING}")
-            
-        chat_interface = gr.ChatInterface(
-            fn=chat_fn,
-            additional_inputs=[persona_selector],
-            title=None,
-            fill_height=True,
-        )
-        
-        with gr.Accordion("Quick Questions", open=False) as quick_questions:
-            with gr.Row(elem_classes="examples-row"):
-                for q in EXAMPLE_QUESTIONS:
-                    btn = gr.Button(q, size="sm", variant="secondary")
-                    btn.click(
-                        fn=lambda x: (x, gr.update(open=False)),
-                        inputs=[gr.State(q)],
-                        outputs=[chat_interface.textbox, quick_questions]
+    with gr.Blocks(title="Vexilon: BCGEU Navigator", fill_height=True) as demo:
+        with gr.Column(scale=1):
+            # ── Header (Fixed) ───────────────────────────────────────────────────
+            with gr.Row(scale=0):
+                with gr.Column(scale=0, min_width=160):
+                    gr.HTML("<h3>BCGEU Navigator</h3>")
+                with gr.Column(scale=1, min_width=0):
+                    persona_selector = gr.Radio(
+                        choices=["Lookup", "Grieve", "Manage"],
+                        value="Lookup",
+                        show_label=False,
+                        container=False,
                     )
-        
-        with gr.Accordion("Reference Documents & Utilities", open=False):
-            gr.Markdown(build_pdf_download_links())
-            gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+
+            if INTEGRITY_WARNING:
+                gr.Markdown(f"{INTEGRITY_WARNING}")
+                
+            # ── Chat (Flexible) ──────────────────────────────────────────────────
+            chat_interface = gr.ChatInterface(
+                fn=chat_fn,
+                additional_inputs=[persona_selector],
+                title=None,
+                fill_height=True,
+                chatbot=gr.Chatbot(show_label=False),
+                textbox=gr.Textbox(show_label=False)
+            )
             
-            # Export / Import handlers interacting with ChatInterface's internal chatbot
-            with gr.Row():
-                export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm")
-                import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm")
+            # ── Utilities (Fixed) ────────────────────────────────────────────────
+            with gr.Accordion("Quick Questions", open=False) as quick_questions:
+                with gr.Row(elem_classes="examples-row"):
+                    for q in EXAMPLE_QUESTIONS:
+                        btn = gr.Button(q, size="sm", variant="secondary")
+                        btn.click(
+                            fn=lambda x: (x, gr.update(open=False)),
+                            inputs=[gr.State(q)],
+                            outputs=[chat_interface.textbox, quick_questions]
+                        )
+            
+            with gr.Accordion("Reference Documents & Utilities", open=False):
+                gr.Markdown(build_pdf_download_links())
+                gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+                
+                with gr.Row():
+                    export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm")
+                    import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm")
 
-        def handle_export(history):
-            if not history:
-                return None
-            md_str = history_to_markdown(history)
-            import datetime, tempfile, os, threading
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-            filename = f"vexilon_chat_{timestamp}.md"
-            save_path = os.path.join(tempfile.gettempdir(), filename)
-            with open(save_path, "w", encoding="utf-8") as f:
-                f.write(md_str)
-            threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
-            return save_path
+            def handle_export(history):
+                if not history:
+                    return None
+                md_str = history_to_markdown(history)
+                import datetime, tempfile, os, threading
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+                filename = f"vexilon_chat_{timestamp}.md"
+                save_path = os.path.join(tempfile.gettempdir(), filename)
+                with open(save_path, "w", encoding="utf-8") as f:
+                    f.write(md_str)
+                threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
+                return save_path
 
-        export_btn.click(fn=handle_export, inputs=[chat_interface.chatbot], outputs=[export_btn])
+            export_btn.click(fn=handle_export, inputs=[chat_interface.chatbot], outputs=[export_btn])
 
-        def handle_import(file):
-            if file is None:
-                return gr.update()
-            try:
-                new_history = markdown_to_history(file.name)
-                return new_history
-            except Exception as e:
-                import logging
-                logging.error("[ui] Import failed", exc_info=True)
-                return gr.update()
+            def handle_import(file):
+                if file is None:
+                    return gr.update()
+                try:
+                    new_history = markdown_to_history(file.name)
+                    return new_history
+                except Exception as e:
+                    import logging
+                    logging.error("[ui] Import failed", exc_info=True)
+                    return gr.update()
 
-        import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chat_interface.chatbot])
-        
-        gr.HTML(ATTRIBUTION_HTML)
+            import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chat_interface.chatbot])
+            
+            gr.HTML(ATTRIBUTION_HTML)
         
     return demo
 
@@ -1597,7 +1582,4 @@ if __name__ == "__main__":
         allowed_paths=allowed_paths,
         theme=gr.themes.Default(primary_hue="orange", secondary_hue="slate"),
         auth=auth_creds,
-        js=_CUSTOM_JS,
-        css=_CUSTOM_CSS,
-        pwa=True,
     )
