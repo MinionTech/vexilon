@@ -1485,6 +1485,7 @@ def build_ui() -> "gr.Blocks":
                     choices=["Lookup", "Grieve", "Manage"],
                     value="Lookup",
                     label="Operational Role",
+                    render=False,
                 )
             ],
             additional_inputs_accordion=gr.Accordion("Role Options", open=True),
