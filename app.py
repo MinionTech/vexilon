@@ -1449,187 +1449,92 @@ EXAMPLE_QUESTIONS = [
 ]
 
 
+
+async def chat_fn(message: str, history: list[dict], persona_mode: str, request: gr.Request = None):
+    """Adapter for ChatInterface to match the original submit logic."""
+    user_id = request.client.host if request else "default"
+    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
+    if not allowed:
+        yield rate_msg
+        return
+
+    msg, was_flagged = sanitize_input(message)
+    if was_flagged:
+        yield "Your input was flagged for security review. Please try a different question."
+        return
+
+    accumulated = ""
+    async for chunk in rag_review_stream(msg, history, persona_mode, _chunks):
+        accumulated += chunk
+        yield accumulated
+
+
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
-
+    
+    # Use the expected pattern: gr.ChatInterface
+    persona_selector = gr.Dropdown(
+        choices=["Lookup", "Grieve", "Manage"],
+        value="Lookup",
+        label="Operational Role",
+        show_label=False,
+        container=False,
+        elem_id="persona_selector",
+    )
+    
+    # We wrap in Blocks so we can still provide the custom header and footer utilities
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
-        # Header and Role Selector
-        with gr.Row(elem_classes="compact-row"):
-            gr.Markdown("### BCGEU Steward Assistant")
-            persona_selector = gr.Dropdown(
-                choices=["Lookup", "Grieve", "Manage"],
-                value="Lookup",
-                label="Operational Role",
-                show_label=False,
-                container=False,
-                elem_id="persona_selector",
-                scale=1,
-            )
-
-        # ── Chat interface (Native Fill Height) ───────────────────────────────
-        chatbot = gr.Chatbot(
-            label="Steward Assistant",
-            show_label=False,
-            scale=1,
-            elem_id="chatbot",
+        gr.Markdown("### BCGEU Steward Assistant")
+        if INTEGRITY_WARNING:
+            gr.Markdown(f"{INTEGRITY_WARNING}")
+            
+        chat_interface = gr.ChatInterface(
+            fn=chat_fn,
+            additional_inputs=[persona_selector],
+            examples=[[q, "Lookup"] for q in EXAMPLE_QUESTIONS],
+            title=None,
+            fill_height=True,
         )
-
-        # ── Input row ─────────────────────────────────────────────────────────
-        with gr.Row(elem_classes="compact-row"):
-            msg_input = gr.Textbox(
-                placeholder="Ask about the agreement...",
-                label="Your Question",
-                max_lines=6,
-                scale=5,
-                show_label=False,
-                container=False,
-                lines=1,
-                elem_id="msg_input",
-            )
-            send_btn = gr.Button(
-                "Send",
-                scale=1,
-                variant="primary",
-                min_width=64,
-                elem_id="send_btn",
-            )
-
-        # ── Resources & Utilities ─────────────────────────────────────────────
-        with gr.Accordion("Resources & Utilities", open=False, elem_id="resources_accordion"):
-            if INTEGRITY_WARNING:
-                gr.Markdown(f"{INTEGRITY_WARNING}")
-
-            gr.Markdown("#### Quick Questions")
+        
+        with gr.Accordion("Reference Documents & Utilities", open=False):
+            gr.Markdown(build_pdf_download_links())
+            gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+            
+            # Export / Import handlers interacting with ChatInterface's internal chatbot
             with gr.Row():
-                chip_btns = [
-                    gr.Button(q, size="sm", min_width=150)
-                    for q in EXAMPLE_QUESTIONS
-                ]
+                export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm")
+                import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm")
 
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown("#### Reference Documents")
-                    gr.Markdown(build_pdf_download_links())
-                    gr.Markdown(
-                        f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})"
-                    )
-
-                with gr.Column():
-                    gr.Markdown("#### Conversation Options")
-                    gr.Markdown(
-                        "Save your current chat history or load a previous session."
-                    )
-                    with gr.Row():
-                        export_btn = gr.DownloadButton(
-                            "Save",
-                            variant="secondary",
-                            size="sm",
-                        )
-                        import_btn = gr.UploadButton(
-                            "Load",
-                            file_types=[".md"],
-                            variant="secondary",
-                            size="sm",
-                        )
-
-        # ── Submit handlers ───────────────────────────────────────────────────
-        async def submit(
-            message: str,
-            history: list[dict],
-            persona_mode: str,
-            **kwargs,
-        ) -> AsyncIterator[tuple[list[dict], str]]:
-
-            # Persistent UI — no hiding components
-            request = kwargs.get("request")
-            if not message.strip():
-                yield history, ""
-                return
-
-            user_id = request.client.host if request else "default"
-            allowed, rate_msg = _rate_limiter.is_allowed(user_id)
-            if not allowed:
-                history = list(history) + [
-                    {"role": "user", "content": message},
-                    {"role": "assistant", "content": rate_msg},
-                ]
-                yield history, ""
-                return
-
-            message, was_flagged = sanitize_input(message)
-            if was_flagged:
-                yield (
-                    history,
-                    "Your input was flagged for security review. Please try a different question.",
-                )
-                return
-            prior_history = list(history)
-            # Append user turn; seed an empty assistant bubble for streaming.
-            history = prior_history + [
-                {"role": "user", "content": message},
-                {"role": "assistant", "content": ""},
-            ]
-            yield history, ""
-            # Stream tokens from RAG; accumulate into the assistant bubble
-            accumulated = ""
-            async for chunk in rag_review_stream(
-                message, prior_history, persona_mode, _chunks
-            ):
-                accumulated += chunk
-                history[-1]["content"] = accumulated
-                yield history, gr.update()
-
-        submit_inputs = [msg_input, chatbot, persona_selector]
-        submit_outputs = [chatbot, msg_input]
-
-        send_btn.click(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
-        msg_input.submit(fn=submit, inputs=submit_inputs, outputs=submit_outputs)
-
-        # ── Chip click handlers — populate input and auto-submit ──────────────
-        for chip in chip_btns:
-            chip.click(
-                fn=lambda q: q,
-                inputs=[chip],
-                outputs=[msg_input],
-            ).then(
-                fn=submit,
-                inputs=submit_inputs,
-                outputs=submit_outputs,
-            )
-
-        # ── Export/Import Handlers ───────────────────────────────────────────
         def handle_export(history):
             if not history:
                 return None
             md_str = history_to_markdown(history)
+            import datetime, tempfile, os, threading
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             filename = f"vexilon_chat_{timestamp}.md"
             save_path = os.path.join(tempfile.gettempdir(), filename)
             with open(save_path, "w", encoding="utf-8") as f:
                 f.write(md_str)
-            threading.Timer(
-                600, lambda: os.path.exists(save_path) and os.remove(save_path)
-            ).start()
+            threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
             return save_path
 
-        export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
+        export_btn.click(fn=handle_export, inputs=[chat_interface.chatbot], outputs=[export_btn])
 
         def handle_import(file):
             if file is None:
                 return gr.update()
             try:
                 new_history = markdown_to_history(file.name)
-                # Hide onboarding if history is restored
                 return new_history
-            except Exception:
+            except Exception as e:
+                import logging
                 logging.error("[ui] Import failed", exc_info=True)
                 return gr.update()
 
-        import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-
-        # ── Footer ────────────────────────────────────────────────────────────
+        import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chat_interface.chatbot])
+        
         gr.HTML(ATTRIBUTION_HTML)
-
+        
     return demo
 
 
