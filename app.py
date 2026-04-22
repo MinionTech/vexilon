@@ -213,7 +213,7 @@ CLOSE_ACCORDION_JS = """
 }
 """
 
-_CSS = "footer {display: none !important;}"
+_CSS = "footer {display: none !important;} .chatbot .icon-button:not([aria-label]) {display: none !important;}"
 
 with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     with gr.Row():
@@ -227,7 +227,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             interactive=True
         )
     
-    chatbot = gr.Chatbot(show_label=False, scale=1, min_height=400, show_share_button=False)
+    chatbot = gr.Chatbot(show_label=False, scale=1, min_height=400)
     
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
