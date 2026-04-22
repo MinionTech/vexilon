@@ -6,21 +6,18 @@ def chat_fn(message, history, persona):
     return f"Vexilon ({persona} Mode) received: {message}"
 
 with gr.Blocks(title="Vexilon", fill_height=True) as demo:
-    with gr.Sidebar():
-        gr.Markdown("### Vexilon Settings")
+    with gr.Row():
+        gr.Markdown("### Vexilon", scale=3)
         persona = gr.Dropdown(
             choices=["Lookup", "Grieve", "Manage"],
             value="Lookup",
-            label="Operational Role"
+            show_label=False,
+            container=False,
+            scale=1
         )
-        gr.Markdown("Choose a role to change how Vexilon responds.")
-
-    chatbot = gr.Chatbot(label="Vexilon")
     
-    # Standard ChatInterface logic in a manual wrapper
     gr.ChatInterface(
         fn=chat_fn,
-        chatbot=chatbot,
         additional_inputs=[persona],
         fill_height=True
     )
