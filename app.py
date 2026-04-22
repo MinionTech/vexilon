@@ -110,11 +110,6 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
-
-/* Hide the Chatbot label cleanly without breaking native component layouts */
-.gradio-container .label-wrap {
-    display: none !important;
-}
 """
 
 
@@ -1498,6 +1493,7 @@ def build_ui() -> "gr.Blocks":
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
+            chatbot=gr.Chatbot(show_label=False, scale=1, render=False),
             additional_inputs=[persona_selector],
             title=None,
             fill_height=True,
