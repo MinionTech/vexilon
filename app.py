@@ -111,9 +111,9 @@ footer {
     display: none !important;
 }
 
-/* Override Gradio's fill_height overflow clipping to allow scrolling on small screens */
-.gradio-container {
-    overflow-y: auto !important;
+/* Hide the Chatbot label cleanly without breaking native component layouts */
+.gradio-container .label-wrap {
+    display: none !important;
 }
 """
 
@@ -1498,7 +1498,6 @@ def build_ui() -> "gr.Blocks":
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
-            chatbot=gr.Chatbot(show_label=False, elem_id="chatbot", scale=1),
             additional_inputs=[persona_selector],
             title=None,
             fill_height=True,
