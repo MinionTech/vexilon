@@ -1474,21 +1474,23 @@ def build_ui() -> "gr.Blocks":
     
     # We wrap in Blocks so we can still provide the custom header and footer utilities
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
-        gr.Markdown("### BCGEU Steward Assistant")
+        with gr.Row(elem_classes="compact-row"):
+            gr.Markdown("### BCGEU Steward Assistant")
+            persona_selector = gr.Dropdown(
+                choices=["Lookup", "Grieve", "Manage"],
+                value="Lookup",
+                label="Operational Role",
+                show_label=False,
+                container=False,
+                scale=1,
+            )
+
         if INTEGRITY_WARNING:
             gr.Markdown(f"{INTEGRITY_WARNING}")
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
-            additional_inputs=[
-                gr.Dropdown(
-                    choices=["Lookup", "Grieve", "Manage"],
-                    value="Lookup",
-                    label="Operational Role",
-                    render=False,
-                )
-            ],
-            additional_inputs_accordion=gr.Accordion("Role Options", open=True, render=False),
+            additional_inputs=[persona_selector],
             examples=[[q, "Lookup"] for q in EXAMPLE_QUESTIONS],
             title=None,
             fill_height=True,
