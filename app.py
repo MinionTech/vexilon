@@ -227,7 +227,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             interactive=True
         )
     
-    chatbot = gr.Chatbot(show_label=False, scale=1, min_height=400)
+    chatbot = gr.Chatbot(show_label=False, scale=1, min_height=400, show_share_button=False)
     
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
