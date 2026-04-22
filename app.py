@@ -110,6 +110,11 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
+
+/* Override Gradio's fill_height overflow clipping to allow scrolling on small screens */
+.gradio-container {
+    overflow-y: auto !important;
+}
 """
 
 
@@ -1475,7 +1480,7 @@ def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     
     # We wrap in Blocks so we can still provide the custom header and footer utilities
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant") as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
         with gr.Row(elem_classes="compact-row"):
             gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Steward Assistant</h3></div>")
             persona_selector = gr.Dropdown(
@@ -1493,9 +1498,10 @@ def build_ui() -> "gr.Blocks":
             
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
-            chatbot=gr.Chatbot(show_label=False, elem_id="chatbot", scale=1, height="60vh"),
+            chatbot=gr.Chatbot(show_label=False, elem_id="chatbot", scale=1),
             additional_inputs=[persona_selector],
             title=None,
+            fill_height=True,
         )
         
         with gr.Accordion("Quick Questions", open=False):
