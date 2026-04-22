@@ -19,6 +19,14 @@ _version_url = _container_url
 if VEXILON_VERSION != "Dev mode":
     _version_url += f"/versions?filters%5Bversion_type%5D=tagged&query={urllib.parse.quote(VEXILON_VERSION)}"
 
+# Standard examples from the original Vexilon UI
+EXAMPLES = [
+    "What are the steps for a Step 1 grievance?",
+    "How do I report a safety hazard?",
+    "What are the shift premium rates?",
+    "Tell me about the sick leave policy."
+]
+
 with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     with gr.Row():
         gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
@@ -35,6 +43,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             fn=chat_fn,
             chatbot=gr.Chatbot(show_label=False),
             additional_inputs=[persona],
+            examples=EXAMPLES,
             fill_height=True
         )
 
