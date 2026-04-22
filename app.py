@@ -110,14 +110,6 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-.gradio-container {
-    margin: 0 !important;
-    padding: 0 !important;
-}
 """
 
 
@@ -1460,7 +1452,7 @@ EXAMPLE_QUESTIONS = [
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
 
-    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=False) as demo:
+    with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
         # ── Header ────────────────────────────────────────────────────────────
         gr.Markdown("### BCGEU Steward Assistant")
 
@@ -1480,8 +1472,7 @@ def build_ui() -> "gr.Blocks":
                 chatbot = gr.Chatbot(
                     label="Steward Assistant",
                     show_label=False,
-                    scale=1,
-                    height=700,
+                    height="calc(100vh - 300px)",
                     elem_id="chatbot",
                 )
 
@@ -1495,12 +1486,14 @@ def build_ui() -> "gr.Blocks":
                         show_label=False,
                         container=False,
                         lines=1,
+                        elem_id="msg_input",
                     )
                     send_btn = gr.Button(
                         "Send",
                         scale=1,
                         variant="primary",
                         min_width=64,
+                        elem_id="send_btn",
                     )
 
             with gr.Tab("Resources", id="resources_tab"):
