@@ -110,17 +110,6 @@ _CUSTOM_CSS = """
 footer {
     display: none !important;
 }
-
-/* 
- * ULTIMATE VIEWPORT SQUISH OVERRIDE
- * Gradio's Chatbot has a hardcoded min-height of ~400px.
- * On short viewports (< 500px), this forces elements off the bottom of the screen.
- * These rules violently disable those minimums so the Chatbot can squish infinitely,
- * guaranteeing the input box and accordions ALWAYS stay on screen.
- */
-#chatbot {
-    min-height: 0 !important;
-}
 """
 
 
@@ -423,7 +412,7 @@ def build_pdf_download_links() -> str:
     if not files:
         return ""
 
-    lines = ["**Download Documents:**\n<ul style='padding-left: 18px; margin-top: 6px; margin-bottom: 0;'>"]
+    lines = ["**Download Documents:**"]
     for f in files:
         # Use pathlib to get cleaner names and resolve Gradio's /file= path
         display_name = f.stem.replace("_", " ").title()
@@ -433,9 +422,7 @@ def build_pdf_download_links() -> str:
         # URL encode the relative path for Gradio's internal file serving
         rel_path = f.relative_to(Path("."))
         encoded_path = urllib.parse.quote(str(rel_path))
-        lines.append(f"<li style='margin-bottom: 4px;'><a href='/file={encoded_path}' target='_blank'>{display_name}</a></li>")
-        
-    lines.append("</ul>")
+        lines.append(f"* [{display_name}](/file={encoded_path})")
 
     return "\n".join(lines)
 
@@ -1482,34 +1469,36 @@ async def chat_fn(message: str, history: list[dict], persona_mode: str, request:
         yield accumulated
 
 
-# ─── UI Assets ────────────────────────────────────────────────────────────────
-_CUSTOM_JS = ""
-_CUSTOM_CSS = ""
-
-
 def build_ui() -> "gr.Blocks":
     """Assemble and return the Gradio Blocks application."""
     
+    # We wrap in Blocks so we can still provide the custom header and footer utilities
     with gr.Blocks(title="Vexilon: BCGEU Steward Assistant", fill_height=True) as demo:
-        gr.Markdown("# BCGEU Steward Assistant")
-        
-        persona_selector = gr.Dropdown(
-            choices=["Lookup", "Grieve", "Manage"],
-            value="Lookup",
-            label="Operational Role",
-            elem_id="persona_selector",
-        )
+        with gr.Row(elem_classes="compact-row"):
+            gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Steward Assistant</h3></div>")
+            persona_selector = gr.Dropdown(
+                choices=["Lookup", "Grieve", "Manage"],
+                value="Lookup",
+                label="Operational Role",
+                show_label=False,
+                container=False,
+                scale=1,
+            )
 
+        if INTEGRITY_WARNING:
+            gr.Markdown(f"{INTEGRITY_WARNING}")
+            
         chat_interface = gr.ChatInterface(
             fn=chat_fn,
             additional_inputs=[persona_selector],
+            title=None,
             fill_height=True,
         )
         
         with gr.Accordion("Quick Questions", open=False) as quick_questions:
-            with gr.Row():
+            with gr.Row(elem_classes="examples-row"):
                 for q in EXAMPLE_QUESTIONS:
-                    btn = gr.Button(q, size="sm")
+                    btn = gr.Button(q, size="sm", variant="secondary")
                     btn.click(
                         fn=lambda x: (x, gr.update(open=False)),
                         inputs=[gr.State(q)],
