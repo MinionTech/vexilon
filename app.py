@@ -114,34 +114,56 @@ _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "w
 _JOKE_KEYWORDS = {"joke", "funny", "nose", "pick", "mad", "angry", "boss", "dumb", "stupid"}
 _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
-GLOBAL_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES ---
+UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
 2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
 3. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
+4. GRIEVANCE FILING: Facilitate the filing process by identifying potential contract violations.
+"""
+
+MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
+1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
+2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
+3. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
+4. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
 def get_persona_prompt(mode_name: str) -> str:
-    """Load specific operational guidelines for different modes."""
-    fallbacks = {
-        "Lookup": "You are a BCGEU Steward Navigator. Your goal is to find specific clauses and provide literal guidance.",
-        "Grieve": "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor. Your goal is to build air-tight cases while objectively identifying any liability.",
-        "Manage": "You are a Senior Strategic Management Consultant. Your goal is to minimize risk and operational debt by ensuring 100% compliance.",
-    }
-    return fallbacks.get(mode_name, fallbacks["Lookup"])
+    """Return the combined mandatory rules and persona guidelines."""
+    if mode_name == "Manage":
+        rules = MANAGER_MANDATORY_RULES
+        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation."
+    elif mode_name == "Grieve":
+        rules = UNION_MANDATORY_RULES
+        persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases."
+    else:
+        rules = UNION_MANDATORY_RULES
+        persona = "You are a BCGEU Steward Navigator. Your goal is to find specific clauses and provide literal guidance."
+    
+    return f"{rules}\n\nROLE: {persona}"
 
 # ─── RAG Pipeline Functions ─────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
+    """Turn the conversation history and new message into a standalone search query."""
     if not history: return message
     client = anthropic.AsyncAnthropic()
-    prompt = f"Condense this history and message into a standalone search query: {message}"
+    
+    # Actually include the history in the messages list (#369)
+    messages = []
+    for turn in history[-5:]: # Last 5 turns for context
+        messages.append({"role": turn["role"], "content": turn["content"]})
+    messages.append({"role": "user", "content": f"Condense the above conversation and this new message into a single standalone search query for a RAG system. Return ONLY the search query text: {message}"})
+    
     try:
         response = await client.messages.create(
             model=CONDENSE_MODEL,
             max_tokens=100,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
         )
         return response.content[0].text.strip().strip('"')
-    except: return message
+    except Exception as e:
+        logger.error(f"[rag] Condense failed: {e}")
+        return message
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
     condensed = await condense_query(message, history)
@@ -160,9 +182,8 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
     
     # Simple Draft Step
     client = anthropic.AsyncAnthropic()
-    prompt = f"Mode: {persona_mode}\nContext: {context}\nQuestion: {message}"
-    
-    system_prompt = f"{GLOBAL_MANDATORY_RULES}\n\n{get_persona_prompt(persona_mode)}"
+    system_prompt = get_persona_prompt(persona_mode)
+    prompt = f"Context from Knowledge Base:\n{context}\n\nQuestion: {message}"
     
     async with client.messages.stream(
         model=CLAUDE_MODEL,
