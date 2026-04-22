@@ -1498,25 +1498,24 @@ def build_ui() -> "gr.Blocks":
             fill_height=True,
         )
         
-        with gr.Row():
-            with gr.Accordion("Quick Questions", open=False):
-                with gr.Row(elem_classes="examples-row"):
-                    for q in EXAMPLE_QUESTIONS:
-                        btn = gr.Button(q, size="sm", variant="secondary")
-                        btn.click(
-                            fn=lambda text: text,
-                            inputs=[gr.State(q)],
-                            outputs=[chat_interface.textbox]
-                        )
+        with gr.Accordion("Quick Questions", open=False):
+            with gr.Row(elem_classes="examples-row"):
+                for q in EXAMPLE_QUESTIONS:
+                    btn = gr.Button(q, size="sm", variant="secondary")
+                    btn.click(
+                        fn=lambda text: text,
+                        inputs=[gr.State(q)],
+                        outputs=[chat_interface.textbox]
+                    )
 
-            with gr.Accordion("Reference Documents & Utilities", open=False):
-                gr.Markdown(build_pdf_download_links())
-                gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
-                
-                # Export / Import handlers interacting with ChatInterface's internal chatbot
-                with gr.Row():
-                    export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm")
-                    import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm")
+        with gr.Accordion("Reference Documents & Utilities", open=False):
+            gr.Markdown(build_pdf_download_links())
+            gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
+            
+            # Export / Import handlers interacting with ChatInterface's internal chatbot
+            with gr.Row():
+                export_btn = gr.DownloadButton("Save Conversation", variant="secondary", size="sm")
+                import_btn = gr.UploadButton("Load Conversation", file_types=[".md"], variant="secondary", size="sm")
 
         def handle_export(history):
             if not history:
