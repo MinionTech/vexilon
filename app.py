@@ -1488,7 +1488,7 @@ def build_ui() -> "gr.Blocks":
                     render=False,
                 )
             ],
-            additional_inputs_accordion=gr.Accordion("Role Options", open=True),
+            additional_inputs_accordion=gr.Accordion("Role Options", open=True, render=False),
             examples=[[q, "Lookup"] for q in EXAMPLE_QUESTIONS],
             title=None,
             fill_height=True,
