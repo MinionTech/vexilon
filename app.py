@@ -6,16 +6,15 @@ def chat_fn(message, history, persona):
     return f"Vexilon ({persona} Mode) received: {message}"
 
 with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
-    with gr.Row():
-        with gr.Column(scale=3):
-            gr.Markdown("### BCGEU Navigator")
-        with gr.Column(scale=1):
-            persona = gr.Dropdown(
-                choices=["Lookup", "Grieve", "Manage"],
-                value="Lookup",
-                show_label=False,
-                container=False
-            )
+    with gr.Row(variant="compact"):
+        gr.Markdown("### BCGEU Navigator")
+        persona = gr.Dropdown(
+            choices=["Lookup", "Grieve", "Manage"],
+            value="Lookup",
+            show_label=False,
+            container=False,
+            min_width=100
+        )
     
     gr.ChatInterface(
         fn=chat_fn,
