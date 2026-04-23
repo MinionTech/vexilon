@@ -60,17 +60,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s # Match the slow model loading period
-    depends_on:
-      tests:
-        condition: service_completed_successfully
 
   # ── Testing ──────────────────────────────────────────────────────────────────
   # Mounts source code to allow testing local changes without a rebuild.
   tests:
     <<: *service-defaults
+    profiles: [test]
     build:
       <<: *common-build
       target: test_builder
+
     volumes: *dev-volumes # Overrides x-service-defaults
     environment: *common-env
     command: >
@@ -85,6 +84,7 @@ services:
   # Runs the indexing script against the baked-in code.
   index-refresh:
     <<: *service-defaults
+    profiles: [tools]
     build:
       <<: *common-build
       target: builder
@@ -110,6 +110,7 @@ services:
   # Ensures the FAISS cache is in sync with the source data.
   cache-validator:
     <<: *service-defaults
+    profiles: [tools]
     build:
       <<: *common-build
       target: test_builder
