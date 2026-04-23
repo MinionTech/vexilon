@@ -151,7 +151,9 @@ async def condense_query(message: str, history: list[dict]) -> str:
     # Actually include the history in the messages list (#369)
     messages = []
     for turn in history[-5:]: # Last 5 turns for context
-        messages.append({"role": turn["role"], "content": turn["content"]})
+        role = turn["role"] if isinstance(turn, dict) else turn.role
+        content = turn["content"] if isinstance(turn, dict) else turn.content
+        messages.append({"role": role, "content": content})
     messages.append({"role": "user", "content": f"Condense the above conversation and this new message into a single standalone search query for a RAG system. Return ONLY the search query text: {message}"})
     
     try:
@@ -220,9 +222,9 @@ def history_to_markdown(history: list[dict]) -> str:
     """Convert chat history to a Markdown string for export."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     md = f"# Vexilon Conversation Export - {timestamp}\n\n"
-    for turn in history:
-        role = turn["role"].capitalize()
-        content = turn["content"]
+    for turn in (history or []):
+        role = (turn["role"] if isinstance(turn, dict) else turn.role).capitalize()
+        content = turn["content"] if isinstance(turn, dict) else turn.content
         if isinstance(content, list):
             text_parts = [part.get("text", "") if isinstance(part, dict) else str(part) for part in content]
             content = "".join(text_parts)
@@ -262,6 +264,7 @@ def startup(force_rebuild: bool = False):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
 async def chat_fn(message, history, persona):
+    history = history or []
     if not message:
         yield "", history, gr.update()
         return
