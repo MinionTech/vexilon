@@ -1,32 +1,23 @@
-# Usage: ./.github/scripts/deploy.sh <image_ref> [--prod] [--dry-run]
-# <image_ref> can be a tag (e.g. 'sha-abc123') or a digest (e.g. 'sha256:abc123...')
-# Default: Targets "DerekRoberts/landru" (TEST).
-# Use --prod as second argument to target "DerekRoberts/vexilon".
-
+#!/bin/bash
 # Strict mode + Trace
 set -euo pipefail
 
 # Usage function
 usage() {
-    echo "Usage: $0 <image_ref> [--prod] [--dry-run]"
+    echo "Usage: $0 <space_name> <image_ref> [--dry-run]"
+    echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')"
     echo "  <image_ref>: Tag or digest of the image to deploy"
-    echo "  --prod: Target 'DerekRoberts/vexilon' (default is TEST 'DerekRoberts/landru')"
     echo "  --dry-run: Show what would be done without performing it"
     exit 1
 }
 
+SPACE_NAME=""
 IMAGE_REF=""
-SPACE_NAME="DerekRoberts/landru"
 DRY_RUN=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --prod)
-            echo "[safety] Production mode enabled."
-            SPACE_NAME="DerekRoberts/vexilon"
-            shift
-            ;;
         --dry-run)
             DRY_RUN=true
             shift
@@ -36,10 +27,12 @@ while [[ $# -gt 0 ]]; do
             usage
             ;;
         *)
-            if [ -z "$IMAGE_REF" ]; then
+            if [ -z "$SPACE_NAME" ]; then
+                SPACE_NAME="$1"
+            elif [ -z "$IMAGE_REF" ]; then
                 IMAGE_REF="$1"
             else
-                echo "Error: Multiple image references provided: $IMAGE_REF and $1"
+                echo "Error: Extra argument provided: $1"
                 usage
             fi
             shift
@@ -47,8 +40,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -z "$IMAGE_REF" ]; then
-    echo "Error: Image reference (e.g. 'sha-abc123' or 'sha256:abc123...') must be provided."
+if [ -z "$SPACE_NAME" ] || [ -z "$IMAGE_REF" ]; then
+    echo "Error: Both space_name and image_ref must be provided."
     usage
 fi
 
@@ -105,13 +98,15 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
 fi
 
 # Re-add only the essentials (including app.py as requested)
-# We also need to fix the README.md metadata on-the-fly to use sdk: docker
-sed -i 's/^sdk: gradio/sdk: docker/' README.md
+# Ensure SDK is set to docker in README.md
+sed -i 's/^sdk: .*/sdk: docker/' README.md
 git add Dockerfile README.md app.py
 git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
 # Auth and Push
-git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}" 2>/dev/null || true
+# Remove existing remote to avoid collision/stale URLs
+git remote remove hf 2>/dev/null || true
+git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
 git config --local credential.https://huggingface.co.helper '!f() { echo "username=api"; echo "password=${HF_TOKEN}"; }; f'
 git push hf hf-snapshot:main --force --no-verify
 

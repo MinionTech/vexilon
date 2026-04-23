@@ -42,7 +42,7 @@ jobs:
           if [ -z "$TAG" ]; then
             TAG=$(echo "$BUNDLE" | jq -r '.vexilon')
           fi
-          ./.github/scripts/deploy.sh "$TAG"
+          ./.github/scripts/deploy.sh "DerekRoberts/landru" "$TAG"
 
       - name: Verify Space boots successfully
         env:

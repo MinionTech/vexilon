@@ -49,7 +49,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
-          ./.github/scripts/deploy.sh "$TAG" --prod
+          ./.github/scripts/deploy.sh "DerekRoberts/vexilon" "$TAG"
 
       - name: Verify Space boots successfully
         env:
