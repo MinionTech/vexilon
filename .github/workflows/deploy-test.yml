@@ -1,4 +1,4 @@
-name: Merge
+name: Deploy TEST
 
 on:
   workflow_dispatch:
@@ -7,14 +7,15 @@ on:
         description: 'Image tag to deploy, e.g. sha-abc123def...'
         required: false
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions: {}
 
 jobs:
-  deploy-prod:
+  deploy-test:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: test
     permissions:
       contents: read
       packages: read
@@ -23,11 +24,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Resolve image
         id: resolve
+        if: ${{ !inputs.image_tag }}
         uses: bcgov/actions/image-tracker@main
         with:
           package: vexilon
@@ -36,24 +36,23 @@ jobs:
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          BUNDLE: ${{ steps.resolve.outputs.bundle }}
         run: |
-          # Priority: Manual override -> Automated resolution -> Commit SHA
           TAG="${{ inputs.image_tag }}"
-          [ -z "$TAG" ] && TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon // empty')
-          [ -z "$TAG" ] && TAG="sha-${{ github.sha }}"
-
-          echo "Deploying: $TAG"
+          if [ -z "$TAG" ]; then
+            TAG=$(echo "$BUNDLE" | jq -r '.vexilon')
+          fi
           ./.github/scripts/deploy.sh "$TAG"
 
       - name: Verify Space boots successfully
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: ./.github/scripts/verify_deployment.sh "DerekRoberts/vexilon"
+        run: ./.github/scripts/verify_deployment.sh "DerekRoberts/landru"
 
       - name: Notify Owners on Failure
         if: failure()
         uses: bcgov/actions/workflow-notifier@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "PROD Deployment Failure: Vexilon"
-          labels: "critical,deployment,prod"
+          title: "TEST Deployment Failure: Vexilon"
+          labels: "failure,deployment,test"

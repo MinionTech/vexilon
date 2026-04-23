@@ -1,0 +1,47 @@
+name: Deploy PROD
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Resolve image
+        id: resolve
+        uses: bcgov/actions/image-tracker@main
+        with:
+          package: vexilon
+          token: ${{ github.token }}
+
+      - name: Push image-based stub to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
+          ./.github/scripts/deploy.sh "$TAG" --prod
+
+      - name: Verify Space boots successfully
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: ./.github/scripts/verify_deployment.sh "DerekRoberts/vexilon"
+
+      - name: Notify Owners on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "PROD Deployment Failure: Vexilon"
+          labels: "critical,deployment,prod"
