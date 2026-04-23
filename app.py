@@ -262,21 +262,29 @@ def startup(force_rebuild: bool = False):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
 async def chat_fn(message, history, persona):
-    if not message:
-        yield "", history, gr.update()
-        return
-    
-    # 1. Update history with user message
-    new_history = history + [{"role": "user", "content": message}]
-    yield "", new_history, gr.update(open=False)
-    
-    # 2. Stream assistant response
-    accumulated = ""
-    async for chunk in rag_review_stream(message, history, persona):
-        accumulated += chunk
-        # Update history with current accumulated response
-        current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield "", current_history, gr.update(open=False)
+    try:
+        if not message:
+            yield "", history, gr.update()
+            return
+        
+        # 1. Update history with user message
+        new_history = history + [{"role": "user", "content": message}]
+        yield "", new_history, gr.update(open=False)
+        
+        # 2. Stream assistant response
+        accumulated = ""
+        async for chunk in rag_review_stream(message, history, persona):
+            accumulated += chunk
+            # Update history with current accumulated response
+            current_history = new_history + [{"role": "assistant", "content": accumulated}]
+            yield "", current_history, gr.update(open=False)
+            
+    except Exception as e:
+        logger.error(f"[ui] chat_fn failed: {e}", exc_info=True)
+        # Yield the error to the UI so the user isn't left hanging
+        error_msg = f"❌ **Error:** {str(e)}"
+        error_history = (history or []) + [{"role": "user", "content": message or ""}, {"role": "assistant", "content": error_msg}]
+        yield "", error_history, gr.update()
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
 EXAMPLES = [
@@ -315,7 +323,12 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             interactive=True
         )
     
-    chatbot = gr.Chatbot(show_label=False, scale=1, height="70vh", min_height=400)
+    chatbot = gr.Chatbot(
+        show_label=False, 
+        scale=1, 
+        height="70vh", 
+        min_height=400
+    )
     
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
