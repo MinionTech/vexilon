@@ -1,0 +1,59 @@
+name: Deploy TEST
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy, e.g. sha-abc123def...'
+        required: false
+  push:
+    branches: [feat/**]
+
+permissions: {}
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    environment: test
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve image
+        id: resolve
+        uses: bcgov/actions/image-tracker@main
+        with:
+          package: vexilon
+          token: ${{ github.token }}
+
+      - name: Push image-based stub to Hugging Face Space (Landru)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # Priority: Manual override -> Automated resolution -> Commit SHA
+          TAG="${{ inputs.image_tag }}"
+          [ -z "$TAG" ] && TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon // empty')
+          [ -z "$TAG" ] && TAG="sha-${{ github.sha }}"
+
+          echo "Deploying to Landru: $TAG"
+          ./.github/scripts/deploy.sh "$TAG" "DerekRoberts/landru"
+
+      - name: Verify Space boots successfully
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: ./.github/scripts/verify_deployment.sh "DerekRoberts/landru"
+
+      - name: Notify on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "TEST Deployment (Landru) Failure"
+          labels: "failure,deployment,test"
