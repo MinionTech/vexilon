@@ -344,7 +344,7 @@ _HEAD = """
 </script>
 """
 
-with gr.Blocks(title="BCGEU Navigator", fill_height=True, head=_HEAD) as demo:
+with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     with gr.Row():
         gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
         persona = gr.Dropdown(
@@ -431,4 +431,4 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True, head=_HEAD) as demo:
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
-    demo.launch(server_name="0.0.0.0", server_port=port, css=_CSS)
+    demo.launch(server_name="0.0.0.0", server_port=port, css=_CSS, head=_HEAD)
