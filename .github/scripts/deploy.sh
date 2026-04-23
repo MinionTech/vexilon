@@ -40,9 +40,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -z "$SPACE_NAME" ] || [ -z "$IMAGE_REF" ]; then
-    echo "Error: Both space_name and image_ref must be provided."
+if [ -z "$SPACE_NAME" ]; then
+    echo "Error: space_name (e.g. 'DerekRoberts/landru') must be provided."
     usage
+fi
+
+# Fallback to current short SHA if no image ref provided
+if [ -z "$IMAGE_REF" ]; then
+    IMAGE_REF=$(git rev-parse --short HEAD)
+    echo "[info] No image reference provided. Falling back to current SHA: $IMAGE_REF"
 fi
 
 if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
