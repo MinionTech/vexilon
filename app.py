@@ -153,6 +153,8 @@ async def condense_query(message: str, history: list[dict]) -> str:
     for turn in history[-5:]: # Last 5 turns for context
         role = turn["role"] if isinstance(turn, dict) else turn.role
         content = turn["content"] if isinstance(turn, dict) else turn.content
+        if isinstance(content, list):
+            content = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in content])
         messages.append({"role": role, "content": content})
     messages.append({"role": "user", "content": f"Condense the above conversation and this new message into a single standalone search query for a RAG system. Return ONLY the search query text: {message}"})
     
