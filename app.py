@@ -326,10 +326,23 @@ footer { display: none !important; }
 .message-buttons, .share-button, .undo-button, .retry-button, .copy-button, .clear-button, button[aria-label="Clear"] {
     display: none !important;
 }
+/* Prevent infinite growth in iframes while maintaining responsiveness */
+.is-iframe .gradio-chatbot {
+    max-height: 75vh !important;
+    height: auto !important;
+}
 """
 
 if __name__ == "__main__":
     startup()
+
+_HEAD = """
+<script>
+    if (window.self !== window.top) {
+        document.documentElement.classList.add('is-iframe');
+    }
+</script>
+"""
 
 with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     with gr.Row():
@@ -343,7 +356,13 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             interactive=True
         )
     
-    chatbot = gr.Chatbot(show_label=False, scale=1, height="70vh", min_height=400, buttons=[])
+    chatbot = gr.Chatbot(
+        show_label=False, 
+        scale=1, 
+        height="70vh", 
+        min_height=400, 
+        buttons=[]
+    )
     
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
@@ -412,4 +431,4 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
-    demo.launch(server_name="0.0.0.0", server_port=port, css=_CSS)
+    demo.launch(server_name="0.0.0.0", server_port=port, css=_CSS, head=_HEAD)
