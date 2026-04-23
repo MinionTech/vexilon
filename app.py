@@ -334,7 +334,7 @@ footer { display: none !important; }
 if __name__ == "__main__":
     startup()
 
-with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
+with gr.Blocks(title="BCGEU Navigator", fill_height=False) as demo:
     with gr.Row():
         gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
         persona = gr.Dropdown(
@@ -410,8 +410,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
-    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
+    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox], show_progress="hidden", scroll_to_output=False, js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox"))
+    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox], show_progress="hidden", scroll_to_output=False, js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox"))
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
