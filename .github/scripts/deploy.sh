@@ -1,4 +1,8 @@
 #!/bin/bash
+# Usage: ./.github/scripts/deploy.sh <space_name> <image_ref> [--dry-run]
+# <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')
+# <image_ref>: Tag or digest of the image to deploy (falls back to short SHA if omitted)
+#
 # Strict mode + Trace
 set -euo pipefail
 
@@ -104,8 +108,8 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
 fi
 
 # Re-add only the essentials (including app.py as requested)
-# Ensure SDK is set to docker in README.md
-sed -i 's/^sdk: .*/sdk: docker/' README.md
+# Ensure SDK is set to docker in README.md (portable sed)
+sed 's/^sdk: .*/sdk: docker/' README.md > README.md.tmp && mv README.md.tmp README.md
 git add Dockerfile README.md app.py
 git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
