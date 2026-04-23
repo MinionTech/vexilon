@@ -287,14 +287,6 @@ EXAMPLES = [
     "Does my employer have a social media policy?"
 ]
 
-CLOSE_ACCORDION_JS = """
-() => {
-    const btn = document.querySelector('#quick-questions-accordion .label-wrap');
-    if (btn && btn.classList.contains('open')) {
-        btn.click();
-    }
-}
-"""
 
 _CSS = """
 footer { display: none !important; }
@@ -337,8 +329,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn.click(
                     chat_fn, 
                     [gr.State(q), chatbot, persona], 
-                    [msg, chatbot, toolbox],
-                    js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
+                    [msg, chatbot, toolbox]
                 )
 
         gr.Markdown("---")
@@ -387,8 +378,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox], js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox"))
-    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox], js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox"))
+    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
+    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
