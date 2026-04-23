@@ -56,6 +56,6 @@ The `COPY --from=builder /app/hf_cache /app/hf_cache` line in the Containerfile 
 | `.github/workflows/pr-open.yml` | Tests + builds Docker image on PR |
 | `.github/workflows/deploy-test.yml` | Deploys to test HF Space on push to main |
 | `.github/workflows/deploy-prod.yml` | Deploys to prod HF Space on release |
-| `.github/scripts/deploy.sh` | Pushes stub Dockerfile + README to HF Space |
+| `.github/scripts/deploy.sh` | Pushes stub Dockerfile + README to HF Space. Usage: `<space_name> [image_ref] [--dry-run]` |
 | `Containerfile` | Multi-stage Docker build |
 | `tests/test_deploy_integrity.py` | Automated checks for the constraints above |
