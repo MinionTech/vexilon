@@ -1,16 +1,16 @@
 #!/bin/bash
-# Usage: ./.github/scripts/deploy.sh <space_name> <image_ref> [--dry-run]
+# Usage: ./.github/scripts/deploy.sh <space_name> [image_ref] [--dry-run]
 # <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')
-# <image_ref>: Tag or digest of the image to deploy (falls back to short SHA if omitted)
+# [image_ref]: Tag or digest of the image to deploy (falls back to short SHA if omitted)
 #
 # Strict mode + Trace
 set -euo pipefail
 
 # Usage function
 usage() {
-    echo "Usage: $0 <space_name> <image_ref> [--dry-run]"
+    echo "Usage: $0 <space_name> [image_ref] [--dry-run]"
     echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')"
-    echo "  <image_ref>: Tag or digest of the image to deploy"
+    echo "  [image_ref]: Tag or digest of the image to deploy"
     echo "  --dry-run: Show what would be done without performing it"
     exit 1
 }
