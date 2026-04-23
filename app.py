@@ -292,7 +292,7 @@ async def chat_fn(message, history, persona):
         accumulated += chunk
         # Update history with current accumulated response
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield gr.update(value=""), current_history, gr.update(open=False)
+        yield gr.update(), current_history, gr.update(open=False)
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
 EXAMPLES = [
