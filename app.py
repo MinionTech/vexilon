@@ -323,7 +323,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             interactive=True
         )
     
-    chatbot = gr.Chatbot(show_label=False, scale=1, min_height=400, buttons=[])
+    chatbot = gr.Chatbot(show_label=False, scale=1, height="70vh", min_height=400)
     
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
@@ -383,7 +383,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             &nbsp;&nbsp;•&nbsp;&nbsp;
             <a href="{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md" target="_blank" style="color: #3b82f6; text-decoration: none;">Privacy</a>
             &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{VEXILON_REPO_URL}" target="_blank" style="color: #3b82f6; text-decoration: none;">{VEXILON_VERSION}</a>
+            <a href="{VEXILON_REPO_URL}" target="_blank" style="color: #3b82f6; text-decoration: none;">{VEXILON_VERSION[:11]}</a>
         </div>
     """)
 
