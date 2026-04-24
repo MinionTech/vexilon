@@ -89,8 +89,8 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 # ── Final Environment ────────────────────────────────────────────────────────
-ARG VERSION
-ARG REPO_URL
+ARG VERSION="Dev mode"
+ARG REPO_URL="https://github.com/DerekRoberts/vexilon"
 ENV VEXILON_VERSION=$VERSION
 ENV VEXILON_REPO_URL=$REPO_URL
 
