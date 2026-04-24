@@ -1,5 +1,5 @@
-# BCGEU Navigator - UI Version: 2026-04-22_13-17
-# Integrated RAG Backend + Stabilized Gradio 6 UI
+# BCGEU Navigator - UI Version: 2026-04-24_17-00
+# Integrated RAG Backend + Stabilized Gradio 6 ChatInterface
 import os
 import sys
 import re
@@ -226,22 +226,6 @@ def get_persona_prompt(mode_name: str) -> str:
     return f"{rules}\n\nROLE: {persona}"
 
 # ─── Verification & Anthropic Helpers ───────────────────────────────────────
-VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
-VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
-
-For each claim in the response:
-1. Check if the quoted text actually supports the claim being made
-2. Check if the citation (document name, article/section, page number) is accurate
-3. Identify any hallucinations, misquotes, or unsupported claims
-
-Respond in this format:
-- VERIFIED: [claim summary] — the quote supports the claim
-- DISPUTED: [claim summary] — the quote does NOT support the claim
-- UNCERTAIN: [claim summary] — cannot verify due to unclear citation
-
-If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
-If there are disputed claims, list them with explanations."""
-
 _anthropic_client = None
 def get_anthropic() -> anthropic.AsyncAnthropic:
     global _anthropic_client
@@ -249,45 +233,11 @@ def get_anthropic() -> anthropic.AsyncAnthropic:
         _anthropic_client = anthropic.AsyncAnthropic()
     return _anthropic_client
 
-async def verify_response(assistant_response: str, context: str) -> str:
-    if not VERIFY_ENABLED: return ""
-    client = get_anthropic()
-    try:
-        verify_resp = await client.messages.create(
-            model=VERIFY_MODEL,
-            max_tokens=512,
-            system=[{"type": "text", "text": VERIFY_SYSTEM_PROMPT}],
-            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}],
-        )
-        return verify_resp.content[0].text
-    except Exception as exc:
-        return f"⚠️ Verification unavailable: {exc}"
-
-def get_system_prompt(developer_mode: bool = False) -> str:
+def get_system_prompt() -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
     header = f"--- VEXILON SYSTEM STATE ---\nDATE: {now}\nVERSION: {VEXILON_VERSION}\n----------------------------\n\n"
-    content = "You are Vexilon, a professional assistant for BCGEU union stewards.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
+    content = "You are Vexilon, a professional assistant for BCGEU union stewards."
     return f"{header}{content}"
-
-async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
-    """Yields (chunk, context) for tests and legacy callers."""
-    if _index is None:
-        yield "⚠️ Knowledge base not loaded.", ""
-        return
-    queries, context = await get_multi_perspective_context(message, history)
-    yield "", context
-    client = get_anthropic()
-    async with client.messages.stream(
-        model=CLAUDE_MODEL,
-        max_tokens=RAG_MAX_TOKENS,
-        system=[
-            {"type": "text", "text": get_system_prompt().format(manifest="", verify_message=""), "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": f"Context:\n{context}", "cache_control": {"type": "ephemeral"}},
-        ],
-        messages=history + [{"role": "user", "content": message}],
-    ) as stream:
-        async for chunk in stream.text_stream:
-            yield chunk, ""
 
 # ─── RAG Pipeline Functions ─────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
@@ -324,7 +274,6 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
-        # More robust extraction using regex to find the JSON block
         text = resp.content[0].text
         match = re.search(r"\[.*\]", text, re.DOTALL)
         if match:
@@ -336,7 +285,6 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
     condensed = await condense_query(message, history)
-    # Issue #361: Heuristic for complexity
     if len(condensed.split()) > 10:
         queries = await generate_perspective_queries(condensed, history)
     else:
@@ -354,7 +302,7 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
     return queries, "\n\n".join(context_parts)
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", all_chunks: list[dict] = None) -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup") -> AsyncIterator[str]:
     if _index is None:
         yield "⚠️ Index not ready."
         return
@@ -362,7 +310,6 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
     queries, context = await get_multi_perspective_context(message, history)
     query = queries[0]
     
-    # ── Audit Logic (Restored) ──────────────────────────────────────────────
     system_prompt = get_persona_prompt(persona_mode)
     if persona_mode in ("Grieve", "Manage"):
         matched_tests = _test_registry.find_matches(message + " " + query)
@@ -371,9 +318,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             system_prompt += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
             system_prompt += f"CRITERIA:\n{test.content}\n"
 
-    # Simple Draft Step
     client = get_anthropic()
-    prompt = f"Context from Knowledge Base:\n{context}\n\nQuestion: {message}"
     
     async with client.messages.stream(
         model=CLAUDE_MODEL,
@@ -382,7 +327,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}},
             {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
         ],
-        messages=[{"role": "user", "content": message}],
+        messages=history + [{"role": "user", "content": message}],
     ) as stream:
         async for text in stream.text_stream:
             yield text
@@ -394,8 +339,6 @@ def _get_download_source_files() -> list[Path]:
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(list(set(pdfs)), key=lambda p: str(p))
-
-# (Obsolete build_pdf_download_links removed)
 
 def history_to_markdown(history: list[dict]) -> str:
     """Convert chat history to a Markdown string for export."""
@@ -446,40 +389,36 @@ async def chat_fn(message, history, persona, request: gr.Request = None):
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield gr.update(), history + [{"role": "assistant", "content": rate_msg}], gr.update()
+        yield rate_msg
         return
 
-    msg_str = message
-    if isinstance(message, list):
-        msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
+    # Extract message string robustly
+    if isinstance(message, dict):
+        msg_str = message.get("text", "")
+    elif hasattr(message, "text"):
+        msg_str = message.text
+    else:
+        msg_str = str(message)
     
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield gr.update(), history + [{"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
+        yield "⚠️ Input flagged for security review."
         return
 
     # Normalization for Gradio 6 / Backend compatibility
-    if history:
-        history = [
-            h if isinstance(h, dict) else {"role": h.role, "content": h.content}
-            for h in history
-        ]
-    history = history or []
+    history_dicts = []
+    for h in history:
+        if hasattr(h, "role"):
+            history_dicts.append({"role": h.role, "content": h.content})
+        elif isinstance(h, dict):
+            history_dicts.append(h)
     
-    if not message:
-        yield gr.update(value=""), history, gr.update()
+    if not msg_str:
+        yield ""
         return
         
-    new_history = history + [{"role": "user", "content": sanitized}]
-    yield gr.update(value=""), new_history, gr.update(open=False)
-    
-    # 2. Stream assistant response
-    accumulated = ""
-    async for chunk in rag_review_stream(sanitized, history, persona):
-        accumulated += chunk
-        # Update history with current accumulated response
-        current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield gr.update(), current_history, gr.update(open=False)
+    async for chunk in rag_review_stream(sanitized, history_dicts, persona):
+        yield chunk
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
 EXAMPLES = [
@@ -490,18 +429,8 @@ EXAMPLES = [
     "Does my employer have a social media policy?"
 ]
 
-CLOSE_ACCORDION_JS = """
-() => {
-    const btn = document.querySelector('#quick-questions-accordion .label-wrap');
-    if (btn && btn.classList.contains('open')) {
-        btn.click();
-    }
-}
-"""
-
 _CSS = """
 footer { display: none !important; }
-/* Hanging indent for the Resources & Utilities list items */
 #steward-toolbox .prose ul {
     list-style-position: outside;
     padding-left: 1.5rem;
@@ -509,41 +438,24 @@ footer { display: none !important; }
 #steward-toolbox .prose li {
     margin-bottom: 0.5rem;
 }
-/* Aggressive button suppression for Gradio 6.x UI stability */
+/* Aggressive button suppression for Gradio UI stability */
 .message-buttons, .share-button, .undo-button, .retry-button, .copy-button, .clear-button, button[aria-label="Clear"] {
     display: none !important;
 }
-/* Prevent infinite growth in iframes while maintaining responsiveness */
-.is-iframe .gradio-chatbot {
-    max-height: 75vh !important;
-    height: auto !important;
-}
 """
-
-if __name__ == "__main__":
-    startup()
-
-def build_ui() -> gr.Blocks:
-    """Export the demo object for tests."""
-    return demo
 
 _HEAD = """
 <script>
     if (window.self !== window.top) {
         document.documentElement.classList.add('is-iframe');
     }
-    // Handle Enter key for submission (Issue #118)
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            const textarea = document.querySelector('.gradio-container textarea');
-            if (textarea && document.activeElement === textarea) {
-                e.preventDefault();
-                const sendBtn = document.querySelector('button.primary');
-                if (sendBtn) sendBtn.click();
-            }
-        }
-    }, true);
 </script>
+<style>
+    .is-iframe .gradio-chatbot {
+        max-height: 75vh !important;
+        height: auto !important;
+    }
+</style>
 """
 
 with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
@@ -558,43 +470,41 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             interactive=True
         )
     
-    chatbot = gr.Chatbot(
-        show_label=False, 
-        scale=1, 
-        height="70vh", 
-        min_height=400, 
-        buttons=[]
+    chat_interface = gr.ChatInterface(
+        fn=chat_fn,
+        additional_inputs=[persona],
+        examples=[[q, "Lookup"] for q in EXAMPLES],
+        textbox=gr.Textbox(placeholder="Type a message...", container=False, scale=7),
+        fill_height=True,
     )
-    
-    with gr.Row():
-        msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
-        submit = gr.Button("Send", variant="primary", scale=1)
 
-    with gr.Accordion("Toolbox", open=False, elem_id="steward-toolbox") as toolbox:
-        gr.Markdown("### Examples")
+    with gr.Accordion("Reference Tools", open=False, elem_id="steward-toolbox") as toolbox:
+        gr.Markdown("### Quick Questions")
         with gr.Row():
             for q in EXAMPLES:
                 example_btn = gr.Button(q, size="sm", variant="secondary")
                 example_btn.click(
-                    chat_fn, 
-                    [gr.State(q), chatbot, persona], 
-                    [msg, chatbot, toolbox],
-                    js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
+                    fn=lambda x: x,
+                    inputs=[gr.State(q)],
+                    outputs=[chat_interface.textbox]
+                ).then(
+                    fn=None,
+                    inputs=None,
+                    outputs=None,
+                    js="() => { document.querySelector('#steward-toolbox').parentElement.querySelector('button.primary')?.click(); }"
                 )
 
         gr.Markdown("---")
         if INTEGRITY_WARNING:
             gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-        gr.Markdown("### Reference Documents")
         
-        # Use native Gradio components for reliable file serving on HF Spaces and Localhost
+        gr.Markdown("### Reference Documents")
         files = _get_download_source_files()
         for f in files:
             display_name = f.stem.replace("_", " ").title()
             display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
             display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
             
-            # Restore the relative path improvement for container reliability
             try:
                 val = str(f.relative_to(Path.cwd()))
             except ValueError:
@@ -613,7 +523,9 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     # ── Export / Import Handlers ──────────────────────────────────────────
     def handle_export(history):
         if not history: return None
-        md_str = history_to_markdown(history)
+        # Convert ChatMessage to dict if needed
+        history_dicts = [{"role": h.role, "content": h.content} if hasattr(h, "role") else h for h in history]
+        md_str = history_to_markdown(history_dicts)
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         filename = f"vexilon_chat_{timestamp}.md"
         save_path = os.path.join(tempfile.gettempdir(), filename)
@@ -622,7 +534,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
         return save_path
 
-    export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
+    # Use the internal chatbot component of ChatInterface for export
+    export_btn.click(fn=handle_export, inputs=[chat_interface.chatbot], outputs=[export_btn])
 
     def handle_import(file):
         if file is None: return gr.update()
@@ -632,7 +545,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             logger.error("[ui] Import failed", exc_info=True)
             return gr.update()
 
-    import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
+    import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chat_interface.chatbot])
 
     gr.HTML(f"""
         <div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
@@ -644,14 +557,10 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
-    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
-
 if __name__ == "__main__":
+    startup()
     port = int(os.getenv("PORT", 7860))
     
-    # Restore allowed_paths for local file serving (fixes 404s for PDFs)
-    # Using resolve() ensures we handle symlinks and container volume mounts correctly
     allowed_paths = [
         str(LABOUR_LAW_DIR.resolve()), 
         str(Path("docs").resolve()),
@@ -659,7 +568,6 @@ if __name__ == "__main__":
         os.getcwd()
     ]
     
-    # Restore basic auth if configured in environment
     vex_password = os.getenv("VEXILON_PASSWORD")
     auth = None
     if vex_password:
