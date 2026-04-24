@@ -124,7 +124,9 @@ jobs:
           build_context: .
           build_file: Containerfile
           tags: sha-${{ env.IMAGE_SHA }}
-          build_args: VERSION=sha-${{ env.IMAGE_SHA }}
+          build_args: |
+            VERSION=sha-${{ env.IMAGE_SHA }}
+            REPO_URL=https://github.com/${{ github.repository }}
 
   container_test:
     name: Container Smoke Test

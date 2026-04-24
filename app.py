@@ -634,13 +634,14 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
 
     import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
 
+    _URL_VEXILON_VERSION = urllib.parse.quote(VEXILON_VERSION)
     gr.HTML(f"""
         <div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
             <a href="{VEXILON_REPO_URL}" target="_blank" style="color: #3b82f6; text-decoration: none;">GitHub</a>
             &nbsp;&nbsp;•&nbsp;&nbsp;
             <a href="{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md" target="_blank" style="color: #3b82f6; text-decoration: none;">Privacy</a>
             &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{VEXILON_REPO_URL}" target="_blank" style="color: #3b82f6; text-decoration: none;">{VEXILON_VERSION[:11]}</a>
+            <a href="{VEXILON_REPO_URL}/pkgs/container/vexilon/versions?filters%5Bversion_type%5D=tagged&query={_URL_VEXILON_VERSION}" target="_blank" style="color: #3b82f6; text-decoration: none;">{VEXILON_VERSION[:11]}</a>
         </div>
     """)
 
