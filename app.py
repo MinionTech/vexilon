@@ -32,6 +32,11 @@ from vexilon.indexing import (
     search_index_batch,
     _fetch_pdf_cache_if_missing,
     LABOUR_LAW_DIR,
+    get_embed_model,
+    EMBED_DIM,
+    chunk_text,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
 )
 
 # ─── Global State & Config ──────────────────────────────────────────────────
@@ -61,6 +66,50 @@ VERIFY_MODEL = os.getenv("VEXILON_VERIFY_MODEL", DEFAULT_MODEL_LLM)
 
 RAG_MAX_TOKENS = 4096
 REVIEWER_MAX_TOKENS = 4096
+
+MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", 10000))
+LOG_SUSPICIOUS_INPUTS = os.getenv("LOG_SUSPICIOUS_INPUTS", "true").lower() == "true"
+
+PROMPT_INJECTION_PATTERNS = [
+    re.compile(r, re.IGNORECASE)
+    for r in [
+        r"ignore\s+.*instructions",
+        r"forget\s+.*instructions",
+        r"disregard\s+.*rules",
+        r"you\s+are\s+now\s+.+\s+instead",
+        r"new\s+(system\s+|)prompt:",
+        r"#\#\#\s*(system\s+|)instructions",
+        r"\[\[SYSTEM\]\]",
+        r"override\s+.*instructions",
+        r"disable\s+.*safety",
+        r"\bjailbreak\b",
+        r"developer\s+mode",
+        r"sudo\s+mode",
+        r"roleplay\s+as",
+        r"pretend\s+(you\s+are|to\s+be)",
+        r"forget\s+everything\s+above",
+        r"discard\s+.*instructions",
+    ]
+]
+
+def sanitize_input(user_input: str) -> tuple[str, bool]:
+    """Check for prompt injection patterns and length limits."""
+    if not user_input:
+        return user_input, False
+
+    injection_found = False
+    for pattern in PROMPT_INJECTION_PATTERNS:
+        if pattern.search(user_input):
+            injection_found = True
+            if LOG_SUSPICIOUS_INPUTS:
+                logger.warning(f"[security] Prompt injection detected: {pattern.pattern[:100]}...")
+            break
+
+    too_long = len(user_input) > MAX_INPUT_LENGTH
+    if too_long and LOG_SUSPICIOUS_INPUTS:
+        logger.warning(f"[security] Input too long: {len(user_input)}")
+
+    return user_input[:MAX_INPUT_LENGTH], injection_found or too_long
 
 # ─── Test Registry Logic ────────────────────────────────────────────────────
 class TestDoctrine:
@@ -109,6 +158,40 @@ class TestRegistry:
 _test_registry = TestRegistry()
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
 
+# ─── Rate Limiter ───────────────────────────────────────────────────────────
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
+RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "100"))
+
+class RateLimiter:
+    def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
+        self.minute_limit = max_per_minute
+        self.hour_limit = max_per_hour
+        self.requests: dict[str, list[float]] = {}
+        self._lock = Lock()
+
+    def _clean_old_requests(self, key: str) -> None:
+        now = time.time()
+        hour_ago = now - 3600
+        if key in self.requests:
+            self.requests[key] = [t for t in self.requests[key] if t > hour_ago]
+            if not self.requests[key]: del self.requests[key]
+
+    def is_allowed(self, user_id: str = "default") -> tuple[bool, str]:
+        with self._lock:
+            self._clean_old_requests(user_id)
+            now = time.time()
+            minute_ago = now - 60
+            requests = self.requests.get(user_id, [])
+            recent = [t for t in requests if t > minute_ago]
+            if len(recent) >= self.minute_limit:
+                return False, f"Rate limit exceeded: {self.minute_limit} per minute."
+            if len(requests) >= self.hour_limit:
+                return False, f"Rate limit exceeded: {self.hour_limit} per hour."
+            self.requests.setdefault(user_id, []).append(now)
+            return True, ""
+
+_rate_limiter = RateLimiter(RATE_LIMIT_PER_MINUTE, RATE_LIMIT_PER_HOUR)
+
 # ─── RAG Pipeline Constants ─────────────────────────────────────────────────
 _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
 _JOKE_KEYWORDS = {"joke", "funny", "nose", "pick", "mad", "angry", "boss", "dumb", "stupid"}
@@ -142,60 +225,164 @@ def get_persona_prompt(mode_name: str) -> str:
     
     return f"{rules}\n\nROLE: {persona}"
 
+# ─── Verification & Anthropic Helpers ───────────────────────────────────────
+VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
+VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
+
+For each claim in the response:
+1. Check if the quoted text actually supports the claim being made
+2. Check if the citation (document name, article/section, page number) is accurate
+3. Identify any hallucinations, misquotes, or unsupported claims
+
+Respond in this format:
+- VERIFIED: [claim summary] — the quote supports the claim
+- DISPUTED: [claim summary] — the quote does NOT support the claim
+- UNCERTAIN: [claim summary] — cannot verify due to unclear citation
+
+If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
+If there are disputed claims, list them with explanations."""
+
+_anthropic_client = None
+def get_anthropic() -> anthropic.AsyncAnthropic:
+    global _anthropic_client
+    if _anthropic_client is None:
+        _anthropic_client = anthropic.AsyncAnthropic()
+    return _anthropic_client
+
+async def verify_response(assistant_response: str, context: str) -> str:
+    if not VERIFY_ENABLED: return ""
+    client = get_anthropic()
+    try:
+        verify_resp = await client.messages.create(
+            model=VERIFY_MODEL,
+            max_tokens=512,
+            system=[{"type": "text", "text": VERIFY_SYSTEM_PROMPT}],
+            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}],
+        )
+        return verify_resp.content[0].text
+    except Exception as exc:
+        return f"⚠️ Verification unavailable: {exc}"
+
+def get_system_prompt(developer_mode: bool = False) -> str:
+    now = datetime.datetime.now().strftime("%Y-%m-%d")
+    header = f"--- VEXILON SYSTEM STATE ---\nDATE: {now}\nVERSION: {VEXILON_VERSION}\n----------------------------\n\n"
+    content = "You are Vexilon, a professional assistant for BCGEU union stewards.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
+    return f"{header}{content}"
+
+async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
+    """Yields (chunk, context) for tests and legacy callers."""
+    if _index is None:
+        yield "⚠️ Knowledge base not loaded.", ""
+        return
+    queries, context = await get_multi_perspective_context(message, history)
+    yield "", context
+    client = get_anthropic()
+    async with client.messages.stream(
+        model=CLAUDE_MODEL,
+        max_tokens=RAG_MAX_TOKENS,
+        system=[
+            {"type": "text", "text": get_system_prompt().format(manifest="", verify_message=""), "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": f"Context:\n{context}", "cache_control": {"type": "ephemeral"}},
+        ],
+        messages=history + [{"role": "user", "content": message}],
+    ) as stream:
+        async for chunk in stream.text_stream:
+            yield chunk, ""
+
 # ─── RAG Pipeline Functions ─────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
     """Turn the conversation history and new message into a standalone search query."""
-    if isinstance(message, list):
-        message = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     if not history: return message
-    client = anthropic.AsyncAnthropic()
+    client = get_anthropic()
     
-    # Actually include the history in the messages list (#369)
-    messages = []
-    for turn in history[-5:]: # Last 5 turns for context
-        role = turn["role"] if isinstance(turn, dict) else turn.role
+    history_text = ""
+    for turn in history[-5:]:
+        role = (turn["role"] if isinstance(turn, dict) else turn.role).capitalize()
         content = turn["content"] if isinstance(turn, dict) else turn.content
         if isinstance(content, list):
             content = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in content])
-        messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": f"Condense the above conversation and this new message into a single standalone search query for a RAG system. Return ONLY the search query text: {message}"})
+        history_text += f"{role}: {content}\n"
     
+    prompt = f"CONVERSATION HISTORY:\n{history_text}\nUSER MESSAGE: {message}\n\nTask: Condense into a standalone search query."
     try:
-        response = await client.messages.create(
+        resp = await client.messages.create(
             model=CONDENSE_MODEL,
             max_tokens=100,
-            messages=messages,
+            messages=[{"role": "user", "content": prompt}]
         )
-        return response.content[0].text.strip().strip('"')
-    except Exception as e:
-        logger.error(f"[rag] Condense failed: {e}")
+        return resp.content[0].text.strip().strip('"')
+    except Exception:
         return message
+
+async def generate_perspective_queries(message: str, history: list[dict]) -> list[str]:
+    """Generate 3 different search perspectives for a complex query."""
+    client = get_anthropic()
+    prompt = f"Given this user message: '{message}', generate 3 different standalone search queries that look at this from different angles (e.g. legal, procedural, factual). Return ONLY a JSON list of strings."
+    try:
+        resp = await client.messages.create(
+            model=CONDENSE_MODEL,
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        # More robust extraction using regex to find the JSON block
+        text = resp.content[0].text
+        match = re.search(r"\[.*\]", text, re.DOTALL)
+        if match:
+            import json
+            return json.loads(match.group(0))
+        return [message]
+    except Exception:
+        return [message]
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
     condensed = await condense_query(message, history)
-    # Simplified retrieval call
-    queries = [condensed]
-    all_relevant_chunks = await asyncio.to_thread(search_index_batch, _index, _chunks, queries, [10])
-    context = "\n\n".join([f"[Source: {c['source']}]\n{c['text']}" for c in all_relevant_chunks[0]])
-    return queries, context
+    # Issue #361: Heuristic for complexity
+    if len(condensed.split()) > 10:
+        queries = await generate_perspective_queries(condensed, history)
+    else:
+        queries = [condensed]
+    
+    all_res = search_index_batch(_index, _chunks, queries, [5] * len(queries))
+    seen = set()
+    context_parts = []
+    for res_list in all_res:
+        for c in res_list:
+            if c["text"] not in seen:
+                seen.add(c["text"])
+                source = c.get("source", "Unknown")
+                page = c.get("page", "?")
+                context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
+    return queries, "\n\n".join(context_parts)
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup") -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", all_chunks: list[dict] = None) -> AsyncIterator[str]:
     if _index is None:
         yield "⚠️ Index not ready."
         return
 
     queries, context = await get_multi_perspective_context(message, history)
+    query = queries[0]
     
-    # Simple Draft Step
-    client = anthropic.AsyncAnthropic()
+    # ── Audit Logic (Restored) ──────────────────────────────────────────────
     system_prompt = get_persona_prompt(persona_mode)
+    if persona_mode in ("Grieve", "Manage"):
+        matched_tests = _test_registry.find_matches(message + " " + query)
+        for test in matched_tests:
+            system_prompt += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+            system_prompt += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
+            system_prompt += f"CRITERIA:\n{test.content}\n"
+
+    # Simple Draft Step
+    client = get_anthropic()
     prompt = f"Context from Knowledge Base:\n{context}\n\nQuestion: {message}"
     
     async with client.messages.stream(
         model=CLAUDE_MODEL,
         max_tokens=2048,
-        system=system_prompt,
-        messages=[{"role": "user", "content": prompt}],
+        system=[
+            {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
+        ],
+        messages=[{"role": "user", "content": message}],
     ) as stream:
         async for text in stream.text_stream:
             yield text
@@ -208,32 +395,19 @@ def _get_download_source_files() -> list[Path]:
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(list(set(pdfs)), key=lambda p: str(p))
 
-def build_pdf_download_links() -> str:
-    """Scan labour_law for PDFs and return a Markdown list of download links."""
-    files = _get_download_source_files()
-    if not files: return ""
-    lines = []
-    for f in files:
-        display_name = f.stem.replace("_", " ").title()
-        display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
-        display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
-        rel_path = f.relative_to(Path("."))
-        encoded_path = urllib.parse.quote(str(rel_path))
-        lines.append(f"* [{display_name}](/file={encoded_path})")
-    return "\n".join(lines)
+# (Obsolete build_pdf_download_links removed)
 
 def history_to_markdown(history: list[dict]) -> str:
     """Convert chat history to a Markdown string for export."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    md = f"# Vexilon Conversation Export - {timestamp}\n\n"
+    lines = [f"# Vexilon Conversation Export - {timestamp}\n"]
     for turn in (history or []):
         role = (turn["role"] if isinstance(turn, dict) else turn.role).capitalize()
         content = turn["content"] if isinstance(turn, dict) else turn.content
         if isinstance(content, list):
-            text_parts = [part.get("text", "") if isinstance(part, dict) else str(part) for part in content]
-            content = "".join(text_parts)
-        md += f"### {role}\n{content}\n\n"
-    return md
+            content = "".join([part.get("text", "") if isinstance(part, dict) else str(part) for part in content])
+        lines.append(f"### {role}\n{content}\n")
+    return "\n".join(lines)
 
 def markdown_to_history(file_path: str) -> list[dict]:
     """Parse a Markdown conversation file back into a list of dicts."""
@@ -267,28 +441,41 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-async def chat_fn(message, history, persona):
-    # Convert Gradio 6 ChatMessage objects to dictionaries for backend compatibility
+async def chat_fn(message, history, persona, request: gr.Request = None):
+    # 0. Rate Limit & Security Check
+    user_id = request.client.host if request else "default"
+    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
+    if not allowed:
+        yield gr.update(), history + [{"role": "assistant", "content": rate_msg}], gr.update()
+        return
+
+    msg_str = message
+    if isinstance(message, list):
+        msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
+    
+    sanitized, flagged = sanitize_input(msg_str)
+    if flagged:
+        yield gr.update(), history + [{"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
+        return
+
+    # Normalization for Gradio 6 / Backend compatibility
     if history:
         history = [
             h if isinstance(h, dict) else {"role": h.role, "content": h.content}
             for h in history
         ]
     history = history or []
+    
     if not message:
         yield gr.update(value=""), history, gr.update()
         return
-    
-    # 1. Update history with user message
-    if isinstance(message, list):
-        message = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
         
-    new_history = history + [{"role": "user", "content": message}]
+    new_history = history + [{"role": "user", "content": sanitized}]
     yield gr.update(value=""), new_history, gr.update(open=False)
     
     # 2. Stream assistant response
     accumulated = ""
-    async for chunk in rag_review_stream(message, history, persona):
+    async for chunk in rag_review_stream(sanitized, history, persona):
         accumulated += chunk
         # Update history with current accumulated response
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
@@ -336,11 +523,26 @@ footer { display: none !important; }
 if __name__ == "__main__":
     startup()
 
+def build_ui() -> gr.Blocks:
+    """Export the demo object for tests."""
+    return demo
+
 _HEAD = """
 <script>
     if (window.self !== window.top) {
         document.documentElement.classList.add('is-iframe');
     }
+    // Handle Enter key for submission (Issue #118)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const textarea = document.querySelector('.gradio-container textarea');
+            if (textarea && document.activeElement === textarea) {
+                e.preventDefault();
+                const sendBtn = document.querySelector('button.primary');
+                if (sendBtn) sendBtn.click();
+            }
+        }
+    }, true);
 </script>
 """
 
@@ -383,7 +585,23 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         gr.Markdown("---")
         if INTEGRITY_WARNING:
             gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-        gr.Markdown(f"### Reference Documents\n{build_pdf_download_links()}")
+        gr.Markdown("### Reference Documents")
+        
+        # Use native Gradio components for reliable file serving on HF Spaces and Localhost
+        files = _get_download_source_files()
+        for f in files:
+            display_name = f.stem.replace("_", " ").title()
+            display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
+            display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
+            
+            # Restore the relative path improvement for container reliability
+            try:
+                val = str(f.relative_to(Path.cwd()))
+            except ValueError:
+                val = str(f.resolve())
+                
+            gr.DownloadButton(display_name, value=val, size="sm", variant="secondary")
+            
         gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
         
         gr.Markdown("---")
@@ -431,4 +649,29 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
-    demo.launch(server_name="0.0.0.0", server_port=port, css=_CSS, head=_HEAD)
+    
+    # Restore allowed_paths for local file serving (fixes 404s for PDFs)
+    # Using resolve() ensures we handle symlinks and container volume mounts correctly
+    allowed_paths = [
+        str(LABOUR_LAW_DIR.resolve()), 
+        str(Path("docs").resolve()),
+        str(Path("data").resolve()),
+        os.getcwd()
+    ]
+    
+    # Restore basic auth if configured in environment
+    vex_password = os.getenv("VEXILON_PASSWORD")
+    auth = None
+    if vex_password:
+        vex_user = os.getenv("VEXILON_USERNAME", "admin")
+        auth = (vex_user, vex_password)
+        logger.info(f"[startup] Authentication enabled for user '{vex_user}'")
+
+    demo.launch(
+        server_name="0.0.0.0", 
+        server_port=port, 
+        allowed_paths=allowed_paths,
+        auth=auth,
+        css=_CSS, 
+        head=_HEAD
+    )
