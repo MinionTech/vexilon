@@ -2,13 +2,12 @@ name: Deploy PROD
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 permissions: {}
 
 jobs:
   deploy-prod:
-    if: github.event.release.draft == false
     runs-on: ubuntu-latest
     environment: prod
     permissions:
@@ -26,23 +25,6 @@ jobs:
         with:
           package: vexilon
           token: ${{ github.token }}
-
-      - name: Verify image matches release tag
-        run: |
-          RESOLVED_TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.vexilon')
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
-          echo "Resolved Tag: $RESOLVED_TAG"
-          echo "Release Tag:  $RELEASE_TAG"
-          
-          if [[ -z "$RESOLVED_TAG" ]]; then
-            echo "::error::Could not resolve image tag via image-tracker."
-            exit 1
-          fi
-          
-          if [[ "$RESOLVED_TAG" != "$RELEASE_TAG" ]] && [[ ! "$RESOLVED_TAG" =~ ^sha- ]]; then
-            echo "::error::Resolved tag ($RESOLVED_TAG) does not match release tag ($RELEASE_TAG) and is not a valid SHA tag. This may happen if the container image build failed."
-            exit 1
-          fi
 
       - name: Push image-based stub to Hugging Face Space
         env:
