@@ -694,9 +694,15 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         with gr.Row():
             for q in EXAMPLES:
                 example_btn = gr.Button(q, size="sm", variant="secondary")
+                def make_handler(query):
+                    async def handler(hist, pers, req: gr.Request = None):
+                        async for update in chat_fn(query, hist, pers, req):
+                            yield update
+                    return handler
+
                 example_btn.click(
-                    chat_fn, 
-                    [gr.State(q), chatbot, persona], 
+                    make_handler(q), 
+                    [chatbot, persona], 
                     [msg, chatbot, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
