@@ -32,12 +32,12 @@ x-service-defaults: &service-defaults
   mem_limit: *MEM_LIMIT
   memswap_limit: *MEM_LIMIT
   volumes:
-    - ./.pdf_cache:/app/.pdf_cache:z
+    - pdf_cache:/app/.pdf_cache
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
   - .:/app:z
-  - ./.pdf_cache:/app/.pdf_cache:z
+  - pdf_cache:/app/.pdf_cache
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
   - /app/hf_cache      # Lifeboat for the model
@@ -135,7 +135,7 @@ services:
     profiles: ["dev", "ollama"]
     ports: ["11434:11434"]
     volumes:
-      - ./.ollama:/root/.ollama:z
+      - ollama_data:/root/.ollama
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -151,3 +151,9 @@ services:
         condition: service_healthy
     command: >
       sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"${OLLAMA_MODEL:-qwen2.5:7b}\"}'"
+
+volumes:
+  pdf_cache:
+    description: "FAISS index and PDF chunk cache"
+  ollama_data:
+    description: "Ollama model storage"
