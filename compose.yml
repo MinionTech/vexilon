@@ -153,7 +153,7 @@ services:
       ollama:
         condition: service_healthy
     command: >
-      sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"${OLLAMA_MODEL:-qwen2.5:7b}\"}'"
+      sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"${OLLAMA_MODEL:-qwen2.5:3b}\"}'"
 
 volumes:
   pdf_cache: {}
