@@ -90,7 +90,7 @@ jobs:
             podman compose run --rm tests
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
           sonar_token: ${{ secrets.SONAR_TOKEN }}
-      
+
       - name: Upload Test and Security Reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -140,14 +140,19 @@ jobs:
 
     steps:
       - name: Log in to GHCR
-        run: echo "${{ github.token }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull and Start Container
         env:
           # Resolve the real PR head commit SHA independently — validates the SHA pattern
           IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          declare -l IMAGE="ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}"
+          # Force lowercase for GHCR namespace compliance
+          IMAGE=$(echo "ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}" | tr '[:upper:]' '[:lower:]')
           podman pull $IMAGE
           podman run -d -p 7860:7860 --name vexilon-${{ github.event.pull_request.number || github.run_id }} -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
 
@@ -158,7 +163,7 @@ jobs:
               echo "Container is healthy!"
               exit 0
             fi
-            
+
             if ! podman inspect vexilon-${{ github.event.pull_request.number || github.run_id }} --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
               echo "Container died! Logs:"
               podman logs vexilon-${{ github.event.pull_request.number || github.run_id }}
