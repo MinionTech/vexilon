@@ -193,7 +193,7 @@ jobs:
     permissions:
       security-events: write
     runs-on: ubuntu-slim
-    timeout-minutes: 1
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -233,7 +233,7 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-10
-          generateSarif: "1"
+          args: "--sarif --sarif-output=semgrep.sarif"
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v4
