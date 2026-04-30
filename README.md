@@ -163,7 +163,11 @@ python scripts/pdf_to_md.py path/to/document.pdf
 
 ## 🚀 Contributing
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+We welcome contributions from everyone! Whether you are interested in development, infrastructure, or documentation, your help is appreciated.
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for our full guidelines. To get started:
+- Browse the [Issue Tracker](https://github.com/DerekRoberts/vexilon/issues).
+- Look for the **`good first issue`** label—these are specifically curated tasks for those new to the project.
 
 ## Configuration
 
