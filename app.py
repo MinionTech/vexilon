@@ -463,33 +463,29 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
     return queries, "\n\n".join(context_parts)
 
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", all_chunks: list[dict] = None) -> AsyncIterator[str]:
-    if _index is None:
-        yield "⚠️ Index not ready."
-        return
-
-    queries, context = await get_multi_perspective_context(message, history)
-    query = queries[0]
-    
-    # ── Audit Logic (Restored) ──────────────────────────────────────────────
-    base_persona = get_persona_prompt(persona_mode)
-    audit_rules = ""
-    if persona_mode in ("Grieve", "Manage"):
-        matched_tests = _test_registry.find_matches(message + " " + query)
-        for test in matched_tests:
-            audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-            audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
-            audit_rules += f"CRITERIA:\n{test.content}\n"
-
-    # ── Prompt Caching ──────────────────────────────────────────────────────
-    if get_llm_provider() == "anthropic":
-        system = [
-            {"type": "text", "text": base_persona + audit_rules, "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
-        ]
-    else:
-        system = base_persona + audit_rules + f"\n\nContext from Knowledge Base:\n{context}"
-    
     try:
+        queries, context = await get_multi_perspective_context(message, history)
+        query = queries[0]
+        
+        # ── Audit Logic (Restored) ──────────────────────────────────────────────
+        base_persona = get_persona_prompt(persona_mode)
+        audit_rules = ""
+        if persona_mode in ("Grieve", "Manage"):
+            matched_tests = _test_registry.find_matches(message + " " + query)
+            for test in matched_tests:
+                audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+                audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
+                audit_rules += f"CRITERIA:\n{test.content}\n"
+
+        # ── Prompt Caching ──────────────────────────────────────────────────────
+        if get_llm_provider() == "anthropic":
+            system = [
+                {"type": "text", "text": base_persona + audit_rules, "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
+            ]
+        else:
+            system = base_persona + audit_rules + f"\n\nContext from Knowledge Base:\n{context}"
+        
         async for text in unified_chat_stream(
             model=CLAUDE_MODEL,
             max_tokens=2048,
@@ -498,6 +494,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         ):
             yield text
     except Exception as exc:
+        logger.error(f"[rag] Pipeline error: {exc}", exc_info=True)
         yield f"⚠️ API error: {exc}"
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
