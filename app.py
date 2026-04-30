@@ -74,8 +74,8 @@ def _get_default_model():
     if provider == "anthropic":
         return "claude-haiku-4-5-20251001"
     if provider == "ollama":
-        return os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
-    return "Qwen/Qwen3.6-72B-Instruct"
+        return os.getenv("OLLAMA_MODEL", "qwen3:latest")
+    return "Qwen/Qwen3-72B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -271,7 +271,7 @@ def get_anthropic():
             _llm_client = anthropic.AsyncAnthropic()
         elif provider == "huggingface":
             _llm_client = AsyncOpenAI(
-                base_url="https://api-inference.huggingface.co/v1/",
+                base_url="https://router.huggingface.co/v1",
                 api_key=os.getenv("HF_TOKEN")
             )
         elif provider == "ollama":
