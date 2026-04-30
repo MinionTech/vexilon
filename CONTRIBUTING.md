@@ -6,4 +6,4 @@ You are encouraged to contribute to the repository by **creating a branch and su
 
 Pull requests will be evaluated by the repository guardians are intended to be squash merged to the main branch.
 
-All contributors retain the original copyright to their works, but by contributing to this project, you grant a world-wide, royalty-free, perpetual, irrevocable, non-exclusive, transferable license to all users **under the terms of the [license](./LICENSE.md) under which this project is distributed**.
+All contributors retain the original copyright to their works, but by contributing to this project, you grant a world-wide, royalty-free, perpetual, irrevocable, non-exclusive, transferable license to all users **under the terms of the [license](./LICENSE) under which this project is distributed**.
