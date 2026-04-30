@@ -109,7 +109,23 @@ fi
 
 # Re-add only the essentials (including app.py as requested)
 # Ensure SDK is set to docker in README.md (portable sed)
-sed 's/^sdk: .*/sdk: docker/' README.md > README.md.tmp && mv README.md.tmp README.md
+# Generate the HF metadata block and prepend it to the README
+cat <<EOF > README.md.tmp
+---
+title: Agreement Navigator (AgNav)
+emoji: 📋
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+startup_duration_timeout: 10m
+pinned: false
+license: mit
+short_description: Look up the BCGEU 19th Main Public Service Agreement
+---
+EOF
+cat README.md >> README.md.tmp
+mv README.md.tmp README.md
 git add Dockerfile README.md app.py
 git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
