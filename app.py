@@ -802,7 +802,7 @@ if __name__ == "__main__":
         auth = (vex_user, vex_password)
         logger.info(f"[startup] Authentication enabled for user '{vex_user}'")
 
-    demo.launch(
+    demo.queue().launch(
         server_name="0.0.0.0", 
         server_port=port, 
         allowed_paths=allowed_paths,
