@@ -593,11 +593,14 @@ async def chat_fn(message, history, persona, request: gr.Request = None):
     
     # 2. Stream assistant response
     accumulated = ""
+    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
     async for chunk in rag_review_stream(sanitized, history, persona):
         accumulated += chunk
         # Update history with current accumulated response
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
         yield gr.update(), current_history, gr.update(open=False)
+    
+    logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
 EXAMPLES = [
@@ -682,7 +685,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         scale=1, 
         height="70vh", 
         min_height=400, 
-        buttons=[]
+        buttons=[],
+        type="messages"
     )
     
     with gr.Row():
