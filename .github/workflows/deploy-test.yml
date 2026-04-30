@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - main
+      - feat/hf-inference-api
 
 permissions: {}
 
