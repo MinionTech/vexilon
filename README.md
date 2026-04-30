@@ -161,6 +161,10 @@ export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 python scripts/pdf_to_md.py path/to/document.pdf
 ```
 
+## 🚀 Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+
 ## Configuration
 
 All settings are optional — defaults match the product specification.
