@@ -12,7 +12,7 @@ async def test_generate_perspective_queries_simple():
     mock_client = AsyncMock()
     mock_response = MagicMock()
     # Mocking a response that doesn't start with a hyphen (simple query)
-    mock_response.content = [MagicMock(text="vacation days amount")]
+    mock_response.content = [MagicMock(text='["vacation days amount"]')]
     mock_client.messages.create.return_value = mock_response
     
     with patch("app.get_anthropic", return_value=mock_client):
@@ -33,7 +33,7 @@ async def test_generate_perspective_queries_complex():
     mock_client = AsyncMock()
     mock_response = MagicMock()
     # Mocking a multi-perspective response
-    mock_response.content = [MagicMock(text="- off-duty conduct case law\n- Millhaven factors DUI\n- employer rights off-site arrest")]
+    mock_response.content = [MagicMock(text='["off-duty conduct case law", "Millhaven factors DUI", "employer rights off-site arrest"]')]
     mock_client.messages.create.return_value = mock_response
     
     with patch("app.get_anthropic", return_value=mock_client):
@@ -63,6 +63,7 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
         return ["query1", "query2"]
     
     monkeypatch.setattr(app, "generate_perspective_queries", AsyncMock(side_effect=mock_generate_perspectives))
+    monkeypatch.setattr(app, "condense_query", AsyncMock(return_value="this is a very long string that has more than ten words in it to trigger the logic"))
 
     search_calls = []
     def mock_search_batch(index, chunks, queries, top_ks):
@@ -81,11 +82,9 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
         # Capture the system prompt to check context
         system_prompt = kwargs.get("system", [])
         mock_stream = MagicMock()
-        mock_stream.text_stream = AsyncMock()
-        # Mocking an empty stream for simplicity
-        async def _empty_gen():
-            if False: yield
-        mock_stream.text_stream.__aiter__.return_value = _empty_gen()
+        async def _async_gen():
+            yield "Mocked response content."
+        mock_stream.text_stream = _async_gen()
         
         # Mock get_final_message
         fake_usage = MagicMock(input_tokens=0, output_tokens=0, cache_creation_input_tokens=0, cache_read_input_tokens=0)
