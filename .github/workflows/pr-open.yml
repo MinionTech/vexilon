@@ -65,7 +65,7 @@ jobs:
     needs: [check, cache_validation, compose_validation]
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 1
     permissions:
       contents: read
       security-events: write
