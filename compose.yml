@@ -153,7 +153,5 @@ services:
       sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"${OLLAMA_MODEL:-qwen2.5:7b}\"}'"
 
 volumes:
-  pdf_cache:
-    description: "FAISS index and PDF chunk cache"
-  ollama_data:
-    description: "Ollama model storage"
+  pdf_cache: {}
+  ollama_data: {}
