@@ -378,8 +378,11 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
         "success_count": len(all_files) - len(failed_files),
         "total_count": len(all_files)
     }
-    with open(INTEGRITY_PATH, "w") as f:
-        json.dump(integrity_data, f, indent=2)
+    try:
+        with open(INTEGRITY_PATH, "w") as f:
+            json.dump(integrity_data, f, indent=2)
+    except PermissionError:
+        logger.warning(f"[build] Permission denied writing to {INTEGRITY_PATH}. Integrity report skipped.")
 
     if failed_files and os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
         raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
@@ -389,9 +392,13 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
         return None, None
 
     index = build_index(chunks)
-    save_index(index, chunks)
-    with open(MANIFEST_PATH, "w") as f:
-        json.dump(current_manifest, f, indent=2)
+    try:
+        save_index(index, chunks)
+        with open(MANIFEST_PATH, "w") as f:
+            json.dump(current_manifest, f, indent=2)
+    except PermissionError:
+        logger.warning("[build] Permission denied writing to cache directory. Index will remain in-memory only.")
+        
     return index, chunks
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
