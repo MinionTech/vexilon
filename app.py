@@ -18,7 +18,6 @@ import tempfile
 from threading import Lock
 
 import numpy as np
-import anthropic
 import openai
 from openai import AsyncOpenAI
 import faiss
@@ -71,8 +70,7 @@ def get_llm_provider():
 
 def _get_default_model():
     provider = get_llm_provider()
-    if provider == "anthropic":
-        return "claude-haiku-4-5-20251001"
+    # Default to Hugging Face or Ollama
     if provider == "ollama":
         return os.getenv("OLLAMA_MODEL", "qwen3:latest")
     return "Qwen/Qwen3-72B-Instruct"
@@ -245,7 +243,7 @@ def get_persona_prompt(mode_name: str) -> str:
     
     return f"{rules}\n\nROLE: {persona}"
 
-# ─── Verification & Anthropic Helpers ───────────────────────────────────────
+# ─── Verification & LLM Helpers ───────────────────────────────────────
 VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
 VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
 
@@ -263,13 +261,11 @@ If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
 _llm_client = None
-def get_anthropic():
+def get_llm_client():
     global _llm_client
     if _llm_client is None:
         provider = get_llm_provider()
-        if provider == "anthropic":
-            _llm_client = anthropic.AsyncAnthropic()
-        elif provider == "huggingface":
+        if provider == "huggingface":
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
                 api_key=os.getenv("HF_TOKEN")
@@ -287,66 +283,42 @@ def get_anthropic():
     return _llm_client
 
 async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
-    client = get_anthropic()
-    if get_llm_provider() == "anthropic":
-        # Anthropic supports system as a list of blocks (for caching)
-        if isinstance(system, str):
-            system = [{"type": "text", "text": system}]
-        resp = await client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=messages
-        )
-        return resp.content[0].text
-    else:
-        # OpenAI/HF: system is a single message (flatten if list)
-        full_messages = []
-        if system:
-            if isinstance(system, list):
-                system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
-            else:
-                system_text = system
-            full_messages.append({"role": "system", "content": system_text})
-        full_messages.extend(messages)
-        resp = await client.chat.completions.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=full_messages
-        )
-        return resp.choices[0].message.content
+    client = get_llm_client()
+    # OpenAI/HF: system is a single message (flatten if list)
+    full_messages = []
+    if system:
+        if isinstance(system, list):
+            system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
+        else:
+            system_text = system
+        full_messages.append({"role": "system", "content": system_text})
+    full_messages.extend(messages)
+    resp = await client.chat.completions.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=full_messages
+    )
+    return resp.choices[0].message.content
 
 async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
-    client = get_anthropic()
-    if get_llm_provider() == "anthropic":
-        if isinstance(system, str):
-            system = [{"type": "text", "text": system}]
-        async with client.messages.stream(
-            model=model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=messages
-        ) as stream:
-            async for chunk in stream.text_stream:
-                yield chunk
-    else:
-        full_messages = []
-        if system:
-            if isinstance(system, list):
-                system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
-            else:
-                system_text = system
-            full_messages.append({"role": "system", "content": system_text})
-        full_messages.extend(messages)
-        stream = await client.chat.completions.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=full_messages,
-            stream=True
-        )
-        async for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+    client = get_llm_client()
+    full_messages = []
+    if system:
+        if isinstance(system, list):
+            system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
+        else:
+            system_text = system
+        full_messages.append({"role": "system", "content": system_text})
+    full_messages.extend(messages)
+    stream = await client.chat.completions.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=full_messages,
+        stream=True
+    )
+    async for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
 
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
@@ -374,14 +346,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
     try:
         queries, context = await get_multi_perspective_context(message, history)
         
-        # ── Prompt Caching ──────────────────────────────────────────────────────
-        if get_llm_provider() == "anthropic":
-            system = [
-                {"type": "text", "text": get_system_prompt().format(manifest="", verify_message=""), "cache_control": {"type": "ephemeral"}},
-                {"type": "text", "text": f"Context:\n{context}", "cache_control": {"type": "ephemeral"}},
-            ]
-        else:
-            system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
+        system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
             
         messages = history + [{"role": "user", "content": message}]
         
@@ -403,7 +368,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
 async def condense_query(message: str, history: list[dict]) -> str:
     """Turn the conversation history and new message into a standalone search query."""
     if not history: return message
-    client = get_anthropic()
+    client = get_llm_client()
     
     history_text = ""
     for turn in history[-5:]:
@@ -477,14 +442,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
                 audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
                 audit_rules += f"CRITERIA:\n{test.content}\n"
 
-        # ── Prompt Caching ──────────────────────────────────────────────────────
-        if get_llm_provider() == "anthropic":
-            system = [
-                {"type": "text", "text": base_persona + audit_rules, "cache_control": {"type": "ephemeral"}},
-                {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
-            ]
-        else:
-            system = base_persona + audit_rules + f"\n\nContext from Knowledge Base:\n{context}"
+        system = base_persona + audit_rules + f"\n\nContext from Knowledge Base:\n{context}"
         
         async for text in unified_chat_stream(
             model=CLAUDE_MODEL,

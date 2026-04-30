@@ -323,7 +323,7 @@ Each response must follow this structure:
 
 | Component | Choice | Rationale |
 |---|---|---|
-| **LLM** | Anthropic Claude (`claude-haiku-4-5-20251001`) | Best-in-class instruction following; reliable citation behaviour; pay-per-use; Haiku sufficient for citation-grounded retrieval |
+| **LLM** | Hugging Face Router (`Qwen/Qwen3-72B-Instruct`) | Best-in-class instruction following; reliable citation behaviour; unified API |
 | **Embeddings** | `BAAI/bge-small-en-v1.5` via `sentence-transformers` (local CPU) | No API key; no per-query cost; ~90 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
 | **Vector Store** | FAISS (in-memory, pre-computed index on disk) | No server process; index loaded from disk at startup (<1s); pre-computed once per agreement update |
 | **Markdown-First RAG** | Native Markdown | High-precision extraction via `pdf_to_md.py`; structured MD ensures the highest grounding accuracy and eliminates runtime PDF parsing overhead. |
@@ -337,8 +337,8 @@ Each response must follow this structure:
 
 | Removed | Reason |
 |---|---|
-| Ollama | Replaced by Anthropic API |
-| `llama3.2:3b` / `llama3.1:8b` | Replaced by Claude |
+| Ollama | Used for local development (Qwen3) |
+| Anthropic | Replaced by HF Router / OpenAI compatible client |
 | `nomic-embed-text` (Ollama) | Replaced by `sentence-transformers` local model |
 | OpenAI `text-embedding-3-small` | Replaced by local `BAAI/bge-small-en-v1.5` — eliminates second API dependency |
 | LlamaIndex | Replaced by direct RAG implementation |
@@ -370,7 +370,7 @@ User sends message
         system: [citation-rules + agreement context + continuity rule]
         user: [conversation history + new query]
         context: [retrieved chunks with page numbers]
-  └── Send to Claude API (claude-haiku-4-5-20251001) via AsyncAnthropic
+  └── Send to LLM (Qwen/Qwen3-72B-Instruct) via OpenAI client
   └── Stream response to Gradio chat interface (asynchronous generator)
   └── Append to conversation history
 ```
@@ -378,7 +378,7 @@ User sends message
 ### Concurrency and Asynchrony
 
 To support multiple simultaneous users without thread pool exhaustion, Vexilon uses:
-- **`AsyncAnthropic`**: The asynchronous variant of the Anthropic client.
+- **`OpenAI`**: The asynchronous client for HF/OpenAI/Ollama.
 - **`async def` handlers**: Gradio handlers are implemented as asynchronous generators.
 - **Deferred Imports**: Heavy libraries (`torch`, `sentence_transformers`, `faiss`, `gradio`) are imported lazily within functions to ensure fast startup and responsive CLI/test environments.
 
@@ -415,7 +415,7 @@ Note: The "Query Condenser" adds one extra fast LLM call per multi-turn message,
 To ensure multi-turn conversations are reliable, the system uses the **Query Condensing** pattern:
 
 1.  **Reasoning**: Vague follow-up questions (e.g., "What about for part-time?") yield poor similarity results if searched directly.
-2.  **Implementation**: A fast LLM pass (Claude) reconstructs the user's intent into a standalone query using the conversation history.
+2.  **Implementation**: A fast LLM pass reconstructs the user's intent into a standalone query using the conversation history.
 3.  **Benefit**: Decouples the "conversational brain" from the "retrieval search," ensuring the FAISS index always receives high-fidelity queries even for vague follow-ups.
 
 ### 9.6 Verification Bot
@@ -431,7 +431,7 @@ To reduce hallucinations, Vexilon includes an optional verification bot that rev
    | Variable | Default | Description |
    |---|---|---|
    | `VERIFY_ENABLED` | `true` | Enable verification bot |
-   | `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Model for verification (can use cheaper model) |
+   | `VERIFY_MODEL` | `Qwen/Qwen3-72B-Instruct` | Model for verification |
 
 **Note:** The verification bot provides limited additional value since it uses the same context as the main bot. It may catch obvious issues (wrong page numbers, misquoted text) but cannot detect when relevant text was simply not retrieved. Future improvements may include multi-perspective retrieval for complex topics.
 
@@ -439,8 +439,8 @@ To reduce hallucinations, Vexilon includes an optional verification bot that rev
 
 To ensure the highest possible grounding and citation accuracy, Vexilon uses a "Markdown-First" ingestion strategy. This decouples the messy PDF parsing from the RAG retrieval logic.
 
-1.  **Atomic Engine (`pdf_to_md.py`)**: Uses **PyMuPDF** for geometric word reconstruction, followed by a **Claude 4.6 (Sonnet)** pass to restructure the text into clean, hierarchical Markdown.
-2.  **Dual-Pass Verification**: A second model (Haiku) performs a parallel conversion. The script flags substantive word discrepancies (hallucinations) between the two models and the raw source.
+1.  **Atomic Engine (`pdf_to_md.py`)**: Uses **PyMuPDF** for geometric word reconstruction, followed by an **LLM** pass to restructure the text into clean, hierarchical Markdown.
+2.  **Dual-Pass Verification**: A second model pass performs a parallel conversion. The script flags substantive word discrepancies (hallucinations) between the two models and the raw source.
 3.  **Integrity Audit**: Generates a sidecar `.integrity.md` report showing exactly which lines were flagged, allowing for a rapid human audit of 200+ page documents.
 4.  **Shadow File Architecture**: Side-by-side storage (`filename.pdf` for users, `filename.md` for AI) ensures the official source is always available for human verification while the RAG index uses high-fidelity text.
 
@@ -454,7 +454,7 @@ To ensure the highest possible grounding and citation accuracy, Vexilon uses a "
 
 ```bash
 # Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
+export HF_TOKEN=hf_...
 
 # Run with Podman Compose
 # The build stage automatically bakes the PDF index for zero-downtime startup
@@ -466,7 +466,7 @@ Open `http://localhost:7860`.
 ### Hugging Face Spaces
 
 - App type: Gradio
-- Secrets: `ANTHROPIC_API_KEY`
+- Secrets: `HF_TOKEN`
 - The `.pdf_cache/` directory is committed to the repo and available at runtime
 - No persistent volume required (FAISS index rebuilt on each cold start — acceptable for this scale)
 
@@ -476,8 +476,8 @@ Open `http://localhost:7860`.
 |---|---|---|
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
-| `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
+| `HF_TOKEN` | *(required for PROD)* | Hugging Face access token |
+| `DEFAULT_MODEL_LLM` | `Qwen/Qwen3-72B-Instruct` | Model for responses |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
@@ -486,7 +486,7 @@ Open `http://localhost:7860`.
 | `CONDENSE_QUERY_HISTORY_TURNS` | `3` | Number of previous turns used for context condensation |
 | `CONDENSE_QUERY_CONTENT_MAX_LEN` | `200` | Max character length of historical messages in condensation prompt |
 | `VERIFY_ENABLED` | `true` | Enable verification bot |
-| `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Claude model for verification |
+| `VERIFY_MODEL` | `Qwen/Qwen3-72B-Instruct` | Model for verification |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Max requests per minute per client IP |
 | `RATE_LIMIT_PER_HOUR` | `100` | Max requests per hour per client IP |
 | `MAX_INPUT_LENGTH` | `10000` | Max characters per user message |
@@ -542,7 +542,7 @@ These have been discussed and resolved:
 | Question | Decision |
 |---|---|
 | Quote verbatim or paraphrase? | Verbatim, with plain-language explanation first |
-| Which LLM provider? | Anthropic Claude |
+| Which LLM provider? | Hugging Face (PROD) / Ollama (DEV) |
 | Which vector store? | FAISS for MVP; ChromaDB when multi-agreement support added |
 | Session persistence? | Fresh session per page load (MVP) |
 | Auth required? | No for MVP; must be easy to add later |

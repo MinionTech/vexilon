@@ -28,32 +28,19 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     
     all_captured_kwargs = []
     
-    @asynccontextmanager
-    async def mock_stream(**kwargs):
+    async def mock_create(**kwargs):
         all_captured_kwargs.append(kwargs)
-        mock_s = MagicMock()
-        
-        async def _gen():
-            yield "Response"
-        mock_s.text_stream = _gen()
-        
-        async def _get_final():
-            return MagicMock(usage=MagicMock(
-                input_tokens=1, 
-                output_tokens=1, 
-                cache_creation_input_tokens=0, 
-                cache_read_input_tokens=0
-            ))
-        mock_s.get_final_message = _get_final
-        
-        yield mock_s
+        if kwargs.get("stream"):
+            async def _gen():
+                chunk = MagicMock()
+                chunk.choices = [MagicMock(delta=MagicMock(content="Response"))]
+                yield chunk
+            return _gen()
+        return MagicMock(choices=[MagicMock(message=MagicMock(content="unsafe work"))])
 
     mock_client = MagicMock()
-    mock_client.messages.stream = mock_stream
-    mock_client.messages.create = AsyncMock(return_value=MagicMock(content=[MagicMock(text="unsafe work")]))
-    # Force the mock to behave like a string for the .text attribute
-    mock_client.messages.create.return_value.content[0].text = "unsafe work"
-    monkeypatch.setattr("app.get_anthropic", lambda: mock_client)
+    mock_client.chat.completions.create = AsyncMock(side_effect=mock_create)
+    monkeypatch.setattr("app.get_llm_client", lambda: mock_client)
     
     # Mock generate_perspective_queries to avoid hitting the API in this test
     monkeypatch.setattr("app.generate_perspective_queries", AsyncMock(return_value=["I need to refuse unsafe work"]))
@@ -66,11 +53,12 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     # Verify the system prompt in ANY of the calls contains the OHS referral
     found_ohs = False
     for call_kwargs in all_captured_kwargs:
-        system = call_kwargs.get("system", [])
-        if system and isinstance(system, list) and "--- MANDATORY LOGIC CHECK: OHS SAFETY REFERRAL ---" in system[0]["text"]:
+        messages = call_kwargs.get("messages", [])
+        system = next((m["content"] for m in messages if m["role"] == "system"), "")
+        if "--- MANDATORY LOGIC CHECK: OHS SAFETY REFERRAL ---" in system:
             found_ohs = True
-            assert "1-888-621-7233" in system[0]["text"]
-            assert "YOU MUST immediately advise" in system[0]["text"]
+            assert "1-888-621-7233" in system
+            assert "YOU MUST immediately advise" in system
             break
     
     assert found_ohs, "OHS Safety Referral was not found in any system prompt"

@@ -2,7 +2,7 @@ name: PR Open
 
 # Runs unit tests on pull requests (excluding drafts) and on the weekly schedule.
 # Images are built during PRs and promoted on merge — no rebuild on main.
-# Smoke tests (tests/smoke/) are excluded — they require a real ANTHROPIC_API_KEY.
+# Smoke tests (tests/smoke/) are excluded — they require a real HF_TOKEN.
 #
 # This workflow is the required gate for Renovate dependency PRs.
 
@@ -85,7 +85,7 @@ jobs:
           dir: .
           # Consistent test execution via podman-compose
           commands: |
-            export ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY || 'sk-dummy-key-for-predictability' }}
+            export HF_TOKEN=${{ secrets.HF_TOKEN }}
             mkdir -p reports
             podman compose run --rm tests
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
@@ -154,7 +154,7 @@ jobs:
           # Force lowercase for GHCR namespace compliance
           IMAGE=$(echo "ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}" | tr '[:upper:]' '[:lower:]')
           podman pull $IMAGE
-          podman run -d -p 7860:7860 --name vexilon-${{ github.event.pull_request.number || github.run_id }} -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
+          podman run -d -p 7860:7860 --name vexilon-${{ github.event.pull_request.number || github.run_id }} -e HF_TOKEN=hf_test123 $IMAGE
 
       - name: Wait for Healthcheck
         run: |

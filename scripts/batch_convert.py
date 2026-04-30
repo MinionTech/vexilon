@@ -26,10 +26,10 @@ def main():
         print(f"Error: {DATA_DIR} not found.")
         sys.exit(1)
 
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("Error: ANTHROPIC_API_KEY is not set.")
+    if not os.getenv("HF_TOKEN") and not os.getenv("OPENAI_API_KEY"):
+        print("Error: HF_TOKEN or OPENAI_API_KEY is not set.")
         print("Export your API key before running the batch converter:")
-        print("export ANTHROPIC_API_KEY=your-key-here")
+        print("export HF_TOKEN=your-token-here")
         sys.exit(1)
 
     if args.files:

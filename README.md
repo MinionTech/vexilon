@@ -22,7 +22,7 @@ of labour law and contract documents.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Anthropic Claude (`claude-haiku-4-5-20251001`) |
+| LLM | Hugging Face Router (`Qwen/Qwen3-72B-Instruct`) |
 | Embeddings | `BAAI/bge-small-en-v1.5` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | Web UI | Gradio 6 — `http://localhost:7860` |
@@ -98,7 +98,7 @@ Docker deployments.
 Run the app exactly as it will behave in production. Changes to your local files **will not** be reflected.
 
 ```bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+export HF_TOKEN=<YOUR_HF_TOKEN>
 podman compose up --build
 ```
 
@@ -106,7 +106,7 @@ podman compose up --build
 Run the **`watch`** service to enable hot-reloading. When you modify `app.py`, `style.css`, or the `vexilon/` directory, the container will automatically refresh.
 
 ```bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+export HF_TOKEN=<YOUR_HF_TOKEN>
 podman compose up --build watch
 ```
 
@@ -157,7 +157,7 @@ See [docs/MARKDOWN_CONVERSION.md](docs/MARKDOWN_CONVERSION.md) for full rational
 
 **Run the converter:**
 ```bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+export HF_TOKEN=<YOUR_HF_TOKEN>
 python scripts/pdf_to_md.py path/to/document.pdf
 ```
 
@@ -179,8 +179,8 @@ All settings are optional — defaults match the product specification.
 |---|---|---|
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
-| `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
+| `HF_TOKEN` | *(required for PROD)* | Hugging Face access token |
+| `DEFAULT_MODEL_LLM` | `Qwen/Qwen3-72B-Instruct` | Model for responses |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
@@ -194,7 +194,7 @@ Vexilon includes a second AI bot that verifies responses against source citation
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
-| `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Claude model for verification |
+| `VERIFY_MODEL` | `Qwen/Qwen3-72B-Instruct` | Model for verification |
 
 When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
 
@@ -283,7 +283,7 @@ the HF Space.
 
 | Secret | Value |
 |---|---|
-| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `HF_TOKEN` | Hugging Face write-scoped access token |
 
 ### Manual deploy (one-time setup or re-deploy)
 
@@ -303,7 +303,7 @@ Vexilon uses a **Quality Gate** pattern in `compose.yml` — the app will not st
 |---|---|---|---|
 | **Unit** | `tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
 | **Integration** | `tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
-| **Smoke** | `tests/smoke/` | Real Anthropic API | Manually, to verify live API connectivity |
+| **Smoke** | `tests/smoke/` | Real HF/OpenAI API | Manually, to verify live API connectivity |
 
 #### Commands
 
@@ -324,7 +324,7 @@ podman compose up watch
 # Skip the gate — useful for rapid UI iteration (no volumes)
 podman compose up vexilon
 
-# Smoke tests — verifies real Anthropic API connectivity
+# Smoke tests — verifies real API connectivity
 podman compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
 ````
 
@@ -368,6 +368,6 @@ vexilon/
 │   │   ├── test_embed_pipeline.py  # sentence-transformers + FAISS interop
 │   │   └── test_gradio_ui.py       # Gradio Blocks construction check
 │   └── smoke/
-│       └── test_model_valid.py  # live Anthropic API model validation
+│       └── test_model_valid.py  # live API model validation
 └── .pdf_cache/       # Pre-built FAISS index and chunk metadata
 ````

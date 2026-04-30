@@ -141,7 +141,7 @@ def test_startup_raises_on_failure(monkeypatch):
     monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", _boom)
 
     with pytest.raises(RuntimeError, match="disk on fire"):
-        monkeypatch.setattr(app, "get_anthropic", MagicMock())
+        monkeypatch.setattr(app, "get_llm_client", MagicMock())
         app.startup()
 
 
@@ -163,7 +163,7 @@ def test_startup_uses_precomputed_index_when_available(monkeypatch):
     mock_build = MagicMock(return_value=(None, None)) # FEEDBACK: Unpack safety
     monkeypatch.setattr(app, "build_index_from_sources", mock_build)
 
-    monkeypatch.setattr(app, "get_anthropic", MagicMock())
+    monkeypatch.setattr(app, "get_llm_client", MagicMock())
     app.startup()
 
     assert app._index is fake_index
@@ -181,7 +181,7 @@ def test_startup_delegates_to_indexing(monkeypatch):
     mock_build = MagicMock(return_value=(fake_index, fake_chunks))
     monkeypatch.setattr(app, "build_index_from_sources", mock_build)
 
-    monkeypatch.setattr(app, "get_anthropic", MagicMock())
+    monkeypatch.setattr(app, "get_llm_client", MagicMock())
     app.startup(force_rebuild=True)
 
     assert app._index is fake_index

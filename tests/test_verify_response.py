@@ -4,41 +4,22 @@ tests/test_verify_response.py — Unit tests for verification bot
 Tests verify the verify_response() function behavior.
 """
 
-from contextlib import asynccontextmanager
-from unittest.mock import MagicMock, patch
-
-import anthropic
+from unittest.mock import MagicMock, patch, AsyncMock
+import openai
 import pytest
 
 import app
 
-
-def _fake_verify_response(
-    model: str = "claude-haiku-4-5-20251001",
-    max_tokens: int = 512,
-    system: list = None,
-    messages: list = None,
-):
-    """Create a fake async messages.create that returns a mock response."""
-    fake_message = MagicMock()
-    fake_message.text = "ALL_CLAIMS_VERIFIED"
-
-    fake_response = MagicMock()
-    fake_response.content = [fake_message]
-
-    async def _create(*args, **kwargs):
-        return fake_response
-
-    return _create
-
-
 @pytest.fixture
-def mock_anthropic_client():
-    """Create a mock Anthropic client."""
+def mock_llm_client():
+    """Create a mock OpenAI-compatible client."""
     mock_client = MagicMock()
-    mock_client.messages.create = _fake_verify_response()
+    
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content="ALL_CLAIMS_VERIFIED"))]
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+    
     return mock_client
-
 
 async def test_verify_response_disabled_when_flag_off(monkeypatch):
     """When VERIFY_ENABLED is False, verify_response returns empty string."""
@@ -47,56 +28,50 @@ async def test_verify_response_disabled_when_flag_off(monkeypatch):
     result = await app.verify_response("Some response", "Some context")
     assert result == ""
 
-
-async def test_verify_response_calls_anthropic(monkeypatch):
-    """verify_response should call Anthropic API with the response and context."""
+async def test_verify_response_calls_llm_client(monkeypatch):
+    """verify_response should call LLM client API with the response and context."""
     mock_client = MagicMock()
 
-    fake_message = MagicMock()
-    fake_message.text = "ALL_CLAIMS_VERIFIED"
-    fake_response = MagicMock()
-    fake_response.content = [fake_message]
-    mock_client.messages.create = MagicMock(return_value=fake_response)
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content="ALL_CLAIMS_VERIFIED"))]
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
 
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_client)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
 
     result = await app.verify_response("The response", "The context")
 
-    mock_client.messages.create.assert_called_once()
-    call_kwargs = mock_client.messages.create.call_args.kwargs
-    assert "The response" in call_kwargs["messages"][0]["content"]
-    assert "The context" in call_kwargs["messages"][0]["content"]
-
+    mock_client.chat.completions.create.assert_called_once()
+    call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+    assert "The response" in call_kwargs["messages"][1]["content"]
+    assert "The context" in call_kwargs["messages"][1]["content"]
 
 async def test_verify_response_returns_verification_text(
-    monkeypatch, mock_anthropic_client
+    monkeypatch, mock_llm_client
 ):
     """verify_response returns the text from the verification model response."""
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_anthropic_client)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
 
     result = await app.verify_response("Response", "Context")
 
     assert result == "ALL_CLAIMS_VERIFIED"
-
 
 async def test_verify_response_handles_api_error(monkeypatch):
     """verify_response should handle API errors gracefully."""
     mock_client = MagicMock()
 
     async def _raising_create(*args, **kwargs):
-        raise anthropic.APIStatusError(
+        raise openai.APIStatusError(
             message="API error",
             response=MagicMock(status_code=500),
             body={"type": "error"},
         )
 
-    mock_client.messages.create = _raising_create
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_client)
+    mock_client.chat.completions.create = _raising_create
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
 
     result = await app.verify_response("Response", "Context")
 
     assert "Verification unavailable" in result
-
 
 async def test_rag_stream_yields_context(monkeypatch):
     """rag_stream should yield context alongside text chunks."""
@@ -113,36 +88,20 @@ async def test_rag_stream_yields_context(monkeypatch):
 
     monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
-    @asynccontextmanager
-    async def _stream_ctx(*args, **kwargs):
-        mock_stream = MagicMock()
-
-        async def _async_gen():
-            yield "Hello"
-
-        mock_stream.text_stream = _async_gen()
-
-        fake_usage = MagicMock(
-            input_tokens=10,
-            output_tokens=5,
-            cache_creation_input_tokens=0,
-            cache_read_input_tokens=0,
-        )
-        fake_message = MagicMock()
-        fake_message.usage = fake_usage
-
-        async def _get_final():
-            return fake_message
-
-        mock_stream.get_final_message = _get_final
-        yield mock_stream
+    async def _mock_openai_stream(*args, **kwargs):
+        if kwargs.get("stream"):
+            async def _gen():
+                chunk = MagicMock()
+                chunk.choices = [MagicMock(delta=MagicMock(content="Hello"))]
+                yield chunk
+            return _gen()
+        return MagicMock()
 
     mock_client = MagicMock()
-    mock_client.messages.stream = _stream_ctx
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_client)
+    mock_client.chat.completions.create = AsyncMock(side_effect=_mock_openai_stream)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
 
     # Mock generate_perspective_queries to avoid hitting the API in this test
-    from unittest.mock import AsyncMock
     monkeypatch.setattr(app, "generate_perspective_queries", AsyncMock(return_value=["Question"]))
 
     yielded_contexts = []

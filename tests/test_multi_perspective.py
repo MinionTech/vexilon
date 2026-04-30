@@ -9,20 +9,19 @@ async def test_generate_perspective_queries_simple():
     message = "How many days of vacation do I get?"
     history = []
     
-    mock_client = AsyncMock()
-    mock_response = MagicMock()
-    # Mocking a response that doesn't start with a hyphen (simple query)
-    mock_response.content = [MagicMock(text='["vacation days amount"]')]
-    mock_client.messages.create.return_value = mock_response
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content='["vacation days amount"]'))]
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
     
-    with patch("app.get_anthropic", return_value=mock_client):
+    with patch("app.get_llm_client", return_value=mock_client):
         # We need to mock condense_query to return a known value
         with patch("app.condense_query", return_value="vacation days amount"):
             queries = await app.generate_perspective_queries(message, history)
             
     assert queries == ["vacation days amount"]
     # Verify the mock was called
-    assert mock_client.messages.create.called
+    assert mock_client.chat.completions.create.called
 
 @pytest.mark.asyncio
 async def test_generate_perspective_queries_complex():
@@ -30,13 +29,12 @@ async def test_generate_perspective_queries_complex():
     message = "I was arrested for a DUI while off-duty. Can I be fired?"
     history = []
     
-    mock_client = AsyncMock()
-    mock_response = MagicMock()
-    # Mocking a multi-perspective response
-    mock_response.content = [MagicMock(text='["off-duty conduct case law", "Millhaven factors DUI", "employer rights off-site arrest"]')]
-    mock_client.messages.create.return_value = mock_response
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content='["off-duty conduct case law", "Millhaven factors DUI", "employer rights off-site arrest"]'))]
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
     
-    with patch("app.get_anthropic", return_value=mock_client):
+    with patch("app.get_llm_client", return_value=mock_client):
         with patch("app.condense_query", return_value="DUI arrest off-duty termination"):
             queries = await app.generate_perspective_queries(message, history)
             
@@ -74,32 +72,25 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
 
     monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
 
-    # Mock Anthropic stream
+    # Mock OpenAI stream
     mock_client = MagicMock()
     
-    @asynccontextmanager
-    async def _mock_stream(**kwargs):
+    async def _mock_openai_stream(**kwargs):
         # Capture the system prompt to check context
-        system_prompt = kwargs.get("system", [])
-        mock_stream = MagicMock()
-        async def _async_gen():
-            yield "Mocked response content."
-        mock_stream.text_stream = _async_gen()
-        
-        # Mock get_final_message
-        fake_usage = MagicMock(input_tokens=0, output_tokens=0, cache_creation_input_tokens=0, cache_read_input_tokens=0)
-        fake_message = MagicMock(usage=fake_usage, stop_reason="stop")
-        mock_stream.get_final_message = AsyncMock(return_value=fake_message)
-        
-        # Check context deduplication (only one instance of chunk1 should be in the system prompt)
-        context_block = system_prompt[1]["text"]
-        assert context_block.count("Original Article 1 text.") == 1
-        assert "Detailed Article 2 text." in context_block
-        
-        yield mock_stream
+        system_prompt = kwargs.get("system", "")
+        if kwargs.get("stream"):
+            async def _gen():
+                # Check context deduplication
+                assert system_prompt.count("Original Article 1 text.") == 1
+                assert "Detailed Article 2 text." in system_prompt
+                chunk = MagicMock()
+                chunk.choices = [MagicMock(delta=MagicMock(content="Mocked response content."))]
+                yield chunk
+            return _gen()
+        return MagicMock()
 
-    mock_client.messages.stream = _mock_stream
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_client)
+    mock_client.chat.completions.create = AsyncMock(side_effect=_mock_openai_stream)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
 
     async for chunk, ctx in app.rag_stream("Complex question", []):
         pass

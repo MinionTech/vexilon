@@ -2,11 +2,11 @@
 """
 pdf_to_md.py — Forensic PDF-to-Markdown Converter for Vexilon
 ------------------------------------------------------------
-This script uses Claude (Anthropic API) to convert messy legal PDFs into 
+This script uses OpenAI/HuggingFace to convert messy legal PDFs into 
 clean, structured Markdown files optimized for RAG retrieval.
 
 Usage:
-  export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+  export HF_TOKEN=<YOUR_TOKEN>
   python scripts/pdf_to_md.py path/to/input.pdf [path/to/output.md]
 """
 
@@ -20,7 +20,7 @@ import difflib
 from pathlib import Path
 from typing import List
 
-import anthropic
+from openai import OpenAI
 import pymupdf  # High-precision PDF extraction (geometric word reconstruction)
 
 def print_banner():
@@ -36,7 +36,6 @@ def clean_for_integrity_check(text: str) -> str:
     text = re.sub(r"[^a-zA-Z0-9\s]", " ", text)
     # Merge into single string and normalize
     return " ".join(text.lower().split())
-
 
 def extract_raw_text(pdf_path: Path) -> List[str]:
     """Precision extraction using PyMuPDF to preserve word integrity."""
@@ -54,7 +53,7 @@ def extract_raw_text(pdf_path: Path) -> List[str]:
     print(f"[+] Total pages extracted: {len(pages)}")
     return pages
 
-def convert_batch(client: anthropic.Anthropic, model: str, batch_text: str, source_name: str, batch_idx: int) -> str:
+def convert_batch(client: OpenAI, model: str, batch_text: str, source_name: str, batch_idx: int) -> str:
     """Individual pass for a single batch of text with resilience and retries."""
     system_prompt = f"""You are a ZERO-REASONING legal transcription engine. 
 Your ONLY task is to add Markdown formatting to raw text from '{source_name}'.
@@ -71,14 +70,16 @@ STRICT INTEGRITY RULES:
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = client.messages.create(
+            response = client.chat.completions.create(
                 model=model,
                 max_tokens=4096,
                 temperature=0.0, # PARANOID DETERMINISM
-                system=system_prompt,
-                messages=[{"role": "user", "content": f"[Batch {batch_idx}] Raw text:\n\n{batch_text}"}]
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"[Batch {batch_idx}] Raw text:\n\n{batch_text}"}
+                ]
             )
-            return response.content[0].text
+            return response.choices[0].message.content
         except Exception as e:
             if attempt == max_retries - 1:
                 raise e
@@ -89,14 +90,17 @@ STRICT INTEGRITY RULES:
     return "" # Unreachable
 
 def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resume: bool = False) -> str:
-    """Use Claude to restructure into clean MD with optional dual-pass verification."""
-    client = anthropic.Anthropic()
+    """Use LLM to restructure into clean MD with optional dual-pass verification."""
+    api_key = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+    base_url = "https://router.huggingface.co/v1" if os.getenv("HF_TOKEN") else os.getenv("OPENAI_API_BASE")
+    
+    client = OpenAI(base_url=base_url, api_key=api_key)
     raw_pages = extract_raw_text(input_path)
     source_name = input_path.stem
     
-    # Selection based on user request for "best outcome"
-    primary_model = os.getenv("CONVERT_MODEL", "claude-sonnet-4-6")
-    secondary_model = os.getenv("CONSENSUS_MODEL", "claude-haiku-4-5-20251001") # Fast consensus model
+    # Defaults for HF Router
+    primary_model = os.getenv("CONVERT_MODEL", "Qwen/Qwen3-72B-Instruct")
+    secondary_model = os.getenv("CONSENSUS_MODEL", "Qwen/Qwen3-72B-Instruct") 
     
     print(f"[*] Primary Model:   {primary_model}")
     if verify:
@@ -141,12 +145,11 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
             page_end = min(batch_id * BATCH_SIZE, total_pages)
             print(f"    [>] Batch {batch_id}: Processing pages {page_start} to {page_end}...")
 
-            # DUAL-PASS CONSENSUS (Sonnet + Haiku)
+            # DUAL-PASS CONSENSUS
             md_p1 = convert_batch(client, primary_model, batch_text, source_name, batch_id)
             md_p2 = convert_batch(client, secondary_model, batch_text, source_name, batch_id)
 
-            # Strip "(continued)" variants from headings only — AI adds these for multi-page sections.
-            # Only applied to heading lines (starting with #) to preserve legitimate body text usage.
+            # Strip "(continued)" variants from headings only
             def _strip_continued_headings(md: str) -> str:
                 lines = md.split('\n')
                 return '\n'.join(
@@ -165,7 +168,6 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
                 f.write(f"\n\n--- [IN PROGRESS: Batch {batch_id}/{len(batches)}] ---")
 
             # Word-Stability Check (Hallucination Detection)
-            # We check if words in P1 exist in the raw text
             p1_words = re.findall(r'\b\w{4,}\b', md_p1.lower())
             raw_words = set(re.findall(r'\b\w{4,}\b', batch_text.lower()))
             
@@ -230,18 +232,10 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
                         break
                 
                 if diverged:
-                    print(f"    [!] NOTICE: Structural divergence detected (auto-accepting Sonnet).")
-                    print(f"    --- P1 (Sonnet) ---")
-                    for line in lines1[:4]:
-                        print(f"        {line[:100]}")
-                    print(f"    --- P2 (Haiku) ---")
-                    for line in lines2[:4]:
-                        print(f"        {line[:100]}")
-                    print(f"    -------------------")
-
+                    print(f"    [!] NOTICE: Structural divergence detected.")
                     with open(audit_path, "a", encoding="utf-8") as af:
                         af.write(f"### [Batch {batch_id}] Structural Divergence Detected\n")
-                        af.write(f"- Note: {secondary_model} output differed from {primary_model}. Auto-accepted P1.\n")
+                        af.write(f"- Note: Consensus check differed. Auto-accepted P1.\n")
                         af.write("\n---\n")
 
             pages_processed += (page_end - page_start + 1)
@@ -261,10 +255,7 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
 
     # Final Success Polish
     final_md = "\n\n".join(full_markdown)
-    
-    # Prune redundant blank lines (collapse 3+ into 2)
     final_md = re.sub(r'\n{3,}', '\n\n', final_md)
-    # Strip leading/trailing whitespace
     final_md = final_md.strip() + "\n"
 
     with open(output_path, "w", encoding="utf-8") as f:
@@ -290,17 +281,16 @@ def main():
 
     input_path = Path(args.input)
     if not input_path.exists():
-        # Try finding it recursively in the knowledge base
         matches = list(Path("data/labour_law").rglob(input_path.name))
         if matches:
             input_path = matches[0]
             print(f"[*] Found '{input_path.name}' in {input_path.parent}")
         else:
-            print(f"Error: File {args.input} not found in current directory or knowledge base.")
+            print(f"Error: File {args.input} not found.")
             sys.exit(1)
 
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("Error: ANTHROPIC_API_KEY environment variable not set.")
+    if not os.getenv("HF_TOKEN") and not os.getenv("OPENAI_API_KEY"):
+        print("Error: HF_TOKEN or OPENAI_API_KEY environment variable not set.")
         sys.exit(1)
 
     output_path = Path(args.output) if args.output else input_path.with_suffix(".md")
@@ -310,16 +300,13 @@ def main():
     print(f"Output: {output_path}")
     print("-" * 66)
     
-    # Initialize/Clear output file for incremental writes
     output_path.write_text("", encoding="utf-8")
 
     try:
         markdown_content = convert_to_md(input_path, output_path, verify=args.verify, resume=args.resume)
-        
         print("-" * 66)
         print(f"[FINISH] Conversion Complete.")
         print(f"Vexilon Integrity Fingerprint: {len(markdown_content)} chars / {len(markdown_content.split())} words")
-        
     except KeyboardInterrupt:
         print("\n[!] Interrupted by user.")
         sys.exit(130)
