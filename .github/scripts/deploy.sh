@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$SPACE_NAME" ]; then
-    echo "Error: space_name (e.g. 'MinionTech/landru') must be provided."
+    echo "Error: space_name (e.g. 'MinionTech/vexilon') must be provided."
     usage
 fi
 
