@@ -9,6 +9,7 @@ dependencies = [
     "python-multipart==0.0.26",
     # ── LLM ─────────────────────────────────────────────────────────────────
     "anthropic>=0.84.0",            # Claude API client
+    "openai>=1.60.0",               # OpenAI-compatible client (HF, DeepSeek)
     # ── Embeddings (local CPU, no API key required) ──────────────────────────
     # torch is sourced from the CPU-only wheel index (see [[tool.uv.index]])
     # to avoid pulling the 3 GB CUDA stack that the default PyPI index would

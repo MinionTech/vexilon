@@ -19,6 +19,8 @@ from threading import Lock
 
 import numpy as np
 import anthropic
+import openai
+from openai import AsyncOpenAI
 import faiss
 import gradio as gr
 
@@ -57,8 +59,19 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
     "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
 )
 
-# Models
-DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", "claude-haiku-4-5-20251001")
+# Models & Providers
+def get_llm_provider():
+    return os.getenv("VEXILON_LLM_PROVIDER", "huggingface").lower()
+
+def _get_default_model():
+    provider = get_llm_provider()
+    if provider == "anthropic":
+        return "claude-haiku-4-5-20251001"
+    if provider == "ollama":
+        return os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+    return "Qwen/Qwen3.6-72B-Instruct"
+
+DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
 REVIEWER_MODEL = os.getenv("VEXILON_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
 CONDENSE_MODEL = os.getenv("VEXILON_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
@@ -208,14 +221,15 @@ MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
 2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
 3. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
-4. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
+4. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
+5. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
 def get_persona_prompt(mode_name: str) -> str:
     """Return the combined mandatory rules and persona guidelines."""
     if mode_name == "Manage":
         rules = MANAGER_MANDATORY_RULES
-        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation."
+        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework."
     elif mode_name == "Grieve":
         rules = UNION_MANDATORY_RULES
         persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases."
@@ -242,24 +256,101 @@ Respond in this format:
 If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
-_anthropic_client = None
-def get_anthropic() -> anthropic.AsyncAnthropic:
-    global _anthropic_client
-    if _anthropic_client is None:
-        _anthropic_client = anthropic.AsyncAnthropic()
-    return _anthropic_client
+_llm_client = None
+def get_anthropic():
+    global _llm_client
+    if _llm_client is None:
+        provider = get_llm_provider()
+        if provider == "anthropic":
+            _llm_client = anthropic.AsyncAnthropic()
+        elif provider == "huggingface":
+            _llm_client = AsyncOpenAI(
+                base_url="https://api-inference.huggingface.co/v1/",
+                api_key=os.getenv("HF_TOKEN")
+            )
+        elif provider == "ollama":
+            _llm_client = AsyncOpenAI(
+                base_url=os.getenv("OLLAMA_API_BASE", "http://ollama:11434/v1"),
+                api_key="ollama"
+            )
+        else:
+            _llm_client = AsyncOpenAI(
+                base_url=os.getenv("OPENAI_API_BASE"),
+                api_key=os.getenv("OPENAI_API_KEY")
+            )
+    return _llm_client
+
+async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
+    client = get_anthropic()
+    if get_llm_provider() == "anthropic":
+        # Anthropic supports system as a list of blocks (for caching)
+        if isinstance(system, str):
+            system = [{"type": "text", "text": system}]
+        resp = await client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=messages
+        )
+        return resp.content[0].text
+    else:
+        # OpenAI/HF: system is a single message (flatten if list)
+        full_messages = []
+        if system:
+            if isinstance(system, list):
+                system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
+            else:
+                system_text = system
+            full_messages.append({"role": "system", "content": system_text})
+        full_messages.extend(messages)
+        resp = await client.chat.completions.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=full_messages
+        )
+        return resp.choices[0].message.content
+
+async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
+    client = get_anthropic()
+    if get_llm_provider() == "anthropic":
+        if isinstance(system, str):
+            system = [{"type": "text", "text": system}]
+        async with client.messages.stream(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=messages
+        ) as stream:
+            async for chunk in stream.text_stream:
+                yield chunk
+    else:
+        full_messages = []
+        if system:
+            if isinstance(system, list):
+                system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
+            else:
+                system_text = system
+            full_messages.append({"role": "system", "content": system_text})
+        full_messages.extend(messages)
+        stream = await client.chat.completions.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=full_messages,
+            stream=True
+        )
+        async for chunk in stream:
+            if chunk.choices and chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
 
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
-    client = get_anthropic()
     try:
-        verify_resp = await client.messages.create(
+        return await unified_chat_create(
             model=VERIFY_MODEL,
             max_tokens=512,
-            system=[{"type": "text", "text": VERIFY_SYSTEM_PROMPT}],
-            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}],
+            system=VERIFY_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}]
         )
-        return verify_resp.content[0].text
     except Exception as exc:
         return f"⚠️ Verification unavailable: {exc}"
 
@@ -274,20 +365,33 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
     if _index is None:
         yield "⚠️ Knowledge base not loaded.", ""
         return
-    queries, context = await get_multi_perspective_context(message, history)
-    yield "", context
-    client = get_anthropic()
-    async with client.messages.stream(
-        model=CLAUDE_MODEL,
-        max_tokens=RAG_MAX_TOKENS,
-        system=[
-            {"type": "text", "text": get_system_prompt().format(manifest="", verify_message=""), "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": f"Context:\n{context}", "cache_control": {"type": "ephemeral"}},
-        ],
-        messages=history + [{"role": "user", "content": message}],
-    ) as stream:
-        async for chunk in stream.text_stream:
+    try:
+        queries, context = await get_multi_perspective_context(message, history)
+        
+        # ── Prompt Caching ──────────────────────────────────────────────────────
+        if get_llm_provider() == "anthropic":
+            system = [
+                {"type": "text", "text": get_system_prompt().format(manifest="", verify_message=""), "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": f"Context:\n{context}", "cache_control": {"type": "ephemeral"}},
+            ]
+        else:
+            system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
+            
+        messages = history + [{"role": "user", "content": message}]
+        
+        has_yielded_context = False
+        async for chunk in unified_chat_stream(
+            model=CLAUDE_MODEL,
+            max_tokens=RAG_MAX_TOKENS,
+            system=system,
+            messages=messages
+        ):
+            if not has_yielded_context:
+                yield "", context
+                has_yielded_context = True
             yield chunk, ""
+    except Exception as exc:
+        yield f"⚠️ API error: {exc}", ""
 
 # ─── RAG Pipeline Functions ─────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
@@ -305,27 +409,25 @@ async def condense_query(message: str, history: list[dict]) -> str:
     
     prompt = f"CONVERSATION HISTORY:\n{history_text}\nUSER MESSAGE: {message}\n\nTask: Condense into a standalone search query."
     try:
-        resp = await client.messages.create(
+        resp_text = await unified_chat_create(
             model=CONDENSE_MODEL,
             max_tokens=100,
             messages=[{"role": "user", "content": prompt}]
         )
-        return resp.content[0].text.strip().strip('"')
+        return resp_text.strip().strip('"')
     except Exception:
         return message
 
 async def generate_perspective_queries(message: str, history: list[dict]) -> list[str]:
     """Generate 3 different search perspectives for a complex query."""
-    client = get_anthropic()
     prompt = f"Given this user message: '{message}', generate 3 different standalone search queries that look at this from different angles (e.g. legal, procedural, factual). Return ONLY a JSON list of strings."
     try:
-        resp = await client.messages.create(
+        text = await unified_chat_create(
             model=CONDENSE_MODEL,
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
         # More robust extraction using regex to find the JSON block
-        text = resp.content[0].text
         match = re.search(r"\[.*\]", text, re.DOTALL)
         if match:
             import json
@@ -363,29 +465,34 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
     query = queries[0]
     
     # ── Audit Logic (Restored) ──────────────────────────────────────────────
-    system_prompt = get_persona_prompt(persona_mode)
+    base_persona = get_persona_prompt(persona_mode)
+    audit_rules = ""
     if persona_mode in ("Grieve", "Manage"):
         matched_tests = _test_registry.find_matches(message + " " + query)
         for test in matched_tests:
-            system_prompt += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-            system_prompt += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
-            system_prompt += f"CRITERIA:\n{test.content}\n"
+            audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+            audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
+            audit_rules += f"CRITERIA:\n{test.content}\n"
 
-    # Simple Draft Step
-    client = get_anthropic()
-    prompt = f"Context from Knowledge Base:\n{context}\n\nQuestion: {message}"
-    
-    async with client.messages.stream(
-        model=CLAUDE_MODEL,
-        max_tokens=2048,
-        system=[
-            {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}},
+    # ── Prompt Caching ──────────────────────────────────────────────────────
+    if get_llm_provider() == "anthropic":
+        system = [
+            {"type": "text", "text": base_persona + audit_rules, "cache_control": {"type": "ephemeral"}},
             {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
-        ],
-        messages=[{"role": "user", "content": message}],
-    ) as stream:
-        async for text in stream.text_stream:
+        ]
+    else:
+        system = base_persona + audit_rules + f"\n\nContext from Knowledge Base:\n{context}"
+    
+    try:
+        async for text in unified_chat_stream(
+            model=CLAUDE_MODEL,
+            max_tokens=2048,
+            system=system,
+            messages=[{"role": "user", "content": message}]
+        ):
             yield text
+    except Exception as exc:
+        yield f"⚠️ API error: {exc}"
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
@@ -555,7 +662,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             show_label=False,
             container=False,
             min_width=100,
-            interactive=True
+            interactive=True,
+            elem_id="persona_selector"
         )
     
     chatbot = gr.Chatbot(
