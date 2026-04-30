@@ -591,12 +591,19 @@ async def chat_fn(message, history, persona, request: gr.Request = None):
     new_history = history + [{"role": "user", "content": sanitized}]
     yield gr.update(value=""), new_history, gr.update(open=False)
     
+    # Send a "thinking" message so the user knows it hasn't frozen
+    thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
+    current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
+    yield gr.update(), current_history, gr.update(open=False)
+    
     # 2. Stream assistant response
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
     async for chunk in rag_review_stream(sanitized, history, persona):
+        # Remove the thinking message once real chunks arrive
+        if accumulated == "":
+            thinking_msg = ""
         accumulated += chunk
-        # Update history with current accumulated response
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
         yield gr.update(), current_history, gr.update(open=False)
     
@@ -685,8 +692,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         scale=1, 
         height="70vh", 
         min_height=400, 
-        buttons=[],
-        type="messages"
+        buttons=[]
     )
     
     with gr.Row():
