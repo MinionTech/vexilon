@@ -270,7 +270,7 @@ def get_anthropic():
             )
         elif provider == "ollama":
             _llm_client = AsyncOpenAI(
-                base_url=os.getenv("OLLAMA_API_BASE", "http://ollama:11434/v1"),
+                base_url=os.getenv("OLLAMA_API_BASE", "http://ollama:11434/v1/"),
                 api_key="ollama"
             )
         else:
@@ -538,6 +538,14 @@ def markdown_to_history(file_path: str) -> list[dict]:
 # ─── Gradio App Logic ───────────────────────────────────────────────────────
 def startup(force_rebuild: bool = False):
     global _index, _chunks, INTEGRITY_WARNING
+    
+    # Identify environment
+    provider = get_llm_provider()
+    model = DEFAULT_MODEL_LLM
+    logger.info(f"[startup] Vexilon {VEXILON_VERSION} starting...")
+    logger.info(f"[startup] LLM Provider: {provider.upper()}")
+    logger.info(f"[startup] Default Model: {model}")
+
     _test_registry.load(TESTS_DIR)
     _fetch_pdf_cache_if_missing()
     _index, _chunks = load_precomputed_index()
