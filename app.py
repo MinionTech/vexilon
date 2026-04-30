@@ -64,8 +64,10 @@ def get_llm_provider():
     # Smart defaults: Use Ollama for local dev, HF for Hugging Face Spaces.
     # Users can still explicitly override via VEXILON_LLM_PROVIDER.
     is_hf_space = os.getenv("HF_SPACE_ID") is not None
-    default = "huggingface" if is_hf_space else "ollama"
-    return os.getenv("VEXILON_LLM_PROVIDER", default).lower()
+    smart_default = "huggingface" if is_hf_space else "ollama"
+    
+    val = os.getenv("VEXILON_LLM_PROVIDER")
+    return val.lower() if (val and val.strip()) else smart_default
 
 def _get_default_model():
     provider = get_llm_provider()
