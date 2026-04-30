@@ -61,10 +61,10 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
 
 # Models & Providers
 def get_llm_provider():
-    # Smart defaults: Use Ollama for local dev, HF for Hugging Face Spaces.
-    # Users can still explicitly override via VEXILON_LLM_PROVIDER.
-    is_hf_space = os.getenv("HF_SPACE_ID") is not None
-    smart_default = "huggingface" if is_hf_space else "ollama"
+    # Safe by Default: Assume PROD (Hugging Face) unless explicitly told otherwise.
+    # Users can set VEXILON_MODE=DEV to enable local Ollama defaults.
+    mode = os.getenv("VEXILON_MODE", "PROD").upper()
+    smart_default = "ollama" if mode == "DEV" else "huggingface"
     
     val = os.getenv("VEXILON_LLM_PROVIDER")
     return val.lower() if (val and val.strip()) else smart_default

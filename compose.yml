@@ -110,6 +110,7 @@ services:
     environment:
       <<: *common-env
       WATCHFILES_FORCE_POLLING: "true"
+      VEXILON_MODE: ${VEXILON_MODE:-DEV}
       VEXILON_LLM_PROVIDER: ${VEXILON_LLM_PROVIDER:-ollama}
       OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
     depends_on:
