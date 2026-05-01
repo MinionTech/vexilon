@@ -161,6 +161,14 @@ export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 python scripts/pdf_to_md.py path/to/document.pdf
 ```
 
+## 🚀 Contributing
+
+We welcome contributions from everyone! Whether you are interested in development, infrastructure, or documentation, your help is appreciated.
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for our full guidelines. To get started:
+- Browse the [Issue Tracker](https://github.com/DerekRoberts/vexilon/issues).
+- Look for the **`good first issue`** label—these are specifically curated tasks for those new to the project.
+
 ## Configuration
 
 All settings are optional — defaults match the product specification.
