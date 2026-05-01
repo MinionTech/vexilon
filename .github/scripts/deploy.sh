@@ -88,11 +88,13 @@ git reset # Clears the index
 # Create the Stub Dockerfile
 # Digests use @ syntax, tags use : syntax
 [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
-# Determine the image path dynamically, default to the known path if outside GitHub Actions
-REGISTRY_PATH=$(echo "${GITHUB_REPOSITORY:-miniontech/vexilon}" | tr '[:upper:]' '[:lower:]')
+
+# Use Bash-native expansion for the repository name (lowercase)
+# Fallback to the known repo if run outside of GitHub Actions
+REPO_PATH=$(echo "${GITHUB_REPOSITORY:-miniontech/vexilon}" | tr '[:upper:]' '[:lower:]')
 
 cat <<EOF > Dockerfile
-FROM ghcr.io/${REGISTRY_PATH}${separator}$IMAGE_REF
+FROM ghcr.io/${REPO_PATH}${separator}$IMAGE_REF
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then
