@@ -1,7 +1,7 @@
 #!/bin/bash
 # .github/scripts/verify_deployment.sh <space_id> [timeout_seconds]
 # Polls Hugging Face API until Space status is 'running'.
-# Usage: ./.github/scripts/verify_deployment.sh DerekRoberts/vexilon 600
+# Usage: ./.github/scripts/verify_deployment.sh MinionTech/vexilon 600
 
 set -eo pipefail
 
