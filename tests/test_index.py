@@ -102,3 +102,109 @@ def test_search_index_finds_most_similar(monkeypatch):
 
     results = indexing.search_index(index, chunks, "irrelevant", top_k=1)
     assert results[0] == chunks[2]
+
+
+# ── pickle → JSON migration ─────────────────────────────────────────────────
+
+def test_save_index_uses_json(tmp_path, monkeypatch):
+    """save_index should write chunks as JSON, not pickle."""
+    monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+
+    chunks = _make_chunks(3)
+    vecs = np.random.randn(3, indexing.EMBED_DIM).astype(np.float32)
+    faiss.normalize_L2(vecs)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
+
+    indexing.save_index(index, chunks)
+
+    # Verify chunks.json is valid JSON (not pickle)
+    import json
+    chunks_file = tmp_path / "chunks.json"
+    assert chunks_file.exists()
+    with open(chunks_file, "r", encoding="utf-8") as f:
+        loaded = json.load(f)
+    assert len(loaded) == 3
+    assert loaded[0]["text"] == "chunk number 0"
+
+
+def test_load_precomputed_index_from_json(tmp_path, monkeypatch):
+    """load_precomputed_index should load chunks from JSON."""
+    import json
+    monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+
+    chunks = _make_chunks(3)
+    vecs = np.random.randn(3, indexing.EMBED_DIM).astype(np.float32)
+    faiss.normalize_L2(vecs)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
+
+    # Save as JSON
+    with open(tmp_path / "chunks.json", "w", encoding="utf-8") as f:
+        json.dump(chunks, f)
+    faiss.write_index(index, str(tmp_path / "index.faiss"))
+
+    # Load and verify
+    loaded_index, loaded_chunks = indexing.load_precomputed_index()
+    assert loaded_index.ntotal == 3
+    assert len(loaded_chunks) == 3
+    assert loaded_chunks[0]["text"] == "chunk number 0"
+
+
+def test_load_precomputed_index_migrates_legacy_pkl(tmp_path, monkeypatch):
+    """load_precomputed_index should migrate legacy .pkl to JSON and delete the .pkl."""
+    import pickle
+    monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+
+    chunks = _make_chunks(3)
+    vecs = np.random.randn(3, indexing.EMBED_DIM).astype(np.float32)
+    faiss.normalize_L2(vecs)
+    monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
+    index = indexing.build_index(chunks)
+
+    # Save as legacy pickle
+    pkl_path = tmp_path / "chunks.pkl"
+    with open(pkl_path, "wb") as f:
+        pickle.dump(chunks, f)
+    faiss.write_index(index, str(tmp_path / "index.faiss"))
+
+    # JSON doesn't exist yet
+    assert not (tmp_path / "chunks.json").exists()
+
+    # Load should migrate
+    loaded_index, loaded_chunks = indexing.load_precomputed_index()
+    assert loaded_index.ntotal == 3
+    assert len(loaded_chunks) == 3
+
+    # JSON should now exist, pickle should be deleted
+    assert (tmp_path / "chunks.json").exists()
+    assert not pkl_path.exists()
+
+
+def test_fetch_downloads_json_not_pkl(tmp_path, monkeypatch):
+    """_fetch_pdf_cache_if_missing should request chunks.json, not chunks.pkl."""
+    import urllib.request
+    monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+
+    requested_urls = []
+    def mock_urlretrieve(url, dest):
+        requested_urls.append(url)
+        # Create a dummy file so the function doesn't loop
+        Path(dest).write_text("[]")
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", mock_urlretrieve)
+    monkeypatch.setenv("VEXILON_RAW_URL_BASE", "https://example.com")
+
+    indexing._fetch_pdf_cache_if_missing()
+
+    # Should have requested chunks.json, not chunks.pkl
+    assert any("chunks.json" in url for url in requested_urls)
+    assert not any("chunks.pkl" in url for url in requested_urls)
