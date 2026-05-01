@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import vexilon.indexing as indexing
+import agnav.indexing as indexing
 import app
 
 # ─── Tests for _is_toc_or_index_page() (Restored Parity) ──────────────────────

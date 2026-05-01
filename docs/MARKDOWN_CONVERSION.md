@@ -1,10 +1,10 @@
 # RAG Optimization: Converting PDF to Markdown
 
-This document explains the rationale, benefits, and process for migrating the Vexilon knowledge base from legacy PDFs to high-fidelity Markdown.
+This document explains the rationale, benefits, and process for migrating the Agreement Navigator (AgNav) knowledge base from legacy PDFs to high-fidelity Markdown.
 
 ## 1. Why Convert? (The Forensic Advantage)
 
-While Vexilon's RAG pipeline includes advanced PDF extraction logic (`app.py`), PDFs are a "lossy" format for semantic search. Converting to Markdown (`.md`) provides three critical advantages:
+While AgNav's RAG pipeline includes advanced PDF extraction logic (`app.py`), PDFs are a "lossy" format for semantic search. Converting to Markdown (`.md`) provides three critical advantages:
 
 ### A. Semantic Hierarchy
 *   **PDF Problem**: Sections and Articles are just text that "looks" like a header. The RAG has to guess whether "10.1" is a section start or just a number in a sentence.
@@ -51,7 +51,7 @@ We have provided a specialized script `scripts/pdf_to_md.py` that uses a **Foren
 3.  **Audit the Result**:
     Quickly scan the generated `.md` file to ensure the header levels match the document's structure (e.g., `# ARTICLE 10`).
 
-4.  **Re-index Vexilon**:
+4.  **Re-index AgNav**:
     After adding the `.md` file, force a rebuild of the vector index:
     ```bash
     # From project root

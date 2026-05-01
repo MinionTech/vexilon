@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-pdf_to_md.py — Forensic PDF-to-Markdown Converter for Vexilon
-------------------------------------------------------------
-This script uses OpenAI/HuggingFace to convert messy legal PDFs into 
-clean, structured Markdown files optimized for RAG retrieval.
+pdf_to_md.py — Forensic PDF-to-Markdown Converter for Agreement Navigator
+-------------------------------------------------------------------------
+This script uses OpenAI-compatible APIs (e.g. HuggingFace Router) to convert 
+messy legal PDFs into clean, structured Markdown files optimized for RAG retrieval.
 
 Usage:
   export HF_TOKEN=<YOUR_TOKEN>
@@ -25,7 +25,7 @@ import pymupdf  # High-precision PDF extraction (geometric word reconstruction)
 
 def print_banner():
     print("=" * 66)
-    print(" VEXILON : HIGH-INTEGRITY PDF → MARKDOWN CONVERTER (FORENSIC) ")
+    print(" AGNAV : HIGH-INTEGRITY PDF → MARKDOWN CONVERTER (FORENSIC) ")
     print("=" * 66)
 
 def clean_for_integrity_check(text: str) -> str:
@@ -46,7 +46,7 @@ def extract_raw_text(pdf_path: Path) -> List[str]:
     for page in doc:
         text = page.get_text() or ""
         # Remove bclaws-specific web artifacts
-        text = re.sub(r"https?://\www\.bclaws\.gov\.bc\.ca/\S*", "", text)
+        text = re.sub(r"https?://www\.bclaws\.gov\.bc\.ca/\S*", "", text)
         text = re.sub(r"\d{2}/\d{2}/\d{4},?\s*\d{2}:\d{2}\s+[^\n]*", "", text)
         pages.append(text.strip())
         
@@ -133,7 +133,7 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
         full_markdown = [existing_md]
         pages_processed = start_batch_idx * BATCH_SIZE
     else:
-        audit_path.write_text(f"# Vexilon Forensic Integrity Audit: {source_name}\n\n", encoding="utf-8")
+        audit_path.write_text(f"# Agreement Navigator Forensic Integrity Audit: {source_name}\n\n", encoding="utf-8")
 
     try:
         for batch_id, batch_pages in enumerate(batches, 1):
@@ -306,7 +306,7 @@ def main():
         markdown_content = convert_to_md(input_path, output_path, verify=args.verify, resume=args.resume)
         print("-" * 66)
         print(f"[FINISH] Conversion Complete.")
-        print(f"Vexilon Integrity Fingerprint: {len(markdown_content)} chars / {len(markdown_content.split())} words")
+        print(f"Agreement Navigator Integrity Fingerprint: {len(markdown_content)} chars / {len(markdown_content.split())} words")
     except KeyboardInterrupt:
         print("\n[!] Interrupted by user.")
         sys.exit(130)

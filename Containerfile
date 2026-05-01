@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
 COPY data/ ./data/
-COPY vexilon/ ./vexilon/
+COPY agnav/ ./agnav/
 COPY scripts/ ./scripts/
 # Data and indexing engine code copied — Indexing prerequisites complete.
 
@@ -65,7 +65,7 @@ FROM python:3.12-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1000 --create-home --shell /sbin/nologin vexilon
+    useradd --uid 1001 --create-home --shell /sbin/nologin agnav
 
 WORKDIR /app
 
@@ -77,16 +77,16 @@ ENV HF_HOME=/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the prepared environment and code from builder
-# We chown the entire /app so the 'vexilon' user can touch lock files and cache.
-COPY --from=builder --chown=vexilon:vexilon /app /app
-COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /hf_cache
+# We chown the entire /app so the 'agnav' user can touch lock files and cache.
+COPY --from=builder --chown=agnav:agnav /app /app
+COPY --from=model_fetcher --chown=agnav:agnav /model_cache /hf_cache
 
 # 3. Build index
 # Create persistent cache directory
-RUN mkdir -p /app/.pdf_cache && chown vexilon:vexilon /app/.pdf_cache
+RUN mkdir -p /app/.pdf_cache && chown agnav:agnav /app/.pdf_cache
 
-USER vexilon
-RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
+USER agnav
+RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
@@ -94,9 +94,9 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
 
 # ── Final Environment ────────────────────────────────────────────────────────
 ARG VERSION="Dev mode"
-ARG REPO_URL="https://github.com/DerekRoberts/vexilon"
-ENV VEXILON_VERSION=$VERSION
-ENV VEXILON_REPO_URL=$REPO_URL
+ARG REPO_URL="https://github.com/MinionTech/vexilon"
+ENV AGNAV_VERSION=$VERSION
+ENV AGNAV_REPO_URL=$REPO_URL
 
 EXPOSE 7860
 

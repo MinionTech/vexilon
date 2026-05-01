@@ -1,5 +1,5 @@
 [project]
-name = "vexilon"
+name = "agnav"
 version = "0.1.0"
 description = "BCGEU Collective Agreement RAG Chatbot"
 requires-python = ">=3.12"

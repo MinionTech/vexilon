@@ -1,5 +1,5 @@
 ---
-title: BCGEU Steward Assistant
+title: Agreement Navigator (AgNav)
 emoji: 📋
 colorFrom: blue
 colorTo: indigo
@@ -11,7 +11,7 @@ license: mit
 short_description: Look up the BCGEU 19th Main Public Service Agreement
 ---
 
-# BCGEU Steward Assistant
+# Agreement Navigator (AgNav)
 
 AI chatbot built to empower BCGEU union stewards with instant, cited answers from a broad library
 of labour law and contract documents.
@@ -31,7 +31,7 @@ of labour law and contract documents.
 
 ## Knowledge Base
 
-Vexilon is currently indexed with the following core documents:
+Agreement Navigator is currently indexed with the following core documents:
 
 - **BCGEU 19th Main Public Service Agreement (Priority 1)**: The core collective agreement. This is the **authoritative source** for union stewards; all other documents provide context.
 - **BC Employment Standards Act (Priority 2)**: Statutory minimums for wages, overtime, and notice.
@@ -42,14 +42,14 @@ Vexilon is currently indexed with the following core documents:
 - **BC Social Media Guidance for Public Service Employees**: Specific guidelines for personal and professional social media conduct.
 
 ### Priority & Weighting Logic
-Vexilon is programmed to prioritize the **Collective Agreement** above all else. When a query overlaps multiple sources:
+Agreement Navigator is programmed to prioritize the **Collective Agreement** above all else. When a query overlaps multiple sources:
 1. The **Agreement** is used for primary enforcement.
 2. **Statutes** (ESA, Labour Code, HRC) are cited as secondary legal context.
 3. If no contract language exists, the assistant identifies relevant statutory protections.
 
 ### Adding or Updating Documents
 
-Vexilon indexes **Markdown files** (`.md`), not PDFs. PDFs are kept only for the "Download Original" links in the UI.
+Agreement Navigator indexes **Markdown files** (`.md`), not PDFs. PDFs are kept only for the "Download Original" links in the UI.
 
 Add or replace Markdown files in `data/labour_law/` using the naming convention:
 
@@ -79,7 +79,7 @@ Docker deployments.
 
 🚀 **TEST:** https://huggingface.co/spaces/DerekRoberts/landru
 
-🚀 **PROD:** https://huggingface.co/spaces/DerekRoberts/vexilon
+🚀 **PROD:** https://huggingface.co/spaces/MinionTech/vexilon
 
 ## Quick Start
 
@@ -91,7 +91,7 @@ Docker deployments.
 
 ### Run
 
-Vexilon is "Secure by Default" but optimized for a zero-config developer experience via Podman Compose.
+Agreement Navigator is "Secure by Default" but optimized for a zero-config developer experience via Podman Compose.
 
 **1. Local Development (Zero-Config)**
 This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app. No API keys or tokens are required.
@@ -101,7 +101,7 @@ podman compose up --build
 ```
 
 > [!NOTE]
-> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the ~1.4GB `qwen3:1.7b` model.
+> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the model weights defined in `app.py`.
 
 **2. Production / Cloud Mode**
 Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requires an internet connection and a valid token.
@@ -113,13 +113,6 @@ podman compose up prod --build
 
 > [!TIP]
 > Using `--no-deps` prevents the local Ollama services from starting, allowing for an instant cloud-connected session.
-
-**3. Live Reload (Frontend Dev)**
-Mounts your local code into the container for instant UI feedback.
-
-```bash
-podman compose up --build watch
-```
 
 The container uses a multi-stage build and pre-indexes the agreement at build time for zero-downtime startup.
 
@@ -150,10 +143,7 @@ The app is ready immediately on page load — no dropdown, no Load button.
 1. Type a question in the input field and press **Enter** or tap **Send**
 2. Or click one of the suggested question chips on the welcome screen
 3. Responses include a plain-language explanation followed by verbatim quotes with citations
-4. **Direct Advice Mode**: Toggle this to receive tactical, operational guidance from a "Senior Staff Rep" persona. This includes:
-   - **Immediate Action Steps**: Numbered instructions for your next moves.
-   - **Meeting Scripts**: Verbatim language to use with management.
-   - **Nexus Analysis**: Specific guidance for off-duty conduct conduct cases.
+4. **Persona Mode**: Toggle between Lookup, Grieve, and Manage to receive tactical guidance.
 
 > **Note:** Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.
 
@@ -175,7 +165,7 @@ python scripts/pdf_to_md.py path/to/document.pdf
 We welcome contributions from everyone! Whether you are interested in development, infrastructure, or documentation, your help is appreciated.
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for our full guidelines. To get started:
-- Browse the [Issue Tracker](https://github.com/DerekRoberts/vexilon/issues).
+- Browse the [Issue Tracker](https://github.com/MinionTech/vexilon/issues).
 - Look for the **`good first issue`** label—these are specifically curated tasks for those new to the project.
 
 ## Configuration
@@ -184,44 +174,23 @@ All settings are optional — defaults match the product specification.
 
 ### Core Settings
 
-Vexilon uses **App-Authority** for model versioning. The primary source of truth is `app.py`.
+Agreement Navigator uses **App-Authority** for model versioning. The primary source of truth is `app.py`.
 
 | Variable | Default | Description |
 |---|---|---|
 | `OLLAMA_MODEL_ID` | `qwen3:1.7b` | *(Code Constant)* Defined in `app.py`. Infrastructure automatically pulls this. |
 | `HF_TOKEN` | *(required for PROD)* | Hugging Face access token with Inference permissions |
-| `VEXILON_LLM_PROVIDER` | `ollama` | Deployment mode (`ollama` or `huggingface`). Set via Compose profiles. |
+| `AGNAV_LLM_PROVIDER` | `ollama` | Deployment mode (`ollama` or `huggingface`). Set via Compose profiles. |
 | `PORT` | `7860` | Gradio listen port |
-| `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
-| `CHUNK_SIZE` | `450` | Tokens per chunk |
-| `CHUNK_OVERLAP` | `100` | Token overlap between chunks |
 
 ### Verification Bot
 
-Vexilon includes a second AI bot that verifies responses against source citations to reduce hallucinations:
+Agreement Navigator includes a second AI bot that verifies responses against source citations to reduce hallucinations:
 
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
 | `VERIFY_MODEL` | `Qwen/Qwen2.5-7B-Instruct` | Model for verification |
-
-When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
-
-> **Evaluation:** After deploying, monitor responses for "Verification:" notes.
-> - If notes appear frequently → verification is catching real issues; keep enabled
-> - If notes never appear → the main bot is reliable; consider disabling to save ~30% on API costs
-> - This evaluation approach assumes VERIFY_ENABLED=true by default to assess value over time
-
-### Rate Limiting
-
-Rate limiting prevents abuse and controls API costs by throttling requests per client IP:
-
-| Variable | Default | Description |
-|---|---|---|
-| `RATE_LIMIT_PER_MINUTE` | `10` | Maximum requests per minute per client IP |
-| `RATE_LIMIT_PER_HOUR` | `100` | Maximum requests per hour per client IP |
-
-When a rate limit is exceeded, users receive a clear error message indicating which limit was hit and when they can retry.
 
 ### Input Sanitization
 
@@ -232,16 +201,9 @@ Input sanitization prevents prompt injection attacks by detecting and blocking m
 | `MAX_INPUT_LENGTH` | `10000` | Maximum characters per message |
 | `LOG_SUSPICIOUS_INPUTS` | `true` | Log flagged inputs for security review |
 
-The sanitization checks for 16+ prompt injection patterns including:
-- `ignore all/previous/system instructions`
-- `forget your/the instructions`
-- `you are now ... instead`
-- `jailbreak`, `developer mode`, `sudo mode`
-- And other common injection techniques
-
 ### Privacy & Data Retention
 
-Vexilon is a "content-blind" application designed for maximum privacy and to support compliance with the British Columbia **Personal Information Protection Act (PIPA)**.
+Agreement Navigator is a "content-blind" application designed for maximum privacy and to support compliance with the British Columbia **Personal Information Protection Act (PIPA)**.
 
 - **Ephemeral Conversations**: Chats are tied only to your current browser session and are permanently deleted upon refresh or closure.
 - **No Content Logging**: We **never** log user queries, bot responses, or search reasoning.
@@ -252,98 +214,13 @@ For full technical disclosure and mapping to the 10 PIPA Fair Information Princi
 ## Hugging Face Spaces Deployment
 
 The Space runs as **`sdk: docker`** in production — the deploy script pushes a stub
-`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/vexilon`.
-The FAISS index is already baked into that image (built via the `Containerfile` `RUN` step),
-so the Space starts instantly.
-
-### FAISS index fallback (Gradio SDK / bare startup)
-
-If the app ever runs without the pre-built index (e.g. during development or on a fresh
-Gradio-SDK Space), [`_fetch_pdf_cache_if_missing()`](app.py) downloads
-`.pdf_cache/index.faiss` and `.pdf_cache/chunks.json` from this public GitHub repo.
-Those files are **not** committed by default (`.pdf_cache/` is gitignored).
-To publish an updated fallback after rebuilding the index locally:
-
-```bash
-python app.py --rebuild-index
-git add -f .pdf_cache/index.faiss .pdf_cache/chunks.json
-git commit -m "chore(index): rebuild fallback cache"
-git push
-```
-
-### Automated deploy (GitHub Actions)
-
-> [!WARNING]
-> This repository is currently using GitHub Actions pointing to `@main` (e.g., `bcgov/actions/diff-triggers@main`) for testing purposes. This is **not recommended** for production environments as it lacks version stability and can introduce breaking changes without notice.
-
-The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
-the HF Space.
-
-- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
-
-**Required GitHub secret:**
-
-| Secret | Value |
-|---|---|
-| `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
-
-**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/DerekRoberts/vexilon/settings)):
-
-| Secret | Value |
-|---|---|
-| `HF_TOKEN` | Hugging Face write-scoped access token |
-
-### Manual deploy (one-time setup or re-deploy)
-
-The `.github/scripts/deploy.sh` script handles this end-to-end.  To run manually:
-
-````bash
-HF_TOKEN=YOUR_HF_TOKEN ./.github/scripts/deploy.sh sha-$(git rev-parse --short HEAD) --prod
-````
-
-### Running tests
-
-Vexilon uses a **Quality Gate** pattern in `compose.yml` — the app will not start unless the test suite passes.
-
-#### Test tiers
-
-| Tier | Location | Model | When to run |
-|---|---|---|---|
-| **Unit** | `tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
-| **Integration** | `tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
-| **Smoke** | `tests/smoke/` | Real HF/Ollama API | Manually, to verify live API connectivity |
-
-#### Commands
-
-````bash
-# Run unit tests only — fast, safe locally
-uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
-
-# Run full suite (unit + integration) inside the memory-capped container
-podman compose run --rm tests
-
-# Gated startup — tests must pass before Vexilon launches
-podman compose up
-
-# Live Development — launch with hot-reload and volumes
-# This is the default: podman compose up
-
-# Skip the gate — useful for rapid UI iteration (no volumes)
-# podman compose up vexilon --build
-
-# Smoke tests — verifies real API connectivity
-podman compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
-````
-
-> [!NOTE]
-> Integration tests intentionally load the real embedding model. Run them locally only if you have
-> ~1.5 GB of free RAM headroom. The Compose `tests` service caps usage at 2 GB.
+`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/agnav`.
+The FAISS index is already baked into that image, so the Space starts instantly.
 
 ## Project Structure
 
-````
-vexilon/
+```
+agnav/
 ├── app.py            # Main application (RAG pipeline + Gradio UI)
 ├── conftest.py       # pytest root path configuration
 ├── requirements.txt  # Python dependencies
@@ -351,31 +228,5 @@ vexilon/
 ├── compose.yml       # Podman Compose config (production parity)
 ├── SPEC.md           # Product specification
 ├── data/             # Knowledge base source files
-│   └── labour_law/   # Hierarchical document library
-│       ├── primary/       # Collective Agreement, Labour Relations Code
-│       ├── statutory/     # Employment Standards Act, Human Rights Code
-│       ├── resources/     # Steward manuals, ethics guides
-│       ├── jurisprudence/ # Arbitration awards, case precedents
-│       └── tests/         # Test/doctrine registry (Millhaven, KVP)
-├── tests/            # pytest test suite
-│   ├── conftest.py         # root: mock embedding model + mock Anthropic client
-│   ├── test_chunking.py    # chunk_text() unit tests
-│   ├── test_condense_query.py  # query condensation unit tests
-│   ├── test_fetch.py       # index bootstrap / HTTP fetch unit tests
-│   ├── test_index.py       # FAISS build/search unit tests
-│   ├── test_knowledge_base.py  # PDF/MD parity integrity check
-│   ├── test_md_ingestion.py    # TOC detection, artifact cleaning, MD loader
-│   ├── test_md_loader.py   # load_md_chunks() unit tests
-│   ├── test_persistence.py # index save/load round-trip tests
-│   ├── test_rag_stream.py  # rag_stream() unit tests
-│   ├── test_rate_limit.py  # rate limiter unit tests
-│   ├── test_sanitize_input.py  # prompt injection detection tests
-│   ├── test_verify_response.py # verification bot unit tests
-│   ├── integration/        # real model — run via: podman-compose run --rm tests
-│   │   ├── test_app_flow.py        # full startup → index → RAG stream flow
-│   │   ├── test_embed_pipeline.py  # sentence-transformers + FAISS interop
-│   │   └── test_gradio_ui.py       # Gradio Blocks construction check
-│   └── smoke/
-│       └── test_model_valid.py  # live API model validation
-└── .pdf_cache/       # Pre-built FAISS index and chunk metadata
-````
+└── tests/            # pytest test suite
+```

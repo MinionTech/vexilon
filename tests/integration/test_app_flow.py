@@ -8,7 +8,7 @@ using the real embedding model but a mocked LLM API.
 import pytest
 import app
 from pathlib import Path
-import vexilon.indexing as indexing
+import agnav.indexing as indexing
 
 @pytest.mark.asyncio
 async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path):

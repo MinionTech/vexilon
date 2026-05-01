@@ -30,7 +30,7 @@ jobs:
       - id: diff
         uses: bcgov/actions/diff-triggers@main
         with:
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
+          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
 
   cache_validation:
     name: Validate FAISS Cache
@@ -88,14 +88,14 @@ jobs:
             export HF_TOKEN=${{ secrets.HF_TOKEN }}
             mkdir -p reports
             podman compose run --rm tests
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
+          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
           sonar_token: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload Test and Security Reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: vexilon-reports
+          name: agnav-reports
           path: reports/
           retention-days: 5
 
@@ -120,7 +120,7 @@ jobs:
         id: builder
         uses: bcgov/action-builder-ghcr@main
         with:
-          package: vexilon
+          package: agnav
           build_context: .
           build_file: Containerfile
           tags: sha-${{ env.IMAGE_SHA }}
@@ -186,12 +186,12 @@ jobs:
           # Override: pre-built image, tiny smoke-test model, cached model dir
           cat <<EOF > compose.override.yml
           services:
-            vexilon:
+            agnav:
               image: $IMAGE
               build: null
               volumes: []
               environment:
-                VEXILON_LLM_PROVIDER: ollama
+                AGNAV_LLM_PROVIDER: ollama
                 OLLAMA_MODEL: qwen3:0.6b
             ollama:
               volumes:
@@ -202,10 +202,11 @@ jobs:
           EOF
           
           # Start the stack using compose
-          podman compose up -d vexilon
+          podman compose up -d agnav
           
           # Rename for healthcheck compatibility with existing scripts
-          podman rename vexilon-vexilon-1 vexilon-${{ github.event.pull_request.number || github.run_id }}
+          podman rename vexilon-agnav-1 agnav-${{ github.event.pull_request.number || github.run_id }}
+
       - name: Wait for Healthcheck
         run: |
           for i in {1..60}; do
@@ -214,9 +215,9 @@ jobs:
               exit 0
             fi
 
-            if ! podman inspect vexilon-${{ github.event.pull_request.number || github.run_id }} --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
+            if ! podman inspect agnav-${{ github.event.pull_request.number || github.run_id }} --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
               echo "Container died! Logs:"
-              podman logs vexilon-${{ github.event.pull_request.number || github.run_id }}
+              podman logs agnav-${{ github.event.pull_request.number || github.run_id }}
               exit 1
             fi
 
@@ -228,13 +229,13 @@ jobs:
 
       - name: Dump Logs on Failure
         if: failure()
-        run: podman logs vexilon-${{ github.event.pull_request.number || github.run_id }}
+        run: podman logs agnav-${{ github.event.pull_request.number || github.run_id }}
 
       - name: Cleanup Stack
         if: always()
         run: |
           podman compose down || true
-          podman rm -f vexilon-${{ github.event.pull_request.number || github.run_id }} || true
+          podman rm -f agnav-${{ github.event.pull_request.number || github.run_id }} || true
 
   trivy:
     name: Trivy Security Scan

@@ -20,7 +20,7 @@ LABOUR_LAW_DIR = Path("./data/labour_law")
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
-_GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/MinionTech/vexilon/main")
+_GITHUB_RAW_BASE = os.getenv("AGNAV_RAW_URL_BASE", "https://raw.githubusercontent.com/MinionTech/vexilon/main")
 INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
 SOURCE_MANIFEST_PATH = LABOUR_LAW_DIR / "manifest.json"
 
@@ -30,7 +30,7 @@ class FileIntegrityError(Exception):
 
 # Models
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
-MAX_EMBED_TOKENS = int(os.getenv("VEXILON_MAX_EMBED_TOKENS", 4096))
+MAX_EMBED_TOKENS = int(os.getenv("AGNAV_MAX_EMBED_TOKENS", 4096))
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
 EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
@@ -57,12 +57,12 @@ def get_embed_model() -> "SentenceTransformer":
         _embed_model.max_seq_length = MAX_EMBED_TOKENS
         
         if hasattr(_embed_model, "tokenizer"):
-            # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
+            # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
             # Most modern models (including BGE) have fast variants.
             if not getattr(_embed_model.tokenizer, "is_fast", False):
                 raise RuntimeError(
                     f"Tokenizer for {current_model_name} is NOT a 'Fast' tokenizer. "
-                    "Vexilon requires 'Fast' tokenizers for reliable character-offset mapping."
+                    "Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping."
                 )
             
             _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
@@ -190,7 +190,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
             current_header = stripped.lstrip("#").strip().upper()
         
         page_num = 1
-        # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
+        # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
         # This replaces the legacy try-except/char-length fallback blocks.
         encoding = tokenizer(
             line,
@@ -231,7 +231,7 @@ def load_pdf_chunks(pdf_path: Path, strict: bool = False) -> list[dict]:
             page_num = i + 1
             full_text += page_text + "\n"
             
-            # Vexilon requires 'Fast' tokenizers for reliable character-offset mapping.
+            # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
             # This replaces the legacy try-except/char-length fallback blocks.
             encoding = tokenizer(
                 page_text,
@@ -363,12 +363,12 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
             if f.suffix.lower() == ".md":
                 chunks.extend(load_md_chunks(f))
             elif f.suffix.lower() == ".pdf":
-                file_chunks = load_pdf_chunks(f, strict=os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true")
+                file_chunks = load_pdf_chunks(f, strict=os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true")
                 chunks.extend(file_chunks)
         except Exception as e:
             logger.error(f"[build] ERROR: Failed to index {f.name}: {e}")
             failed_files.append(f.name)
-            if os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
+            if os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true":
                 raise
 
     # Save integrity report
@@ -384,7 +384,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     except PermissionError as e:
         logger.warning(f"[build] Could not write integrity manifest: {e}")
 
-    if failed_files and os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
+    if failed_files and os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true":
         raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
     
     if not chunks:

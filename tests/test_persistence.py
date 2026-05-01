@@ -17,7 +17,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import app
-import vexilon.indexing as indexing
+import agnav.indexing as indexing
 
 
 def _tiny_index(n: int = 3) -> tuple[faiss.IndexFlatIP, list[dict]]:
