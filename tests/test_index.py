@@ -155,8 +155,8 @@ def test_load_precomputed_index_from_json(tmp_path, monkeypatch):
     assert loaded_chunks[0]["text"] == "chunk number 0"
 
 
-def test_load_precomputed_index_migrates_legacy_pkl(tmp_path, monkeypatch):
-    """load_precomputed_index should migrate legacy .pkl to JSON and delete the .pkl."""
+def test_load_precomputed_index_deletes_legacy_pkl(tmp_path, monkeypatch):
+    """load_precomputed_index should delete legacy .pkl without loading it (security)."""
     import pickle
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
@@ -168,23 +168,24 @@ def test_load_precomputed_index_migrates_legacy_pkl(tmp_path, monkeypatch):
     monkeypatch.setattr(indexing, "embed_texts", _make_embed_fn(vecs))
     index = indexing.build_index(chunks)
 
-    # Save as legacy pickle
+    # Save as legacy pickle (simulate pre-migration state)
     pkl_path = tmp_path / "chunks.pkl"
     with open(pkl_path, "wb") as f:
         pickle.dump(chunks, f)
     faiss.write_index(index, str(tmp_path / "index.faiss"))
+    # No chunks.json — triggers the legacy path
 
     # JSON doesn't exist yet
     assert not (tmp_path / "chunks.json").exists()
 
-    # Load should migrate
+    # Load should return None, None (not load the untrusted pickle)
     loaded_index, loaded_chunks = indexing.load_precomputed_index()
-    assert loaded_index.ntotal == 3
-    assert len(loaded_chunks) == 3
+    assert loaded_index is None
+    assert loaded_chunks is None
 
-    # JSON should now exist, pickle should be deleted
-    assert (tmp_path / "chunks.json").exists()
+    # Pickle should be deleted, JSON should NOT be created from untrusted pickle
     assert not pkl_path.exists()
+    assert not (tmp_path / "chunks.json").exists()
 
 
 def test_fetch_downloads_json_not_pkl(tmp_path, monkeypatch):
@@ -198,7 +199,7 @@ def test_fetch_downloads_json_not_pkl(tmp_path, monkeypatch):
     def mock_urlretrieve(url, dest):
         requested_urls.append(url)
         # Create a dummy file so the function doesn't loop
-        Path(dest).write_text("[]")
+        open(dest, "w").write("[]")
 
     monkeypatch.setattr(urllib.request, "urlretrieve", mock_urlretrieve)
     monkeypatch.setenv("VEXILON_RAW_URL_BASE", "https://example.com")

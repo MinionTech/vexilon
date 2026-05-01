@@ -396,19 +396,13 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
     if not INDEX_PATH.exists() or not CHUNKS_PATH.exists():
-        # Backward compat: check for legacy .pkl file
+        # Security: delete legacy .pkl file without loading it (RCE risk).
+        # The system will re-download JSON or rebuild from source.
         legacy_pkl = PDF_CACHE_DIR / "chunks.pkl"
-        if INDEX_PATH.exists() and legacy_pkl.exists():
-            import pickle
-            logger.warning("[startup] Found legacy chunks.pkl — migrating to JSON...")
-            with open(legacy_pkl, "rb") as f:
-                chunks = pickle.load(f)
-            with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
-                json.dump(chunks, f, ensure_ascii=False)
-            legacy_pkl.unlink()
-            logger.info("[startup] Migration complete. Deleted chunks.pkl.")
-        else:
-            return None, None
+        if legacy_pkl.exists():
+            legacy_pkl.unlink(missing_ok=True)
+            logger.warning("[startup] Deleted legacy chunks.pkl (security). Will re-download or rebuild index.")
+        return None, None
     logger.info(f"[startup] Loading pre-computed index from {INDEX_PATH}...")
     import faiss
     index = faiss.read_index(str(INDEX_PATH))
