@@ -13,7 +13,7 @@ Binary cache files are tracked via Git LFS to prevent repository bloat:
 ```bash
 # .gitattributes
 .pdf_cache/*.faiss filter=lfs diff=lfs merge=lfs -text
-.pdf_cache/*.pkl filter=lfs diff=lfs merge=lfs -text
+.pdf_cache/*.json filter=lfs diff=lfs merge=lfs -text
 # Note: manifest.json is NOT in LFS - tracked in standard git
 ```
 
