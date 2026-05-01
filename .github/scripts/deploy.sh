@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: ./.github/scripts/deploy.sh <space_name> [image_ref] [--dry-run]
-# <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')
+# <space_name>: Full name of the Hugging Face Space (e.g. 'MinionTech/vexilon')
 # [image_ref]: Tag or digest of the image to deploy (falls back to short SHA if omitted)
 #
 # Strict mode + Trace
@@ -9,7 +9,7 @@ set -euo pipefail
 # Usage function
 usage() {
     echo "Usage: $0 <space_name> [image_ref] [--dry-run]"
-    echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')"
+    echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'MinionTech/vexilon')"
     echo "  [image_ref]: Tag or digest of the image to deploy"
     echo "  --dry-run: Show what would be done without performing it"
     exit 1
@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$SPACE_NAME" ]; then
-    echo "Error: space_name (e.g. 'DerekRoberts/landru') must be provided."
+    echo "Error: space_name (e.g. 'MinionTech/landru') must be provided."
     usage
 fi
 
@@ -89,7 +89,7 @@ git reset # Clears the index
 # Digests use @ syntax, tags use : syntax
 [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
 cat <<EOF > Dockerfile
-FROM ghcr.io/derekroberts/vexilon${separator}$IMAGE_REF
+FROM ghcr.io/miniontech/vexilon${separator}$IMAGE_REF
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then

@@ -21,7 +21,7 @@ LABOUR_LAW_DIR = Path("./data/labour_law")
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.pkl"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
-_GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/DerekRoberts/vexilon/main")
+_GITHUB_RAW_BASE = os.getenv("VEXILON_RAW_URL_BASE", "https://raw.githubusercontent.com/MinionTech/vexilon/main")
 INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
 SOURCE_MANIFEST_PATH = LABOUR_LAW_DIR / "manifest.json"
 

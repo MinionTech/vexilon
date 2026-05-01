@@ -16,7 +16,7 @@ PR opened → pr-open.yml (test + build image) → merge to main → deploy-test
 ## Critical Constraints
 
 ### GHCR Image URLs MUST be fully lowercase
-GHCR requires lowercase repository paths. GitHub's `${{ github.repository }}` returns `DerekRoberts/vexilon` (mixed case). You MUST use `declare -l` to lowercase the entire image URL:
+GHCR requires lowercase repository paths. GitHub's `${{ github.repository }}` returns `MinionTech/vexilon` (mixed case). You MUST use `declare -l` to lowercase the entire image URL:
 
 ```bash
 # ✅ CORRECT — lowercases entire string including repo path
