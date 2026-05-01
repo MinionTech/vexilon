@@ -188,31 +188,35 @@ def test_startup_delegates_to_indexing(monkeypatch):
     assert app._chunks is fake_chunks
     mock_build.assert_called_once_with(force=True)
 
-def test_load_precomputed_index_deletes_legacy_pkl(tmp_path, monkeypatch):
-    """load_precomputed_index should delete legacy .pkl without loading it (security)."""
+def test_load_precomputed_index_proactively_deletes_legacy_pkl(tmp_path, monkeypatch):
+    """load_precomputed_index should delete legacy .pkl regardless of other files (security)."""
     import pickle
+    import json
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
 
-    # Create a dummy index
-    vecs = np.random.randn(1, indexing.EMBED_DIM).astype(np.float32)
-    faiss.normalize_L2(vecs)
+    # 1. Test cleanup when JSON is missing (returns None, None)
     index = faiss.IndexFlatIP(indexing.EMBED_DIM)
-    index.add(vecs)
     faiss.write_index(index, str(tmp_path / "index.faiss"))
-
-    # Save as legacy pickle (simulate pre-migration state)
     pkl_path = tmp_path / "chunks.pkl"
     with open(pkl_path, "wb") as f:
         pickle.dump([{"text": "legacy"}], f)
-    # No chunks.json — triggers the legacy path cleanup
-
-    # Load should return None, None (not load the untrusted pickle)
+    
     loaded_index, loaded_chunks = indexing.load_precomputed_index()
     assert loaded_index is None
-    assert loaded_chunks is None
-
-    # Pickle should be deleted, JSON should NOT be created from untrusted pickle
     assert not pkl_path.exists()
     assert not (tmp_path / "chunks.json").exists()
+
+    # 2. Test cleanup when JSON ALREADY EXISTS (returns valid index, but still deletes pkl)
+    # Re-create pickle
+    with open(pkl_path, "wb") as f:
+        pickle.dump([{"text": "legacy"}], f)
+    # Create valid JSON and FAISS
+    with open(tmp_path / "chunks.json", "w") as f:
+        json.dump([{"text": "valid"}], f)
+    
+    loaded_index, loaded_chunks = indexing.load_precomputed_index()
+    assert loaded_index is not None
+    assert loaded_chunks[0]["text"] == "valid"
+    assert not pkl_path.exists(), "Legacy pkl should be deleted even if loading succeeds"

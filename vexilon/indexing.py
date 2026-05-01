@@ -395,13 +395,13 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     return index, chunks
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
+    # Security: proactively delete legacy .pkl file (RCE risk).
+    legacy_pkl = PDF_CACHE_DIR / "chunks.pkl"
+    if legacy_pkl.exists():
+        legacy_pkl.unlink(missing_ok=True)
+        logger.warning("[startup] Deleted legacy chunks.pkl (security).")
+
     if not INDEX_PATH.exists() or not CHUNKS_PATH.exists():
-        # Security: delete legacy .pkl file without loading it (RCE risk).
-        # The system will re-download JSON or rebuild from source.
-        legacy_pkl = PDF_CACHE_DIR / "chunks.pkl"
-        if legacy_pkl.exists():
-            legacy_pkl.unlink(missing_ok=True)
-            logger.warning("[startup] Deleted legacy chunks.pkl (security). Will re-download or rebuild index.")
         return None, None
     logger.info(f"[startup] Loading pre-computed index from {INDEX_PATH}...")
     import faiss
