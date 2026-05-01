@@ -52,7 +52,7 @@ _index: "faiss.IndexFlatIP | None" = None
 INTEGRITY_WARNING: str | None = None
 
 VEXILON_VERSION = os.getenv("VEXILON_VERSION", "Dev mode")
-VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/DerekRoberts/vexilon")
+VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_LABOUR_LAW_URL = os.getenv(
     "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
 )

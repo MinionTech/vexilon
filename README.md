@@ -77,9 +77,9 @@ Docker deployments.
 
 ## Hosted
 
-🚀 **TEST:** https://huggingface.co/spaces/DerekRoberts/landru
+🚀 **TEST:** https://huggingface.co/spaces/MinionTech/landru
 
-🚀 **PROD:** https://huggingface.co/spaces/DerekRoberts/vexilon
+🚀 **PROD:** https://huggingface.co/spaces/MinionTech/vexilon
 
 ## Quick Start
 
@@ -235,7 +235,7 @@ For full technical disclosure and mapping to the 10 PIPA Fair Information Princi
 ## Hugging Face Spaces Deployment
 
 The Space runs as **`sdk: docker`** in production — the deploy script pushes a stub
-`Dockerfile` pointing to the pre-built container image on `ghcr.io/derekroberts/vexilon`.
+`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/vexilon`.
 The FAISS index is already baked into that image (built via the `Containerfile` `RUN` step),
 so the Space starts instantly.
 
@@ -262,8 +262,8 @@ git push
 The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
 the HF Space.
 
-- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
+- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `MinionTech/landru` Space.
+- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `MinionTech/vexilon` Space.
 
 **Required GitHub secret:**
 
@@ -271,7 +271,7 @@ the HF Space.
 |---|---|
 | `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
 
-**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/DerekRoberts/vexilon/settings)):
+**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/MinionTech/vexilon/settings)):
 
 | Secret | Value |
 |---|---|
