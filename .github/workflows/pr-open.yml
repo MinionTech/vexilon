@@ -208,8 +208,6 @@ jobs:
     needs: [check]
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
-    container:
-      image: semgrep/semgrep
     permissions:
       contents: read
       security-events: write
@@ -217,14 +215,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Run Semgrep
-        run: |
-          semgrep scan \
-            --config p/python \
-            --config p/security-audit \
-            --config p/secrets \
-            --config p/owasp-top-10 \
-            --sarif \
-            --output semgrep.sarif
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/python
+            p/security-audit
+            p/secrets
+            p/owasp-top-10
+          generateSarif: "1"
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v4
