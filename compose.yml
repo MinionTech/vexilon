@@ -16,12 +16,9 @@ x-common-env: &common-env
   PYTHONPATH: "/app"
   TRANSFORMERS_OFFLINE: "1"
 
-# Reusable build configuration
 x-common-build: &common-build
   context: .
   dockerfile: Containerfile
-  args:
-    VERSION: ${VEXILON_VERSION:-dev}
 
 # Standard service boilerplate: Resource limits and Persistence
 x-service-defaults: &service-defaults
