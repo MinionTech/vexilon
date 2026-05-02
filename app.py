@@ -433,29 +433,29 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
     return queries, "\n\n".join(context_parts)
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", all_chunks: list[dict] = None) -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup") -> AsyncIterator[str]:
     try:
         queries, context = await get_multi_perspective_context(message, history)
         
-        # ── Audit Logic (Restored) ──────────────────────────────────────────────
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
         if persona_mode in ("Grieve", "Manage"):
             matched_tests = _test_registry.find_matches(message + " " + queries[0])
             for test in matched_tests:
                 audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-                audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
-                audit_rules += f"CRITERIA:\n{test.content}\n"
+                audit_rules += f"Criteria:\n{test.content}\n"
 
-        # Combine Master Rules with Persona Rules
         master_rules = get_system_prompt()
         system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        
+        # RESTORED: Pass full history to the model
+        messages = history + [{"role": "user", "content": message}]
         
         async for text in unified_chat_stream(
             model=REVIEWER_MODEL,
             max_tokens=2048,
             system=system,
-            messages=[{"role": "user", "content": message}]
+            messages=messages
         ):
             yield text
     except Exception as exc:
@@ -525,17 +525,19 @@ def startup(force_rebuild: bool = False):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
 async def chat_handler(message, history, persona, request: gr.Request = None):
-    """Unified handler for both adding the user message and streaming the assistant response."""
+    """Unified atomic handler for adding user message and streaming response."""
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
+    msg_str = msg_str.strip() if msg_str else ""
     if not msg_str:
         yield history or [], gr.update(), gr.update()
         return
         
-    # 1. Add user message and clear textbox IMMEDIATELY
-    new_history = (history or []) + [{"role": "user", "content": msg_str}]
+    # 1. Commit user message to history and clear box IMMEDIATELY
+    user_msg = {"role": "user", "content": msg_str}
+    new_history = (history or []) + [user_msg]
     yield new_history, gr.update(value=""), gr.update()
 
     # 2. Rate Limit & Security Check
@@ -547,7 +549,8 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(), gr.update()
+        error_history = new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}]
+        yield error_history, gr.update(), gr.update()
         return
 
     # 3. Show thinking message
@@ -558,9 +561,10 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     # 4. Stream assistant response
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    async for chunk in rag_review_stream(sanitized, history or [], persona):
+    # Use sanitized query for retrieval, but pass full history for context
+    async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
         if accumulated == "":
-            thinking_msg = ""
+            thinking_msg = "" # Remove thinking message on first token
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
         yield current_history, gr.update(), gr.update(open=False)
