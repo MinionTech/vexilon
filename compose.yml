@@ -11,7 +11,7 @@ x-common-env: &common-env
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   OPENAI_API_BASE: ${OPENAI_API_BASE:-}
   OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
-  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b}
   HF_HOME: /app/hf_cache
   HF_HUB_OFFLINE: "1"
   HF_TOKEN_PATH: /dev/null # Prevent HuggingFace token lookup permission errors
@@ -144,7 +144,7 @@ services:
     environment:
       - OLLAMA_HOST=ollama:11434
     entrypoint: /bin/sh
-    command: -c "ollama pull ${OLLAMA_MODEL:-qwen2.5:7b}"
+    command: -c "ollama pull ${OLLAMA_MODEL:-qwen2.5:0.5b}"
 
 volumes:
   pdf_cache: {}

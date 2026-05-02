@@ -75,7 +75,7 @@ def _get_default_model():
     provider = get_llm_provider()
     # Default to Hugging Face or Ollama
     if provider == "ollama":
-        return os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+        return os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
     return "Qwen/Qwen2.5-7B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
