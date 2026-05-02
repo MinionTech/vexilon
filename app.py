@@ -663,9 +663,11 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         with gr.Row():
             for q in EXAMPLES:
                 example_btn = gr.Button(q, size="sm", variant="secondary")
-                def make_handler(query):
+                def make_handler(q_text):
                     async def handler(hist, pers, req: gr.Request = None):
-                        async for update in chat_fn(query, hist, pers, req):
+                        # Use the same logic as user_fn: Add query to history
+                        new_history = (hist or []) + [{"role": "user", "content": q_text}]
+                        async for update in chat_fn(new_history, pers, req):
                             yield update
                     return handler
 
