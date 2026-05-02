@@ -69,6 +69,7 @@ WORKDIR /app
 ENV HF_HOME=/app/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
+    EMBED_MODEL=/app/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the prepared environment and code from builder

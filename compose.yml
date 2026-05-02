@@ -8,6 +8,10 @@ x-common-env: &common-env
   VEXILON_LLM_PROVIDER: ${VEXILON_LLM_PROVIDER:-ollama}
   OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
   HF_TOKEN: ${HF_TOKEN:-}
+  HF_HOME: /app/hf_cache
+  HF_HUB_OFFLINE: "1"
+  TRANSFORMERS_OFFLINE: "1"
+  EMBED_MODEL: /app/hf_cache
 
 x-common-build: &common-build
   context: .
