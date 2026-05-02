@@ -64,16 +64,9 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
 
 # Models & Providers
 def get_llm_provider() -> str:
-    # Safe by Default: Assume PROD (Hugging Face) unless explicitly told otherwise.
-    # Users can set VEXILON_MODE=DEV to enable local Ollama defaults.
-    mode_raw = os.getenv("VEXILON_MODE", "PROD")
-    mode = mode_raw.strip().upper()
-    smart_default = "ollama" if mode == "DEV" else "huggingface"
-    
-    val = os.getenv("VEXILON_LLM_PROVIDER")
-    # Provider switching logic
-    provider = val.lower() if (val and val.strip()) else smart_default
-    return provider
+    # Safe by Default: Assume PROD (Hugging Face) unless explicitly told otherwise via VEXILON_LLM_PROVIDER.
+    val = os.getenv("VEXILON_LLM_PROVIDER", "huggingface")
+    return val.lower().strip()
 
 def _get_default_model():
     provider = get_llm_provider()
