@@ -15,7 +15,7 @@ x-common-env: &common-env
   HF_HOME: /app/hf_cache
   HF_HUB_OFFLINE: "1"
   HF_TOKEN_PATH: /dev/null # Prevent HuggingFace token lookup permission errors
-  PATH: "/app/.venv/bin:/app/:$PATH"
+  PATH: "/app/.venv/bin:/app/:/usr/local/bin:/usr/bin:/bin"
   PYTHONPATH: "/app"
   TRANSFORMERS_OFFLINE: "1"
   EMBED_MODEL: /app/hf_cache
