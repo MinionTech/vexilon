@@ -15,7 +15,6 @@ x-common-env: &common-env
   PATH: "/app/.venv/bin:/app/:/usr/local/bin:/usr/bin:/bin"
   PYTHONPATH: "/app"
   TRANSFORMERS_OFFLINE: "1"
-  EMBED_MODEL: /app/hf_cache
 
 # Reusable build configuration
 x-common-build: &common-build
