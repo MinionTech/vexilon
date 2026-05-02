@@ -5,7 +5,6 @@ x-var:
 
 # Reusable environment for all services
 x-common-env: &common-env
-  OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
   HF_TOKEN: ${HF_TOKEN:-}
   HF_HOME: /hf_cache
   HF_HUB_OFFLINE: "1"

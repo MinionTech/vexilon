@@ -284,7 +284,7 @@ def get_async_openai_client():
             )
         elif provider == "ollama":
             _llm_client = AsyncOpenAI(
-                base_url=os.getenv("OLLAMA_API_BASE", "http://ollama:11434/v1/"),
+                base_url="http://ollama:11434/v1/",
                 api_key="ollama"
             )
         else:
