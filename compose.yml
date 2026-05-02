@@ -5,7 +5,7 @@ x-var:
 
 # Reusable environment for all services
 x-common-env: &common-env
-  VEXILON_LLM_PROVIDER: ${VEXILON_LLM_PROVIDER:-ollama}
+  VEXILON_LLM_PROVIDER: ollama
   OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
   HF_TOKEN: ${HF_TOKEN:-}
   HF_HOME: /hf_cache
