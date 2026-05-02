@@ -64,9 +64,16 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
 
 # Models & Providers
 def get_llm_provider() -> str:
-    # Safe by Default: Assume PROD (Hugging Face) unless explicitly told otherwise via VEXILON_LLM_PROVIDER.
-    val = os.getenv("VEXILON_LLM_PROVIDER", "huggingface")
-    return val.lower().strip()
+    # 1. Explicit override (keeps the 'prod' profile working)
+    val = os.getenv("VEXILON_LLM_PROVIDER")
+    if val:
+        return val.lower().strip()
+
+    # 2. Smart Detection based on version
+    version = os.getenv("VEXILON_VERSION", "Dev mode")
+    if version == "Dev mode":
+        return "ollama"  # We're coding locally!
+    return "huggingface" # We're in the clouds!
 
 def _get_default_model():
     provider = get_llm_provider()
