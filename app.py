@@ -309,7 +309,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
         model=model,
         max_tokens=max_tokens,
         messages=full_messages,
-        timeout=300.0
+        timeout=60.0
     )
     return resp.choices[0].message.content
 
@@ -321,7 +321,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         max_tokens=max_tokens,
         messages=full_messages,
         stream=True,
-        timeout=300.0
+        timeout=60.0
     )
     async for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
@@ -414,7 +414,12 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
         return [message]
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
-    condensed = await condense_query(message, history)
+    # Optimization: Skip condensation in DEV or if no history exists to save ~30s of latency
+    if IS_DEV or not history:
+        condensed = message
+    else:
+        condensed = await condense_query(message, history)
+
     # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
     if not IS_DEV and len(condensed.split()) > 10:
         queries = await generate_perspective_queries(condensed, history)
