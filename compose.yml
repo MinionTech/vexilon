@@ -22,15 +22,16 @@ x-service-defaults: &service-defaults
   mem_limit: *MEM_LIMIT
   memswap_limit: *MEM_LIMIT
   volumes:
-    - pdf_cache:/app/.pdf_cache
+    - ./.pdf_cache:/app/.pdf_cache:z
+    - ./hf_cache:/app/hf_cache:z
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
   - .:/app:z
-  - pdf_cache:/app/.pdf_cache
+  - ./.pdf_cache:/app/.pdf_cache:z
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
-  - /app/hf_cache      # Lifeboat for the model
+  - ./hf_cache:/app/hf_cache:z      # Lifeboat for the model
   - /app/.pytest_cache # Lifeboat for test metadata
 
 services:
@@ -143,5 +144,4 @@ services:
         ollama pull $$TARGET_MODEL
 
 volumes:
-  pdf_cache: {}
   ollama_data: {}
