@@ -43,7 +43,7 @@ from vexilon.indexing import (
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
-OLLAMA_MODEL_ID = "qwen3:4b"
+OLLAMA_MODEL_ID = "qwen3:1.5b"
 
 # Configure structured logging
 logging.basicConfig(
@@ -426,7 +426,9 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
     else:
         queries = [condensed]
     
-    all_res = search_index_batch(_index, _chunks, queries, [5] * len(queries))
+    # Optimization: Fewer chunks in dev to speed up inference
+    top_k_count = 3 if IS_DEV else 5
+    all_res = search_index_batch(_index, _chunks, queries, [top_k_count] * len(queries))
     seen = set()
     context_parts = []
     for res_list in all_res:
