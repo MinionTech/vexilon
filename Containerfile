@@ -90,7 +90,7 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
 
 # ── Final Environment ────────────────────────────────────────────────────────
 ARG VERSION="Dev mode"
-ARG REPO_URL="https://github.com/MinionTech/vexilon"
+ARG REPO_URL="https://github.com/DerekRoberts/vexilon"
 ENV VEXILON_VERSION=$VERSION
 ENV VEXILON_REPO_URL=$REPO_URL
 
