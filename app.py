@@ -514,53 +514,52 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-async def chat_fn(message, history, persona, request: gr.Request = None):
-    # 0. Rate Limit & Security Check
-    user_id = request.client.host if request else "default"
-    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
-    if not allowed:
-        yield gr.update(), history + [{"role": "assistant", "content": rate_msg}], gr.update()
-        return
-
+def user_fn(message, history):
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
-    sanitized, flagged = sanitize_input(msg_str)
-    if flagged:
-        yield gr.update(), history + [{"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
+    if not msg_str:
+        return gr.update(), history
+        
+    new_history = (history or []) + [{"role": "user", "content": msg_str}]
+    return gr.update(value=""), new_history
+
+async def chat_fn(history, persona, request: gr.Request = None):
+    # 0. Rate Limit & Security Check
+    user_id = request.client.host if request else "default"
+    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
+    if not allowed:
+        yield history + [{"role": "assistant", "content": rate_msg}], gr.update()
         return
 
-    # Normalization for Gradio 6 / Backend compatibility
-    if history:
-        history = [
-            h if isinstance(h, dict) else {"role": h.role, "content": h.content}
-            for h in history
-        ]
-    history = history or []
-    
-    if not message:
-        yield gr.update(value=""), history, gr.update()
+    # Get the last user message
+    if not history or history[-1]["role"] != "user":
+        yield history, gr.update()
         return
         
-    new_history = history + [{"role": "user", "content": sanitized}]
-    yield gr.update(value=""), new_history, gr.update(open=False)
+    last_user_msg = history[-1]["content"]
+    sanitized, flagged = sanitize_input(last_user_msg)
     
-    # Send a "thinking" message so the user knows it hasn't frozen
+    if flagged:
+        yield history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
+        return
+
+    # 1. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
+    new_history = history[:-1] + [{"role": "user", "content": sanitized}]
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield gr.update(), current_history, gr.update(open=False)
+    yield current_history, gr.update(), gr.update(open=False)
     
     # 2. Stream assistant response
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    async for chunk in rag_review_stream(sanitized, history, persona):
-        # Remove the thinking message once real chunks arrive
+    async for chunk in rag_review_stream(sanitized, history[:-1], persona):
         if accumulated == "":
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield gr.update(), current_history, gr.update(open=False)
+        yield current_history, gr.update(), gr.update(open=False)
     
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
@@ -734,8 +733,12 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
-    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
+    msg.submit(user_fn, [msg, chatbot], [msg, chatbot]).then(
+        chat_fn, [chatbot, persona], [chatbot, msg, toolbox]
+    )
+    submit.click(user_fn, [msg, chatbot], [msg, chatbot]).then(
+        chat_fn, [chatbot, persona], [chatbot, msg, toolbox]
+    )
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
