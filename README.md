@@ -108,7 +108,7 @@ Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requir
 
 ```bash
 export HF_TOKEN=<YOUR_HF_TOKEN>
-VEXILON_MODE=PROD podman compose up --no-deps --build vexilon
+podman compose up prod --build
 ```
 
 > [!TIP]
@@ -184,13 +184,13 @@ All settings are optional — defaults match the product specification.
 
 ### Core Settings
 
+Vexilon uses **App-Authority** for model versioning. The primary source of truth is `app.py`.
+
 | Variable | Default | Description |
 |---|---|---|
-| `VEXILON_MODE` | `PROD` | Deployment mode (`DEV` or `PROD`). Compose defaults this to `DEV`. |
+| `OLLAMA_MODEL_ID` | `qwen2.5:3b` | *(Code Constant)* Defined in `app.py`. Infrastructure automatically pulls this. |
 | `HF_TOKEN` | *(required for PROD)* | Hugging Face access token with Inference permissions |
-| `VEXILON_LLM_PROVIDER` | *(auto)* | Manual override for LLM backend (`huggingface` or `ollama`) |
-| `DEFAULT_MODEL_LLM` | *(auto)* | Defaults to `Qwen2.5-7B` (PROD) or `qwen2.5:7b` (DEV) |
-| `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
+| `VEXILON_LLM_PROVIDER` | `ollama` | Deployment mode (`ollama` or `huggingface`). Set via Compose profiles. |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
 | `CHUNK_SIZE` | `450` | Tokens per chunk |
@@ -327,10 +327,10 @@ podman compose run --rm tests
 podman compose up
 
 # Live Development — launch with hot-reload and volumes
-podman compose up watch
+# This is the default: podman compose up
 
 # Skip the gate — useful for rapid UI iteration (no volumes)
-podman compose up vexilon
+# podman compose up vexilon --build
 
 # Smoke tests — verifies real API connectivity
 podman compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
