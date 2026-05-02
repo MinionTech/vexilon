@@ -539,6 +539,10 @@ async def chat_fn(history, persona, request: gr.Request = None):
         return
         
     last_user_msg = history[-1]["content"]
+    # Handle Gradio 6 multi-part content
+    if isinstance(last_user_msg, list):
+        last_user_msg = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in last_user_msg])
+    
     sanitized, flagged = sanitize_input(last_user_msg)
     
     if flagged:
