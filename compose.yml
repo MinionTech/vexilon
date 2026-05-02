@@ -11,7 +11,6 @@ x-common-env: &common-env
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   OPENAI_API_BASE: ${OPENAI_API_BASE:-}
   OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
-  OLLAMA_MODEL: ${OLLAMA_MODEL:-} # Defaults to app.py OLLAMA_MODEL_ID if empty
   HF_HOME: /app/hf_cache
   HF_HUB_OFFLINE: "1"
   HF_TOKEN_PATH: /dev/null # Prevent HuggingFace token lookup permission errors
@@ -145,12 +144,11 @@ services:
       - ./app.py:/app/app.py:ro
     environment:
       - OLLAMA_HOST=ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-}
     entrypoint: /bin/sh
     command: 
       - -c
       - |
-        TARGET_MODEL=$${OLLAMA_MODEL:-$$(sed -n 's/.*OLLAMA_MODEL_ID = "\(.*\)".*/\1/p' /app/app.py)}
+        TARGET_MODEL=$$(sed -n 's/.*OLLAMA_MODEL_ID = "\(.*\)".*/\1/p' /app/app.py)
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
