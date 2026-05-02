@@ -22,6 +22,12 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
 FROM python:3.14.4-slim AS builder
 
+# ── Environment Configuration ────────────────────────────────────────────────
+ENV HF_HOME=/hf_cache \
+    TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1 \
+    EMBED_MODEL=/hf_cache
+
 COPY --from=uv_source /uv /usr/local/bin/uv
 WORKDIR /app
 
@@ -45,9 +51,6 @@ FROM builder AS test_builder
 
 # Copy model from model_fetcher so tests can load it
 COPY --from=model_fetcher /model_cache /hf_cache
-ENV HF_HOME=/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
-    HF_HUB_OFFLINE=1
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
