@@ -221,10 +221,11 @@ _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
 UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. STRICT CITATIONS: Every claim MUST be followed by a verbatim quote in a blockquote (> "...") and a citation in brackets.
-   FORMAT: > "[verbatim text from excerpt]" [Document Name, Page X]
-3. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
-4. GRIEVANCE FILING: Facilitate the filing process by identifying potential contract violations.
+2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
+3. NO SUMMARIZING: Do NOT use arrows (→) or bullet points to summarize excerpts. 
+4. CITATION FORMAT: Use blockquotes for quotes followed by the source in brackets.
+   EXAMPLE: > "verbatim text" [Document Name, Page X]
+5. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
 """
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
@@ -444,7 +445,9 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
                 audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
                 audit_rules += f"CRITERIA:\n{test.content}\n"
 
-        system = base_persona + audit_rules + f"\n\nContext from Knowledge Base:\n{context}"
+        # Combine Master Rules with Persona Rules
+        master_rules = get_system_prompt()
+        system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
         
         async for text in unified_chat_stream(
             model=CLAUDE_MODEL,
