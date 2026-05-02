@@ -413,8 +413,8 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
     condensed = await condense_query(message, history)
-    # Issue #361: Heuristic for complexity
-    if len(condensed.split()) > 10:
+    # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
+    if not IS_DEV and len(condensed.split()) > 10:
         queries = await generate_perspective_queries(condensed, history)
     else:
         queries = [condensed]
