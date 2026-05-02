@@ -50,7 +50,7 @@ services:
   # Uses code baked into the image for maximum performance/reliability.
   vexilon:
     <<: *service-defaults
-    profiles: [prod]
+    # profiles: [prod] # Removed so this service starts by default in local compose
     build: *common-build
     environment:
       <<: *common-env
@@ -58,6 +58,9 @@ services:
       VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
       VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
       PORT: *PORT
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
     ports: ["7860:7860"]
     cap_drop: [ALL]
     tmpfs: [/tmp]
