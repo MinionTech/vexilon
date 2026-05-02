@@ -540,16 +540,16 @@ async def chat_fn(history, persona, request: gr.Request = None):
     user_id = request.client.host if request else "default"
 
     # ── IMMEDIATE YIELD TO ENSURE UI UPDATES ──────────────────────────────────
-    yield history, gr.update(), gr.update()
+    yield history, gr.update()
 
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield history + [{"role": "assistant", "content": rate_msg}], gr.update(), gr.update()
+        yield history + [{"role": "assistant", "content": rate_msg}], gr.update()
         return
 
     # Get the last user message
     if not history or history[-1]["role"] != "user":
-        yield history, gr.update(), gr.update()
+        yield history, gr.update()
         return
         
     last_user_msg = history[-1]["content"]
@@ -560,14 +560,14 @@ async def chat_fn(history, persona, request: gr.Request = None):
     sanitized, flagged = sanitize_input(last_user_msg)
     
     if flagged:
-        yield history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(), gr.update()
+        yield history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
         return
 
     # 1. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
     new_history = history[:-1] + [{"role": "user", "content": sanitized}]
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(open=False)
+    yield current_history, gr.update(open=False)
     
     # 2. Stream assistant response
     accumulated = ""
@@ -577,7 +577,7 @@ async def chat_fn(history, persona, request: gr.Request = None):
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(open=False)
+        yield current_history, gr.update(open=False)
     
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
@@ -687,7 +687,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn.click(
                     make_handler(q), 
                     [chatbot, persona], 
-                    [chatbot, msg, toolbox],
+                    outputs=[chatbot, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -754,10 +754,10 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     """)
 
     msg.submit(user_fn, [msg, chatbot], [msg, chatbot]).then(
-        chat_fn, [chatbot, persona], [chatbot, msg, toolbox]
+        chat_fn, [chatbot, persona], [chatbot, toolbox]
     )
     submit.click(user_fn, [msg, chatbot], [msg, chatbot]).then(
-        chat_fn, [chatbot, persona], [chatbot, msg, toolbox]
+        chat_fn, [chatbot, persona], [chatbot, toolbox]
     )
 
 if __name__ == "__main__":
