@@ -539,23 +539,24 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     
     msg_str = msg_str.strip() if msg_str else ""
     if not msg_str:
-        yield history or [], gr.update(), gr.update()
+        yield history or [], gr.update(interactive=True), gr.update(interactive=True)
         return
         
     # 1. Add user message and clear textbox IMMEDIATELY in one atomic yield
+    # We also disable the inputs to prevent race conditions (#402)
     new_history = (history or []) + [{"role": "user", "content": msg_str}]
-    yield new_history, gr.update(value=""), gr.update()
+    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False)
 
     # 2. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(), gr.update()
+        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
         return
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(), gr.update()
+        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
         return
 
     # 3. Show thinking message
@@ -573,6 +574,8 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
         yield current_history, gr.update(), gr.update(open=False)
     
+    # 5. Restore interactivity
+    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
@@ -679,7 +682,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn.click(
                     make_handler(q), 
                     [chatbot, persona], 
-                    outputs=[chatbot, msg, toolbox],
+                    outputs=[chatbot, msg, submit],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -745,8 +748,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, toolbox])
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, toolbox])
+    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit])
+    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
