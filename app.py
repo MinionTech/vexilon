@@ -288,10 +288,7 @@ def get_async_openai_client():
                 api_key="ollama"
             )
         else:
-            _llm_client = AsyncOpenAI(
-                base_url=os.getenv("OPENAI_API_BASE"),
-                api_key=os.getenv("OPENAI_API_KEY")
-            )
+            raise ValueError(f"Unsupported LLM provider: {provider}")
     return _llm_client
 
 def _build_messages(messages: list, system: str | list = None) -> list:
