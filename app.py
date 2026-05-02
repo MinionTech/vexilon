@@ -524,50 +524,44 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-async def chat_handler(message, history, persona, request: gr.Request = None):
-    """Unified atomic handler for adding user message and streaming response."""
-    msg_str = message
-    if isinstance(message, list):
-        msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
-    
-    msg_str = msg_str.strip() if msg_str else ""
-    if not msg_str:
-        yield history or [], gr.update(), gr.update()
+async def chat_handler(history, persona, request: gr.Request = None):
+    """Refined handler that assumes history already contains the latest user message."""
+    if not history or history[-1]["role"] != "user":
+        yield history, gr.update()
         return
-        
-    # 1. Commit user message to history and clear box IMMEDIATELY
-    user_msg = {"role": "user", "content": msg_str}
-    new_history = (history or []) + [user_msg]
-    yield new_history, gr.update(value=""), gr.update()
 
-    # 2. Rate Limit & Security Check
+    msg_str = history[-1]["content"]
+    if isinstance(msg_str, list):
+        msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in msg_str])
+
+    # 1. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(), gr.update()
+        yield history + [{"role": "assistant", "content": rate_msg}], gr.update()
         return
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        error_history = new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}]
-        yield error_history, gr.update(), gr.update()
+        error_history = history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}]
+        yield error_history, gr.update()
         return
 
-    # 3. Show thinking message
+    # 2. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
+    new_history = history[:-1] + [{"role": "user", "content": sanitized}]
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(open=False)
+    yield current_history, gr.update(open=False)
     
-    # 4. Stream assistant response
+    # 3. Stream assistant response
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    # Use sanitized query for retrieval, but pass full history for context
     async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
         if accumulated == "":
-            thinking_msg = "" # Remove thinking message on first token
+            thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(open=False)
+        yield current_history, gr.update(open=False)
     
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
@@ -668,14 +662,16 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn = gr.Button(q, size="sm", variant="secondary")
                 def make_handler(q_text):
                     async def handler(hist, pers, req: gr.Request = None):
-                        async for update in chat_handler(q_text, hist, pers, req):
+                        # Add user message manually for examples
+                        new_history = (hist or []) + [{"role": "user", "content": q_text}]
+                        async for update in chat_handler(new_history, pers, req):
                             yield update
                     return handler
 
                 example_btn.click(
                     make_handler(q), 
                     [chatbot, persona], 
-                    outputs=[chatbot, msg, toolbox],
+                    outputs=[chatbot, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -741,8 +737,16 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, toolbox])
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, toolbox])
+    def user_fn(msg_str, history):
+        if not msg_str: return gr.update(), history
+        return gr.update(value=""), (history or []) + [{"role": "user", "content": msg_str}]
+
+    msg.submit(user_fn, [msg, chatbot], [msg, chatbot]).then(
+        chat_handler, [chatbot, persona], [chatbot, toolbox]
+    )
+    submit.click(user_fn, [msg, chatbot], [msg, chatbot]).then(
+        chat_handler, [chatbot, persona], [chatbot, toolbox]
+    )
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
