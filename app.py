@@ -308,7 +308,8 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     resp = await client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
-        messages=full_messages
+        messages=full_messages,
+        timeout=60.0
     )
     return resp.choices[0].message.content
 
@@ -319,7 +320,8 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         model=model,
         max_tokens=max_tokens,
         messages=full_messages,
-        stream=True
+        stream=True,
+        timeout=60.0
     )
     async for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
@@ -547,7 +549,7 @@ async def chat_fn(history, persona, request: gr.Request = None):
 
     # Get the last user message
     if not history or history[-1]["role"] != "user":
-        yield history, gr.update()
+        yield history, gr.update(), gr.update()
         return
         
     last_user_msg = history[-1]["content"]
