@@ -63,7 +63,6 @@ services:
       ollama-init:
         condition: service_completed_successfully
     ports: ["7860:7860"]
-    # We use Gradio's watch mode for local development
     command: uv run --no-sync gradio app.py --watch-dirs .
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.getenv('PORT', '7860'))\""]
@@ -73,8 +72,7 @@ services:
       start_period: 30s
 
   # ── Production Simulation (Immutable Cloud-Parity) ───────────────────────────
-  # Uses code baked into the image. No local volumes, no local LLM.
-  # Run with: podman compose --profile prod up prod
+  # Run with: podman compose up prod
   prod:
     <<: *service-defaults
     profiles: [prod]
