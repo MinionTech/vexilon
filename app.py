@@ -67,10 +67,8 @@ def get_llm_provider() -> str:
     smart_default = "ollama" if mode == "DEV" else "huggingface"
     
     val = os.getenv("VEXILON_LLM_PROVIDER")
+    # Provider switching logic
     provider = val.lower() if (val and val.strip()) else smart_default
-    
-    # Trace logic for debugging environment overrides
-    logger.info(f"[startup] Detected VEXILON_MODE='{mode_raw}' -> Provider: {provider.upper()}")
     return provider
 
 def _get_default_model():
@@ -434,7 +432,6 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", all_chunks: list[dict] = None) -> AsyncIterator[str]:
     try:
         queries, context = await get_multi_perspective_context(message, history)
-        query = queries[0]
         
         # ── Audit Logic (Restored) ──────────────────────────────────────────────
         base_persona = get_persona_prompt(persona_mode)
