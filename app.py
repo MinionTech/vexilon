@@ -538,7 +538,7 @@ async def chat_fn(history, persona, request: gr.Request = None):
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield history + [{"role": "assistant", "content": rate_msg}], gr.update()
+        yield history + [{"role": "assistant", "content": rate_msg}], gr.update(), gr.update()
         return
 
     # Get the last user message
@@ -554,7 +554,7 @@ async def chat_fn(history, persona, request: gr.Request = None):
     sanitized, flagged = sanitize_input(last_user_msg)
     
     if flagged:
-        yield history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
+        yield history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(), gr.update()
         return
 
     # 1. Show thinking message
