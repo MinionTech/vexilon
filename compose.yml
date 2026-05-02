@@ -150,13 +150,15 @@ services:
 
   # One-time service to pull the required model into the ollama volume.
   ollama-init:
-    image: curlimages/curl:latest
+    image: ollama/ollama:latest
     # profiles: ["dev", "ollama"]
     depends_on:
       ollama:
         condition: service_healthy
-    command: >
-      sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"${OLLAMA_MODEL:-qwen3:7b}\"}'"
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: /bin/sh
+    command: -c "ollama pull ${OLLAMA_MODEL:-qwen3:7b}"
 
 volumes:
   pdf_cache: {}
