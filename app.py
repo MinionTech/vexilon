@@ -536,6 +536,10 @@ def user_fn(message, history):
 async def chat_fn(history, persona, request: gr.Request = None):
     # 0. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
+
+    # ── IMMEDIATE YIELD TO ENSURE UI UPDATES ──────────────────────────────────
+    yield history, gr.update(), gr.update()
+
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
         yield history + [{"role": "assistant", "content": rate_msg}], gr.update(), gr.update()
