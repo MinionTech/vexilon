@@ -43,7 +43,7 @@ from vexilon.indexing import (
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
-OLLAMA_MODEL_ID = "qwen2.5:3b"
+OLLAMA_MODEL_ID = "qwen3:4b"
 
 # Configure structured logging
 logging.basicConfig(
@@ -74,7 +74,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else OLLAMA_MODEL_ID
-    return "Qwen/Qwen2.5-7B-Instruct"
+    return "Qwen/Qwen3-8B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -432,7 +432,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
         if persona_mode in ("Grieve", "Manage"):
-            matched_tests = _test_registry.find_matches(message + " " + query)
+            matched_tests = _test_registry.find_matches(message + " " + " ".join(queries))
             for test in matched_tests:
                 audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
                 audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"

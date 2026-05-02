@@ -312,7 +312,7 @@ Vexilon uses a **Quality Gate** pattern in `compose.yml` — the app will not st
 |---|---|---|---|
 | **Unit** | `tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
 | **Integration** | `tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
-| **Smoke** | `tests/smoke/` | Real HF/OpenAI API | Manually, to verify live API connectivity |
+| **Smoke** | `tests/smoke/` | Real HF/Ollama API | Manually, to verify live API connectivity |
 
 #### Commands
 

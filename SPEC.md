@@ -323,7 +323,7 @@ Each response must follow this structure:
 
 | Component | Choice | Rationale |
 |---|---|---|
-| **LLM** | Hugging Face Router (`Qwen/Qwen3-72B-Instruct`) | Best-in-class instruction following; reliable citation behaviour; unified API |
+| **LLM** | Hugging Face Router (`Qwen/Qwen3-8B-Instruct`) | Best-in-class instruction following; reliable citation behaviour; unified API |
 | **Embeddings** | `BAAI/bge-small-en-v1.5` via `sentence-transformers` (local CPU) | No API key; no per-query cost; ~90 MB model; runs on CPU; index pre-computed and committed to repo for fast cold starts |
 | **Vector Store** | FAISS (in-memory, pre-computed index on disk) | No server process; index loaded from disk at startup (<1s); pre-computed once per agreement update |
 | **Markdown-First RAG** | Native Markdown | High-precision extraction via `pdf_to_md.py`; structured MD ensures the highest grounding accuracy and eliminates runtime PDF parsing overhead. |
@@ -338,7 +338,7 @@ Each response must follow this structure:
 | Removed | Reason |
 |---|---|
 | Ollama | Used for local development (Qwen3) |
-| Anthropic | Replaced by HF Router / OpenAI compatible client |
+| Anthropic | Replaced by HF Router / Open-Standard client |
 | `nomic-embed-text` (Ollama) | Replaced by `sentence-transformers` local model |
 | OpenAI `text-embedding-3-small` | Replaced by local `BAAI/bge-small-en-v1.5` — eliminates second API dependency |
 | LlamaIndex | Replaced by direct RAG implementation |
@@ -370,7 +370,7 @@ User sends message
         system: [citation-rules + agreement context + continuity rule]
         user: [conversation history + new query]
         context: [retrieved chunks with page numbers]
-  └── Send to LLM (Qwen/Qwen3-72B-Instruct) via OpenAI client
+  └── Send to LLM (Qwen/Qwen3-8B-Instruct) via Open-Standard client
   └── Stream response to Gradio chat interface (asynchronous generator)
   └── Append to conversation history
 ```
@@ -378,7 +378,7 @@ User sends message
 ### Concurrency and Asynchrony
 
 To support multiple simultaneous users without thread pool exhaustion, Vexilon uses:
-- **`OpenAI`**: The asynchronous client for HF/OpenAI/Ollama.
+- **`openai`**: The underlying asynchronous library used for HF/Ollama (Open-Standard compatible).
 - **`async def` handlers**: Gradio handlers are implemented as asynchronous generators.
 - **Deferred Imports**: Heavy libraries (`torch`, `sentence_transformers`, `faiss`, `gradio`) are imported lazily within functions to ensure fast startup and responsive CLI/test environments.
 
@@ -431,7 +431,7 @@ To reduce hallucinations, Vexilon includes an optional verification bot that rev
    | Variable | Default | Description |
    |---|---|---|
    | `VERIFY_ENABLED` | `true` | Enable verification bot |
-   | `VERIFY_MODEL` | `Qwen/Qwen3-72B-Instruct` | Model for verification |
+   | `VERIFY_MODEL` | `Qwen/Qwen3-8B-Instruct` | Model for verification |
 
 **Note:** The verification bot provides limited additional value since it uses the same context as the main bot. It may catch obvious issues (wrong page numbers, misquoted text) but cannot detect when relevant text was simply not retrieved. Future improvements may include multi-perspective retrieval for complex topics.
 
@@ -477,7 +477,7 @@ Open `http://localhost:7860`.
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `HF_TOKEN` | *(required for PROD)* | Hugging Face access token |
-| `DEFAULT_MODEL_LLM` | `Qwen/Qwen3-72B-Instruct` | Model for responses |
+| `DEFAULT_MODEL_LLM` | `Qwen/Qwen3-8B-Instruct` | Model for responses |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | Local sentence-transformers embedding model |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |

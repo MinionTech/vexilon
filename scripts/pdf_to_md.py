@@ -91,8 +91,8 @@ STRICT INTEGRITY RULES:
 
 def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resume: bool = False) -> str:
     """Use LLM to restructure into clean MD with optional dual-pass verification."""
-    api_key = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
-    base_url = "https://router.huggingface.co/v1" if os.getenv("HF_TOKEN") else os.getenv("OPENAI_API_BASE")
+    api_key = os.getenv("HF_TOKEN")
+    base_url = "https://router.huggingface.co/v1"
     
     client = OpenAI(base_url=base_url, api_key=api_key)
     raw_pages = extract_raw_text(input_path)
@@ -289,8 +289,8 @@ def main():
             print(f"Error: File {args.input} not found.")
             sys.exit(1)
 
-    if not os.getenv("HF_TOKEN") and not os.getenv("OPENAI_API_KEY"):
-        print("Error: HF_TOKEN or OPENAI_API_KEY environment variable not set.")
+    if not os.getenv("HF_TOKEN"):
+        print("Error: HF_TOKEN environment variable not set.")
         sys.exit(1)
 
     output_path = Path(args.output) if args.output else input_path.with_suffix(".md")

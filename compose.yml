@@ -23,7 +23,6 @@ x-service-defaults: &service-defaults
   memswap_limit: *MEM_LIMIT
   volumes:
     - ./.pdf_cache:/app/.pdf_cache:z
-    - ./hf_cache:/app/hf_cache:z
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
@@ -31,7 +30,7 @@ x-dev-volumes: &dev-volumes
   - ./.pdf_cache:/app/.pdf_cache:z
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
-  - ./hf_cache:/app/hf_cache:z      # Lifeboat for the model
+  - /app/hf_cache      # Lifeboat for the model
   - /app/.pytest_cache # Lifeboat for test metadata
 
 services:
