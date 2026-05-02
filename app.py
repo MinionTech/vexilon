@@ -222,19 +222,20 @@ _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
 2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
-3. NO SUMMARIZING: Do NOT use arrows (→) or bullet points to summarize excerpts. 
-4. CITATION FORMAT: Use blockquotes for quotes followed by the source in brackets.
    EXAMPLE: > "verbatim text" [Document Name, Page X]
+3. STRICT BREVITY: Be extremely concise. No introductory filler (e.g., "Based on the documents...").
+4. NO SUMMARIZING: Do NOT use arrows (→) or bullet points to summarize excerpts. Use literal text.
 5. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
 """
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. STRICT CITATIONS: Every claim MUST be followed by a verbatim quote in a blockquote (> "...") and a citation in brackets.
-   FORMAT: > "[verbatim text from excerpt]" [Document Name, Page X]
-3. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
-4. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
-5. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
+2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
+   EXAMPLE: > "verbatim text" [Document Name, Page X]
+3. STRICT BREVITY: Be extremely concise. No introductory filler.
+4. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
+5. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
+6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
 def get_persona_prompt(mode_name: str) -> str:
