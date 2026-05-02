@@ -45,42 +45,55 @@ x-dev-volumes: &dev-volumes
 
 services:
 
-  # ── Vexilon app ───────────────────────────────────────────────────────────────
-  # Production-ready entry point gated by integration tests.
-  # Uses code baked into the image for maximum performance/reliability.
+  # ── Vexilon (Default: Local Dev with Hot-Reload) ─────────────────────────────
+  # Mounts source code to allow instant feedback. No profile = starts by default.
   vexilon:
     <<: *service-defaults
-    # profiles: [prod] # Removed so this service starts by default in local compose
-    build: *common-build
+    build:
+      <<: *common-build
+      target: test_builder
+    volumes: *dev-volumes
     environment:
       <<: *common-env
-      VEXILON_MODE: ${VEXILON_MODE:-DEV}
-      VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
-      VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
+      WATCHFILES_FORCE_POLLING: "true"
+      VEXILON_MODE: DEV
+      VEXILON_LLM_PROVIDER: ollama
       PORT: *PORT
     depends_on:
       ollama-init:
         condition: service_completed_successfully
     ports: ["7860:7860"]
-    cap_drop: [ALL]
-    tmpfs: [/tmp]
+    # We use Gradio's watch mode for local development
+    command: uv run --no-sync gradio app.py --watch-dirs .
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.getenv('PORT', '7860'))\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s # Match the slow model loading period
+      start_period: 30s
+
+  # ── Production Simulation (Immutable Cloud-Parity) ───────────────────────────
+  # Uses code baked into the image. No local volumes, no local LLM.
+  # Run with: podman compose --profile prod up prod
+  prod:
+    <<: *service-defaults
+    profiles: [prod]
+    build: *common-build
+    environment:
+      <<: *common-env
+      VEXILON_MODE: PROD
+    ports: ["7860:7860"]
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
 
   # ── Testing ──────────────────────────────────────────────────────────────────
-  # Mounts source code to allow testing local changes without a rebuild.
   tests:
     <<: *service-defaults
     profiles: [test]
     build:
       <<: *common-build
       target: test_builder
-
-    volumes: *dev-volumes # Overrides x-service-defaults
+    volumes: *dev-volumes
     environment: *common-env
     command: >
       sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
@@ -91,7 +104,6 @@ services:
         condition: service_completed_successfully
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
-  # Runs the indexing script against the baked-in code.
   index-refresh:
     <<: *service-defaults
     profiles: [tools]
@@ -101,29 +113,7 @@ services:
     environment: *common-env
     command: python scripts/build_index.py
 
-  # ── Fast Development ───────────────────────────────────────────────────
-  # Builds from source with live reload and polling enabled for Podman.
-  watch:
-    <<: *service-defaults
-    extends: vexilon
-    build:
-      <<: *common-build
-      target: test_builder
-    profiles: ["dev"]
-    volumes: *dev-volumes
-    environment:
-      <<: *common-env
-      WATCHFILES_FORCE_POLLING: "true"
-      VEXILON_MODE: ${VEXILON_MODE:-DEV}
-      VEXILON_LLM_PROVIDER: ${VEXILON_LLM_PROVIDER:-ollama}
-      OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://ollama:11434/v1/}
-    depends_on:
-      ollama-init:
-        condition: service_completed_successfully
-    command: uv run --no-sync gradio app.py --watch-dirs .
-
   # ── Cache Validator ─────────────────────────────────────────────────────────
-  # Ensures the FAISS cache is in sync with the source data.
   cache-validator:
     <<: *service-defaults
     profiles: [tools]
@@ -135,10 +125,8 @@ services:
     command: uv run --no-sync python scripts/generate_cache_manifest.py validate
 
   # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
-  # Provides an OpenAI-compatible API for local model execution.
   ollama:
     image: ollama/ollama:latest
-    # profiles: ["dev", "ollama"]
     ports: ["11434:11434"]
     volumes:
       - ollama_data:/root/.ollama
@@ -151,7 +139,6 @@ services:
   # One-time service to pull the required model into the ollama volume.
   ollama-init:
     image: ollama/ollama:latest
-    # profiles: ["dev", "ollama"]
     depends_on:
       ollama:
         condition: service_healthy
