@@ -1,7 +1,7 @@
 # ── Reusable Variables ───────────────────────────────────────────────────────
 x-var:
   - &PORT "7860"
-  - &MEM_LIMIT 4g
+  - &MEM_LIMIT 6g
 
 # Reusable environment for all services
 x-common-env: &common-env

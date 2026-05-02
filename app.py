@@ -309,7 +309,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
         model=model,
         max_tokens=max_tokens,
         messages=full_messages,
-        timeout=60.0
+        timeout=300.0
     )
     return resp.choices[0].message.content
 
@@ -321,7 +321,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         max_tokens=max_tokens,
         messages=full_messages,
         stream=True,
-        timeout=60.0
+        timeout=300.0
     )
     async for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
