@@ -524,60 +524,46 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-def user_fn(message, history):
+async def chat_handler(message, history, persona, request: gr.Request = None):
+    """Unified handler for both adding the user message and streaming the assistant response."""
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
     if not msg_str:
-        return gr.update(), history
+        yield history or [], gr.update(), gr.update()
+        return
         
+    # 1. Add user message and clear textbox IMMEDIATELY
     new_history = (history or []) + [{"role": "user", "content": msg_str}]
-    return gr.update(value=""), new_history
+    yield new_history, gr.update(value=""), gr.update()
 
-async def chat_fn(history, persona, request: gr.Request = None):
-    # 0. Rate Limit & Security Check
+    # 2. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
-
-    # ── IMMEDIATE YIELD TO ENSURE UI UPDATES ──────────────────────────────────
-    yield history, gr.update()
-
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield history + [{"role": "assistant", "content": rate_msg}], gr.update()
+        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(), gr.update()
         return
 
-    # Get the last user message
-    if not history or history[-1]["role"] != "user":
-        yield history, gr.update()
-        return
-        
-    last_user_msg = history[-1]["content"]
-    # Handle Gradio 6 multi-part content
-    if isinstance(last_user_msg, list):
-        last_user_msg = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in last_user_msg])
-    
-    sanitized, flagged = sanitize_input(last_user_msg)
-    
+    sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
+        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(), gr.update()
         return
 
-    # 1. Show thinking message
+    # 3. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
-    new_history = history[:-1] + [{"role": "user", "content": sanitized}]
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(open=False)
+    yield current_history, gr.update(), gr.update(open=False)
     
-    # 2. Stream assistant response
+    # 4. Stream assistant response
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    async for chunk in rag_review_stream(sanitized, history[:-1], persona):
+    async for chunk in rag_review_stream(sanitized, history or [], persona):
         if accumulated == "":
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(open=False)
+        yield current_history, gr.update(), gr.update(open=False)
     
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
@@ -678,16 +664,14 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn = gr.Button(q, size="sm", variant="secondary")
                 def make_handler(q_text):
                     async def handler(hist, pers, req: gr.Request = None):
-                        # Use the same logic as user_fn: Add query to history
-                        new_history = (hist or []) + [{"role": "user", "content": q_text}]
-                        async for update in chat_fn(new_history, pers, req):
+                        async for update in chat_handler(q_text, hist, pers, req):
                             yield update
                     return handler
 
                 example_btn.click(
                     make_handler(q), 
                     [chatbot, persona], 
-                    outputs=[chatbot, toolbox],
+                    outputs=[chatbot, msg, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -753,12 +737,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(user_fn, [msg, chatbot], [msg, chatbot]).then(
-        chat_fn, [chatbot, persona], [chatbot, toolbox]
-    )
-    submit.click(user_fn, [msg, chatbot], [msg, chatbot]).then(
-        chat_fn, [chatbot, persona], [chatbot, toolbox]
-    )
+    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, toolbox])
+    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, toolbox])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
