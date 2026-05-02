@@ -46,10 +46,11 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    ports: ["7860:7860"]
+    ports:
+      - "${PORT:-7860}:7860"
     command: /usr/local/bin/uv run --no-sync gradio app.py --watch-dirs .
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.getenv('PORT', '7860'))\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7860')\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,7 +65,8 @@ services:
     environment:
       <<: *common-env
       VEXILON_LLM_PROVIDER: huggingface
-    ports: ["7860:7860"]
+    ports:
+      - "${PORT:-7860}:7860"
     cap_drop: [ALL]
     tmpfs: [/tmp]
 
