@@ -22,7 +22,7 @@ of labour law and contract documents.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Hugging Face (`Qwen3-7B`) / Ollama (`qwen2.5`) |
+| LLM | Hugging Face (`Qwen2.5-7B`) / Ollama (`qwen2.5`) |
 | Embeddings | `BAAI/bge-small-en-v1.5` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | Web UI | Gradio 6 — `http://localhost:7860` |
@@ -189,7 +189,7 @@ All settings are optional — defaults match the product specification.
 | `VEXILON_MODE` | `PROD` | Deployment mode (`DEV` or `PROD`). Compose defaults this to `DEV`. |
 | `HF_TOKEN` | *(required for PROD)* | Hugging Face access token with Inference permissions |
 | `VEXILON_LLM_PROVIDER` | *(auto)* | Manual override for LLM backend (`huggingface` or `ollama`) |
-| `DEFAULT_MODEL_LLM` | *(auto)* | Defaults to `Qwen3-7B` (PROD) or `qwen2.5:7b` (DEV) |
+| `DEFAULT_MODEL_LLM` | *(auto)* | Defaults to `Qwen2.5-7B` (PROD) or `qwen2.5:7b` (DEV) |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
@@ -203,7 +203,7 @@ Vexilon includes a second AI bot that verifies responses against source citation
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
-| `VERIFY_MODEL` | `Qwen/Qwen3-7B-Instruct` | Model for verification |
+| `VERIFY_MODEL` | `Qwen/Qwen2.5-7B-Instruct` | Model for verification |
 
 When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
 

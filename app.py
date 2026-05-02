@@ -59,21 +59,26 @@ GITHUB_LABOUR_LAW_URL = os.getenv(
 )
 
 # Models & Providers
-def get_llm_provider():
+def get_llm_provider() -> str:
     # Safe by Default: Assume PROD (Hugging Face) unless explicitly told otherwise.
     # Users can set VEXILON_MODE=DEV to enable local Ollama defaults.
-    mode = os.getenv("VEXILON_MODE", "PROD").upper()
+    mode_raw = os.getenv("VEXILON_MODE", "PROD")
+    mode = mode_raw.strip().upper()
     smart_default = "ollama" if mode == "DEV" else "huggingface"
     
     val = os.getenv("VEXILON_LLM_PROVIDER")
-    return val.lower() if (val and val.strip()) else smart_default
+    provider = val.lower() if (val and val.strip()) else smart_default
+    
+    # Trace logic for debugging environment overrides
+    logger.info(f"[startup] Detected VEXILON_MODE='{mode_raw}' -> Provider: {provider.upper()}")
+    return provider
 
 def _get_default_model():
     provider = get_llm_provider()
     # Default to Hugging Face or Ollama
     if provider == "ollama":
-        return os.getenv("OLLAMA_MODEL", "qwen3:7b")
-    return "Qwen/Qwen3-7B-Instruct"
+        return os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+    return "Qwen/Qwen2.5-7B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -499,7 +504,6 @@ def startup(force_rebuild: bool = False):
     provider = get_llm_provider()
     model = DEFAULT_MODEL_LLM
     logger.info(f"[startup] Vexilon {VEXILON_VERSION} starting...")
-    logger.info(f"[startup] LLM Provider: {provider.upper()}")
     logger.info(f"[startup] Default Model: {model}")
 
     _test_registry.load(TESTS_DIR)
