@@ -6,10 +6,6 @@ x-var:
 # Reusable environment for all services
 x-common-env: &common-env
   HF_TOKEN: ${HF_TOKEN:-}
-  HF_HOME: /hf_cache
-  HF_HUB_OFFLINE: "1"
-  TRANSFORMERS_OFFLINE: "1"
-  EMBED_MODEL: /hf_cache
 
 x-common-build: &common-build
   context: .
