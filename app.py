@@ -57,6 +57,7 @@ _index: "faiss.IndexFlatIP | None" = None
 INTEGRITY_WARNING: str | None = None
 
 VEXILON_VERSION = os.getenv("VEXILON_VERSION", "Dev mode")
+IS_DEV = VEXILON_VERSION == "Dev mode"
 VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_LABOUR_LAW_URL = os.getenv(
     "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
@@ -70,8 +71,7 @@ def get_llm_provider() -> str:
         return val.lower().strip()
 
     # 2. Smart Detection based on version
-    version = os.getenv("VEXILON_VERSION", "Dev mode")
-    if version == "Dev mode":
+    if IS_DEV:
         return "ollama"  # We're coding locally!
     return "huggingface" # We're in the clouds!
 
@@ -184,8 +184,8 @@ _test_registry = TestRegistry()
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
 
 # ─── Rate Limiter ───────────────────────────────────────────────────────────
-RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
-RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "100"))
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "999999" if IS_DEV else "10"))
+RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "999999" if IS_DEV else "100"))
 
 class RateLimiter:
     def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
@@ -256,7 +256,7 @@ def get_persona_prompt(mode_name: str) -> str:
     return f"{rules}\n\nROLE: {persona}"
 
 # ─── Verification & LLM Helpers ───────────────────────────────────────
-VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
+VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "false" if IS_DEV else "true").lower() == "true"
 VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
 
 For each claim in the response:
