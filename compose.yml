@@ -138,7 +138,7 @@ services:
   # Provides an OpenAI-compatible API for local model execution.
   ollama:
     image: ollama/ollama:latest
-    profiles: ["dev", "ollama"]
+    # profiles: ["dev", "ollama"]
     ports: ["11434:11434"]
     volumes:
       - ollama_data:/root/.ollama
@@ -151,7 +151,7 @@ services:
   # One-time service to pull the required model into the ollama volume.
   ollama-init:
     image: curlimages/curl:latest
-    profiles: ["dev", "ollama"]
+    # profiles: ["dev", "ollama"]
     depends_on:
       ollama:
         condition: service_healthy
