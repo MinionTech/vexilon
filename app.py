@@ -41,6 +41,10 @@ from vexilon.indexing import (
 )
 
 # ─── Global State & Config ──────────────────────────────────────────────────
+# Single Source of Truth for local development models.
+# Change this here to update the entire stack (including the puller).
+OLLAMA_MODEL_ID = "qwen2.5:3b"
+
 # Configure structured logging
 logging.basicConfig(
     level=logging.INFO,
@@ -75,7 +79,7 @@ def _get_default_model():
     provider = get_llm_provider()
     # Default to Hugging Face or Ollama
     if provider == "ollama":
-        return os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+        return os.getenv("OLLAMA_MODEL", OLLAMA_MODEL_ID)
     return "Qwen/Qwen2.5-7B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
