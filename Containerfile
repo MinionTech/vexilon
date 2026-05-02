@@ -44,8 +44,8 @@ COPY app.py conftest.py ./
 FROM builder AS test_builder
 
 # Copy model from model_fetcher so tests can load it
-COPY --from=model_fetcher /model_cache /app/hf_cache
-ENV HF_HOME=/app/hf_cache \
+COPY --from=model_fetcher /model_cache /hf_cache
+ENV HF_HOME=/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1
 
