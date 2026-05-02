@@ -61,7 +61,7 @@ FROM python:3.14.4-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1001 --create-home --shell /sbin/nologin vexilon
+    useradd --uid 1000 --create-home --shell /sbin/nologin vexilon
 
 WORKDIR /app
 
@@ -82,7 +82,7 @@ COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /app/hf_cache
 RUN mkdir -p /app/.pdf_cache && chown vexilon:vexilon /app/.pdf_cache
 
 USER vexilon
-RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
+RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
