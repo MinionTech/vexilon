@@ -22,7 +22,7 @@ of labour law and contract documents.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Hugging Face Router (`Qwen/Qwen3-72B-Instruct`) |
+| LLM | Hugging Face Router (`Qwen/Qwen3-7B-Instruct`) |
 | Embeddings | `BAAI/bge-small-en-v1.5` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | Web UI | Gradio 6 — `http://localhost:7860` |
@@ -77,9 +77,9 @@ Docker deployments.
 
 ## Hosted
 
-🚀 **TEST:** https://huggingface.co/spaces/MinionTech/landru
+🚀 **TEST:** https://huggingface.co/spaces/DerekRoberts/landru
 
-🚀 **PROD:** https://huggingface.co/spaces/MinionTech/vexilon
+🚀 **PROD:** https://huggingface.co/spaces/DerekRoberts/vexilon
 
 ## Quick Start
 
@@ -180,7 +180,7 @@ All settings are optional — defaults match the product specification.
 | `VEXILON_USERNAME` | `admin` | Username for basic authentication |
 | `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
 | `HF_TOKEN` | *(required for PROD)* | Hugging Face access token |
-| `DEFAULT_MODEL_LLM` | `Qwen/Qwen3-72B-Instruct` | Model for responses |
+| `DEFAULT_MODEL_LLM` | `Qwen/Qwen3-7B-Instruct` | Model for responses |
 | `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
@@ -194,7 +194,7 @@ Vexilon includes a second AI bot that verifies responses against source citation
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
-| `VERIFY_MODEL` | `Qwen/Qwen3-72B-Instruct` | Model for verification |
+| `VERIFY_MODEL` | `Qwen/Qwen3-7B-Instruct` | Model for verification |
 
 When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
 
@@ -270,8 +270,8 @@ git push
 The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
 the HF Space.
 
-- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `MinionTech/landru` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `MinionTech/vexilon` Space.
+- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
+- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
 
 **Required GitHub secret:**
 
@@ -279,7 +279,7 @@ the HF Space.
 |---|---|
 | `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
 
-**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/MinionTech/vexilon/settings)):
+**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/DerekRoberts/vexilon/settings)):
 
 | Secret | Value |
 |---|---|

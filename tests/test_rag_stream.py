@@ -67,7 +67,7 @@ async def test_rag_stream_yields_tokens_from_llm(monkeypatch):
 
     mock_client = MagicMock()
     mock_client.chat.completions.create = AsyncMock(side_effect=_mock_openai_stream)
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     output = []
     async for chunk, ctx in app.rag_stream("Any question", []):
@@ -100,7 +100,7 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
 
     mock_client = MagicMock()
     mock_client.chat.completions.create = AsyncMock(side_effect=_capture_stream)
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     async for chunk, ctx in app.rag_stream("What about overtime?", []):
         pass
@@ -132,7 +132,7 @@ async def test_rag_stream_api_error_yields_error_message(monkeypatch):
 
     mock_client = MagicMock()
     mock_client.chat.completions.create = AsyncMock(side_effect=_raising_stream)
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     output = []
     async for chunk, ctx in app.rag_stream("Any question", []):

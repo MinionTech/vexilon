@@ -36,7 +36,7 @@ async def test_verify_response_calls_llm_client(monkeypatch):
     mock_completion.choices = [MagicMock(message=MagicMock(content="ALL_CLAIMS_VERIFIED"))]
     mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
 
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     result = await app.verify_response("The response", "The context")
 
@@ -49,7 +49,7 @@ async def test_verify_response_returns_verification_text(
     monkeypatch, mock_llm_client
 ):
     """verify_response returns the text from the verification model response."""
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_llm_client)
 
     result = await app.verify_response("Response", "Context")
 
@@ -67,7 +67,7 @@ async def test_verify_response_handles_api_error(monkeypatch):
         )
 
     mock_client.chat.completions.create = _raising_create
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     result = await app.verify_response("Response", "Context")
 
@@ -99,7 +99,7 @@ async def test_rag_stream_yields_context(monkeypatch):
 
     mock_client = MagicMock()
     mock_client.chat.completions.create = AsyncMock(side_effect=_mock_openai_stream)
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     # Mock generate_perspective_queries to avoid hitting the API in this test
     monkeypatch.setattr(app, "generate_perspective_queries", AsyncMock(return_value=["Question"]))

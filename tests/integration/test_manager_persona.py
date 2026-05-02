@@ -6,7 +6,7 @@ def test_manager_mode_in_selector(monkeypatch, mock_llm_client):
     """
     Verifies that 'Manage' is available in the persona selector.
     """
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_llm_client)
     monkeypatch.setattr(app, "_index", "not-none")
     
     demo = app.build_ui()

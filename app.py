@@ -72,8 +72,8 @@ def _get_default_model():
     provider = get_llm_provider()
     # Default to Hugging Face or Ollama
     if provider == "ollama":
-        return os.getenv("OLLAMA_MODEL", "qwen3:latest")
-    return "Qwen/Qwen3-72B-Instruct"
+        return os.getenv("OLLAMA_MODEL", "qwen3:7b")
+    return "Qwen/Qwen3-7B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -261,7 +261,7 @@ If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
 _llm_client = None
-def get_llm_client():
+def get_async_openai_client():
     global _llm_client
     if _llm_client is None:
         provider = get_llm_provider()
@@ -282,9 +282,7 @@ def get_llm_client():
             )
     return _llm_client
 
-async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
-    client = get_llm_client()
-    # OpenAI/HF: system is a single message (flatten if list)
+def _build_messages(messages: list, system: str | list = None) -> list:
     full_messages = []
     if system:
         if isinstance(system, list):
@@ -293,6 +291,11 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
             system_text = system
         full_messages.append({"role": "system", "content": system_text})
     full_messages.extend(messages)
+    return full_messages
+
+async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
+    client = get_async_openai_client()
+    full_messages = _build_messages(messages, system)
     resp = await client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
@@ -301,15 +304,8 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     return resp.choices[0].message.content
 
 async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
-    client = get_llm_client()
-    full_messages = []
-    if system:
-        if isinstance(system, list):
-            system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
-        else:
-            system_text = system
-        full_messages.append({"role": "system", "content": system_text})
-    full_messages.extend(messages)
+    client = get_async_openai_client()
+    full_messages = _build_messages(messages, system)
     stream = await client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
@@ -368,7 +364,6 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
 async def condense_query(message: str, history: list[dict]) -> str:
     """Turn the conversation history and new message into a standalone search query."""
     if not history: return message
-    client = get_llm_client()
     
     history_text = ""
     for turn in history[-5:]:

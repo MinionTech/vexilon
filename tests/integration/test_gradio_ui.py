@@ -14,7 +14,7 @@ def test_ui_builds_correctly(monkeypatch, mock_llm_client):
     Verifies that build_ui() runs without error and returns a gr.Blocks instance.
     """
     # Setup mocks
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_llm_client)
     monkeypatch.setattr(app, "_index", "not-none")
     
     # This catches syntax errors in handlers or missing component references

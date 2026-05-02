@@ -14,7 +14,7 @@ async def test_generate_perspective_queries_simple():
     mock_completion.choices = [MagicMock(message=MagicMock(content='["vacation days amount"]'))]
     mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
     
-    with patch("app.get_llm_client", return_value=mock_client):
+    with patch("app.get_async_openai_client", return_value=mock_client):
         # We need to mock condense_query to return a known value
         with patch("app.condense_query", return_value="vacation days amount"):
             queries = await app.generate_perspective_queries(message, history)
@@ -34,7 +34,7 @@ async def test_generate_perspective_queries_complex():
     mock_completion.choices = [MagicMock(message=MagicMock(content='["off-duty conduct case law", "Millhaven factors DUI", "employer rights off-site arrest"]'))]
     mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
     
-    with patch("app.get_llm_client", return_value=mock_client):
+    with patch("app.get_async_openai_client", return_value=mock_client):
         with patch("app.condense_query", return_value="DUI arrest off-duty termination"):
             queries = await app.generate_perspective_queries(message, history)
             
@@ -90,7 +90,7 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
         return MagicMock()
 
     mock_client.chat.completions.create = AsyncMock(side_effect=_mock_openai_stream)
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
     async for chunk, ctx in app.rag_stream("Complex question", []):
         pass

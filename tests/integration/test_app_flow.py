@@ -39,7 +39,7 @@ async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path)
     monkeypatch.setattr(indexing, "INTEGRITY_PATH", cache_dir / "integrity.json")
 
     # Mock the LLM client globally for the app
-    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_llm_client)
     
     # 2. Startup: This builds the index in memory (slow but thorough)
     app.startup(force_rebuild=True)
