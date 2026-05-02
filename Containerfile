@@ -66,16 +66,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ── Environment Configuration ────────────────────────────────────────────────
-ENV HF_HOME=/app/hf_cache \
+ENV HF_HOME=/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
-    EMBED_MODEL=/app/hf_cache \
+    EMBED_MODEL=/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the prepared environment and code from builder
 # We chown the entire /app so the 'vexilon' user can touch lock files and cache.
 COPY --from=builder --chown=vexilon:vexilon /app /app
-COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /app/hf_cache
+COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /hf_cache
 
 # 3. Build index
 # Create persistent cache directory
