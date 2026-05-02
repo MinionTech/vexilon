@@ -108,9 +108,11 @@ Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requir
 
 ```bash
 export HF_TOKEN=<YOUR_HF_TOKEN>
-export VEXILON_MODE=PROD
-podman compose up --build
+VEXILON_MODE=PROD podman compose up --no-deps --build vexilon
 ```
+
+> [!TIP]
+> Using `--no-deps` prevents the local Ollama services from starting, allowing for an instant cloud-connected session.
 
 **3. Live Reload (Frontend Dev)**
 Mounts your local code into the container for instant UI feedback.
