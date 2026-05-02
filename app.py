@@ -674,7 +674,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn.click(
                     make_handler(q), 
                     [chatbot, persona], 
-                    [msg, chatbot, toolbox],
+                    [chatbot, msg, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
