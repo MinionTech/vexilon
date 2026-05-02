@@ -5,7 +5,7 @@ x-var:
 
 # Reusable environment for all services
 x-common-env: &common-env
-  VEXILON_MODE: ${VEXILON_MODE:-PROD}
+  VEXILON_MODE: ${VEXILON_MODE:-DEV}
   VEXILON_LLM_PROVIDER: ${VEXILON_LLM_PROVIDER:-}
   HF_TOKEN: ${HF_TOKEN:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -54,7 +54,7 @@ services:
     build: *common-build
     environment:
       <<: *common-env
-      VEXILON_MODE: ${VEXILON_MODE:-PROD}
+      VEXILON_MODE: ${VEXILON_MODE:-DEV}
       VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
       VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
       PORT: *PORT
