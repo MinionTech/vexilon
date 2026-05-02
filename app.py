@@ -221,14 +221,16 @@ _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
 UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
+2. STRICT CITATIONS: Every claim MUST be followed by a verbatim quote in a blockquote (> "...") and a citation in brackets.
+   FORMAT: > "[verbatim text from excerpt]" [Document Name, Page X]
 3. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
 4. GRIEVANCE FILING: Facilitate the filing process by identifying potential contract violations.
 """
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
+2. STRICT CITATIONS: Every claim MUST be followed by a verbatim quote in a blockquote (> "...") and a citation in brackets.
+   FORMAT: > "[verbatim text from excerpt]" [Document Name, Page X]
 3. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
 4. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
 5. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
