@@ -102,3 +102,6 @@ def test_search_index_finds_most_similar(monkeypatch):
 
     results = indexing.search_index(index, chunks, "irrelevant", top_k=1)
     assert results[0] == chunks[2]
+
+
+

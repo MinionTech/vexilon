@@ -21,7 +21,7 @@ import vexilon.indexing as indexing
 def _patch_paths(monkeypatch, tmp_path: Path) -> dict:
     """Redirect pdf_cache paths into tmp_path and return them."""
     index_path = tmp_path / "index.faiss"
-    chunks_path = tmp_path / "chunks.pkl"
+    chunks_path = tmp_path / "chunks.json"
 
     monkeypatch.setattr(indexing, "INDEX_PATH", index_path)
     monkeypatch.setattr(indexing, "CHUNKS_PATH", chunks_path)
@@ -106,7 +106,7 @@ def test_creates_cache_dir_when_missing(monkeypatch, tmp_path):
     missing_dir = tmp_path / "new_cache_dir"
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", missing_dir)
     monkeypatch.setattr(indexing, "INDEX_PATH", missing_dir / "index.faiss")
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", missing_dir / "chunks.pkl")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", missing_dir / "chunks.json")
 
     assert not missing_dir.exists()
 
