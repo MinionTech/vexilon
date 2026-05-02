@@ -432,7 +432,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
         if persona_mode in ("Grieve", "Manage"):
-            matched_tests = _test_registry.find_matches(message + " " + " ".join(queries))
+            matched_tests = _test_registry.find_matches(message + " " + queries[0])
             for test in matched_tests:
                 audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
                 audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
@@ -443,7 +443,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
         
         async for text in unified_chat_stream(
-            model=CLAUDE_MODEL,
+            model=REVIEWER_MODEL,
             max_tokens=2048,
             system=system,
             messages=[{"role": "user", "content": message}]
@@ -502,6 +502,7 @@ def startup(force_rebuild: bool = False):
     provider = get_llm_provider()
     model = DEFAULT_MODEL_LLM
     logger.info(f"[startup] Vexilon {VEXILON_VERSION} starting...")
+    logger.info(f"[startup] Provider: {provider}")
     logger.info(f"[startup] Default Model: {model}")
 
     _test_registry.load(TESTS_DIR)
