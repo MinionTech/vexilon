@@ -89,9 +89,10 @@ git reset # Clears the index
 # Digests use @ syntax, tags use : syntax
 [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
 
-# Use Bash-native expansion for the repository name (lowercase)
-# Fallback to the known repo if run outside of GitHub Actions
-REPO_PATH=$(echo "${GITHUB_REPOSITORY:-miniontech/vexilon}" | tr '[:upper:]' '[:lower:]')
+# Use Bash-native expansion for the organization name (lowercase)
+# The package name is hardcoded to 'agnav' to match the workflow configuration
+ORG_NAME=$(echo "${GITHUB_REPOSITORY%/*}" | tr '[:upper:]' '[:lower:]')
+REPO_PATH="${ORG_NAME:-miniontech}/agnav"
 
 cat <<EOF > Dockerfile
 FROM ghcr.io/${REPO_PATH}${separator}$IMAGE_REF

@@ -184,7 +184,7 @@ The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerf
 the HF Space.
 
 - **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
+- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `MinionTech/vexilon` Space.
 
 **Required GitHub secret:**
 
