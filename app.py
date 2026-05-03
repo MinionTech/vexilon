@@ -539,30 +539,30 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     
     msg_str = msg_str.strip() if msg_str else ""
     if not msg_str:
-        yield history or [], gr.update(interactive=True), gr.update(interactive=True)
+        yield history or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
         return
         
     # 1. Add user message and clear textbox IMMEDIATELY in one atomic yield
     # We also disable the inputs to prevent race conditions (#402)
     new_history = (history or []) + [{"role": "user", "content": msg_str}]
-    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False)
+    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
 
     # 2. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
+        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
+        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     # 3. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(interactive=False)
+    yield current_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 4. Stream assistant response
     accumulated = ""
@@ -572,10 +572,10 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(interactive=False)
+        yield current_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 5. Restore interactivity
-    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
+    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
@@ -682,7 +682,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
                 example_btn.click(
                     make_handler(q), 
                     [chatbot, persona], 
-                    outputs=[chatbot, msg, submit],
+                    outputs=[chatbot, msg, submit, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -748,8 +748,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit])
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit])
+    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
+    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
