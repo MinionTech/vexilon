@@ -137,13 +137,15 @@ jobs:
     permissions:
       contents: read
       packages: read
+    services:
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - 11434:11434
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -152,62 +154,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache Ollama Models
-        uses: actions/cache@v4
-        with:
-          path: ~/.ollama
-          key: ollama-smoke-qwen3-0.6b
-
-      - name: Pre-pull Smoke Test Model
+      - name: Pull Smoke Test Model
         run: |
-          mkdir -p ~/.ollama
-          if ! ls ~/.ollama/models/manifests/registry.ollama.ai/library/qwen3 2>/dev/null | grep -q 0.6b; then
-            echo "Model not cached — pulling qwen3:0.6b..."
-            # Start temporary server
-            podman run -d --name puller -v $HOME/.ollama:/root/.ollama -p 11434:11434 ollama/ollama
-            # Wait for health
-            until curl -s localhost:11434 >/dev/null; do echo "Waiting for Ollama..."; sleep 1; done
-            # Pull
-            podman exec puller ollama pull qwen3:0.6b
-            # Clean up
-            podman stop puller && podman rm puller
-          else
-            echo "Model already cached."
-          fi
+          echo "Waiting for Ollama to be ready..."
+          until curl -s http://localhost:11434 > /dev/null; do sleep 1; done
+          echo "Pulling qwen3:0.6b..."
+          curl -X POST http://localhost:11434/api/pull -d '{"name": "qwen3:0.6b"}'
 
-      - name: Pull and Start Stack
+      - name: Run AgNav Container
         env:
           IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          # Force lowercase for GHCR namespace compliance
           OWNER="${{ github.repository_owner }}"
           REPO="${{ github.event.repository.name }}"
           IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
           podman pull $IMAGE
           
-          # Override: pre-built image, tiny smoke-test model, cached model dir
-          cat <<EOF > compose.override.yml
-          services:
-            agnav:
-              image: $IMAGE
-              build: null
-              volumes: []
-              environment:
-                AGNAV_LLM_PROVIDER: ollama
-                OLLAMA_MODEL: qwen3:0.6b
-            ollama:
-              volumes:
-                - $HOME/.ollama:/root/.ollama
-            ollama-init:
-              entrypoint: ["echo", "Model pre-pulled on host"]
-              command: []
-          EOF
-          
-          # Start the stack using compose
-          podman compose up -d agnav
-          
-          # Rename for healthcheck compatibility with existing scripts
-          podman rename vexilon-agnav-1 agnav-${{ github.event.pull_request.number || github.run_id }}
+          # Run with host network to reach Ollama on localhost:11434
+          podman run -d \
+            --name agnav-smoke \
+            --network host \
+            -e AGNAV_LLM_PROVIDER=ollama \
+            -e OLLAMA_MODEL=qwen3:0.6b \
+            -e OLLAMA_HOST=localhost \
+            -e AGNAV_VERSION=sha-${IMAGE_SHA} \
+            -e HF_TOKEN=${{ secrets.HF_TOKEN }} \
+            $IMAGE
 
       - name: Wait for Healthcheck
         run: |
@@ -217,9 +189,9 @@ jobs:
               exit 0
             fi
 
-            if ! podman inspect agnav-${{ github.event.pull_request.number || github.run_id }} --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
+            if ! podman inspect agnav-smoke --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
               echo "Container died! Logs:"
-              podman logs agnav-${{ github.event.pull_request.number || github.run_id }}
+              podman logs agnav-smoke
               exit 1
             fi
 
@@ -229,15 +201,9 @@ jobs:
           echo "Healthcheck timed out."
           exit 1
 
-      - name: Dump Logs on Failure
-        if: failure()
-        run: podman logs agnav-${{ github.event.pull_request.number || github.run_id }}
-
-      - name: Cleanup Stack
+      - name: Cleanup
         if: always()
-        run: |
-          podman compose down || true
-          podman rm -f agnav-${{ github.event.pull_request.number || github.run_id }} || true
+        run: podman rm -f agnav-smoke || true
 
   trivy:
     name: Trivy Security Scan
