@@ -323,9 +323,31 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         stream=True,
         timeout=60.0
     )
+    # State for filtering <think> blocks from reasoning models
+    in_think_block = False
     async for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
-            yield chunk.choices[0].delta.content
+            content = chunk.choices[0].delta.content
+            
+            # Handle thinking blocks (common in Qwen/DeepSeek reasoning models)
+            if "<think>" in content:
+                in_think_block = True
+                # If the tag is accompanied by content, try to strip it
+                content = content.split("<think>")[-1]
+                if "</think>" in content: # One-liner case
+                    content = content.split("</think>")[-1]
+                    in_think_block = False
+                else:
+                    continue
+
+            if "</think>" in content:
+                in_think_block = False
+                content = content.split("</think>")[-1]
+                if not content:
+                    continue
+            
+            if not in_think_block:
+                yield content
 
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
