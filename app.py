@@ -43,7 +43,7 @@ from vexilon.indexing import (
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
-OLLAMA_MODEL_ID = "qwen3.5:4b"
+OLLAMA_MODEL_ID = "qwen3:1.7b"
 
 # Configure structured logging
 logging.basicConfig(
