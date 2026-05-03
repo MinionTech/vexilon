@@ -300,10 +300,6 @@ def _build_messages(messages: list, system: str | list = None) -> list:
             system_text = system
         full_messages.append({"role": "system", "content": system_text})
     full_messages.extend(messages)
-    # Disable Qwen thinking mode to skip internal <think> blocks on CPU
-    if full_messages and full_messages[-1].get("role") == "user":
-        last = full_messages[-1]
-        full_messages[-1] = {**last, "content": last["content"] + " /no_think"}
     return full_messages
 
 async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
@@ -312,7 +308,9 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     resp = await client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
-        messages=full_messages
+        messages=full_messages,
+        timeout=300.0,
+        extra_body={"think": False}
     )
     return resp.choices[0].message.content
 
@@ -323,7 +321,9 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         model=model,
         max_tokens=max_tokens,
         messages=full_messages,
-        stream=True
+        stream=True,
+        timeout=300.0,
+        extra_body={"think": False}
     )
     # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
