@@ -173,7 +173,6 @@ jobs:
           
           # Rename for healthcheck compatibility with existing scripts
           podman rename vexilon-vexilon-1 vexilon-${{ github.event.pull_request.number || github.run_id }}
-
       - name: Wait for Healthcheck
         run: |
           for i in {1..30}; do

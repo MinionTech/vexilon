@@ -378,8 +378,11 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
         "success_count": len(all_files) - len(failed_files),
         "total_count": len(all_files)
     }
-    with open(INTEGRITY_PATH, "w") as f:
-        json.dump(integrity_data, f, indent=2)
+    try:
+        with open(INTEGRITY_PATH, "w") as f:
+            json.dump(integrity_data, f, indent=2)
+    except PermissionError as e:
+        logger.warning(f"[build] Could not write integrity manifest: {e}")
 
     if failed_files and os.getenv("VEXILON_STRICT_BUILD", "false").lower() == "true":
         raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
