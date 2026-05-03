@@ -175,7 +175,7 @@ jobs:
           podman rename vexilon-vexilon-1 vexilon-${{ github.event.pull_request.number || github.run_id }}
       - name: Wait for Healthcheck
         run: |
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -f http://localhost:7860 > /dev/null 2>&1; then
               echo "Container is healthy!"
               exit 0
@@ -187,8 +187,8 @@ jobs:
               exit 1
             fi
 
-            echo "Wait... ($i/30)"
-            sleep 2
+            echo "Wait... ($i/60)"
+            sleep 5
           done
           echo "Healthcheck timed out."
           exit 1
