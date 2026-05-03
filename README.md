@@ -22,7 +22,7 @@ of labour law and contract documents.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Hugging Face (`Qwen3.5-9B`) / Ollama (`qwen3.5`) |
+| LLM | Hugging Face (`Qwen2.5-7B`) / Ollama (`qwen3`) |
 | Embeddings | `BAAI/bge-small-en-v1.5` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | Web UI | Gradio 6 — `http://localhost:7860` |
@@ -101,7 +101,7 @@ podman compose up --build
 ```
 
 > [!NOTE]
-> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the ~4.7GB `qwen3.5:9b` model.
+> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the ~1.4GB `qwen3:1.7b` model.
 
 **2. Production / Cloud Mode**
 Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requires an internet connection and a valid token.
@@ -188,7 +188,7 @@ Vexilon uses **App-Authority** for model versioning. The primary source of truth
 
 | Variable | Default | Description |
 |---|---|---|
-| `OLLAMA_MODEL_ID` | `qwen3.5:9b` | *(Code Constant)* Defined in `app.py`. Infrastructure automatically pulls this. |
+| `OLLAMA_MODEL_ID` | `qwen3:1.7b` | *(Code Constant)* Defined in `app.py`. Infrastructure automatically pulls this. |
 | `HF_TOKEN` | *(required for PROD)* | Hugging Face access token with Inference permissions |
 | `VEXILON_LLM_PROVIDER` | `ollama` | Deployment mode (`ollama` or `huggingface`). Set via Compose profiles. |
 | `PORT` | `7860` | Gradio listen port |
@@ -203,7 +203,7 @@ Vexilon includes a second AI bot that verifies responses against source citation
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
-| `VERIFY_MODEL` | `Qwen/Qwen3.5-9B-Instruct` | Model for verification |
+| `VERIFY_MODEL` | `Qwen/Qwen2.5-7B-Instruct` | Model for verification |
 
 When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
 

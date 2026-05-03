@@ -81,7 +81,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else OLLAMA_MODEL_ID
-    return "Qwen/Qwen3.5-9B-Instruct"
+    return "Qwen/Qwen2.5-7B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
