@@ -28,10 +28,10 @@ While Vexilon's RAG pipeline includes advanced PDF extraction logic (`app.py`), 
 
 ## 3. How to Convert
 
-We have provided a specialized script `scripts/pdf_to_md.py` that uses a **Forensic Dual-Pass** strategy. It uses **Claude 3.5 Sonnet** and **Haiku** to reconstruct the document with a "Zero-Reasoning" constraint.
+We have provided a specialized script `scripts/pdf_to_md.py` that uses a **Forensic Dual-Pass** strategy. It uses **LLMs** to reconstruct the document with a "Zero-Reasoning" constraint.
 
 ### Safety Features
-- **Dual-Pass Verification**: The script runs each page through two different models. If they disagree on the Markdown structure, it flags a divergence for your review.
+- **Dual-Pass Verification**: The script runs each page through two different model passes. If they disagree on the Markdown structure, it flags a divergence for your review.
 - **Word-Fingerprinting**: The script extracts a "fingerprint" of substantive words from the raw PDF and compares it to the Markdown. It will alert you if the AI accidentally "hallucinates" a word that wasn't in the original text.
 - **Strict Verbatim Prompt**: The AI is explicitly forbidden from rephrasing, "improving," or summarizing the source.
 
@@ -39,7 +39,7 @@ We have provided a specialized script `scripts/pdf_to_md.py` that uses a **Foren
 
 1.  **Set Environment Variable**:
     ```bash
-    export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+    export HF_TOKEN=<YOUR_HF_TOKEN>
     ```
 
 2.  **Run the Converter**:

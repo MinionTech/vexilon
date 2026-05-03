@@ -2,11 +2,11 @@ import pytest
 import app
 import gradio as gr
 
-def test_manager_mode_in_selector(monkeypatch, mock_anthropic):
+def test_manager_mode_in_selector(monkeypatch, mock_llm_client):
     """
     Verifies that 'Manage' is available in the persona selector.
     """
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_anthropic)
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_llm_client)
     monkeypatch.setattr(app, "_index", "not-none")
     
     demo = app.build_ui()

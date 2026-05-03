@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: ./.github/scripts/deploy.sh <space_name> [image_ref] [--dry-run]
-# <space_name>: Full name of the Hugging Face Space (e.g. 'MinionTech/vexilon')
+# <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')
 # [image_ref]: Tag or digest of the image to deploy (falls back to short SHA if omitted)
 #
 # Strict mode + Trace
@@ -9,7 +9,7 @@ set -euo pipefail
 # Usage function
 usage() {
     echo "Usage: $0 <space_name> [image_ref] [--dry-run]"
-    echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'MinionTech/vexilon')"
+    echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')"
     echo "  [image_ref]: Tag or digest of the image to deploy"
     echo "  --dry-run: Show what would be done without performing it"
     exit 1
@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$SPACE_NAME" ]; then
-    echo "Error: space_name (e.g. 'MinionTech/landru') must be provided."
+    echo "Error: space_name (e.g. 'DerekRoberts/vexilon') must be provided."
     usage
 fi
 

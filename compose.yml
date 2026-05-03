@@ -1,25 +1,15 @@
 # ── Reusable Variables ───────────────────────────────────────────────────────
 x-var:
   - &PORT "7860"
-  - &MEM_LIMIT 3g
+  - &MEM_LIMIT 6g
 
 # Reusable environment for all services
 x-common-env: &common-env
-  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-  HF_HOME: /app/hf_cache
-  HF_HUB_OFFLINE: "1"
-  HF_TOKEN_PATH: /dev/null # Prevent HuggingFace token lookup permission errors
-  PATH: "/app/.venv/bin:/app/:$PATH"
-  PYTHONPATH: "/app"
-  TRANSFORMERS_OFFLINE: "1"
-  EMBED_MODEL: /app/hf_cache
+  HF_TOKEN: ${HF_TOKEN:-}
 
-# Reusable build configuration
 x-common-build: &common-build
   context: .
   dockerfile: Containerfile
-  args:
-    VERSION: ${VEXILON_VERSION:-dev}
 
 # Standard service boilerplate: Resource limits and Persistence
 x-service-defaults: &service-defaults
@@ -34,43 +24,58 @@ x-dev-volumes: &dev-volumes
   - ./.pdf_cache:/app/.pdf_cache:z
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
-  - /app/hf_cache      # Lifeboat for the model
+  - /hf_cache      # Lifeboat for the model
   - /app/.pytest_cache # Lifeboat for test metadata
 
 services:
 
-  # ── Vexilon app ───────────────────────────────────────────────────────────────
-  # Production-ready entry point gated by integration tests.
-  # Uses code baked into the image for maximum performance/reliability.
+  # ── Vexilon (Default: Local Dev with Hot-Reload) ─────────────────────────────
+  # Mounts source code to allow instant feedback. No profile = starts by default.
   vexilon:
+    <<: *service-defaults
+    build:
+      <<: *common-build
+      target: test_builder
+    volumes: *dev-volumes
+    environment:
+      <<: *common-env
+      WATCHFILES_FORCE_POLLING: "true"
+      PORT: *PORT
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    ports:
+      - "${PORT:-7860}:7860"
+    command: /app/.venv/bin/python app.py
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7860')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ── Production Simulation (Immutable Cloud-Parity) ───────────────────────────
+  # Run with: podman compose up prod
+  prod:
     <<: *service-defaults
     profiles: [prod]
     build: *common-build
     environment:
       <<: *common-env
-      VEXILON_USERNAME: ${VEXILON_USERNAME:-admin}
-      VEXILON_PASSWORD: ${VEXILON_PASSWORD:-}
-      PORT: *PORT
-    ports: ["7860:7860"]
+      VEXILON_LLM_PROVIDER: huggingface
+    ports:
+      - "${PORT:-7860}:7860"
     cap_drop: [ALL]
     tmpfs: [/tmp]
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.getenv('PORT', '7860'))\""]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s # Match the slow model loading period
 
   # ── Testing ──────────────────────────────────────────────────────────────────
-  # Mounts source code to allow testing local changes without a rebuild.
   tests:
     <<: *service-defaults
     profiles: [test]
     build:
       <<: *common-build
       target: test_builder
-
-    volumes: *dev-volumes # Overrides x-service-defaults
+    volumes: *dev-volumes
     environment: *common-env
     command: >
       sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
@@ -81,7 +86,6 @@ services:
         condition: service_completed_successfully
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
-  # Runs the indexing script against the baked-in code.
   index-refresh:
     <<: *service-defaults
     profiles: [tools]
@@ -91,23 +95,7 @@ services:
     environment: *common-env
     command: python scripts/build_index.py
 
-  # ── Fast Development ───────────────────────────────────────────────────
-  # Builds from source with live reload and polling enabled for Podman.
-  watch:
-    <<: *service-defaults
-    extends: vexilon
-    build:
-      <<: *common-build
-      target: test_builder
-    profiles: ["dev"]
-    volumes: *dev-volumes
-    environment:
-      <<: *common-env
-      WATCHFILES_FORCE_POLLING: "true"
-    command: uv run --no-sync gradio app.py --watch-dirs .
-
   # ── Cache Validator ─────────────────────────────────────────────────────────
-  # Ensures the FAISS cache is in sync with the source data.
   cache-validator:
     <<: *service-defaults
     profiles: [tools]
@@ -116,4 +104,39 @@ services:
       target: test_builder
     volumes: *dev-volumes
     environment: *common-env
-    command: uv run --no-sync python scripts/generate_cache_manifest.py validate
+    command: /app/.venv/bin/python scripts/generate_cache_manifest.py validate
+
+  # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    environment:
+      - OLLAMA_FLASH_ATTENTION=1
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-time service to pull the required model into the ollama volume.
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./app.py:/app/app.py:ro
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: /bin/sh
+    command: 
+      - -c
+      - |
+        TARGET_MODEL=$$(sed -n 's/.*OLLAMA_MODEL_ID = "\(.*\)".*/\1/p' /app/app.py)
+        echo "Determined target model from app.py: $$TARGET_MODEL"
+        ollama pull $$TARGET_MODEL
+
+volumes:
+  ollama_data: {}

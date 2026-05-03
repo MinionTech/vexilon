@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import pytest
+import os
 from unittest.mock import MagicMock, AsyncMock
 from contextlib import asynccontextmanager
 
@@ -47,28 +48,28 @@ def mock_embedding_model(request, monkeypatch):
     return mock_model
 
 @pytest.fixture
-def mock_anthropic():
-    """Provides a mocked AsyncAnthropic client."""
+def mock_llm_client():
+    """Provides a mocked LLM client supporting OpenAI-compatible APIs (HF, Ollama)."""
     mock_client = MagicMock()
     
-    @asynccontextmanager
-    async def _mock_stream(*args, **kwargs):
-        mock_stream = MagicMock()
-        async def _async_gen():
-            yield "Mocked response content."
-        mock_stream.text_stream = _async_gen()
-        
-        # Mock get_final_message
-        fake_message = MagicMock(usage=MagicMock(input_tokens=10, output_tokens=5, cache_creation_input_tokens=0, cache_read_input_tokens=0))
-        mock_stream.get_final_message = AsyncMock(return_value=fake_message)
-        
-        yield mock_stream
-
-    mock_client.messages.stream = _mock_stream
+    # ── OpenAI / HF Style ──
+    mock_chat = MagicMock()
     
-    # Mock messages.create for condense_query
-    mock_resp = MagicMock()
-    mock_resp.content = [MagicMock(text="Condensed search query")]
-    mock_client.messages.create = AsyncMock(return_value=mock_resp)
+    # Mock completions.create (non-streaming)
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content="Mocked response content"))]
+    
+    # Mock completions.create (streaming vs non-streaming)
+    async def _mock_openai_create(*args, **kwargs):
+        if kwargs.get("stream"):
+            async def _gen():
+                chunk = MagicMock()
+                chunk.choices = [MagicMock(delta=MagicMock(content="Mocked response content."))]
+                yield chunk
+            return _gen()
+        return mock_completion
+    
+    mock_chat.completions.create = AsyncMock(side_effect=_mock_openai_create)
+    mock_client.chat = mock_chat
     
     return mock_client

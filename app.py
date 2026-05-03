@@ -1,8 +1,8 @@
+import sys
+import os
+import re
 # BCGEU Navigator - UI Version: 2026-04-22_13-17
 # Integrated RAG Backend + Stabilized Gradio 6 UI
-import os
-import sys
-import re
 import html
 import time
 import logging
@@ -18,7 +18,8 @@ import tempfile
 from threading import Lock
 
 import numpy as np
-import anthropic
+import openai
+from openai import AsyncOpenAI
 import faiss
 import gradio as gr
 
@@ -40,6 +41,10 @@ from vexilon.indexing import (
 )
 
 # ─── Global State & Config ──────────────────────────────────────────────────
+# Single Source of Truth for local development models.
+# Change this here to update the entire stack (including the puller).
+OLLAMA_MODEL_ID = "qwen3:1.7b"
+
 # Configure structured logging
 logging.basicConfig(
     level=logging.INFO,
@@ -52,13 +57,33 @@ _index: "faiss.IndexFlatIP | None" = None
 INTEGRITY_WARNING: str | None = None
 
 VEXILON_VERSION = os.getenv("VEXILON_VERSION", "Dev mode")
+IS_DEV = VEXILON_VERSION == "Dev mode"
 VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_LABOUR_LAW_URL = os.getenv(
     "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
 )
 
-# Models
-DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", "claude-haiku-4-5-20251001")
+# Models & Providers
+def get_llm_provider() -> str:
+    # 1. Explicit override (keeps the 'prod' profile working)
+    val = os.getenv("VEXILON_LLM_PROVIDER")
+    if val:
+        return val.lower().strip()
+
+    # 2. Smart Detection based on version
+    if IS_DEV:
+        return "ollama"  # We're coding locally!
+    return "huggingface" # We're in the clouds!
+
+def _get_default_model():
+    provider = get_llm_provider()
+    # Default to Hugging Face or Ollama
+    if provider == "ollama":
+        val = os.getenv("OLLAMA_MODEL")
+        return val if (val and val.strip()) else OLLAMA_MODEL_ID
+    return "Qwen/Qwen2.5-7B-Instruct"
+
+DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
 REVIEWER_MODEL = os.getenv("VEXILON_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
 CONDENSE_MODEL = os.getenv("VEXILON_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
@@ -159,8 +184,8 @@ _test_registry = TestRegistry()
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
 
 # ─── Rate Limiter ───────────────────────────────────────────────────────────
-RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
-RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "100"))
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "999999" if IS_DEV else "10"))
+RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "999999" if IS_DEV else "100"))
 
 class RateLimiter:
     def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
@@ -199,23 +224,28 @@ _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
 UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
-3. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
-4. GRIEVANCE FILING: Facilitate the filing process by identifying potential contract violations.
+2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
+   EXAMPLE: > "verbatim text" [Document Name, Page X]
+3. STRICT BREVITY: Be extremely concise. No introductory filler (e.g., "Based on the documents...").
+4. NO SUMMARIZING: Do NOT use arrows (→) or bullet points to summarize excerpts. Use literal text.
+5. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
 """
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. CITATIONS: Every claim MUST be supported by a verbatim quote in a blockquote (> "...") followed by its citation.
-3. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
-4. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
+2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
+   EXAMPLE: > "verbatim text" [Document Name, Page X]
+3. STRICT BREVITY: Be extremely concise. No introductory filler.
+4. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
+5. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
+6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
 def get_persona_prompt(mode_name: str) -> str:
     """Return the combined mandatory rules and persona guidelines."""
     if mode_name == "Manage":
         rules = MANAGER_MANDATORY_RULES
-        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation."
+        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework."
     elif mode_name == "Grieve":
         rules = UNION_MANDATORY_RULES
         persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases."
@@ -225,8 +255,8 @@ def get_persona_prompt(mode_name: str) -> str:
     
     return f"{rules}\n\nROLE: {persona}"
 
-# ─── Verification & Anthropic Helpers ───────────────────────────────────────
-VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "true").lower() == "true"
+# ─── Verification & LLM Helpers ───────────────────────────────────────
+VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "false" if IS_DEV else "true").lower() == "true"
 VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
 
 For each claim in the response:
@@ -242,31 +272,126 @@ Respond in this format:
 If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
-_anthropic_client = None
-def get_anthropic() -> anthropic.AsyncAnthropic:
-    global _anthropic_client
-    if _anthropic_client is None:
-        _anthropic_client = anthropic.AsyncAnthropic()
-    return _anthropic_client
+_llm_client = None
+def get_async_openai_client():
+    global _llm_client
+    if _llm_client is None:
+        provider = get_llm_provider()
+        if provider == "huggingface":
+            _llm_client = AsyncOpenAI(
+                base_url="https://router.huggingface.co/v1",
+                api_key=os.getenv("HF_TOKEN")
+            )
+        elif provider == "ollama":
+            _llm_client = AsyncOpenAI(
+                base_url="http://ollama:11434/v1",
+                api_key="ollama"
+            )
+        else:
+            raise ValueError(f"Unsupported LLM provider: {provider}")
+    return _llm_client
+
+def _build_messages(messages: list, system: str | list = None) -> list:
+    full_messages = []
+    if system:
+        if isinstance(system, list):
+            system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
+        else:
+            system_text = system
+        full_messages.append({"role": "system", "content": system_text})
+    full_messages.extend(messages)
+    return full_messages
+
+async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
+    client = get_async_openai_client()
+    full_messages = _build_messages(messages, system)
+    resp = await client.chat.completions.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=full_messages,
+        timeout=300.0,
+        extra_body={"think": False}
+    )
+    return resp.choices[0].message.content
+
+async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
+    client = get_async_openai_client()
+    full_messages = _build_messages(messages, system)
+    stream = await client.chat.completions.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=full_messages,
+        stream=True,
+        timeout=300.0,
+        extra_body={"think": False}
+    )
+    # Stateful buffer for filtering <think> blocks (handles split-token tags)
+    in_think_block = False
+    buffer = ""
+    start_tag = "<think>"
+    end_tag = "</think>"
+    
+    async for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            buffer += chunk.choices[0].delta.content
+            
+            while buffer:
+                if not in_think_block:
+                    # Look for start tag
+                    start_idx = buffer.find(start_tag)
+                    if start_idx != -1:
+                        # Yield everything before the tag
+                        if start_idx > 0:
+                            yield buffer[:start_idx]
+                        in_think_block = True
+                        buffer = buffer[start_idx + len(start_tag):] # Skip start tag
+                    else:
+                        # No complete start tag found. 
+                        # But wait! What if we have a partial tag at the end (e.g. '...<thi')?
+                        partial_idx = buffer.find("<")
+                        if partial_idx != -1 and len(buffer[partial_idx:]) < len(start_tag):
+                            # Yield everything before the partial tag and keep the partial in buffer
+                            if partial_idx > 0:
+                                yield buffer[:partial_idx]
+                            buffer = buffer[partial_idx:]
+                            break
+                        else:
+                            # Safe to yield everything
+                            yield buffer
+                            buffer = ""
+                else:
+                    # In a think block, look for end tag
+                    end_idx = buffer.find(end_tag)
+                    if end_idx != -1:
+                        in_think_block = False
+                        buffer = buffer[end_idx + len(end_tag):] # Skip end tag
+                    else:
+                        # Still thinking, discard buffer (careful not to discard a partial end tag)
+                        partial_end_idx = buffer.find("<")
+                        if partial_end_idx != -1 and len(buffer[partial_end_idx:]) < len(end_tag):
+                            # Keep potential partial end tag
+                            buffer = buffer[partial_end_idx:]
+                            break
+                        else:
+                            buffer = ""
+                            break
 
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
-    client = get_anthropic()
     try:
-        verify_resp = await client.messages.create(
+        return await unified_chat_create(
             model=VERIFY_MODEL,
             max_tokens=512,
-            system=[{"type": "text", "text": VERIFY_SYSTEM_PROMPT}],
-            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}],
+            system=VERIFY_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}]
         )
-        return verify_resp.content[0].text
     except Exception as exc:
         return f"⚠️ Verification unavailable: {exc}"
 
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
     header = f"--- VEXILON SYSTEM STATE ---\nDATE: {now}\nVERSION: {VEXILON_VERSION}\n----------------------------\n\n"
-    content = "You are Vexilon, a professional assistant for BCGEU union stewards.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
+    content = "You are Vexilon, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\n{manifest}\n\n{verify_message}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
@@ -274,26 +399,36 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
     if _index is None:
         yield "⚠️ Knowledge base not loaded.", ""
         return
-    queries, context = await get_multi_perspective_context(message, history)
-    yield "", context
-    client = get_anthropic()
-    async with client.messages.stream(
-        model=CLAUDE_MODEL,
-        max_tokens=RAG_MAX_TOKENS,
-        system=[
-            {"type": "text", "text": get_system_prompt().format(manifest="", verify_message=""), "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": f"Context:\n{context}", "cache_control": {"type": "ephemeral"}},
-        ],
-        messages=history + [{"role": "user", "content": message}],
-    ) as stream:
-        async for chunk in stream.text_stream:
+    try:
+        queries, context = await get_multi_perspective_context(message, history)
+        
+        system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
+
+        # Cap history to last 2 turns, truncated to reduce prompt size on CPU
+        capped = []
+        for h in history[-2:]:
+            c = h["content"] if isinstance(h["content"], str) else str(h["content"])
+            capped.append({"role": h["role"], "content": c[:300] + "..." if len(c) > 300 else c})
+        messages = capped + [{"role": "user", "content": message}]
+        
+        has_yielded_context = False
+        async for chunk in unified_chat_stream(
+            model=CLAUDE_MODEL,
+            max_tokens=RAG_MAX_TOKENS,
+            system=system,
+            messages=messages
+        ):
+            if not has_yielded_context:
+                yield "", context
+                has_yielded_context = True
             yield chunk, ""
+    except Exception as exc:
+        yield f"⚠️ API error: {exc}", ""
 
 # ─── RAG Pipeline Functions ─────────────────────────────────────────────────
 async def condense_query(message: str, history: list[dict]) -> str:
     """Turn the conversation history and new message into a standalone search query."""
     if not history: return message
-    client = get_anthropic()
     
     history_text = ""
     for turn in history[-5:]:
@@ -305,27 +440,25 @@ async def condense_query(message: str, history: list[dict]) -> str:
     
     prompt = f"CONVERSATION HISTORY:\n{history_text}\nUSER MESSAGE: {message}\n\nTask: Condense into a standalone search query."
     try:
-        resp = await client.messages.create(
+        resp_text = await unified_chat_create(
             model=CONDENSE_MODEL,
             max_tokens=100,
             messages=[{"role": "user", "content": prompt}]
         )
-        return resp.content[0].text.strip().strip('"')
+        return resp_text.strip().strip('"')
     except Exception:
         return message
 
 async def generate_perspective_queries(message: str, history: list[dict]) -> list[str]:
     """Generate 3 different search perspectives for a complex query."""
-    client = get_anthropic()
     prompt = f"Given this user message: '{message}', generate 3 different standalone search queries that look at this from different angles (e.g. legal, procedural, factual). Return ONLY a JSON list of strings."
     try:
-        resp = await client.messages.create(
+        text = await unified_chat_create(
             model=CONDENSE_MODEL,
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
         # More robust extraction using regex to find the JSON block
-        text = resp.content[0].text
         match = re.search(r"\[.*\]", text, re.DOTALL)
         if match:
             import json
@@ -335,14 +468,21 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
         return [message]
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
-    condensed = await condense_query(message, history)
-    # Issue #361: Heuristic for complexity
-    if len(condensed.split()) > 10:
+    # Optimization: Skip condensation in DEV or if no history exists to save ~30s of latency
+    if IS_DEV or not history:
+        condensed = message
+    else:
+        condensed = await condense_query(message, history)
+
+    # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
+    if not IS_DEV and len(condensed.split()) > 10:
         queries = await generate_perspective_queries(condensed, history)
     else:
         queries = [condensed]
     
-    all_res = search_index_batch(_index, _chunks, queries, [5] * len(queries))
+    # Optimization: Fewer chunks in dev to speed up inference
+    top_k_count = 3 if IS_DEV else 5
+    all_res = search_index_batch(_index, _chunks, queries, [top_k_count] * len(queries))
     seen = set()
     context_parts = []
     for res_list in all_res:
@@ -354,38 +494,38 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
     return queries, "\n\n".join(context_parts)
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", all_chunks: list[dict] = None) -> AsyncIterator[str]:
-    if _index is None:
-        yield "⚠️ Index not ready."
-        return
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup") -> AsyncIterator[str]:
+    try:
+        queries, context = await get_multi_perspective_context(message, history)
+        
+        base_persona = get_persona_prompt(persona_mode)
+        audit_rules = ""
+        if persona_mode in ("Grieve", "Manage"):
+            matched_tests = _test_registry.find_matches(message + " " + queries[0])
+            for test in matched_tests:
+                audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+                audit_rules += f"Criteria:\n{test.content}\n"
 
-    queries, context = await get_multi_perspective_context(message, history)
-    query = queries[0]
-    
-    # ── Audit Logic (Restored) ──────────────────────────────────────────────
-    system_prompt = get_persona_prompt(persona_mode)
-    if persona_mode in ("Grieve", "Manage"):
-        matched_tests = _test_registry.find_matches(message + " " + query)
-        for test in matched_tests:
-            system_prompt += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-            system_prompt += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
-            system_prompt += f"CRITERIA:\n{test.content}\n"
-
-    # Simple Draft Step
-    client = get_anthropic()
-    prompt = f"Context from Knowledge Base:\n{context}\n\nQuestion: {message}"
-    
-    async with client.messages.stream(
-        model=CLAUDE_MODEL,
-        max_tokens=2048,
-        system=[
-            {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": f"Context from Knowledge Base:\n{context}", "cache_control": {"type": "ephemeral"}},
-        ],
-        messages=[{"role": "user", "content": message}],
-    ) as stream:
-        async for text in stream.text_stream:
+        master_rules = get_system_prompt().format(manifest="", verify_message="")
+        system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        
+        # Cap history to last 2 turns, truncated to reduce prompt size on CPU
+        capped = []
+        for h in history[-2:]:
+            c = h["content"] if isinstance(h["content"], str) else str(h["content"])
+            capped.append({"role": h["role"], "content": c[:300] + "..." if len(c) > 300 else c})
+        messages = capped + [{"role": "user", "content": message}]
+        
+        async for text in unified_chat_stream(
+            model=REVIEWER_MODEL,
+            max_tokens=1024,
+            system=system,
+            messages=messages
+        ):
             yield text
+    except Exception as exc:
+        logger.error(f"[rag] Pipeline error: {exc}", exc_info=True)
+        yield f"⚠️ API error: {exc}"
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
@@ -397,19 +537,17 @@ def _get_download_source_files() -> list[Path]:
 
 # (Obsolete build_pdf_download_links removed)
 
-def history_to_markdown(history: list[dict]) -> str:
+def history_to_markdown(history: list) -> str:
     """Convert chat history to a Markdown string for export."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     lines = [f"# Vexilon Conversation Export - {timestamp}\n"]
     for turn in (history or []):
-        role = (turn["role"] if isinstance(turn, dict) else turn.role).capitalize()
-        content = turn["content"] if isinstance(turn, dict) else turn.content
-        if isinstance(content, list):
-            content = "".join([part.get("text", "") if isinstance(part, dict) else str(part) for part in content])
+        role = turn["role"].capitalize()
+        content = turn["content"]
         lines.append(f"### {role}\n{content}\n")
     return "\n".join(lines)
 
-def markdown_to_history(file_path: str) -> list[dict]:
+def markdown_to_history(file_path: str) -> list:
     """Parse a Markdown conversation file back into a list of dicts."""
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -417,13 +555,16 @@ def markdown_to_history(file_path: str) -> list[dict]:
     for line in lines:
         new_role = None
         if line.startswith("### User"): new_role = "user"
-        elif line.startswith("### Assistant"): new_role = "assistant"
+        elif line.startswith("### Vexilon") or line.startswith("### Assistant"): new_role = "assistant"
+        
         if new_role:
             if current_role:
                 history.append({"role": current_role, "content": "\n".join(current_content).strip()})
             current_role, current_content = new_role, []
         elif current_role:
             current_content.append(line.rstrip("\n"))
+            
+    # Final flush
     if current_role:
         history.append({"role": current_role, "content": "\n".join(current_content).strip()})
     return history
@@ -431,7 +572,24 @@ def markdown_to_history(file_path: str) -> list[dict]:
 # ─── Gradio App Logic ───────────────────────────────────────────────────────
 def startup(force_rebuild: bool = False):
     global _index, _chunks, INTEGRITY_WARNING
+    
+    # Identify environment
+    provider = get_llm_provider()
+    model = DEFAULT_MODEL_LLM
+    logger.info(f"[startup] Vexilon {VEXILON_VERSION} starting...")
+    logger.info(f"[startup] Provider: {provider}")
+    logger.info(f"[startup] Default Model: {model}")
+
     _test_registry.load(TESTS_DIR)
+    # Ensure cache directory is writable
+    os.makedirs(".pdf_cache", exist_ok=True)
+    try:
+        test_file = Path(".pdf_cache/permissions_test")
+        test_file.touch()
+        test_file.unlink()
+    except Exception as e:
+        logger.warning(f"[startup] .pdf_cache is not writable: {e}. Indexing may fail.")
+
     _fetch_pdf_cache_if_missing()
     _index, _chunks = load_precomputed_index()
     if _index is None or force_rebuild:
@@ -441,45 +599,49 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-async def chat_fn(message, history, persona, request: gr.Request = None):
-    # 0. Rate Limit & Security Check
-    user_id = request.client.host if request else "default"
-    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
-    if not allowed:
-        yield gr.update(), history + [{"role": "assistant", "content": rate_msg}], gr.update()
-        return
-
+async def chat_handler(message, history, persona, request: gr.Request = None):
+    """Unified atomic handler using modern dicts (messages) format."""
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
-    sanitized, flagged = sanitize_input(msg_str)
-    if flagged:
-        yield gr.update(), history + [{"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update()
-        return
-
-    # Normalization for Gradio 6 / Backend compatibility
-    if history:
-        history = [
-            h if isinstance(h, dict) else {"role": h.role, "content": h.content}
-            for h in history
-        ]
-    history = history or []
-    
-    if not message:
-        yield gr.update(value=""), history, gr.update()
+    msg_str = msg_str.strip() if msg_str else ""
+    if not msg_str:
+        yield history or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
         return
         
-    new_history = history + [{"role": "user", "content": sanitized}]
-    yield gr.update(value=""), new_history, gr.update(open=False)
+    # 1. Update server state and clear textbox IMMEDIATELY
+    new_history = (history or []) + [{"role": "user", "content": msg_str}]
+    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
+
+    # 2. Rate Limit & Security Check
+    user_id = request.client.host if request else "default"
+    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
+    if not allowed:
+        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        return
+
+    sanitized, flagged = sanitize_input(msg_str)
+    if flagged:
+        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        return
+
+    # 3. Show thinking message
+    thinking_msg = "*(Analyzing knowledge base...)*\n\n"
+    current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
+    yield current_history, gr.update(), gr.update(interactive=False), gr.update()
     
-    # 2. Stream assistant response
+    # 4. Stream assistant response
     accumulated = ""
-    async for chunk in rag_review_stream(sanitized, history, persona):
+    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
+    async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
         accumulated += chunk
-        # Update history with current accumulated response
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield gr.update(), current_history, gr.update(open=False)
+        yield current_history, gr.update(), gr.update(interactive=False), gr.update()
+    
+    # 5. Restore interactivity
+    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+    logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
 EXAMPLES = [
@@ -555,14 +717,18 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             show_label=False,
             container=False,
             min_width=100,
-            interactive=True
+            interactive=True,
+            elem_id="persona_selector"
         )
+    
+    
     
     chatbot = gr.Chatbot(
         show_label=False, 
         scale=1, 
         height="70vh", 
         min_height=400, 
+        
         buttons=[]
     )
     
@@ -575,10 +741,16 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         with gr.Row():
             for q in EXAMPLES:
                 example_btn = gr.Button(q, size="sm", variant="secondary")
+                def make_handler(q_text):
+                    async def handler(hist, pers, req: gr.Request = None):
+                        async for update in chat_handler(q_text, hist, pers, req):
+                            yield update
+                    return handler
+
                 example_btn.click(
-                    chat_fn, 
-                    [gr.State(q), chatbot, persona], 
-                    [msg, chatbot, toolbox],
+                    make_handler(q), 
+                    [chatbot, persona], 
+                    outputs=[chatbot, msg, submit, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -625,9 +797,9 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
 
     def handle_import(file):
-        if file is None: return gr.update()
         try:
-            return markdown_to_history(file.name)
+            hist = markdown_to_history(file.name)
+            return hist
         except Exception:
             logger.error("[ui] Import failed", exc_info=True)
             return gr.update()
@@ -644,8 +816,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
-    submit.click(chat_fn, [msg, chatbot, persona], [msg, chatbot, toolbox])
+    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
+    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
@@ -667,7 +839,7 @@ if __name__ == "__main__":
         auth = (vex_user, vex_password)
         logger.info(f"[startup] Authentication enabled for user '{vex_user}'")
 
-    demo.launch(
+    demo.queue().launch(
         server_name="0.0.0.0", 
         server_port=port, 
         allowed_paths=allowed_paths,

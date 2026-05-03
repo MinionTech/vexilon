@@ -22,7 +22,7 @@ of labour law and contract documents.
 
 | Component | Technology |
 |-----------|------------|
-| LLM | Anthropic Claude (`claude-haiku-4-5-20251001`) |
+| LLM | Hugging Face (`Qwen2.5-7B`) / Ollama (`qwen3`) |
 | Embeddings | `BAAI/bge-small-en-v1.5` — local CPU, no API key |
 | Vector Store | FAISS (in-memory, rebuilt at startup) |
 | Web UI | Gradio 6 — `http://localhost:7860` |
@@ -77,9 +77,9 @@ Docker deployments.
 
 ## Hosted
 
-🚀 **TEST:** https://huggingface.co/spaces/MinionTech/landru
+🚀 **TEST:** https://huggingface.co/spaces/DerekRoberts/landru
 
-🚀 **PROD:** https://huggingface.co/spaces/MinionTech/vexilon
+🚀 **PROD:** https://huggingface.co/spaces/DerekRoberts/vexilon
 
 ## Quick Start
 
@@ -87,26 +87,37 @@ Docker deployments.
 
 - **Container Engine**: [Podman](https://podman.io/docs/installation) (recommended) or [Docker](https://docs.docker.com/get-docker/)
 - **Compose**: `podman compose` (built-in) or [Docker Compose V2](https://docs.docker.com/compose/) plugin
-- **Anthropic API key**: An active key exported as `ANTHROPIC_API_KEY`
+- **Hugging Face Token**: Required only for Production mode (HF Inference API)
 
 ### Run
 
-> [!TIP]
-> **Docker users**: `docker compose` can be used as a drop-in replacement for `podman compose` in all examples below.
+Vexilon is "Secure by Default" but optimized for a zero-config developer experience via Podman Compose.
 
-**1. Production Smoke Test (Immutable Code)**
-Run the app exactly as it will behave in production. Changes to your local files **will not** be reflected.
+**1. Local Development (Zero-Config)**
+This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app. No API keys or tokens are required.
 
 ```bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 podman compose up --build
 ```
 
-**2. Local Development (Live Reload)**
-Run the **`watch`** service to enable hot-reloading. When you modify `app.py`, `style.css`, or the `vexilon/` directory, the container will automatically refresh.
+> [!NOTE]
+> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the ~1.4GB `qwen3:1.7b` model.
+
+**2. Production / Cloud Mode**
+Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requires an internet connection and a valid token.
 
 ```bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+export HF_TOKEN=<YOUR_HF_TOKEN>
+podman compose up prod --build
+```
+
+> [!TIP]
+> Using `--no-deps` prevents the local Ollama services from starting, allowing for an instant cloud-connected session.
+
+**3. Live Reload (Frontend Dev)**
+Mounts your local code into the container for instant UI feedback.
+
+```bash
 podman compose up --build watch
 ```
 
@@ -126,13 +137,11 @@ Open <http://localhost:7860> in your browser.
 
 ### Troubleshooting
 
-**`anthropic.AuthenticationError`** — `ANTHROPIC_API_KEY` is not set or not exported.
-Check with `echo $ANTHROPIC_API_KEY` and re-export before running:
+**`openai.PermissionDeniedError`** — Your `HF_TOKEN` lacks "Inference" permissions. Update your token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
 
-````bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
-podman-compose up
-````
+**`openai.APIConnectionError`** — The app cannot reach the LLM provider.
+- In **DEV**: Ensure the `ollama` container is running (`podman ps`).
+- In **PROD**: Check your internet connection to `router.huggingface.co`.
 
 ## Usage
 
@@ -157,7 +166,7 @@ See [docs/MARKDOWN_CONVERSION.md](docs/MARKDOWN_CONVERSION.md) for full rational
 
 **Run the converter:**
 ```bash
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+export HF_TOKEN=<YOUR_HF_TOKEN>
 python scripts/pdf_to_md.py path/to/document.pdf
 ```
 
@@ -175,13 +184,13 @@ All settings are optional — defaults match the product specification.
 
 ### Core Settings
 
+Vexilon uses **App-Authority** for model versioning. The primary source of truth is `app.py`.
+
 | Variable | Default | Description |
 |---|---|---|
-| `VEXILON_USERNAME` | `admin` | Username for basic authentication |
-| `VEXILON_PASSWORD` | *(optional)* | Password for basic authentication. If unset, auth is disabled. |
-| `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
-| `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Claude model for responses |
-| `EMBED_MODEL` | `BAAI/bge-small-en-v1.5` | sentence-transformers embedding model (512-token window) |
+| `OLLAMA_MODEL_ID` | `qwen3:1.7b` | *(Code Constant)* Defined in `app.py`. Infrastructure automatically pulls this. |
+| `HF_TOKEN` | *(required for PROD)* | Hugging Face access token with Inference permissions |
+| `VEXILON_LLM_PROVIDER` | `ollama` | Deployment mode (`ollama` or `huggingface`). Set via Compose profiles. |
 | `PORT` | `7860` | Gradio listen port |
 | `SIMILARITY_TOP_K` | `40` | Chunks retrieved per query |
 | `CHUNK_SIZE` | `450` | Tokens per chunk |
@@ -194,7 +203,7 @@ Vexilon includes a second AI bot that verifies responses against source citation
 | Variable | Default | Description |
 |---|---|---|
 | `VERIFY_ENABLED` | `true` | Enable verification bot to check claims against citations |
-| `VERIFY_MODEL` | `claude-haiku-4-5-20251001` | Claude model for verification |
+| `VERIFY_MODEL` | `Qwen/Qwen2.5-7B-Instruct` | Model for verification |
 
 When enabled, the verification bot reviews each response and checks if quoted text actually supports the claims made. If claims are disputed, a "Verification" note is appended to the response. Verified responses remain clean with no added note.
 
@@ -270,8 +279,8 @@ git push
 The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
 the HF Space.
 
-- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `MinionTech/landru` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `MinionTech/vexilon` Space.
+- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
+- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
 
 **Required GitHub secret:**
 
@@ -279,11 +288,11 @@ the HF Space.
 |---|---|
 | `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
 
-**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/MinionTech/vexilon/settings)):
+**Required HF Space secret** (set in [Space settings](https://huggingface.co/spaces/DerekRoberts/vexilon/settings)):
 
 | Secret | Value |
 |---|---|
-| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `HF_TOKEN` | Hugging Face write-scoped access token |
 
 ### Manual deploy (one-time setup or re-deploy)
 
@@ -303,7 +312,7 @@ Vexilon uses a **Quality Gate** pattern in `compose.yml` — the app will not st
 |---|---|---|---|
 | **Unit** | `tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
 | **Integration** | `tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
-| **Smoke** | `tests/smoke/` | Real Anthropic API | Manually, to verify live API connectivity |
+| **Smoke** | `tests/smoke/` | Real HF/Ollama API | Manually, to verify live API connectivity |
 
 #### Commands
 
@@ -315,16 +324,15 @@ uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
 podman compose run --rm tests
 
 # Gated startup — tests must pass before Vexilon launches
-export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 podman compose up
 
 # Live Development — launch with hot-reload and volumes
-podman compose up watch
+# This is the default: podman compose up
 
 # Skip the gate — useful for rapid UI iteration (no volumes)
-podman compose up vexilon
+# podman compose up vexilon --build
 
-# Smoke tests — verifies real Anthropic API connectivity
+# Smoke tests — verifies real API connectivity
 podman compose run --rm tests sh -c "uv run --no-sync pytest tests/smoke/ -v"
 ````
 
@@ -368,6 +376,6 @@ vexilon/
 │   │   ├── test_embed_pipeline.py  # sentence-transformers + FAISS interop
 │   │   └── test_gradio_ui.py       # Gradio Blocks construction check
 │   └── smoke/
-│       └── test_model_valid.py  # live Anthropic API model validation
+│       └── test_model_valid.py  # live API model validation
 └── .pdf_cache/       # Pre-built FAISS index and chunk metadata
 ````

@@ -2,7 +2,7 @@
 tests/integration/test_app_flow.py — Full-flow integration test
 
 Verifies that the app can start up, load the PDF, index it, and run a RAG query
-using the real embedding model but a mocked Anthropic API.
+using the real embedding model but a mocked LLM API.
 """
 
 import pytest
@@ -11,7 +11,7 @@ from pathlib import Path
 import vexilon.indexing as indexing
 
 @pytest.mark.asyncio
-async def test_full_rag_flow_integration(monkeypatch, mock_anthropic, tmp_path):
+async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path):
     """
     Tests the system from Markdown loading to streaming response.
     Uses the real MD agreement and real embedding model.
@@ -38,8 +38,8 @@ async def test_full_rag_flow_integration(monkeypatch, mock_anthropic, tmp_path):
     monkeypatch.setattr(indexing, "MANIFEST_PATH", cache_dir / "manifest.json")
     monkeypatch.setattr(indexing, "INTEGRITY_PATH", cache_dir / "integrity.json")
 
-    # Mock the anthropic client globally for the app
-    monkeypatch.setattr(app, "get_anthropic", lambda: mock_anthropic)
+    # Mock the LLM client globally for the app
+    monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_llm_client)
     
     # 2. Startup: This builds the index in memory (slow but thorough)
     app.startup(force_rebuild=True)

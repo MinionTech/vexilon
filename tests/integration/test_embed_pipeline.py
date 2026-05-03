@@ -19,7 +19,7 @@ Run time: ~5–15 s on model first load; ~1–2 s after the model is cached.
 import numpy as np
 import pytest
 
-import app
+from vexilon import indexing as app
 
 
 # ── embed_texts() API shape ───────────────────────────────────────────────────

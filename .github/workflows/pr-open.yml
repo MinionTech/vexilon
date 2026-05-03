@@ -2,7 +2,7 @@ name: PR Open
 
 # Runs unit tests on pull requests (excluding drafts) and on the weekly schedule.
 # Images are built during PRs and promoted on merge — no rebuild on main.
-# Smoke tests (tests/smoke/) are excluded — they require a real ANTHROPIC_API_KEY.
+# Smoke tests (tests/smoke/) are excluded — they require a real HF_TOKEN.
 #
 # This workflow is the required gate for Renovate dependency PRs.
 
@@ -65,7 +65,7 @@ jobs:
     needs: [check, cache_validation, compose_validation]
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 1
     permissions:
       contents: read
       security-events: write
@@ -85,12 +85,12 @@ jobs:
           dir: .
           # Consistent test execution via podman-compose
           commands: |
-            export ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY || 'sk-dummy-key-for-predictability' }}
+            export HF_TOKEN=${{ secrets.HF_TOKEN }}
             mkdir -p reports
             podman compose run --rm tests
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./vexilon/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
           sonar_token: ${{ secrets.SONAR_TOKEN }}
-      
+
       - name: Upload Test and Security Reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -139,34 +139,89 @@ jobs:
       packages: read
 
     steps:
-      - name: Log in to GHCR
-        run: echo "${{ github.token }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Pull and Start Container
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Ollama Models
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ollama-smoke-qwen3-0.6b
+
+      - name: Pre-pull Smoke Test Model
+        run: |
+          mkdir -p ~/.ollama
+          if ! ls ~/.ollama/models/manifests/registry.ollama.ai/library/qwen3 2>/dev/null | grep -q 0.6b; then
+            echo "Model not cached — pulling qwen3:0.6b..."
+            # Start temporary server
+            podman run -d --name puller -v $HOME/.ollama:/root/.ollama -p 11434:11434 ollama/ollama
+            # Wait for health
+            until curl -s localhost:11434 >/dev/null; do echo "Waiting for Ollama..."; sleep 1; done
+            # Pull
+            podman exec puller ollama pull qwen3:0.6b
+            # Clean up
+            podman stop puller && podman rm puller
+          else
+            echo "Model already cached."
+          fi
+
+      - name: Pull and Start Stack
         env:
-          # Resolve the real PR head commit SHA independently — validates the SHA pattern
           IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          declare -l IMAGE="ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}"
+          # Force lowercase for GHCR namespace compliance
+          IMAGE=$(echo "ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}" | tr '[:upper:]' '[:lower:]')
           podman pull $IMAGE
-          podman run -d -p 7860:7860 --name vexilon-${{ github.event.pull_request.number || github.run_id }} -e ANTHROPIC_API_KEY=sk-ant-test123 $IMAGE
-
+          
+          # Override: pre-built image, tiny smoke-test model, cached model dir
+          cat <<EOF > compose.override.yml
+          services:
+            vexilon:
+              image: $IMAGE
+              build: null
+              volumes: []
+              environment:
+                VEXILON_LLM_PROVIDER: ollama
+                OLLAMA_MODEL: qwen3:0.6b
+            ollama:
+              volumes:
+                - $HOME/.ollama:/root/.ollama
+            ollama-init:
+              entrypoint: ["echo", "Model pre-pulled on host"]
+              command: []
+          EOF
+          
+          # Start the stack using compose
+          podman compose up -d vexilon
+          
+          # Rename for healthcheck compatibility with existing scripts
+          podman rename vexilon-vexilon-1 vexilon-${{ github.event.pull_request.number || github.run_id }}
       - name: Wait for Healthcheck
         run: |
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -f http://localhost:7860 > /dev/null 2>&1; then
               echo "Container is healthy!"
               exit 0
             fi
-            
+
             if ! podman inspect vexilon-${{ github.event.pull_request.number || github.run_id }} --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
               echo "Container died! Logs:"
               podman logs vexilon-${{ github.event.pull_request.number || github.run_id }}
               exit 1
             fi
 
-            echo "Wait... ($i/30)"
-            sleep 2
+            echo "Wait... ($i/60)"
+            sleep 5
           done
           echo "Healthcheck timed out."
           exit 1
@@ -175,11 +230,11 @@ jobs:
         if: failure()
         run: podman logs vexilon-${{ github.event.pull_request.number || github.run_id }}
 
-      - name: Cleanup Container
+      - name: Cleanup Stack
         if: always()
         run: |
-          podman stop vexilon-${{ github.event.pull_request.number || github.run_id }} || true
-          podman rm vexilon-${{ github.event.pull_request.number || github.run_id }} || true
+          podman compose down || true
+          podman rm -f vexilon-${{ github.event.pull_request.number || github.run_id }} || true
 
   trivy:
     name: Trivy Security Scan
@@ -188,7 +243,7 @@ jobs:
     permissions:
       security-events: write
     runs-on: ubuntu-slim
-    timeout-minutes: 1
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:

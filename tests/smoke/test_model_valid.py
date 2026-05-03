@@ -1,73 +1,37 @@
 """
-tests/smoke/test_model_valid.py — Smoke test: verify CLAUDE_MODEL is reachable
-
-❗ This test calls the real Anthropic API and requires ANTHROPIC_API_KEY to be set.
-   Run manually or in a gated CI step:
-
-       pytest tests/smoke/ -v
-
-   It is intentionally excluded from the default test run (no auto-discovery
-   from the root `pytest` invocation unless you pass `--smoke`).
-
-   To skip:      pytest tests/ --ignore=tests/smoke
-   To run only:  pytest tests/smoke/ -v
+tests/smoke/test_model_valid.py — Smoke test: verify HF Router is reachable
 """
 
 import os
 import pytest
-import anthropic
+from openai import OpenAI
 
-# Skip gracefully if no key is present so the default suite stays green
+# Skip gracefully if no key is present
 pytestmark = pytest.mark.skipif(
-    not os.getenv("ANTHROPIC_API_KEY"),
-    reason="ANTHROPIC_API_KEY not set — skipping smoke test",
+    not os.getenv("HF_TOKEN"),
+    reason="HF_TOKEN not set — skipping smoke test",
 )
 
-
-def test_claude_model_exists_and_responds():
+def test_hf_model_exists_and_responds():
     """
-    Send a minimal 1-token request to CLAUDE_MODEL.
-    Fails with a clear message if the model name is invalid (404).
-    This is the exact failure mode that hit production on 2026-03-08.
+    Send a minimal 1-token request to the default model via HF Router.
     """
-    from app import CLAUDE_MODEL
+    from app import DEFAULT_MODEL_LLM
 
-    client = anthropic.Anthropic()
+    client = OpenAI(
+        base_url="https://router.huggingface.co/v1",
+        api_key=os.getenv("HF_TOKEN")
+    )
     try:
-        response = client.messages.create(
-            model=CLAUDE_MODEL,
+        response = client.chat.completions.create(
+            model=DEFAULT_MODEL_LLM,
             max_tokens=1,
             messages=[{"role": "user", "content": "ping"}],
         )
-    except anthropic.NotFoundError as exc:
+    except Exception as exc:
         pytest.fail(
-            f"CLAUDE_MODEL='{CLAUDE_MODEL}' does not exist in the Anthropic API.\n"
-            f"Update the default in app.py or set the CLAUDE_MODEL env var.\n"
+            f"DEFAULT_MODEL_LLM='{DEFAULT_MODEL_LLM}' failed via HF Router.\n"
             f"Original error: {exc}"
         )
 
-    # Any valid response confirms the model is reachable
-    assert response.content is not None
-
-
-def test_condense_model_exists_and_responds():
-    """
-    Send a minimal 1-token request to CONDENSE_MODEL.
-    """
-    from app import CONDENSE_MODEL
-
-    client = anthropic.Anthropic()
-    try:
-        response = client.messages.create(
-            model=CONDENSE_MODEL,
-            max_tokens=1,
-            messages=[{"role": "user", "content": "ping"}],
-        )
-    except anthropic.NotFoundError as exc:
-        pytest.fail(
-            f"CONDENSE_MODEL='{CONDENSE_MODEL}' does not exist in the Anthropic API.\n"
-            f"Update the default in app.py or set the CONDENSE_MODEL env var.\n"
-            f"Original error: {exc}"
-        )
-
-    assert response.content is not None
+    assert response.choices[0].message.content is not None

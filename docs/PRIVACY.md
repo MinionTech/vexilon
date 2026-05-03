@@ -7,7 +7,7 @@ Vexilon is built with a "Privacy-by-Design" architecture, specifically aligned w
 ### 1. Accountability
 *   **Designation**: The Vexilon maintainer serves as the Privacy Officer.
 *   **Policies**: This document serves as our formal privacy policy.
-*   **Third-Parties**: Vexilon uses Anthropic (Claude) for processing. All data sent to Anthropic is subject to their standard data processing agreements, which prohibit the use of customer data for training their models.
+*   **Third-Parties**: Vexilon uses Hugging Face Router for processing. All data sent to the LLM provider is subject to their standard data processing agreements.
 
 ### 2. Identifying Purposes
 *   **Purpose**: Vexilon processes user queries for the sole purpose of providing context-aware answers in real-time. 
@@ -47,13 +47,14 @@ Vexilon is built with a "Privacy-by-Design" architecture, specifically aligned w
 
 ### 10. Challenging Compliance
 *   **Reporting**: Users can report privacy concerns or potential vulnerabilities through GitHub Issues or by contacting the project maintainer.
+*   **Third-Parties**: Vexilon uses Hugging Face (Router) for processing. All data sent to the LLM provider is subject to their standard data processing agreements.
 *   **Recourse**: As a tool for union stewards, we encourage users to consult their BCGEU representative if they believe privacy standards are not being met.
 
 ---
 
 ## Data Flow Summary
 
-1.  **User Input** → Sanitized locally → Sent to Anthropic (Claude) via TLS.
-2.  **Processing** → Claude generates a response based *only* on the provided agreement excerpts.
+1.  **User Input** → Sanitized locally → Sent to LLM Provider via TLS.
+2.  **Processing** → LLM generates a response based *only* on the provided agreement excerpts.
 3.  **Output** → Streamed back to the user's browser.
 4.  **Closure** → Tab closes → RAM is cleared → No record remains on Vexilon servers.
