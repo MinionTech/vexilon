@@ -707,6 +707,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             elem_id="persona_selector"
         )
     
+    chat_state = gr.State([])
+    
     chatbot = gr.Chatbot(
         show_label=False, 
         scale=1, 
@@ -715,7 +717,6 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         buttons=[]
     )
     
-    chat_state = gr.State([])
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
         submit = gr.Button("Send", variant="primary", scale=1)
