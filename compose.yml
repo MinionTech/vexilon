@@ -110,6 +110,8 @@ services:
   ollama:
     image: ollama/ollama:latest
     ports: ["11434:11434"]
+    environment:
+      - OLLAMA_FLASH_ATTENTION=1
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:

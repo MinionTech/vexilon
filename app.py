@@ -43,7 +43,7 @@ from vexilon.indexing import (
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
-OLLAMA_MODEL_ID = "qwen3.5:9b"
+OLLAMA_MODEL_ID = "qwen3.5:4b"
 
 # Configure structured logging
 logging.basicConfig(
@@ -518,7 +518,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         
         async for text in unified_chat_stream(
             model=REVIEWER_MODEL,
-            max_tokens=2048,
+            max_tokens=1024,
             system=system,
             messages=messages
         ):
