@@ -1,6 +1,6 @@
 # Labour Law Tests & Doctrines Index
 
-This index lists the legal tests and doctrines that the Vexilon assistant can guide you through.
+This index lists the legal tests and doctrines that the AgNav assistant can guide you through.
 
 | Test Name | Description | Example Triggers |
 | :--- | :--- | :--- |

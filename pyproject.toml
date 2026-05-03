@@ -1,11 +1,11 @@
 [project]
-name = "vexilon"
+name = "agnav"
 version = "0.1.0"
 description = "BCGEU Collective Agreement RAG Chatbot"
 requires-python = ">=3.12"
 dependencies = [
     # ── Web UI ──────────────────────────────────────────────────────────────
-    "gradio==5.1.0",
+    "gradio==6.11.0",
     "numpy",
     "python-multipart==0.0.26",
     # ── LLM ─────────────────────────────────────────────────────────────────

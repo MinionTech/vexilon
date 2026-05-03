@@ -1,8 +1,8 @@
 import pytest
-from vexilon.indexing import get_embed_model
+from agnav.indexing import get_embed_model
 
 def test_tokenizer_is_fast():
-    """Vexilon requires 'Fast' tokenizers for character-offset mapping."""
+    """Agreement Navigator requires 'Fast' tokenizers for character-offset mapping."""
     model = get_embed_model()
     assert hasattr(model, "tokenizer"), "Model should have a tokenizer"
     assert getattr(model.tokenizer, "is_fast", False), "Tokenizer must be a 'Fast' tokenizer"

@@ -30,7 +30,7 @@ jobs:
         if: ${{ !inputs.image_tag }}
         uses: bcgov/actions/image-tracker@main
         with:
-          package: vexilon
+          package: agnav
           token: ${{ github.token }}
 
       - name: Push image-based stub to Hugging Face Space
@@ -40,7 +40,7 @@ jobs:
         run: |
           TAG="${{ inputs.image_tag }}"
           if [ -z "$TAG" ]; then
-            TAG=$(echo "$BUNDLE" | jq -r '.vexilon')
+            TAG=$(echo "$BUNDLE" | jq -r '.agnav')
           fi
           ./.github/scripts/deploy.sh "DerekRoberts/landru" "$TAG"
 

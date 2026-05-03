@@ -10,6 +10,8 @@ x-common-env: &common-env
 x-common-build: &common-build
   context: .
   dockerfile: Containerfile
+  args:
+    VERSION: ${AGNAV_VERSION:-dev}
 
 # Standard service boilerplate: Resource limits and Persistence
 x-service-defaults: &service-defaults
@@ -29,9 +31,9 @@ x-dev-volumes: &dev-volumes
 
 services:
 
-  # ── Vexilon (Default: Local Dev with Hot-Reload) ─────────────────────────────
+  # ── Agreement Navigator (Default: Local Dev with Hot-Reload) ─────────────────
   # Mounts source code to allow instant feedback. No profile = starts by default.
-  vexilon:
+  agnav:
     <<: *service-defaults
     build:
       <<: *common-build
@@ -62,7 +64,8 @@ services:
     build: *common-build
     environment:
       <<: *common-env
-      VEXILON_LLM_PROVIDER: huggingface
+      AGNAV_LLM_PROVIDER: huggingface
+      PORT: *PORT
     ports:
       - "${PORT:-7860}:7860"
     cap_drop: [ALL]
@@ -80,7 +83,7 @@ services:
     command: >
       sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
       --junitxml=reports/junit.xml 
-      --cov=vexilon --cov=app --cov-report=xml:reports/coverage.xml"
+      --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml"
     depends_on:
       index-refresh:
         condition: service_completed_successfully

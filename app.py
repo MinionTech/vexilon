@@ -1,7 +1,7 @@
 import sys
 import os
 import re
-# BCGEU Navigator - UI Version: 2026-04-22_13-17
+# Agreement Navigator - UI Version: 2026-05-03
 # Integrated RAG Backend + Stabilized Gradio 6 UI
 import html
 import time
@@ -23,8 +23,8 @@ from openai import AsyncOpenAI
 import faiss
 import gradio as gr
 
-# ─── Vexilon Imports ────────────────────────────────────────────────────────
-from vexilon.indexing import (
+# ─── Agnav Imports ────────────────────────────────────────────────────────
+from agnav.indexing import (
     _get_source_name,
     _get_rag_source_files,
     build_index_from_sources,
@@ -56,17 +56,17 @@ _chunks: list[dict] = []
 _index: "faiss.IndexFlatIP | None" = None
 INTEGRITY_WARNING: str | None = None
 
-VEXILON_VERSION = os.getenv("VEXILON_VERSION", "Dev mode")
-IS_DEV = VEXILON_VERSION == "Dev mode"
-VEXILON_REPO_URL = os.getenv("VEXILON_REPO_URL", "https://github.com/MinionTech/vexilon")
+AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
+IS_DEV = AGNAV_VERSION == "Dev mode"
+AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_LABOUR_LAW_URL = os.getenv(
-    "VEXILON_KNOWLEDGE_URL", f"{VEXILON_REPO_URL}/tree/main/data/labour_law"
+    "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/data/labour_law"
 )
 
 # Models & Providers
 def get_llm_provider() -> str:
     # 1. Explicit override (keeps the 'prod' profile working)
-    val = os.getenv("VEXILON_LLM_PROVIDER")
+    val = os.getenv("AGNAV_LLM_PROVIDER")
     if val:
         return val.lower().strip()
 
@@ -83,11 +83,11 @@ def _get_default_model():
         return val if (val and val.strip()) else OLLAMA_MODEL_ID
     return "Qwen/Qwen2.5-7B-Instruct"
 
-DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
-CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
-REVIEWER_MODEL = os.getenv("VEXILON_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
-CONDENSE_MODEL = os.getenv("VEXILON_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
-VERIFY_MODEL = os.getenv("VEXILON_VERIFY_MODEL", DEFAULT_MODEL_LLM)
+DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
+CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
+REVIEWER_MODEL = os.getenv("AGNAV_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
+CONDENSE_MODEL = os.getenv("AGNAV_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
+VERIFY_MODEL = os.getenv("AGNAV_VERIFY_MODEL", DEFAULT_MODEL_LLM)
 
 RAG_MAX_TOKENS = 4096
 REVIEWER_MAX_TOKENS = 4096
@@ -390,8 +390,8 @@ async def verify_response(assistant_response: str, context: str) -> str:
 
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
-    header = f"--- VEXILON SYSTEM STATE ---\nDATE: {now}\nVERSION: {VEXILON_VERSION}\n----------------------------\n\n"
-    content = "You are Vexilon, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\n{manifest}\n\n{verify_message}"
+    header = f"--- BCGEU NAVIGATOR SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
+    content = "You are BCGEU Navigator, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
@@ -535,12 +535,10 @@ def _get_download_source_files() -> list[Path]:
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(list(set(pdfs)), key=lambda p: str(p))
 
-# (Obsolete build_pdf_download_links removed)
-
 def history_to_markdown(history: list) -> str:
     """Convert chat history to a Markdown string for export."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    lines = [f"# Vexilon Conversation Export - {timestamp}\n"]
+    lines = [f"# BCGEU Navigator Conversation Export - {timestamp}\n"]
     for turn in (history or []):
         role = turn["role"].capitalize()
         content = turn["content"]
@@ -555,7 +553,7 @@ def markdown_to_history(file_path: str) -> list:
     for line in lines:
         new_role = None
         if line.startswith("### User"): new_role = "user"
-        elif line.startswith("### Vexilon") or line.startswith("### Assistant"): new_role = "assistant"
+        elif line.startswith("### BCGEU Navigator") or line.startswith("### Assistant"): new_role = "assistant"
         
         if new_role:
             if current_role:
@@ -576,7 +574,7 @@ def startup(force_rebuild: bool = False):
     # Identify environment
     provider = get_llm_provider()
     model = DEFAULT_MODEL_LLM
-    logger.info(f"[startup] Vexilon {VEXILON_VERSION} starting...")
+    logger.info(f"[startup] AgNav {AGNAV_VERSION} starting...")
     logger.info(f"[startup] Provider: {provider}")
     logger.info(f"[startup] Default Model: {model}")
 
@@ -721,14 +719,11 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
             elem_id="persona_selector"
         )
     
-    
-    
     chatbot = gr.Chatbot(
         show_label=False, 
         scale=1, 
         height="70vh", 
         min_height=400, 
-        
         buttons=[]
     )
     
@@ -787,7 +782,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         if not history: return None
         md_str = history_to_markdown(history)
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        filename = f"vexilon_chat_{timestamp}.md"
+        filename = f"bcgeu_chat_{timestamp}.md"
         save_path = os.path.join(tempfile.gettempdir(), filename)
         with open(save_path, "w", encoding="utf-8") as f:
             f.write(md_str)
@@ -808,11 +803,11 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
 
     gr.HTML(f"""
         <div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
-            <a href="{VEXILON_REPO_URL}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">GitHub</a>
+            <a href="{AGNAV_REPO_URL}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">GitHub</a>
             &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{VEXILON_REPO_URL}/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">Privacy</a>
+            <a href="{AGNAV_REPO_URL}/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">Privacy</a>
             &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{VEXILON_REPO_URL}/pkgs/container/vexilon" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">{VEXILON_VERSION[:11]}</a>
+            <a href="{AGNAV_REPO_URL}/pkgs/container/agnav" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">{AGNAV_VERSION[:11]}</a>
         </div>
     """)
 
@@ -832,12 +827,12 @@ if __name__ == "__main__":
     ]
     
     # Restore basic auth if configured in environment
-    vex_password = os.getenv("VEXILON_PASSWORD")
+    agn_password = os.getenv("AGNAV_PASSWORD")
     auth = None
-    if vex_password:
-        vex_user = os.getenv("VEXILON_USERNAME", "admin")
-        auth = (vex_user, vex_password)
-        logger.info(f"[startup] Authentication enabled for user '{vex_user}'")
+    if agn_password:
+        agn_user = os.getenv("AGNAV_USERNAME", "admin")
+        auth = (agn_user, agn_password)
+        logger.info(f"[startup] Authentication enabled for user '{agn_user}'")
 
     demo.queue().launch(
         server_name="0.0.0.0", 

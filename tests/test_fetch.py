@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-import vexilon.indexing as indexing
+import agnav.indexing as indexing
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

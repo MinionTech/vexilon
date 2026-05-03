@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 import app
-import vexilon.indexing as indexing
+import agnav.indexing as indexing
 
 
 def _make_chunks(n: int) -> list[dict]:

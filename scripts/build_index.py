@@ -3,10 +3,10 @@ import sys
 import logging
 from pathlib import Path
 
-# Add project root to sys.path to import from vexilon/
+# Add project root to sys.path to import from agnav/
 sys.path.append(str(Path(__file__).parent.parent))
 
-from vexilon.indexing import build_index_from_sources
+from agnav.indexing import build_index_from_sources
 
 if __name__ == "__main__":
     # Ensure logs from indexing.py are visible (Issue #196)
