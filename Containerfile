@@ -65,7 +65,7 @@ FROM python:3.12-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1001 --create-home --shell /sbin/nologin agnav
+    useradd --uid 1000 --create-home --shell /sbin/nologin agnav
 
 WORKDIR /app
 
