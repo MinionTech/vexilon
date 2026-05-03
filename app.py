@@ -284,7 +284,7 @@ def get_async_openai_client():
             )
         elif provider == "ollama":
             _llm_client = AsyncOpenAI(
-                base_url="http://ollama:11434/v1/",
+                base_url="http://ollama:11434/v1",
                 api_key="ollama"
             )
         else:
@@ -326,6 +326,8 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
     # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
     buffer = ""
+    start_tag = "<think>"
+    end_tag = "</think>"
     
     async for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
@@ -334,18 +336,18 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
             while buffer:
                 if not in_think_block:
                     # Look for start tag
-                    start_idx = buffer.find("<think>")
+                    start_idx = buffer.find(start_tag)
                     if start_idx != -1:
                         # Yield everything before the tag
                         if start_idx > 0:
                             yield buffer[:start_idx]
                         in_think_block = True
-                        buffer = buffer[start_idx + 7:] # Skip '<think>'
+                        buffer = buffer[start_idx + len(start_tag):] # Skip start tag
                     else:
                         # No complete start tag found. 
                         # But wait! What if we have a partial tag at the end (e.g. '...<thi')?
                         partial_idx = buffer.find("<")
-                        if partial_idx != -1 and len(buffer[partial_idx:]) < 7: # Could be partial '<think>'
+                        if partial_idx != -1 and len(buffer[partial_idx:]) < len(start_tag):
                             # Yield everything before the partial tag and keep the partial in buffer
                             if partial_idx > 0:
                                 yield buffer[:partial_idx]
@@ -357,14 +359,14 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
                             buffer = ""
                 else:
                     # In a think block, look for end tag
-                    end_idx = buffer.find("</think>")
+                    end_idx = buffer.find(end_tag)
                     if end_idx != -1:
                         in_think_block = False
-                        buffer = buffer[end_idx + 8:] # Skip '</think>'
+                        buffer = buffer[end_idx + len(end_tag):] # Skip end tag
                     else:
                         # Still thinking, discard buffer (careful not to discard a partial end tag)
                         partial_end_idx = buffer.find("<")
-                        if partial_end_idx != -1 and len(buffer[partial_end_idx:]) < 8:
+                        if partial_end_idx != -1 and len(buffer[partial_end_idx:]) < len(end_tag):
                             # Keep potential partial end tag
                             buffer = buffer[partial_end_idx:]
                             break
