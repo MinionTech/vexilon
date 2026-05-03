@@ -300,6 +300,10 @@ def _build_messages(messages: list, system: str | list = None) -> list:
             system_text = system
         full_messages.append({"role": "system", "content": system_text})
     full_messages.extend(messages)
+    # Disable Qwen thinking mode to skip internal <think> blocks on CPU
+    if full_messages and full_messages[-1].get("role") == "user":
+        last = full_messages[-1]
+        full_messages[-1] = {**last, "content": last["content"] + " /no_think"}
     return full_messages
 
 async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
@@ -308,8 +312,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     resp = await client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
-        messages=full_messages,
-        timeout=60.0
+        messages=full_messages
     )
     return resp.choices[0].message.content
 
@@ -320,8 +323,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         model=model,
         max_tokens=max_tokens,
         messages=full_messages,
-        stream=True,
-        timeout=60.0
+        stream=True
     )
     # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
@@ -401,8 +403,13 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
         queries, context = await get_multi_perspective_context(message, history)
         
         system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
-            
-        messages = history + [{"role": "user", "content": message}]
+
+        # Cap history to last 2 turns, truncated to reduce prompt size on CPU
+        capped = []
+        for h in history[-2:]:
+            c = h["content"] if isinstance(h["content"], str) else str(h["content"])
+            capped.append({"role": h["role"], "content": c[:300] + "..." if len(c) > 300 else c})
+        messages = capped + [{"role": "user", "content": message}]
         
         has_yielded_context = False
         async for chunk in unified_chat_stream(
@@ -502,8 +509,12 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         master_rules = get_system_prompt().format(manifest="", verify_message="")
         system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
         
-        # RESTORED: Pass full history to the model
-        messages = history + [{"role": "user", "content": message}]
+        # Cap history to last 2 turns, truncated to reduce prompt size on CPU
+        capped = []
+        for h in history[-2:]:
+            c = h["content"] if isinstance(h["content"], str) else str(h["content"])
+            capped.append({"role": h["role"], "content": c[:300] + "..." if len(c) > 300 else c})
+        messages = capped + [{"role": "user", "content": message}]
         
         async for text in unified_chat_stream(
             model=REVIEWER_MODEL,
