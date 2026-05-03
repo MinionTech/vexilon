@@ -364,7 +364,7 @@ async def verify_response(assistant_response: str, context: str) -> str:
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
     header = f"--- VEXILON SYSTEM STATE ---\nDATE: {now}\nVERSION: {VEXILON_VERSION}\n----------------------------\n\n"
-    content = "You are Vexilon, a professional assistant for BCGEU union stewards.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
+    content = "You are Vexilon, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags or provide internal reasoning blocks. Provide your answer directly and professionally.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
