@@ -7,6 +7,7 @@ dependencies = [
     # ── Web UI ──────────────────────────────────────────────────────────────
     "gradio==5.1.0",
     "numpy",
+    "huggingface-hub<1.0.0",
     "python-multipart==0.0.26",
     # ── LLM ─────────────────────────────────────────────────────────────────
     "openai>=1.60.0",               # OpenAI-compatible client (HF, Ollama, DeepSeek)
