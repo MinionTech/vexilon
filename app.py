@@ -562,7 +562,7 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     # 3. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(open=False)
+    yield current_history, gr.update(), gr.update(interactive=False)
     
     # 4. Stream assistant response
     accumulated = ""
@@ -572,7 +572,7 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(open=False)
+        yield current_history, gr.update(), gr.update(interactive=False)
     
     # 5. Restore interactivity
     yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True)
