@@ -390,8 +390,8 @@ async def verify_response(assistant_response: str, context: str) -> str:
 
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
-    header = f"--- AGNAV SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
-    content = "You are Agnav, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
+    header = f"--- BCGEU NAVIGATOR SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
+    content = "You are BCGEU Navigator, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
@@ -538,7 +538,7 @@ def _get_download_source_files() -> list[Path]:
 def history_to_markdown(history: list) -> str:
     """Convert chat history to a Markdown string for export."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    lines = [f"# Agreement Navigator (AgNav) Conversation Export - {timestamp}\n"]
+    lines = [f"# BCGEU Navigator Conversation Export - {timestamp}\n"]
     for turn in (history or []):
         role = turn["role"].capitalize()
         content = turn["content"]
@@ -553,7 +553,7 @@ def markdown_to_history(file_path: str) -> list:
     for line in lines:
         new_role = None
         if line.startswith("### User"): new_role = "user"
-        elif line.startswith("### AgNav") or line.startswith("### Assistant"): new_role = "assistant"
+        elif line.startswith("### BCGEU Navigator") or line.startswith("### Assistant"): new_role = "assistant"
         
         if new_role:
             if current_role:
@@ -706,9 +706,9 @@ _HEAD = """
 </script>
 """
 
-with gr.Blocks(title="Agreement Navigator (AgNav)", fill_height=True) as demo:
+with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     with gr.Row():
-        gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>Agreement Navigator (AgNav)</h3></div>")
+        gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
         persona = gr.Dropdown(
             choices=["Lookup", "Grieve", "Manage"],
             value="Lookup",
@@ -782,7 +782,7 @@ with gr.Blocks(title="Agreement Navigator (AgNav)", fill_height=True) as demo:
         if not history: return None
         md_str = history_to_markdown(history)
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        filename = f"agnav_chat_{timestamp}.md"
+        filename = f"bcgeu_chat_{timestamp}.md"
         save_path = os.path.join(tempfile.gettempdir(), filename)
         with open(save_path, "w", encoding="utf-8") as f:
             f.write(md_str)
