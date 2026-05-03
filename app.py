@@ -323,31 +323,54 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         stream=True,
         timeout=60.0
     )
-    # State for filtering <think> blocks from reasoning models
+    # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
+    buffer = ""
+    
     async for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
-            content = chunk.choices[0].delta.content
+            buffer += chunk.choices[0].delta.content
             
-            # Handle thinking blocks (common in Qwen/DeepSeek reasoning models)
-            if "<think>" in content:
-                in_think_block = True
-                # If the tag is accompanied by content, try to strip it
-                content = content.split("<think>")[-1]
-                if "</think>" in content: # One-liner case
-                    content = content.split("</think>")[-1]
-                    in_think_block = False
+            while buffer:
+                if not in_think_block:
+                    # Look for start tag
+                    start_idx = buffer.find("<think>")
+                    if start_idx != -1:
+                        # Yield everything before the tag
+                        if start_idx > 0:
+                            yield buffer[:start_idx]
+                        in_think_block = True
+                        buffer = buffer[start_idx + 7:] # Skip '<think>'
+                    else:
+                        # No complete start tag found. 
+                        # But wait! What if we have a partial tag at the end (e.g. '...<thi')?
+                        partial_idx = buffer.find("<")
+                        if partial_idx != -1 and len(buffer[partial_idx:]) < 7: # Could be partial '<think>'
+                            # Yield everything before the partial tag and keep the partial in buffer
+                            if partial_idx > 0:
+                                yield buffer[:partial_idx]
+                            buffer = buffer[partial_idx:]
+                            break
+                        else:
+                            # Safe to yield everything
+                            yield buffer
+                            buffer = ""
                 else:
-                    continue
-
-            if "</think>" in content:
-                in_think_block = False
-                content = content.split("</think>")[-1]
-                if not content:
-                    continue
-            
-            if not in_think_block:
-                yield content
+                    # In a think block, look for end tag
+                    end_idx = buffer.find("</think>")
+                    if end_idx != -1:
+                        in_think_block = False
+                        buffer = buffer[end_idx + 8:] # Skip '</think>'
+                    else:
+                        # Still thinking, discard buffer (careful not to discard a partial end tag)
+                        partial_end_idx = buffer.find("<")
+                        if partial_end_idx != -1 and len(buffer[partial_end_idx:]) < 8:
+                            # Keep potential partial end tag
+                            buffer = buffer[partial_end_idx:]
+                            break
+                        else:
+                            buffer = ""
+                            break
 
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
