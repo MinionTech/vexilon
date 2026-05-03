@@ -189,6 +189,7 @@ jobs:
             vexilon:
               image: $IMAGE
               build: null
+              volumes: []
               environment:
                 VEXILON_LLM_PROVIDER: ollama
                 OLLAMA_MODEL: qwen3:0.6b
