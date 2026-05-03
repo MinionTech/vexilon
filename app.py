@@ -715,6 +715,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         scale=1, 
         height="70vh", 
         min_height=400, 
+        type="messages",
         buttons=[]
     )
     
