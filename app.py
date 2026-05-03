@@ -578,6 +578,9 @@ def startup(force_rebuild: bool = False):
 
 async def chat_handler(message, history_state, persona, request: gr.Request = None):
     """Unified atomic handler using gr.State for robust history management."""
+    hist_len = len(history_state) if history_state else 0
+    logger.info(f"[state-audit] IN: history_state length = {hist_len}")
+    
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
@@ -622,6 +625,7 @@ async def chat_handler(message, history_state, persona, request: gr.Request = No
     
     # 5. Restore interactivity
     final_history = new_history + [{"role": "assistant", "content": accumulated}]
+    logger.info(f"[state-audit] OUT: final_history length = {len(final_history)}")
     yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
