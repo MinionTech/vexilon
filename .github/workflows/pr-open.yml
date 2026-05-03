@@ -181,7 +181,8 @@ jobs:
         run: |
           # Force lowercase for GHCR namespace compliance
           OWNER="${{ github.repository_owner }}"
-          IMAGE="ghcr.io/${OWNER,,}/agnav:sha-${IMAGE_SHA}"
+          REPO="${{ github.event.repository.name }}"
+          IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
           podman pull $IMAGE
           
           # Override: pre-built image, tiny smoke-test model, cached model dir

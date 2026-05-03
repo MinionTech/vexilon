@@ -174,7 +174,7 @@ For full technical disclosure and mapping to the 10 PIPA Fair Information Princi
 ## Hugging Face Spaces Deployment
 
 The Space runs as **`sdk: docker`** in production — the deploy script pushes a stub
-`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/agnav`.
+`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/vexilon/agnav`.
 The FAISS index is already baked into that image (built via the `Containerfile` `RUN` step),
 so the Space starts instantly.
 
