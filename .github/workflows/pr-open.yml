@@ -152,6 +152,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cache Ollama Models
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ollama-smoke-qwen2.5-0.5b
+
+      - name: Pre-pull Smoke Test Model
+        run: |
+          mkdir -p ~/.ollama
+          if ! ls ~/.ollama/models/manifests/registry.ollama.ai/library/qwen2.5 2>/dev/null | grep -q 0.5b; then
+            echo "Model not cached — pulling qwen2.5:0.5b..."
+            podman run --rm -v $HOME/.ollama:/root/.ollama ollama/ollama pull qwen2.5:0.5b
+          else
+            echo "Model already cached."
+          fi
+
       - name: Pull and Start Stack
         env:
           IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -160,12 +176,21 @@ jobs:
           IMAGE=$(echo "ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}" | tr '[:upper:]' '[:lower:]')
           podman pull $IMAGE
           
-          # Create a temporary override to use the built image and skip the build step
+          # Override: pre-built image, tiny smoke-test model, cached model dir
           cat <<EOF > compose.override.yml
           services:
             vexilon:
               image: $IMAGE
               build: null
+              environment:
+                VEXILON_LLM_PROVIDER: ollama
+                OLLAMA_MODEL: qwen2.5:0.5b
+            ollama:
+              volumes:
+                - $HOME/.ollama:/root/.ollama
+            ollama-init:
+              entrypoint: ["echo", "Model pre-pulled on host"]
+              command: []
           EOF
           
           # Start the stack using compose
