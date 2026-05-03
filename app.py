@@ -576,38 +576,39 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-async def chat_handler(message, history, persona, request: gr.Request = None):
-    """Unified atomic handler for adding user message and streaming response."""
+async def chat_handler(message, history_state, persona, request: gr.Request = None):
+    """Unified atomic handler using gr.State for robust history management."""
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
     msg_str = msg_str.strip() if msg_str else ""
     if not msg_str:
-        yield history or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
+        yield history_state or [], history_state or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
         return
         
-    # 1. Add user message and clear textbox IMMEDIATELY in one atomic yield
-    # We also disable the inputs to prevent race conditions (#402)
-    new_history = (history or []) + [{"role": "user", "content": msg_str}]
-    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
+    # 1. Update server state and clear textbox IMMEDIATELY in one atomic yield
+    new_history = (history_state or []) + [{"role": "user", "content": msg_str}]
+    yield new_history, new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
 
     # 2. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        final_history = new_history + [{"role": "assistant", "content": rate_msg}]
+        yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        final_history = new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}]
+        yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     # 3. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(interactive=False), gr.update()
+    yield current_history, new_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 4. Stream assistant response
     accumulated = ""
@@ -617,10 +618,11 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(interactive=False), gr.update()
+        yield current_history, new_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 5. Restore interactivity
-    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+    final_history = new_history + [{"role": "assistant", "content": accumulated}]
+    yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
@@ -709,6 +711,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         buttons=[]
     )
     
+    chat_state = gr.State([])
     with gr.Row():
         msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
         submit = gr.Button("Send", variant="primary", scale=1)
@@ -726,8 +729,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
 
                 example_btn.click(
                     make_handler(q), 
-                    [chatbot, persona], 
-                    outputs=[chatbot, msg, submit, toolbox],
+                    [chat_state, persona], 
+                    outputs=[chatbot, chat_state, msg, submit, toolbox],
                     js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
                 )
 
@@ -771,17 +774,18 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
         return save_path
 
-    export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
+    export_btn.click(fn=handle_export, inputs=[chat_state], outputs=[export_btn])
 
     def handle_import(file):
-        if file is None: return gr.update()
+        if file is None: return gr.update(), gr.update()
         try:
-            return markdown_to_history(file.name)
+            hist = markdown_to_history(file.name)
+            return hist, hist
         except Exception:
             logger.error("[ui] Import failed", exc_info=True)
-            return gr.update()
+            return gr.update(), gr.update()
 
-    import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
+    import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot, chat_state])
 
     gr.HTML(f"""
         <div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
@@ -793,8 +797,8 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
         </div>
     """)
 
-    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
+    msg.submit(chat_handler, [msg, chat_state, persona], [chatbot, chat_state, msg, submit, toolbox])
+    submit.click(chat_handler, [msg, chat_state, persona], [chatbot, chat_state, msg, submit, toolbox])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
