@@ -83,7 +83,7 @@ COPY --from=model_fetcher --chown=vexilon:vexilon /model_cache /hf_cache
 
 # 3. Build index
 # Create persistent cache directory
-RUN mkdir -p /app/.pdf_cache && chmod 777 /app/.pdf_cache
+RUN mkdir -p /app/.pdf_cache && chown vexilon:vexilon /app/.pdf_cache
 
 USER vexilon
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
