@@ -43,7 +43,7 @@ from vexilon.indexing import (
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
-OLLAMA_MODEL_ID = "qwen2.5:7b"
+OLLAMA_MODEL_ID = "qwen3.5:35b"
 
 # Configure structured logging
 logging.basicConfig(
@@ -81,7 +81,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else OLLAMA_MODEL_ID
-    return "Qwen/Qwen2.5-7B-Instruct"
+    return "Qwen/Qwen3.5-27B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("VEXILON_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("VEXILON_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -570,6 +570,15 @@ def startup(force_rebuild: bool = False):
     logger.info(f"[startup] Default Model: {model}")
 
     _test_registry.load(TESTS_DIR)
+    # Ensure cache directory is writable
+    os.makedirs(".pdf_cache", exist_ok=True)
+    try:
+        test_file = Path(".pdf_cache/permissions_test")
+        test_file.touch()
+        test_file.unlink()
+    except Exception as e:
+        logger.warning(f"[startup] .pdf_cache is not writable: {e}. Indexing may fail.")
+
     _fetch_pdf_cache_if_missing()
     _index, _chunks = load_precomputed_index()
     if _index is None or force_rebuild:
