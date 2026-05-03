@@ -5,7 +5,7 @@ description = "BCGEU Collective Agreement RAG Chatbot"
 requires-python = ">=3.12"
 dependencies = [
     # ── Web UI ──────────────────────────────────────────────────────────────
-    "gradio>=5.0.0",
+    "gradio==5.1.0",
     "numpy",
     "python-multipart==0.0.26",
     # ── LLM ─────────────────────────────────────────────────────────────────

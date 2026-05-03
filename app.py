@@ -530,35 +530,32 @@ def history_to_markdown(history: list) -> str:
     """Convert chat history to a Markdown string for export."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     lines = [f"# Vexilon Conversation Export - {timestamp}\n"]
-    for u, a in (history or []):
-        if u: lines.append(f"### User\n{u}\n")
-        if a: lines.append(f"### Vexilon\n{a}\n")
+    for turn in (history or []):
+        role = turn["role"].capitalize()
+        content = turn["content"]
+        lines.append(f"### {role}\n{content}\n")
     return "\n".join(lines)
 
 def markdown_to_history(file_path: str) -> list:
-    """Parse a Markdown conversation file back into a list of tuples."""
+    """Parse a Markdown conversation file back into a list of dicts."""
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    history, current_role, current_u, current_a, current_content = [], None, None, None, []
+    history, current_role, current_content = [], None, []
     for line in lines:
         new_role = None
         if line.startswith("### User"): new_role = "user"
         elif line.startswith("### Vexilon") or line.startswith("### Assistant"): new_role = "assistant"
         
         if new_role:
-            if current_role == "user": current_u = "\n".join(current_content).strip()
-            elif current_role == "assistant":
-                current_a = "\n".join(current_content).strip()
-                if current_u:
-                    history.append((current_u, current_a))
-                    current_u, current_a = None, None
+            if current_role:
+                history.append({"role": current_role, "content": "\n".join(current_content).strip()})
             current_role, current_content = new_role, []
         elif current_role:
             current_content.append(line.rstrip("\n"))
             
     # Final flush
-    if current_role == "assistant" and current_u:
-        history.append((current_u, "\n".join(current_content).strip()))
+    if current_role:
+        history.append({"role": current_role, "content": "\n".join(current_content).strip()})
     return history
 
 # ─── Gradio App Logic ───────────────────────────────────────────────────────
@@ -583,9 +580,7 @@ def startup(force_rebuild: bool = False):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
 async def chat_handler(message, history, persona, request: gr.Request = None):
-    """
-    Unified atomic handler using stable tuples for history. 
-    """
+    """Unified atomic handler using modern dicts (messages) format."""
     msg_str = message
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
@@ -596,38 +591,32 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
         return
         
     # 1. Update server state and clear textbox IMMEDIATELY
-    new_history = (history or []) + [(msg_str, None)]
+    new_history = (history or []) + [{"role": "user", "content": msg_str}]
     yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
 
     # 2. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield new_history[:-1] + [(msg_str, rate_msg)], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
-        yield new_history[:-1] + [(sanitized, "⚠️ Input flagged for security review.")], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     # 3. Show thinking message
     thinking_msg = "*(Analyzing knowledge base...)*\n\n"
-    current_history = new_history[:-1] + [(msg_str, thinking_msg)]
+    current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
     yield current_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 4. Stream assistant response
     accumulated = ""
-    # Convert tuple history to dict history for the LLM pipeline internally
-    llm_history = []
-    for u, a in history or []:
-        if u: llm_history.append({"role": "user", "content": u})
-        if a: llm_history.append({"role": "assistant", "content": a})
-
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    async for chunk in rag_review_stream(sanitized, llm_history, persona):
+    async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
         accumulated += chunk
-        current_history = new_history[:-1] + [(msg_str, accumulated)]
+        current_history = new_history + [{"role": "assistant", "content": accumulated}]
         yield current_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 5. Restore interactivity
