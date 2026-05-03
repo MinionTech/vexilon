@@ -46,7 +46,7 @@ services:
         condition: service_completed_successfully
     ports:
       - "${PORT:-7860}:7860"
-    command: python app.py
+    command: /app/.venv/bin/python app.py
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7860')\""]
       interval: 30s
@@ -104,7 +104,7 @@ services:
       target: test_builder
     volumes: *dev-volumes
     environment: *common-env
-    command: python scripts/generate_cache_manifest.py validate
+    command: /app/.venv/bin/python scripts/generate_cache_manifest.py validate
 
   # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
   ollama:
