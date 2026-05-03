@@ -44,6 +44,8 @@ from vexilon.indexing import (
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
 OLLAMA_MODEL_ID = "qwen3.5:9b"
+SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", "10"))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "400"))
 
 # Configure structured logging
 logging.basicConfig(
@@ -280,12 +282,16 @@ def get_async_openai_client():
         if provider == "huggingface":
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=os.getenv("HF_TOKEN")
+                api_key=os.getenv("HF_TOKEN"),
+                timeout=90.0,
+                max_retries=3
             )
         elif provider == "ollama":
             _llm_client = AsyncOpenAI(
                 base_url="http://ollama:11434/v1",
-                api_key="ollama"
+                api_key="ollama",
+                timeout=90.0,
+                max_retries=3
             )
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")
@@ -308,8 +314,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     resp = await client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
-        messages=full_messages,
-        timeout=60.0
+        messages=full_messages
     )
     return resp.choices[0].message.content
 
@@ -320,8 +325,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         model=model,
         max_tokens=max_tokens,
         messages=full_messages,
-        stream=True,
-        timeout=60.0
+        stream=True
     )
     # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
@@ -429,7 +433,8 @@ async def condense_query(message: str, history: list[dict]) -> str:
         content = turn["content"] if isinstance(turn, dict) else turn.content
         if isinstance(content, list):
             content = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in content])
-        history_text += f"{role}: {content}\n"
+        safe_content = content[:200] + "..." if len(content) > 200 else content
+        history_text += f"{role}: {safe_content}\n"
     
     prompt = f"CONVERSATION HISTORY:\n{history_text}\nUSER MESSAGE: {message}\n\nTask: Condense into a standalone search query."
     try:
@@ -474,7 +479,7 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
         queries = [condensed]
     
     # Optimization: Fewer chunks in dev to speed up inference
-    top_k_count = 3 if IS_DEV else 5
+    top_k_count = 3 if IS_DEV else SIMILARITY_TOP_K
     all_res = search_index_batch(_index, _chunks, queries, [top_k_count] * len(queries))
     seen = set()
     context_parts = []
@@ -502,8 +507,15 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         master_rules = get_system_prompt().format(manifest="", verify_message="")
         system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
         
-        # RESTORED: Pass full history to the model
-        messages = history + [{"role": "user", "content": message}]
+        # Truncate history to prevent prompt bloat
+        truncated_history = []
+        for h in history:
+            content = h["content"]
+            if isinstance(content, str) and len(content) > 500:
+                content = content[:500] + "..."
+            truncated_history.append({"role": h["role"], "content": content})
+            
+        messages = truncated_history + [{"role": "user", "content": message}]
         
         async for text in unified_chat_stream(
             model=REVIEWER_MODEL,
