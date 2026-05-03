@@ -587,31 +587,32 @@ async def chat_handler(message, history_state, persona, request: gr.Request = No
     
     msg_str = msg_str.strip() if msg_str else ""
     if not msg_str:
-        yield history_state or [], history_state or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
+        yield gr.update(value=history_state or []), history_state or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
         return
         
     # 1. Update server state and clear textbox IMMEDIATELY in one atomic yield
     new_history = (history_state or []) + [{"role": "user", "content": msg_str}]
-    yield new_history, new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
+    logger.info(f"[state-audit] COMMIT: history_state length = {len(new_history)}")
+    yield gr.update(value=new_history), new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
 
     # 2. Rate Limit & Security Check
     user_id = request.client.host if request else "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
         final_history = new_history + [{"role": "assistant", "content": rate_msg}]
-        yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        yield gr.update(value=final_history), final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
         final_history = new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}]
-        yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        yield gr.update(value=final_history), final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
         return
 
     # 3. Show thinking message
     thinking_msg = "*(Analyzing knowledge base... local processing may take 30-60s)*\n\n"
     current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, new_history, gr.update(), gr.update(interactive=False), gr.update()
+    yield gr.update(value=current_history), new_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 4. Stream assistant response
     accumulated = ""
@@ -621,12 +622,12 @@ async def chat_handler(message, history_state, persona, request: gr.Request = No
             thinking_msg = ""
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, new_history, gr.update(), gr.update(interactive=False), gr.update()
+        yield gr.update(value=current_history), new_history, gr.update(), gr.update(interactive=False), gr.update()
     
     # 5. Restore interactivity
     final_history = new_history + [{"role": "assistant", "content": accumulated}]
     logger.info(f"[state-audit] OUT: final_history length = {len(final_history)}")
-    yield final_history, final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+    yield gr.update(value=final_history), final_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
