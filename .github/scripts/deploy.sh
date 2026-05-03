@@ -89,9 +89,11 @@ git reset # Clears the index
 # Digests use @ syntax, tags use : syntax
 [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
 
-# Use Bash-native expansion for the repository name (lowercase)
-# Fallback to the known repo if run outside of GitHub Actions
-REPO_PATH=$(echo "${GITHUB_REPOSITORY:-miniontech/vexilon}" | tr '[:upper:]' '[:lower:]')
+# The package name is nested as 'repository/package' in this organization
+_REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
+ORG_NAME="${_REPO_REF%/*}"
+REPO_NAME="${_REPO_REF#*/}"
+REPO_PATH="${ORG_NAME,,}/${REPO_NAME,,}/agnav"
 
 cat <<EOF > Dockerfile
 FROM ghcr.io/${REPO_PATH}${separator}$IMAGE_REF
@@ -122,7 +124,9 @@ git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 # Remove existing remote to avoid collision/stale URLs
 git remote remove hf 2>/dev/null || true
 git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
-git config --local credential.https://huggingface.co.helper '!f() { echo "username=api"; echo "password=${HF_TOKEN}"; }; f'
-git push hf hf-snapshot:main --force --no-verify
+
+# Push using an authenticated URL to avoid modifying local git config
+# We use 'api' as the username for Hugging Face HTTPS auth
+git push "https://api:${HF_TOKEN}@huggingface.co/spaces/${SPACE_NAME}" hf-snapshot:main --force --no-verify
 
 echo "Deployment to ${SPACE_NAME} complete!"

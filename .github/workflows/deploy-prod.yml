@@ -23,7 +23,7 @@ jobs:
         id: resolve
         uses: bcgov/actions/image-tracker@main
         with:
-          package: agnav
+          package: vexilon/agnav
           token: ${{ github.token }}
 
       - name: Push image-based stub to Hugging Face Space

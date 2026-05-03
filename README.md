@@ -174,7 +174,7 @@ For full technical disclosure and mapping to the 10 PIPA Fair Information Princi
 ## Hugging Face Spaces Deployment
 
 The Space runs as **`sdk: docker`** in production — the deploy script pushes a stub
-`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/agnav`.
+`Dockerfile` pointing to the pre-built container image on `ghcr.io/miniontech/vexilon/agnav`.
 The FAISS index is already baked into that image (built via the `Containerfile` `RUN` step),
 so the Space starts instantly.
 
@@ -184,7 +184,7 @@ The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerf
 the HF Space.
 
 - **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `DerekRoberts/landru` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `DerekRoberts/vexilon` Space.
+- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `MinionTech/vexilon` Space.
 
 **Required GitHub secret:**
 
