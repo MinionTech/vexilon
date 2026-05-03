@@ -91,8 +91,9 @@ git reset # Clears the index
 
 # Use Bash-native expansion for the organization name (lowercase)
 # The package name is hardcoded to 'agnav' to match the workflow configuration
-ORG_NAME=$(echo "${GITHUB_REPOSITORY%/*}" | tr '[:upper:]' '[:lower:]')
-REPO_PATH="${ORG_NAME:-miniontech}/agnav"
+_REPO_REF="${GITHUB_REPOSITORY:-miniontech/agnav}"
+ORG_NAME="${_REPO_REF%/*}"
+REPO_PATH="${ORG_NAME,,}/agnav"
 
 cat <<EOF > Dockerfile
 FROM ghcr.io/${REPO_PATH}${separator}$IMAGE_REF

@@ -180,8 +180,8 @@ jobs:
           IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           # Force lowercase for GHCR namespace compliance
-          ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE="ghcr.io/${ORG_NAME}/agnav:sha-${IMAGE_SHA}"
+          OWNER="${{ github.repository_owner }}"
+          IMAGE="ghcr.io/${OWNER,,}/agnav:sha-${IMAGE_SHA}"
           podman pull $IMAGE
           
           # Override: pre-built image, tiny smoke-test model, cached model dir
