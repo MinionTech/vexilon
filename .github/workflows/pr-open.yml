@@ -139,6 +139,12 @@ jobs:
       packages: read
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -146,15 +152,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull and Start Container
+      - name: Pull and Start Stack
         env:
-          # Resolve the real PR head commit SHA independently — validates the SHA pattern
           IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           # Force lowercase for GHCR namespace compliance
           IMAGE=$(echo "ghcr.io/${{ github.repository }}:sha-${IMAGE_SHA}" | tr '[:upper:]' '[:lower:]')
           podman pull $IMAGE
-          podman run -d -p 7860:7860 --name vexilon-${{ github.event.pull_request.number || github.run_id }} -e HF_TOKEN=hf_test123 $IMAGE
+          
+          # Create a temporary override to use the built image and skip the build step
+          cat <<EOF > compose.override.yml
+          services:
+            vexilon:
+              image: $IMAGE
+              build: null
+          EOF
+          
+          # Start the stack using compose
+          podman compose up -d vexilon
+          
+          # Rename for healthcheck compatibility with existing scripts
+          podman rename vexilon-vexilon-1 vexilon-${{ github.event.pull_request.number || github.run_id }}
 
       - name: Wait for Healthcheck
         run: |
@@ -180,11 +198,11 @@ jobs:
         if: failure()
         run: podman logs vexilon-${{ github.event.pull_request.number || github.run_id }}
 
-      - name: Cleanup Container
+      - name: Cleanup Stack
         if: always()
         run: |
-          podman stop vexilon-${{ github.event.pull_request.number || github.run_id }} || true
-          podman rm vexilon-${{ github.event.pull_request.number || github.run_id }} || true
+          podman compose down || true
+          podman rm -f vexilon-${{ github.event.pull_request.number || github.run_id }} || true
 
   trivy:
     name: Trivy Security Scan
