@@ -49,7 +49,7 @@ jobs:
         run: podman compose run --rm cache-validator
 
   tests-unit:
-    name: Unit & Integration Tests (Host)
+    name: Unit Tests
     needs: cache_validation
     runs-on: ubuntu-slim
     permissions:
