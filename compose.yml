@@ -144,9 +144,10 @@ services:
   heavy-tests:
     <<: *service-defaults
     profiles: [ci]
-    build: *common-build
+    build:
+      <<: *common-build
+      target: test_builder
     volumes:
-      - ./.venv:/app/.venv:z
       - ./tests:/app/tests:z
       - ./.pdf_cache:/app/.pdf_cache:z
     environment:

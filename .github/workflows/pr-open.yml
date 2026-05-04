@@ -153,31 +153,11 @@ jobs:
 
       - name: Run Heavy Integration & Smoke Stack
         env:
-          IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 1. Build the venv on host to share with the container via volume
-          # This ensures the container has dev deps (pytest) without modifying the image.
-          uv sync --frozen
-          
-          # 2. Pull the production build artifact
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
-          export IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
-          podman pull $IMAGE
-          
-          # 3. Mount host's .venv and tests into the prod container
-          cat <<EOF > compose.override.yml
-          services:
-            heavy-tests:
-              image: $IMAGE
-              build: null
-              volumes:
-                - ./.venv:/app/.venv:z
-                - ./tests:/app/tests:z
-          EOF
-          
-          podman compose --profile ci up --exit-code-from heavy-tests heavy-tests
+          # We use the 'test_builder' stage (where uv is present) 
+          # to run the full heavyweight suite.
+          podman compose --profile ci up --build --exit-code-from heavy-tests heavy-tests
 
       - name: Dump Logs on Failure
         if: failure()

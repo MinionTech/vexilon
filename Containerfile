@@ -47,6 +47,12 @@ COPY app.py conftest.py ./
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
 
+# Install system dependencies needed for testing (like libgomp for FAISS)
+# This is ONLY in the test stage and does not touch production.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy model from model_fetcher so tests can load it
 COPY --from=model_fetcher /model_cache /hf_cache
 

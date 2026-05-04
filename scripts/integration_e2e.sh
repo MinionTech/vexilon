@@ -9,7 +9,7 @@ echo "🚀 Starting Heavyweight Test Suite..."
 echo "📋 [1/2] Running Integration Tests..."
 export VERIFY_ENABLED=true
 export OLLAMA_HOST=ollama
-python -m pytest tests/integration/ -v
+uv run --no-sync python -m pytest tests/integration/ -v
 
 # 2. Run E2E Smoke Test
 # This verifies the actual production build artifact.
