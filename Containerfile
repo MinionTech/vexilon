@@ -1,9 +1,16 @@
 # ─── Stage 0: External Binaries ──────────────────────────────────────────────
 FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
 
-# ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
+# ─── Stage 1: Base Environment ───────────────────────────────────────────────
+FROM python:3.12-slim AS base
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/* && \
+    useradd --uid 1000 --create-home --shell /sbin/nologin agnav
+
+# ─── Stage 2: Model Fetcher ──────────────────────────────────────────────────
 # This stage only re-runs if the model name changes.
-FROM python:3.12-slim AS model_fetcher
+FROM base AS model_fetcher
 
 # Prevent auth attempts for public models
 ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
@@ -19,8 +26,8 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
     python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False, local_dir_use_symlinks=False)" && \
     ls -l /model_cache/config.json # Verify download succeeded
 
-# ─── Stage 2: Builder ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
+# ─── Stage 3: Builder ─────────────────────────────────────────────────────────
+FROM base AS builder
 
 # ── Environment Configuration ────────────────────────────────────────────────
 ENV HF_HOME=/hf_cache \
@@ -45,9 +52,11 @@ COPY prompts/ ./prompts/
 COPY app.py conftest.py ./
 
 
-# ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
+# ─── Stage 3.5: Test Builder ─────────────────────────────────────────────────
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
+
+USER agnav
 
 # Copy model from model_fetcher so tests can load it
 COPY --from=model_fetcher /model_cache /hf_cache
@@ -58,14 +67,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY tests/ ./tests/
 
 
-# ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS runner
-
-# 1. Runtime system deps and setup
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1000 --create-home --shell /sbin/nologin agnav
+# ─── Stage 4: Runtime ─────────────────────────────────────────────────────────
+FROM base AS runner
 
 WORKDIR /app
 

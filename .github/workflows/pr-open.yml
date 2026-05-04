@@ -2,7 +2,7 @@ name: PR Open
 
 # Runs unit tests on pull requests (excluding drafts) and on the weekly schedule.
 # Images are built during PRs and promoted on merge — no rebuild on main.
-# Smoke tests (tests/smoke/) are excluded — they require a real HF_TOKEN.
+# Container Smoke Tests (including real E2E queries) are run on every build.
 #
 # This workflow is the required gate for Renovate dependency PRs.
 
@@ -97,7 +97,6 @@ jobs:
         with:
           name: agnav-reports
           path: reports/
-          retention-days: 5
 
   container_build:
     name: Build & Push to GHCR
@@ -129,23 +128,21 @@ jobs:
             REPO_URL=https://github.com/${{ github.repository }}
 
   container_test:
-    name: Container Smoke Test
+    name: Heavy Tests (Container)
     needs: container_build
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: read
-    services:
-      ollama:
-        image: ollama/ollama:latest
-        ports:
-          - 11434:11434
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -154,56 +151,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Smoke Test Model
-        run: |
-          echo "Waiting for Ollama to be ready..."
-          until curl -s http://localhost:11434 > /dev/null; do sleep 1; done
-          echo "Pulling qwen3:0.6b..."
-          curl -X POST http://localhost:11434/api/pull -d '{"name": "qwen3:0.6b"}'
-
-      - name: Run AgNav Container
+      - name: Run Heavy Integration & Smoke Stack
         env:
-          IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
-          IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
-          podman pull $IMAGE
-          
-          # Run with host network to reach Ollama on localhost:11434
-          podman run -d \
-            --name agnav-smoke \
-            --network host \
-            -e AGNAV_LLM_PROVIDER=ollama \
-            -e OLLAMA_MODEL=qwen3:0.6b \
-            -e OLLAMA_HOST=localhost \
-            -e AGNAV_VERSION=sha-${IMAGE_SHA} \
-            -e HF_TOKEN=${{ secrets.HF_TOKEN }} \
-            $IMAGE
+          # We run the full heavyweight suite (Integration + Smoke) 
+          # using the 'test_builder' stage defined in compose.yml.
+          # This stage has uv and all dev dependencies pre-installed.
+          podman compose --profile ci up --build --exit-code-from heavy-tests heavy-tests
 
-      - name: Wait for Healthcheck
-        run: |
-          for i in {1..60}; do
-            if curl -f http://localhost:7860 > /dev/null 2>&1; then
-              echo "Container is healthy!"
-              exit 0
-            fi
-
-            if ! podman inspect agnav-smoke --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
-              echo "Container died! Logs:"
-              podman logs agnav-smoke
-              exit 1
-            fi
-
-            echo "Wait... ($i/60)"
-            sleep 5
-          done
-          echo "Healthcheck timed out."
-          exit 1
+      - name: Dump Logs on Failure
+        if: failure()
+        run: podman compose --profile ci logs
 
       - name: Cleanup
         if: always()
-        run: podman rm -f agnav-smoke || true
+        run: podman compose --profile ci down -v || true
 
   trivy:
     name: Trivy Security Scan

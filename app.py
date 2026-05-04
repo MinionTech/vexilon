@@ -283,9 +283,11 @@ def get_async_openai_client():
                 api_key=os.getenv("HF_TOKEN")
             )
         elif provider == "ollama":
-            ollama_host = os.getenv("OLLAMA_HOST", "ollama")
+            ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
+            if "://" not in ollama_host:
+                ollama_host = f"http://{ollama_host}"
             _llm_client = AsyncOpenAI(
-                base_url=f"http://{ollama_host}:11434/v1",
+                base_url=f"{ollama_host.rstrip('/')}/v1",
                 api_key="ollama"
             )
         else:
