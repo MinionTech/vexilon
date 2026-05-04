@@ -2,7 +2,9 @@
 FROM python:3.14-slim AS base
 
 # Silence Hugging Face nag messages globally
-ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
+ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
+    HF_HOME=/hf_cache \
+    EMBED_MODEL=/hf_cache
 
 # Install common runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
@@ -20,9 +22,10 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
 RUN uv pip install --system huggingface_hub
+# Download model directly into the consolidated HF_HOME path.
 RUN --mount=type=cache,target=/root/.cache/huggingface \
-    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False, local_dir_use_symlinks=False)" && \
-    ls -l /model_cache/config.json
+    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/hf_cache', token=False, local_dir_use_symlinks=False)" && \
+    ls -l /hf_cache/config.json
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
 FROM base AS builder
@@ -37,10 +40,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ENV HF_HOME=/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
-    HF_HUB_OFFLINE=1 \
-    EMBED_MODEL=/hf_cache
+# Enforce offline mode for builds and tests
+ENV TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1
 
 # 1. Install dependencies
 # We copy pyproject.toml and uv.lock as root.
@@ -56,9 +58,8 @@ COPY prompts/ ./prompts/
 COPY app.py conftest.py ./
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
-# Tests need writable space for reports and cache, but source code stays read-only.
 FROM builder AS test_builder
-COPY --from=model_fetcher /model_cache /hf_cache
+COPY --from=model_fetcher /hf_cache /hf_cache
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
 COPY tests/ ./tests/
@@ -67,15 +68,14 @@ RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1001:1001 /app/reports 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
 
-ENV HF_HOME=/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
+# Enforce offline mode for production runtime
+ENV TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
-    EMBED_MODEL=/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # Copy everything as root (read-only for the application user)
 COPY --from=builder /app /app
-COPY --from=model_fetcher /model_cache /hf_cache
+COPY --from=model_fetcher /hf_cache /hf_cache
 
 # Only create and chown (by UID) the specific directories that MUST be writable
 RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
