@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-privileged user once (UID 1001 is standard for this repo)
-RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
+# Create a non-privileged user once (UID 1000 is standard for Hugging Face Spaces)
+RUN useradd --uid 1000 --create-home --shell /sbin/nologin app
 WORKDIR /app
 
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
@@ -64,7 +64,7 @@ COPY --from=model_fetcher /hf_cache /hf_cache
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
 COPY tests/ ./tests/
-RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1001:1001 /app/reports /app/.pytest_cache
+RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1000:1000 /app/reports /app/.pytest_cache
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
@@ -79,10 +79,10 @@ COPY --from=builder /app /app
 COPY --from=model_fetcher /hf_cache /hf_cache
 
 # Only create and chown (by UID) the specific directories that MUST be writable
-RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
+RUN mkdir -p /app/.pdf_cache && chown 1000:1000 /app/.pdf_cache
 
-USER 1001
-RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
+USER 1000
+RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \

@@ -594,15 +594,6 @@ def startup(force_rebuild: bool = False):
     provider = get_llm_provider()
     model = DEFAULT_MODEL_LLM
     logger.info(f"[startup] AgNav {AGNAV_VERSION} starting...")
-    
-    # Audit environment variables for debugging (masked)
-    logger.info("[startup] Environment Audit:")
-    for k in sorted(os.environ.keys()):
-        if any(x in k.lower() for x in ["token", "key", "secret", "auth", "pwd", "api"]):
-            logger.info(f"  - {k}: [SET]")
-        else:
-            logger.info(f"  - {k}: {os.environ[k][:50]}")
-            
     logger.info(f"[startup] Provider: {provider}")
     logger.info(f"[startup] Default Model: {model}")
 
