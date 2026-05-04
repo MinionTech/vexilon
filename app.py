@@ -20,7 +20,7 @@ from threading import Lock
 import numpy as np
 import openai
 from openai import AsyncOpenAI
-from huggingface_hub import AsyncInferenceClient
+from huggingface_hub import AsyncInferenceClient, get_token
 import faiss
 import gradio as gr
 
@@ -281,7 +281,7 @@ def get_llm_client():
         if provider == "huggingface":
             _llm_client = AsyncInferenceClient(
                 model=DEFAULT_MODEL_LLM,
-                token=os.getenv("HF_TOKEN")
+                token=get_token()
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
