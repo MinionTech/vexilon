@@ -97,7 +97,7 @@ jobs:
         run: systemctl --user start podman.socket
 
       - name: Run Functional Integration and E2E Tests
-        run: podman compose --profile ci up --build --abort-on-container-exit functional-tests
+        run: podman compose --profile ci up --build --abort-on-container-exit tests-functional
 
       - name: Dump Logs on Failure
         if: failure()
