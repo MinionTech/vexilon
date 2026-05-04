@@ -141,8 +141,8 @@ services:
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  # ── Container Smoke Test (E2E) ──────────────────────────────────────────────
-  smoke-test:
+  # ── heavyweight-tests (Integration + E2E) ────────────────────────────────────
+  heavyweight-tests:
     <<: *service-defaults
     user: app
     profiles: [ci]

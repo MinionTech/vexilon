@@ -66,13 +66,11 @@ jobs:
       - name: Start Podman Socket
         run: systemctl --user start podman.socket
 
-      - name: Run E2E Smoke Test Stack
+      - name: Run Heavyweight Integration and Smoke Tests
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Use the 'test_builder' stage defined in main's Containerfile.
-          # The compose.yml handles runtime setup (libgomp1) to keep the file pure.
-          podman compose --profile ci up --build --exit-code-from smoke-test smoke-test
+          podman compose --profile ci up --build --abort-on-container-exit heavyweight-tests
 
       - name: Dump Logs on Failure
         if: failure()
