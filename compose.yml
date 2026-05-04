@@ -144,6 +144,7 @@ services:
   # ── Container Smoke Test (E2E) ──────────────────────────────────────────────
   smoke-test:
     <<: *service-defaults
+    user: root
     profiles: [ci]
     build:
       <<: *common-build
@@ -161,7 +162,7 @@ services:
       ollama-init:
         condition: service_completed_successfully
     command: >
-      sh -c "apt-get update && apt-get install -y libgomp1 && scripts/integration_e2e.sh"
+      sh -c "apt-get update && apt-get install -y libgomp1 && /app/scripts/integration_e2e.sh"
 
 volumes:
   ollama_data: {}

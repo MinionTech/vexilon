@@ -14,6 +14,6 @@ uv run --no-sync python -m pytest tests/integration/ -v
 # 2. Run E2E Smoke Test
 # This verifies the actual production build artifact.
 echo "🔥 [2/2] Running E2E Smoke Test..."
-python scripts/smoke_e2e.py
+uv run --no-sync python scripts/smoke_e2e.py
 
 echo "✅ All Heavyweight Tests Passed!"
