@@ -1,3 +1,16 @@
+# ─── Stage 0: Base ────────────────────────────────────────────────────────────
+# This defines the source of truth for the user, directories, and common deps.
+FROM python:3.14-slim AS base
+
+# Install common runtime dependencies (used by both tests and production)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-privileged user once
+RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
+WORKDIR /app
+
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 # This stage only re-runs if the model name changes.
 FROM astral/uv:python3.14-trixie-slim AS model_fetcher
@@ -9,14 +22,15 @@ ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
 RUN uv pip install --system huggingface_hub
 
 # Fetch model directly into /model_cache using the Python API.
-# This avoids shell PATH issues and wildcard copy bloat.
-# We use token=False to prevent auth attempts and satisfy security scanners.
 RUN --mount=type=cache,target=/root/.cache/huggingface \
     python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False, local_dir_use_symlinks=False)" && \
     ls -l /model_cache/config.json # Verify download succeeded
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
-FROM astral/uv:python3.14-trixie-slim AS builder
+FROM base AS builder
+
+# Copy the uv toolchain from the official image
+COPY --from=model_fetcher /usr/bin/uv /usr/bin/uv
 
 # Install build dependencies for Python 3.14 (where wheels might be missing)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,11 +44,6 @@ ENV HF_HOME=/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
     EMBED_MODEL=/hf_cache
-
-WORKDIR /app
-
-# Create a non-privileged user for both building and running
-RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
 
 # 1. Install dependencies
 COPY --chown=app:app pyproject.toml uv.lock ./
@@ -51,12 +60,6 @@ COPY --chown=app:app app.py conftest.py ./
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
 
-# Install system dependencies needed for testing (like libgomp for FAISS)
-# This is ONLY in the test stage and does not touch production.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy model from model_fetcher so tests can load it
 COPY --from=model_fetcher /model_cache /hf_cache
 
@@ -69,16 +72,7 @@ COPY tests/ ./tests/
 RUN chown -R app:app /app
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.14-slim AS runner
-
-# 1. Runtime system deps and setup
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
-
-WORKDIR /app
+FROM base AS runner
 
 # ── Environment Configuration ────────────────────────────────────────────────
 ENV HF_HOME=/hf_cache \
