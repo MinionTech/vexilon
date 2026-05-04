@@ -4,7 +4,6 @@ emoji: 📋
 colorFrom: blue
 colorTo: indigo
 sdk: docker
-managed_identity: true
 app_port: 7860 # DO NOT EDIT: must match Containerfile EXPOSE to prevent sync-drift
 startup_duration_timeout: 10m
 pinned: true

@@ -281,7 +281,7 @@ def get_llm_client():
         if provider == "huggingface":
             _llm_client = AsyncInferenceClient(
                 model=DEFAULT_MODEL_LLM,
-                token=True
+                token=os.environ.get("HF_TOKEN")
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
@@ -861,4 +861,3 @@ if __name__ == "__main__":
         css=_CSS, 
         head=_HEAD
     )
-# Cache buster: Mon 04 May 2026 01:01:37 AM PDT
