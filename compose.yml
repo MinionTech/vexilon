@@ -72,7 +72,7 @@ services:
     tmpfs: [/tmp]
 
   # ── Testing ──────────────────────────────────────────────────────────────────
-  tests:
+  tests-unit:
     <<: *service-defaults
     profiles: [test]
     build:
@@ -143,8 +143,8 @@ services:
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  # ── functional-tests (Integration + E2E) ─────────────────────────────────────
-  functional-tests:
+  # ── tests-functional (Integration + E2E) ─────────────────────────────────────
+  tests-functional:
     <<: *service-defaults
     user: app
     profiles: [ci]
