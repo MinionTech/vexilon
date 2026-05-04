@@ -65,8 +65,9 @@ RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1000:1000 /app/reports 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
 
-# Use venv path for all subsequent commands
-ENV PATH="/app/.venv/bin:$PATH"
+# Keep embedding model offline at all times
+ENV TRANSFORMERS_OFFLINE=1 \
+    PATH="/app/.venv/bin:$PATH"
 
 # Copy everything as root (read-only for the application user)
 COPY --from=builder /app /app
@@ -79,7 +80,7 @@ USER 1000
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
-    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 python scripts/build_index.py && \
+    HF_HUB_OFFLINE=1 python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 ARG VERSION="Dev mode"
@@ -90,4 +91,4 @@ ENV AGNAV_REPO_URL=$REPO_URL
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
-CMD ["sh", "-c", "python app.py"]
+CMD ["python", "app.py"]
