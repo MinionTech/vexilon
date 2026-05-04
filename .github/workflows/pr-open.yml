@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.number }}
   cancel-in-progress: true
 
 permissions: {}
@@ -130,7 +130,7 @@ jobs:
           package: agnav
           build_context: .
           build_file: Containerfile
-          tags: sha-${{ env.IMAGE_SHA }}
+          tags: sha-${{ env.IMAGE_SHA }}, pr-${{ github.event.number }}
           build_args: |
             VERSION=sha-${{ env.IMAGE_SHA }}
             REPO_URL=https://github.com/${{ github.repository }}
