@@ -36,22 +36,18 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
-# 2. Copy application code
 COPY data/ ./data/
 COPY agnav/ ./agnav/
 COPY scripts/ ./scripts/
+# Data and indexing engine code copied — Indexing prerequisites complete.
+
 COPY prompts/ ./prompts/
 COPY app.py conftest.py ./
+
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
-
-# Install system dependencies needed for testing (like libgomp for FAISS)
-# This is ONLY in the test stage and does not touch production.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy model from model_fetcher so tests can load it
 COPY --from=model_fetcher /model_cache /hf_cache
@@ -60,6 +56,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
 
 COPY tests/ ./tests/
+
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.12-slim AS runner
@@ -72,22 +69,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# 2. Environment Setup
+# ── Environment Configuration ────────────────────────────────────────────────
 ENV HF_HOME=/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
     EMBED_MODEL=/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
-# 3. Copy artifacts from builder
+# 2. Copy the prepared environment and code from builder
+# We chown the entire /app so the 'agnav' user can touch lock files and cache.
 COPY --from=builder --chown=agnav:agnav /app /app
 COPY --from=model_fetcher --chown=agnav:agnav /model_cache /hf_cache
 
-# 4. Prepare data cache and build index
+# 3. Build index
+# Create persistent cache directory
 RUN mkdir -p /app/.pdf_cache && chown agnav:agnav /app/.pdf_cache
-USER agnav
 
-# Build index (utilizing build cache mount for persistent index)
+USER agnav
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \

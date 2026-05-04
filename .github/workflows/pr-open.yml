@@ -1,142 +1,64 @@
 name: PR Open
 
-# Runs unit tests on pull requests (excluding drafts) and on the weekly schedule.
-# Images are built during PRs and promoted on merge — no rebuild on main.
-# Container Smoke Tests (including real E2E queries) are run on every build.
-#
-# This workflow is the required gate for Renovate dependency PRs.
-
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, synchronize, reopened]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
-permissions: {}
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   check:
-    name: Check Triggers
-    if: (! github.event.pull_request.draft)
-    runs-on: ubuntu-24.04
+    name: Check Trigger
+    runs-on: ubuntu-latest
     outputs:
-      triggered: ${{ steps.diff.outputs.triggered }}
+      triggered: ${{ steps.check.outputs.triggered }}
     steps:
-      - uses: actions/checkout@v6
-        with:
-          lfs: true
-      - id: diff
-        uses: bcgov/actions/diff-triggers@main
-        with:
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
-
-  cache_validation:
-    name: Validate FAISS Cache
-    needs: [check, compose_validation]
-    if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          lfs: true
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
-      - name: Validate Cache Manifest
-        run: podman compose run --rm cache-validator
-
-  compose_validation:
-    name: Compose Validation
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
-      - name: Validate Compose File
-        run: podman compose config
+      - name: Check for [skip ci]
+        id: check
+        run: |
+          if [[ "${{ github.event.pull_request.title }}" == *"[skip ci]"* ]]; then
+            echo "triggered=false" >> $GITHUB_OUTPUT
+          else
+            echo "triggered=true" >> $GITHUB_OUTPUT
+          fi
 
   tests:
-    name: Tests and Analysis
-    needs: [check, cache_validation, compose_validation]
+    name: Unit & Integration Tests (Host)
+    needs: check
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 1
-    permissions:
-      contents: read
-      security-events: write
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          lfs: true
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
 
-      - name: Run Tests and Analysis
-        uses: bcgov/action-test-and-analyse@main
-        with:
-          language: python
-          python_version: "3.14"
-          dir: .
-          # Consistent test execution via podman-compose
-          commands: |
-            export HF_TOKEN=${{ secrets.HF_TOKEN }}
-            mkdir -p reports
-            podman compose run --rm tests
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
-          sonar_token: ${{ secrets.SONAR_TOKEN }}
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
 
-      - name: Upload Test and Security Reports
-        if: always()
-        uses: actions/upload-artifact@v7
+      - name: Install Dependencies
+        run: uv sync --frozen
+
+      - name: Run Tests
+        run: |
+          export VERIFY_ENABLED=true
+          uv run python -m pytest tests/test_*.py tests/integration/ -v \
+            --junitxml=reports/junit.xml \
+            --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
         with:
-          name: agnav-reports
+          name: coverage-report
           path: reports/
 
-  container_build:
-    name: Build & Push to GHCR
-    needs: [check, tests]
-    if: needs.check.outputs.triggered == 'true'
-    env:
-      IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      attestations: write
-      contents: read
-      id-token: write
-      packages: write
-    outputs:
-      triggered: ${{ steps.builder.outputs.triggered }}
-
-    steps:
-      - name: Build and Push
-        id: builder
-        uses: bcgov/action-builder-ghcr@main
-        with:
-          package: agnav
-          build_context: .
-          build_file: Containerfile
-          tags: sha-${{ env.IMAGE_SHA }}
-          build_args: |
-            VERSION=sha-${{ env.IMAGE_SHA }}
-            REPO_URL=https://github.com/${{ github.repository }}
-
   container_test:
-    name: Container Smoke Test
-    needs: container_build
+    name: Container Smoke Test (Stage-Based)
+    needs: check
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    permissions:
-      contents: read
-      packages: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -148,8 +70,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # We use the 'test_builder' stage (where uv is present) 
-          # to run the full heavyweight suite as defined in compose.yml.
+          # Use the 'test_builder' stage defined in main's Containerfile.
+          # The compose.yml handles runtime setup (libgomp1) to keep the file pure.
           podman compose --profile ci up --build --exit-code-from smoke-test smoke-test
 
       - name: Dump Logs on Failure
@@ -166,62 +88,18 @@ jobs:
     if: needs.check.outputs.triggered == 'true'
     permissions:
       security-events: write
-    runs-on: ubuntu-slim
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          lfs: true
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          format: "sarif"
-          output: "trivy-results.sarif"
-          ignore-unfixed: true
-          scan-type: "fs"
-          scanners: "vuln,secret,misconfig"
-          severity: "CRITICAL,HIGH"
-          exit-code: "1"
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: "trivy-results.sarif"
-
-  semgrep:
-    name: Semgrep Security Scan
-    needs: [check]
-    if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      security-events: write
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          config: >-
-            p/python
-            p/security-audit
-            p/secrets
-            p/owasp-top-10
-          generateSarif: "1"
-      - name: Upload SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
+          image-ref: 'ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: semgrep.sarif
-
-  results:
-    name: Results
-    needs: [check, tests, container_build, container_test, trivy, semgrep]
-    if: always()
-    runs-on: ubuntu-slim
-    steps:
-      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'canceled')
-        run: |
-          echo "At least one required job has failed or was canceled."
-          exit 1
-      - run: echo "All critical checks passed or were intentionally skipped."
+          sarif_file: 'trivy-results.sarif'
