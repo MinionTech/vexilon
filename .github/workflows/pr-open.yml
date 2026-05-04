@@ -41,22 +41,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b #8.1.0
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
 
-      - name: Install System Dependencies (for Pillow source build)
-        run: sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev
+      - name: Prepare Reports Directory
+        run: mkdir -p reports
 
-      - name: Install Dependencies
-        run: uv sync --frozen
+      - name: Run Containerized Unit Tests
+        run: podman compose --profile test up --build --abort-on-container-exit tests-unit
 
-      - name: Run Tests
-        run: |
-          export VERIFY_ENABLED=true
-          export AGNAV_FORCE_PERSPECTIVES=true
-          uv run python -m pytest tests/test_*.py -v \
-            --junitxml=reports/junit.xml \
-            --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml
+      - name: Dump Logs on Failure
+        if: failure()
+        run: podman compose --profile test logs tests-unit
 
       - name: Upload Coverage
         uses: actions/upload-artifact@v7

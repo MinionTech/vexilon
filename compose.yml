@@ -83,7 +83,7 @@ services:
       <<: *common-env
       AGNAV_FORCE_PERSPECTIVES: "true"
     command: >
-      sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
+      sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py -v 
       --junitxml=reports/junit.xml 
       --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml"
 
