@@ -3,7 +3,7 @@ FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
 
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 # This stage only re-runs if the model name changes.
-FROM python:3.12-slim AS model_fetcher
+FROM python:3.14-slim AS model_fetcher
 
 # Prevent auth attempts for public models
 ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
@@ -20,7 +20,14 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
     ls -l /model_cache/config.json # Verify download succeeded
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
+
+# Install build dependencies for Python 3.14 (where wheels might be missing)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # ── Environment Configuration ────────────────────────────────────────────────
 ENV HF_HOME=/hf_cache \
@@ -49,6 +56,12 @@ COPY app.py conftest.py ./
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
 
+# Install system dependencies needed for testing (like libgomp for FAISS)
+# This is ONLY in the test stage and does not touch production.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy model from model_fetcher so tests can load it
 COPY --from=model_fetcher /model_cache /hf_cache
 
@@ -59,7 +72,7 @@ COPY tests/ ./tests/
 
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS runner
+FROM python:3.14-slim AS runner
 
 # 1. Runtime system deps and setup
 RUN apt-get update && apt-get install -y --no-install-recommends \

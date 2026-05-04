@@ -161,8 +161,7 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    command: >
-      sh -c "apt-get update && apt-get install -y libgomp1 && /app/scripts/integration_e2e.sh"
+    command: /app/scripts/integration_e2e.sh
 
 volumes:
   ollama_data: {}
