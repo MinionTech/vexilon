@@ -47,7 +47,6 @@ COPY --chown=app:app scripts/ ./scripts/
 COPY --chown=app:app prompts/ ./prompts/
 COPY --chown=app:app app.py conftest.py ./
 
-
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
@@ -66,6 +65,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY tests/ ./tests/
 
+# Ensure the app user owns the entire workspace for test cache/logs
+RUN chown -R app:app /app
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.14-slim AS runner
