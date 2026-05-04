@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # We copy pyproject.toml and uv.lock as root.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
+    HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
 # Copy source code and data as root (read-only for the app user later)
 COPY data/ ./data/
@@ -58,7 +58,7 @@ COPY app.py conftest.py ./
 FROM builder AS test_builder
 COPY --from=model_fetcher /hf_cache /hf_cache
 RUN --mount=type=cache,target=/root/.cache/uv \
-    UV_LINK_MODE=copy uv sync --frozen --no-install-project
+    HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-install-project
 COPY tests/ ./tests/
 RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1000:1000 /app/reports /app/.pytest_cache
 
@@ -79,7 +79,7 @@ USER 1000
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
-    TRANSFORMERS_OFFLINE=1 python scripts/build_index.py && \
+    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 ARG VERSION="Dev mode"
@@ -90,4 +90,4 @@ ENV AGNAV_REPO_URL=$REPO_URL
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
-CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 python app.py"]
+CMD ["sh", "-c", "python app.py"]
