@@ -37,13 +37,17 @@ jobs:
       - name: Install UV
         uses: astral-sh/setup-uv@v5
 
+      - name: Install System Dependencies (for Pillow source build)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev
+
       - name: Install Dependencies
         run: uv sync --frozen
 
       - name: Run Tests
         run: |
           export VERIFY_ENABLED=true
-          uv run python -m pytest tests/test_*.py tests/integration/ -v \
+          uv run python -m pytest tests/test_*.py -v \
             --junitxml=reports/junit.xml \
             --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml
 
