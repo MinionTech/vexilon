@@ -478,7 +478,7 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
         condensed = await condense_query(message, history)
 
     # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
-    if not IS_DEV and len(condensed.split()) > 10:
+    if (not IS_DEV or os.getenv("AGNAV_FORCE_PERSPECTIVES") == "true") and len(condensed.split()) > 10:
         queries = await generate_perspective_queries(condensed, history)
     else:
         queries = [condensed]

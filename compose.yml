@@ -79,7 +79,9 @@ services:
       <<: *common-build
       target: test_builder
     volumes: *dev-volumes
-    environment: *common-env
+    environment:
+      <<: *common-env
+      AGNAV_FORCE_PERSPECTIVES: "true"
     command: >
       sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
       --junitxml=reports/junit.xml 
@@ -158,6 +160,7 @@ services:
       AGNAV_LLM_PROVIDER: ollama
       OLLAMA_HOST: ollama
       OLLAMA_MODEL: qwen3:0.6b  # Tiny model for fast CI
+      AGNAV_FORCE_PERSPECTIVES: "true"
     depends_on:
       ollama-init:
         condition: service_completed_successfully
