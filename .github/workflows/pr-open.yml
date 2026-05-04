@@ -66,11 +66,11 @@ jobs:
       - name: Start Podman Socket
         run: systemctl --user start podman.socket
 
-      - name: Run Heavyweight Integration and Smoke Tests
+      - name: Run Heavyweight Integration and Functional Tests
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          podman compose --profile ci up --build --abort-on-container-exit heavyweight-tests
+          podman compose --profile ci up --build --abort-on-container-exit functional-tests
 
       - name: Dump Logs on Failure
         if: failure()
