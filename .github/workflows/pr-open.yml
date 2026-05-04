@@ -13,25 +13,9 @@ permissions:
   pull-requests: read
 
 jobs:
-  check:
-    name: Check Trigger
-    runs-on: ubuntu-latest
-    outputs:
-      triggered: ${{ steps.check.outputs.triggered }}
-    steps:
-      - name: Check for [skip ci]
-        id: check
-        run: |
-          if [[ "${{ github.event.pull_request.title }}" == *"[skip ci]"* ]]; then
-            echo "triggered=false" >> $GITHUB_OUTPUT
-          else
-            echo "triggered=true" >> $GITHUB_OUTPUT
-          fi
 
   tests:
     name: Unit & Integration Tests (Host)
-    needs: check
-    if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -63,8 +47,6 @@ jobs:
 
   container_test:
     name: Container Smoke Test (Stage-Based)
-    needs: check
-    if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -88,8 +70,7 @@ jobs:
 
   trivy:
     name: Trivy Security Scan
-    needs: [check, tests]
-    if: needs.check.outputs.triggered == 'true'
+    needs: [tests]
     permissions:
       security-events: write
     runs-on: ubuntu-24.04
