@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-PDF_CACHE_DIR = Path("./.pdf_cache")
-LABOUR_LAW_DIR = Path("./data/labour_law")
+PDF_CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
+LABOUR_LAW_DIR = Path(os.getenv("AGNAV_DATA_DIR", "./data/labour_law"))
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
 CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"

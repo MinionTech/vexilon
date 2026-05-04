@@ -5,13 +5,22 @@ Verifies that the app can start up, load the PDF, index it, and run a RAG query
 using the real embedding model but a mocked LLM API.
 """
 
+import os
 import pytest
-import app
 from pathlib import Path
-import agnav.indexing as indexing
 
 @pytest.mark.asyncio
 async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path):
+    # Set environment variables BEFORE importing app or indexing
+    test_data_dir = tmp_path / "data/labour_law"
+    cache_dir = tmp_path / "pdf_cache"
+    
+    monkeypatch.setenv("AGNAV_CACHE_DIR", str(cache_dir))
+    monkeypatch.setenv("AGNAV_DATA_DIR", str(test_data_dir))
+    
+    # Now import inside the test to pick up the env vars
+    import app
+    import agnav.indexing as indexing
     """
     Tests the system from Markdown loading to streaming response.
     Uses the real MD agreement and real embedding model.
@@ -21,22 +30,12 @@ async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path)
     if not source_md.exists():
         pytest.skip(f"Agreement Markdown missing at {source_md}; cannot run full integration test.")
 
-    # Create a minimal test knowledge base in a temporary directory
-    test_data_dir = tmp_path / "data/labour_law"
-    test_data_dir.mkdir(parents=True)
+    # Redirect app paths to the temp dir
+    test_data_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(exist_ok=True)
+    
     import shutil
     shutil.copy(source_md, test_data_dir / source_md.name)
-
-    # Redirect app paths to the temp dir
-    cache_dir = tmp_path / "pdf_cache"
-    cache_dir.mkdir()
-    monkeypatch.setattr(indexing, "LABOUR_LAW_DIR", test_data_dir)
-    monkeypatch.setattr(app, "TESTS_DIR", test_data_dir / "tests")
-    monkeypatch.setattr(indexing, "PDF_CACHE_DIR", cache_dir)
-    monkeypatch.setattr(indexing, "INDEX_PATH", cache_dir / "index.faiss")
-    monkeypatch.setattr(indexing, "CHUNKS_PATH", cache_dir / "chunks.json")
-    monkeypatch.setattr(indexing, "MANIFEST_PATH", cache_dir / "manifest.json")
-    monkeypatch.setattr(indexing, "INTEGRITY_PATH", cache_dir / "integrity.json")
 
     # Mock the LLM client globally for the app
     monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)

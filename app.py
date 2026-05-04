@@ -599,13 +599,14 @@ def startup(force_rebuild: bool = False):
 
     _test_registry.load(TESTS_DIR)
     # Ensure cache directory is writable
-    os.makedirs(".pdf_cache", exist_ok=True)
+    from agnav import indexing
+    indexing.PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        test_file = Path(".pdf_cache/permissions_test")
+        test_file = indexing.PDF_CACHE_DIR / "permissions_test"
         test_file.touch()
         test_file.unlink()
     except Exception as e:
-        logger.warning(f"[startup] .pdf_cache is not writable: {e}. Indexing may fail.")
+        logger.warning(f"[startup] {indexing.PDF_CACHE_DIR} is not writable: {e}. Indexing may fail.")
 
     _fetch_pdf_cache_if_missing()
     _index, _chunks = load_precomputed_index()
