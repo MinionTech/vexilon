@@ -278,9 +278,14 @@ def get_async_openai_client():
     if _llm_client is None:
         provider = get_llm_provider()
         if provider == "huggingface":
+            # Prefer HF_TOKEN, fallback to HUGGING_FACE_HUB_TOKEN
+            hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
+            if not hf_token:
+                logger.warning("HF_TOKEN is missing. Hugging Face Router requests may fail.")
+            
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=os.getenv("HF_TOKEN")
+                api_key=hf_token or "hf_no_token_provided" # Avoid OpenAI library fallback
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")

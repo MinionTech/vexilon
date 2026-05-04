@@ -97,6 +97,7 @@ REPO_PATH="${ORG_NAME,,}/${REPO_NAME,,}/agnav"
 
 cat <<EOF > Dockerfile
 FROM ghcr.io/${REPO_PATH}${separator}$IMAGE_REF
+COPY app.py /app/app.py
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then
