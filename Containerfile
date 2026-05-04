@@ -100,4 +100,6 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 EXPOSE 7860
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
 CMD ["python", "app.py"]
