@@ -13,9 +13,41 @@ permissions:
   pull-requests: read
 
 jobs:
+  check:
+    name: Check Triggers
+    if: (! github.event.pull_request.draft)
+    runs-on: ubuntu-24.04
+    outputs:
+      triggered: ${{ steps.diff.outputs.triggered }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - id: diff
+        uses: bcgov/actions/diff-triggers@main
+        with:
+          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
+
+  cache_validation:
+    name: Validate FAISS Cache
+    needs: check
+    if: needs.check.outputs.triggered == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
+
+      - name: Validate Cache Manifest
+        run: podman compose run --rm cache-validator
 
   tests:
     name: Unit & Integration Tests (Host)
+    needs: cache_validation
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
