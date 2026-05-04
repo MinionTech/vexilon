@@ -53,6 +53,7 @@ COPY --chown=app:app scripts/ ./scripts/
 COPY --chown=app:app prompts/ ./prompts/
 COPY --chown=app:app app.py conftest.py ./
 
+
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
 # This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
@@ -103,15 +104,5 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
-# ── Final Environment ────────────────────────────────────────────────────────
-ARG VERSION="Dev mode"
-ARG REPO_URL="https://github.com/MinionTech/vexilon"
-ENV AGNAV_VERSION=$VERSION
-ENV AGNAV_REPO_URL=$REPO_URL
-
 EXPOSE 7860
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
-
-CMD ["/app/scripts/startup.sh"]
+CMD ["python", "app.py"]
