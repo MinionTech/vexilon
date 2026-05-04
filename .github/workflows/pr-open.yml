@@ -33,7 +33,7 @@ jobs:
     name: Validate FAISS Cache
     needs: check
     if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -86,7 +86,7 @@ jobs:
     name: Container Smoke Test (Stage-Based)
     needs: check
     if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     timeout-minutes: 15
