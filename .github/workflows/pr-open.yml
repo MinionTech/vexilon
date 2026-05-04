@@ -110,8 +110,6 @@ jobs:
   build:
     name: Build & Push to GHCR
     needs: tests-unit
-    env:
-      IMAGE_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -130,7 +128,7 @@ jobs:
           build_context: .
           build_file: Containerfile
           build_args: |
-            VERSION=sha-${{ env.IMAGE_SHA }}
+            VERSION=sha-${{ github.event.pull_request.head.sha }}
             REPO_URL=https://github.com/${{ github.repository }}
 
   trivy:
