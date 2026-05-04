@@ -7,7 +7,9 @@ ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
     EMBED_MODEL=/hf_cache
 
 # Install common runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-privileged user once (UID 1001 is standard for this repo)
