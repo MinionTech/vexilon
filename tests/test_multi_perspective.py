@@ -49,6 +49,7 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
     
     fake_index = MagicMock()
     monkeypatch.setattr(app, "_index", fake_index)
+    monkeypatch.setattr(app, "IS_DEV", False)
     
     # Mock chunks from different queries, some overlapping
     chunk1 = {"text": "Original Article 1 text.", "page": 1, "source": "DocA"}
