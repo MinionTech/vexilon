@@ -1,9 +1,11 @@
 # ─── Stage 0: Base ────────────────────────────────────────────────────────────
 FROM python:3.14-slim AS base
 
+# Silence Hugging Face nag messages globally
+ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
+
 # Install common runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-privileged user once (UID 1001 is standard for this repo)
@@ -17,7 +19,6 @@ FROM base AS model_fetcher
 COPY pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
-ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
 RUN uv pip install --system huggingface_hub
 RUN --mount=type=cache,target=/root/.cache/huggingface \
     python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False, local_dir_use_symlinks=False)" && \
