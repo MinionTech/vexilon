@@ -280,7 +280,7 @@ def get_async_openai_client():
         if provider == "huggingface":
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=os.getenv("HF_TOKEN")
+                api_key=os.getenv("HF_TOKEN") or "none"
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
