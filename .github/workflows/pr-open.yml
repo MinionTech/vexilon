@@ -79,6 +79,8 @@ jobs:
 
   smoke-test:
     name: Container Smoke Test (Stage-Based)
+    needs: check
+    if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -102,7 +104,8 @@ jobs:
 
   trivy:
     name: Trivy Security Scan
-    needs: [tests]
+    needs: [check, tests]
+    if: needs.check.outputs.triggered == 'true'
     continue-on-error: true
     permissions:
       security-events: write
