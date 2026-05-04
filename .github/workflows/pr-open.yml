@@ -72,6 +72,7 @@ jobs:
       - name: Run Tests
         run: |
           export VERIFY_ENABLED=true
+          export AGNAV_FORCE_PERSPECTIVES=true
           uv run python -m pytest tests/test_*.py -v \
             --junitxml=reports/junit.xml \
             --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml
@@ -163,7 +164,7 @@ jobs:
 
   results:
     name: Results
-    needs: [build, tests, tests-functional, trivy]
+    needs: [build, tests-unit, tests-functional, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
