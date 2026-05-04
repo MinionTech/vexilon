@@ -57,7 +57,7 @@ jobs:
       - name: Run Containerized Unit Tests
         run: |
           mkdir -p reports
-          docker compose --profile test up --abort-on-container-exit tests-unit
+          docker compose --profile test up --build --abort-on-container-exit tests-unit
 
       - name: Dump Logs on Failure
         if: failure()
@@ -95,7 +95,7 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Validate Cache Manifest
-        run: docker compose run --rm cache-validator
+        run: docker compose run --build --rm cache-validator
 
   tests-functional:
     name: Integration & E2E Tests
@@ -122,7 +122,7 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Run Functional Integration and E2E Tests
-        run: docker compose --profile ci up --abort-on-container-exit tests-functional
+        run: docker compose --profile ci up --build --abort-on-container-exit tests-functional
 
       - name: Dump Logs on Failure
         if: failure()

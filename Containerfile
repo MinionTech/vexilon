@@ -2,6 +2,7 @@
 FROM python:3.14-slim AS base
 
 # Silence Hugging Face nag messages globally
+LABEL rebuild_trigger="$(date)"
 ENV HF_HOME=/hf_cache \
     EMBED_MODEL=/hf_cache
 
