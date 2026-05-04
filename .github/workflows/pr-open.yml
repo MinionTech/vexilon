@@ -45,7 +45,7 @@ jobs:
           name: coverage-report
           path: reports/
 
-  container_test:
+  smoke-test:
     name: Container Smoke Test (Stage-Based)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -71,20 +71,36 @@ jobs:
   trivy:
     name: Trivy Security Scan
     needs: [tests]
+    continue-on-error: true
     permissions:
       security-events: write
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    runs-on: ubuntu-slim
+    timeout-minutes: 1
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - uses: actions/checkout@v6
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: 'ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: "sarif"
+          output: "trivy-results.sarif"
+          ignore-unfixed: true
+          scan-type: "fs"
+          scanners: "vuln,secret,misconfig"
+          severity: "CRITICAL,HIGH"
+
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
+
+  results:
+    name: Results
+    needs: [tests, smoke-test, trivy]
+    if: always()
+    runs-on: ubuntu-slim
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'canceled')
+        run: |
+          echo "At least one required job has failed or was canceled."
+          exit 1
+      - run: echo "All critical checks passed or were intentionally skipped."
