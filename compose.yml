@@ -57,10 +57,10 @@ services:
       start_period: 120s
 
   # ── Production Simulation (Immutable Cloud-Parity) ───────────────────────────
-  # Production / Development App
-  # Run with: podman compose up
+  # Run with: podman compose --profile prod up prod
   prod:
     <<: *service-defaults
+    profiles: [prod]
     build: *common-build
     environment:
       <<: *common-env
