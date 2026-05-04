@@ -272,22 +272,15 @@ Respond in this format:
 If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
-from huggingface_hub import get_token
-
 _llm_client = None
 def get_async_openai_client():
     global _llm_client
     if _llm_client is None:
         provider = get_llm_provider()
         if provider == "huggingface":
-            # Use official HF helper to resolve token (checks HF_TOKEN, HUGGINGFACEHUB_API_TOKEN, etc.)
-            hf_token = get_token()
-            if not hf_token:
-                logger.warning("No Hugging Face token found via get_token(). Requests may fail.")
-            
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=hf_token or "hf_no_token_provided"
+                api_key=os.getenv("HF_TOKEN")
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
