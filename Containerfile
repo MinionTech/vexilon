@@ -1,3 +1,7 @@
+# ─── Global Arguments ─────────────────────────────────────────────────────────
+# This allows Renovate to track the uv version easily.
+ARG UV_VERSION=0.6.5
+
 # ─── Stage 0: Base ────────────────────────────────────────────────────────────
 FROM python:3.14-slim AS base
 
@@ -12,9 +16,8 @@ WORKDIR /app
 
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 FROM base AS model_fetcher
-
-# Surgically inject uv without pulling a full separate OS image
-COPY --from=ghcr.io/astral-sh/uv:0.6.5 /uv /usr/bin/uv
+ARG UV_VERSION
+RUN pip install --no-cache-dir uv==${UV_VERSION}
 
 ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
 RUN uv pip install --system huggingface_hub
@@ -24,9 +27,8 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
 FROM base AS builder
-
-# Surgically inject uv for the build phase
-COPY --from=ghcr.io/astral-sh/uv:0.6.5 /uv /usr/bin/uv
+ARG UV_VERSION
+RUN pip install --no-cache-dir uv==${UV_VERSION}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
