@@ -141,15 +141,14 @@ services:
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  heavy-tests:
+  # ── Container Smoke Test (E2E) ──────────────────────────────────────────────
+  smoke-test:
     <<: *service-defaults
     profiles: [ci]
-    build:
-      <<: *common-build
-      target: test_builder
+    build: *common-build
     volumes:
+      - ./.venv:/app/.venv:z
       - ./tests:/app/tests:z
-      - ./.pdf_cache:/app/.pdf_cache:z
     environment:
       <<: *common-env
       PYTHONPATH: /app
@@ -159,7 +158,7 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    command: scripts/integration_e2e.sh
+    command: python scripts/smoke_e2e.py
 
 volumes:
   ollama_data: {}

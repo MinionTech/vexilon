@@ -128,7 +128,7 @@ jobs:
             REPO_URL=https://github.com/${{ github.repository }}
 
   container_test:
-    name: Heavy Tests (Container)
+    name: Container Smoke Test
     needs: container_build
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
@@ -144,6 +144,12 @@ jobs:
       - name: Start Podman Socket
         run: systemctl --user start podman.socket
 
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build venv for Container
+        run: uv sync --frozen
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -151,13 +157,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Heavy Integration & Smoke Stack
+      - name: Run E2E Smoke Test Stack
         env:
+          IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # We use the 'test_builder' stage (where uv is present) 
-          # to run the full heavyweight suite.
-          podman compose --profile ci up --build --exit-code-from heavy-tests heavy-tests
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          export IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
+          podman pull $IMAGE
+          
+          # Use volumes to inject dev deps into the unmodified prod image
+          cat <<EOF > compose.override.yml
+          services:
+            smoke-test:
+              image: $IMAGE
+              build: null
+              volumes:
+                - ./.venv:/app/.venv:z
+                - ./tests:/app/tests:z
+          EOF
+          
+          podman compose --profile ci up --exit-code-from smoke-test smoke-test
 
       - name: Dump Logs on Failure
         if: failure()
