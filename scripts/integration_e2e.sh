@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "🚀 Starting Heavyweight Test Suite..."
+echo "🚀 Starting Functional Test Suite..."
 
 # 1. Run Integration Tests
 # These verify the RAG pipeline logic (indexing + retrieval) 
@@ -16,4 +16,4 @@ uv run --no-sync python -m pytest tests/integration/ -v
 echo "🔥 [2/2] Running E2E Smoke Test..."
 uv run --no-sync python scripts/smoke_e2e.py
 
-echo "✅ All Heavyweight Tests Passed!"
+echo "✅ All Functional Tests Passed!"
