@@ -14,7 +14,7 @@ jobs:
   check:
     name: Check Triggers
     if: (! github.event.pull_request.draft)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -33,7 +33,7 @@ jobs:
     name: Validate FAISS Cache
     needs: check
     if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
     steps:
@@ -51,7 +51,7 @@ jobs:
   tests:
     name: Unit & Integration Tests (Host)
     needs: cache_validation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
     timeout-minutes: 10
@@ -86,7 +86,7 @@ jobs:
     name: Container Smoke Test (Stage-Based)
     needs: check
     if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
     timeout-minutes: 15
