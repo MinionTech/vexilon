@@ -82,6 +82,33 @@ jobs:
           name: coverage-report
           path: reports/
 
+  build:
+    name: Build & Push to GHCR
+    needs: tests
+    env:
+      IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    outputs:
+      triggered: ${{ steps.builder.outputs.triggered }}
+    steps:
+      - name: Build and Push
+        id: builder
+        uses: bcgov/action-builder-ghcr@main
+        with:
+          package: agnav
+          build_context: .
+          build_file: Containerfile
+          tags: sha-${{ env.IMAGE_SHA }}
+          build_args: |
+            VERSION=sha-${{ env.IMAGE_SHA }}
+            REPO_URL=https://github.com/${{ github.repository }}
+
   smoke-test:
     name: Container Smoke Test (Stage-Based)
     needs: check
@@ -137,7 +164,7 @@ jobs:
 
   results:
     name: Results
-    needs: [tests, smoke-test, trivy]
+    needs: [build, tests, smoke-test, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
