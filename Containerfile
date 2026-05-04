@@ -1,7 +1,3 @@
-# ─── Global Arguments ─────────────────────────────────────────────────────────
-# This allows Renovate to track the uv version easily.
-ARG UV_VERSION=0.6.5
-
 # ─── Stage 0: Base ────────────────────────────────────────────────────────────
 FROM python:3.14-slim AS base
 
@@ -16,8 +12,10 @@ WORKDIR /app
 
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 FROM base AS model_fetcher
-ARG UV_VERSION
-RUN pip install --no-cache-dir uv==${UV_VERSION}
+
+# Extract uv version from pyproject.toml to stay in sync with Renovate
+COPY pyproject.toml .
+RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
 ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
 RUN uv pip install --system huggingface_hub
@@ -27,8 +25,10 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
 FROM base AS builder
-ARG UV_VERSION
-RUN pip install --no-cache-dir uv==${UV_VERSION}
+
+# Extract uv version from pyproject.toml
+COPY pyproject.toml .
+RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -42,8 +42,8 @@ ENV HF_HOME=/hf_cache \
     EMBED_MODEL=/hf_cache
 
 # 1. Install dependencies
-# We copy pyproject.toml and uv.lock as root.
-COPY pyproject.toml uv.lock ./
+# (pyproject.toml was already copied above, but we copy uv.lock now)
+COPY uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
@@ -55,7 +55,6 @@ COPY prompts/ ./prompts/
 COPY app.py conftest.py ./
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
-# Tests need a writable workspace for reports, cache, and coverage.
 FROM builder AS test_builder
 COPY --from=model_fetcher /model_cache /hf_cache
 RUN --mount=type=cache,target=/root/.cache/uv \
