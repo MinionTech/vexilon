@@ -48,7 +48,7 @@ jobs:
       - name: Validate Cache Manifest
         run: podman compose run --rm cache-validator
 
-  tests:
+  tests-unit:
     name: Unit & Integration Tests (Host)
     needs: cache_validation
     runs-on: ubuntu-slim
@@ -84,7 +84,7 @@ jobs:
 
   build:
     name: Build & Push to GHCR
-    needs: tests
+    needs: tests-unit
     env:
       IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     runs-on: ubuntu-24.04
@@ -109,8 +109,8 @@ jobs:
             VERSION=sha-${{ env.IMAGE_SHA }}
             REPO_URL=https://github.com/${{ github.repository }}
 
-  smoke-test:
-    name: Container Smoke Test (Stage-Based)
+  tests-functional:
+    name: Integration & E2E Tests
     needs: check
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
@@ -137,8 +137,7 @@ jobs:
 
   trivy:
     name: Trivy Security Scan
-    needs: [check, tests]
-    if: needs.check.outputs.triggered == 'true'
+    needs: [tests-unit]
     continue-on-error: true
     runs-on: ubuntu-slim
     permissions:
@@ -164,7 +163,7 @@ jobs:
 
   results:
     name: Results
-    needs: [build, tests, smoke-test, trivy]
+    needs: [build, tests, tests-functional, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
