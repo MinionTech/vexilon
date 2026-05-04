@@ -1,106 +1,100 @@
-# ─── Stage 0: External Binaries ──────────────────────────────────────────────
-FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
+# ─── Stage 0: Base ────────────────────────────────────────────────────────────
+FROM python:3.14-slim AS base
 
-# ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
-# This stage only re-runs if the model name changes.
-FROM python:3.12-slim AS model_fetcher
-
-# Prevent auth attempts for public models
-ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
-COPY --from=uv_source /uv /usr/local/bin/uv
-
-# Install huggingface_hub
-RUN uv pip install --system huggingface_hub
-
-# Fetch model directly into /model_cache using the Python API.
-# This avoids shell PATH issues and wildcard copy bloat.
-# We use token=False to prevent auth attempts and satisfy security scanners.
-RUN --mount=type=cache,target=/root/.cache/huggingface \
-    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/model_cache', token=False, local_dir_use_symlinks=False)" && \
-    ls -l /model_cache/config.json # Verify download succeeded
-
-# ─── Stage 2: Builder ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
-
-# ── Environment Configuration ────────────────────────────────────────────────
-ENV HF_HOME=/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
-    HF_HUB_OFFLINE=1 \
+# Silence Hugging Face nag messages globally
+ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
+    HF_HOME=/hf_cache \
     EMBED_MODEL=/hf_cache
 
-COPY --from=uv_source /uv /usr/local/bin/uv
+# Install common runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    libjpeg62-turbo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-privileged user once (UID 1001 is standard for this repo)
+RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
 WORKDIR /app
 
+# ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
+FROM base AS model_fetcher
+
+# Extract uv version from pyproject.toml to stay in sync with Renovate
+COPY pyproject.toml .
+RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
+
+RUN uv pip install --system huggingface_hub
+# Download model directly into the consolidated HF_HOME path.
+RUN --mount=type=cache,target=/root/.cache/huggingface \
+    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/hf_cache', token=False, local_dir_use_symlinks=False)" && \
+    ls -l /hf_cache/config.json
+
+# ─── Stage 2: Builder ─────────────────────────────────────────────────────────
+FROM base AS builder
+
+# Extract uv version from pyproject.toml
+COPY pyproject.toml .
+RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enforce offline mode for builds and tests
+ENV TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1
+
 # 1. Install dependencies
+# We copy pyproject.toml and uv.lock as root.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
+# Copy source code and data as root (read-only for the app user later)
 COPY data/ ./data/
 COPY agnav/ ./agnav/
 COPY scripts/ ./scripts/
-# Data and indexing engine code copied — Indexing prerequisites complete.
-
 COPY prompts/ ./prompts/
 COPY app.py conftest.py ./
 
-
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
-# This stage adds dev dependencies and test suite for the 'tests' service.
 FROM builder AS test_builder
-
-# Copy model from model_fetcher so tests can load it
-COPY --from=model_fetcher /model_cache /hf_cache
-
+COPY --from=model_fetcher /hf_cache /hf_cache
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
-
 COPY tests/ ./tests/
-
+RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1001:1001 /app/reports /app/.pytest_cache
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.12-slim AS runner
+FROM base AS runner
 
-# 1. Runtime system deps and setup
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1000 --create-home --shell /sbin/nologin agnav
-
-WORKDIR /app
-
-# ── Environment Configuration ────────────────────────────────────────────────
-ENV HF_HOME=/hf_cache \
-    TRANSFORMERS_OFFLINE=1 \
+# Enforce offline mode for production runtime
+ENV TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
-    EMBED_MODEL=/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
-# 2. Copy the prepared environment and code from builder
-# We chown the entire /app so the 'agnav' user can touch lock files and cache.
-COPY --from=builder --chown=agnav:agnav /app /app
-COPY --from=model_fetcher --chown=agnav:agnav /model_cache /hf_cache
+# Copy everything as root (read-only for the application user)
+COPY --from=builder /app /app
+COPY --from=model_fetcher /hf_cache /hf_cache
 
-# 3. Build index
-# Create persistent cache directory
-RUN mkdir -p /app/.pdf_cache && chown agnav:agnav /app/.pdf_cache
+# Only create and chown (by UID) the specific directories that MUST be writable
+RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
 
-USER agnav
+USER 1001
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
-# ── Final Environment ────────────────────────────────────────────────────────
 ARG VERSION="Dev mode"
 ARG REPO_URL="https://github.com/MinionTech/vexilon"
 ENV AGNAV_VERSION=$VERSION
 ENV AGNAV_REPO_URL=$REPO_URL
 
 EXPOSE 7860
-
 HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
-
-CMD ["/app/scripts/startup.sh"]
+CMD ["python", "app.py"]

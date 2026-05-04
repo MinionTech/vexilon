@@ -92,7 +92,7 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
     mock_client.chat.completions.create = AsyncMock(side_effect=_mock_openai_stream)
     monkeypatch.setattr(app, "get_async_openai_client", lambda: mock_client)
 
-    async for chunk, ctx in app.rag_stream("Complex question", []):
+    async for chunk, ctx in app.rag_stream("This is a very complex question that needs multiple perspectives to answer correctly about the agreement", []):
         pass
 
     assert len(search_calls) == 2

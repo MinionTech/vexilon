@@ -43,7 +43,7 @@ from agnav.indexing import (
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
 # Change this here to update the entire stack (including the puller).
-OLLAMA_MODEL_ID = "qwen3:1.7b"
+OLLAMA_MODEL_ID = "qwen3:4b-instruct"
 
 # Configure structured logging
 logging.basicConfig(
@@ -81,7 +81,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else OLLAMA_MODEL_ID
-    return "Qwen/Qwen2.5-7B-Instruct"
+    return "Qwen/Qwen3-4B-Instruct-2507"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -283,8 +283,11 @@ def get_async_openai_client():
                 api_key=os.getenv("HF_TOKEN")
             )
         elif provider == "ollama":
+            ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
+            if "://" not in ollama_host:
+                ollama_host = f"http://{ollama_host}"
             _llm_client = AsyncOpenAI(
-                base_url="http://ollama:11434/v1",
+                base_url=f"{ollama_host.rstrip('/')}/v1",
                 api_key="ollama"
             )
         else:
@@ -475,7 +478,7 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
         condensed = await condense_query(message, history)
 
     # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
-    if not IS_DEV and len(condensed.split()) > 10:
+    if (not IS_DEV or os.getenv("AGNAV_FORCE_PERSPECTIVES") == "true") and len(condensed.split()) > 10:
         queries = await generate_perspective_queries(condensed, history)
     else:
         queries = [condensed]

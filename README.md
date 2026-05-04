@@ -4,7 +4,8 @@ emoji: 📋
 colorFrom: blue
 colorTo: indigo
 sdk: docker
-app_port: 7860
+app_port: 7860 # DO NOT EDIT: must match Containerfile EXPOSE to prevent sync-drift
+startup_duration_timeout: 10m
 pinned: true
 license: mit
 short_description: Look up the BCGEU 19th Main Public Service Agreement

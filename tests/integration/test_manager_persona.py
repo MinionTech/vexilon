@@ -36,4 +36,4 @@ def test_manager_persona_prompt(monkeypatch):
     assert "Senior Strategic Management Consultant" in prompt
     assert "INADVERTENT BENEFIT WARNING" in prompt
     assert "Operational Framework" in prompt
-    assert "> \"...\"" in prompt # Verbatim quote rule
+    assert "> \"verbatim text\"" in prompt # Verbatim quote rule

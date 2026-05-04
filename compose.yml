@@ -57,7 +57,7 @@ services:
       start_period: 120s
 
   # ── Production Simulation (Immutable Cloud-Parity) ───────────────────────────
-  # Run with: podman compose up prod
+  # Run with: podman compose --profile prod up prod
   prod:
     <<: *service-defaults
     profiles: [prod]
@@ -72,21 +72,20 @@ services:
     tmpfs: [/tmp]
 
   # ── Testing ──────────────────────────────────────────────────────────────────
-  tests:
+  tests-unit:
     <<: *service-defaults
     profiles: [test]
     build:
       <<: *common-build
       target: test_builder
     volumes: *dev-volumes
-    environment: *common-env
+    environment:
+      <<: *common-env
+      AGNAV_FORCE_PERSPECTIVES: "true"
     command: >
-      sh -c "uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
+      sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py -v 
       --junitxml=reports/junit.xml 
       --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml"
-    depends_on:
-      index-refresh:
-        condition: service_completed_successfully
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
   index-refresh:
@@ -140,6 +139,29 @@ services:
         TARGET_MODEL=$$(sed -n 's/.*OLLAMA_MODEL_ID = "\(.*\)".*/\1/p' /app/app.py)
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
+
+  # ── tests-functional (Integration + E2E) ─────────────────────────────────────
+  tests-functional:
+    <<: *service-defaults
+    user: app
+    profiles: [ci]
+    build:
+      <<: *common-build
+      target: test_builder
+    volumes:
+      - ./tests:/app/tests:z
+      - ./.pdf_cache:/app/.pdf_cache:z
+    environment:
+      <<: *common-env
+      PYTHONPATH: /app
+      AGNAV_LLM_PROVIDER: ollama
+      OLLAMA_HOST: ollama
+      OLLAMA_MODEL: qwen3:0.6b  # Tiny model for fast CI
+      AGNAV_FORCE_PERSPECTIVES: "true"
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    command: /app/scripts/integration_e2e.sh
 
 volumes:
   ollama_data: {}

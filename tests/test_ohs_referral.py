@@ -47,7 +47,7 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     
     # Run rag_review_stream with an OHS keyword
     # persona_mode must be 'Grieve' to trigger Audit Logic
-    async for chunk in rag_review_stream("I need to refuse unsafe work", [], persona_mode="Grieve", all_chunks=fake_chunks):
+    async for chunk in rag_review_stream("I need to refuse unsafe work", [], persona_mode="Grieve"):
         pass
 
     # Verify the system prompt in ANY of the calls contains the OHS referral

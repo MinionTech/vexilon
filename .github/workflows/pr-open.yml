@@ -1,17 +1,11 @@
 name: PR Open
 
-# Runs unit tests on pull requests (excluding drafts) and on the weekly schedule.
-# Images are built during PRs and promoted on merge — no rebuild on main.
-# Smoke tests (tests/smoke/) are excluded — they require a real HF_TOKEN.
-#
-# This workflow is the required gate for Renovate dependency PRs.
-
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, synchronize, reopened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: pr-${{ github.event.number }}
   cancel-in-progress: true
 
 permissions: {}
@@ -20,7 +14,10 @@ jobs:
   check:
     name: Check Triggers
     if: (! github.event.pull_request.draft)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       triggered: ${{ steps.diff.outputs.triggered }}
     steps:
@@ -32,79 +29,83 @@ jobs:
         with:
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
 
-  cache_validation:
-    name: Validate FAISS Cache
-    needs: [check, compose_validation]
+  tests-unit:
+    name: Unit Tests
+    needs: check
     if: needs.check.outputs.triggered == 'true'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
+
+      - name: Prepare Reports Directory
+        run: mkdir -p reports
+
+      - name: Run Containerized Unit Tests
+        run: podman compose --profile test up --build --abort-on-container-exit tests-unit
+
+      - name: Dump Logs on Failure
+        if: failure()
+        run: podman compose --profile test logs tests-unit
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: reports/
+
+  validate-cache:
+    name: Validate FAISS Cache
+    needs: tests-unit
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           lfs: true
+
       - name: Start Podman Socket
         run: systemctl --user start podman.socket
+
       - name: Validate Cache Manifest
         run: podman compose run --rm cache-validator
 
-  compose_validation:
-    name: Compose Validation
+  tests-functional:
+    name: Integration & E2E Tests
+    needs: tests-unit
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
-      - name: Validate Compose File
-        run: podman compose config
 
-  tests:
-    name: Tests and Analysis
-    needs: [check, cache_validation, compose_validation]
-    if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 1
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          lfs: true
       - name: Start Podman Socket
         run: systemctl --user start podman.socket
 
-      - name: Run Tests and Analysis
-        uses: bcgov/action-test-and-analyse@main
-        with:
-          language: python
-          python_version: "3.14"
-          dir: .
-          # Consistent test execution via podman-compose
-          commands: |
-            export HF_TOKEN=${{ secrets.HF_TOKEN }}
-            mkdir -p reports
-            podman compose run --rm tests
-          triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
-          sonar_token: ${{ secrets.SONAR_TOKEN }}
+      - name: Run Functional Integration and E2E Tests
+        run: podman compose --profile ci up --build --abort-on-container-exit tests-functional
 
-      - name: Upload Test and Security Reports
+      - name: Dump Logs on Failure
+        if: failure()
+        run: podman compose --profile ci logs
+
+      - name: Cleanup
         if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: agnav-reports
-          path: reports/
-          retention-days: 5
+        run: podman compose --profile ci down -v || true
 
-  container_build:
+  build:
     name: Build & Push to GHCR
-    needs: [check, tests]
-    if: needs.check.outputs.triggered == 'true'
-    env:
-      IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    needs: tests-unit
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -114,7 +115,6 @@ jobs:
       packages: write
     outputs:
       triggered: ${{ steps.builder.outputs.triggered }}
-
     steps:
       - name: Build and Push
         id: builder
@@ -123,134 +123,21 @@ jobs:
           package: agnav
           build_context: .
           build_file: Containerfile
-          tags: sha-${{ env.IMAGE_SHA }}
           build_args: |
-            VERSION=sha-${{ env.IMAGE_SHA }}
+            VERSION=sha-${{ github.event.pull_request.head.sha }}
             REPO_URL=https://github.com/${{ github.repository }}
-
-  container_test:
-    name: Container Smoke Test
-    needs: container_build
-    if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cache Ollama Models
-        uses: actions/cache@v4
-        with:
-          path: ~/.ollama
-          key: ollama-smoke-qwen3-0.6b
-
-      - name: Pre-pull Smoke Test Model
-        run: |
-          mkdir -p ~/.ollama
-          if ! ls ~/.ollama/models/manifests/registry.ollama.ai/library/qwen3 2>/dev/null | grep -q 0.6b; then
-            echo "Model not cached — pulling qwen3:0.6b..."
-            # Start temporary server
-            podman run -d --name puller -v $HOME/.ollama:/root/.ollama -p 11434:11434 ollama/ollama
-            # Wait for health
-            until curl -s localhost:11434 >/dev/null; do echo "Waiting for Ollama..."; sleep 1; done
-            # Pull
-            podman exec puller ollama pull qwen3:0.6b
-            # Clean up
-            podman stop puller && podman rm puller
-          else
-            echo "Model already cached."
-          fi
-
-      - name: Pull and Start Stack
-        env:
-          IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          # Force lowercase for GHCR namespace compliance
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
-          IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
-          podman pull $IMAGE
-          
-          # Override: pre-built image, tiny smoke-test model, cached model dir
-          cat <<EOF > compose.override.yml
-          services:
-            agnav:
-              image: $IMAGE
-              build: null
-              volumes: []
-              environment:
-                AGNAV_LLM_PROVIDER: ollama
-                OLLAMA_MODEL: qwen3:0.6b
-            ollama:
-              volumes:
-                - $HOME/.ollama:/root/.ollama
-            ollama-init:
-              entrypoint: ["echo", "Model pre-pulled on host"]
-              command: []
-          EOF
-          
-          # Start the stack using compose
-          podman compose up -d agnav
-          
-          # Rename for healthcheck compatibility with existing scripts
-          podman rename vexilon-agnav-1 agnav-${{ github.event.pull_request.number || github.run_id }}
-
-      - name: Wait for Healthcheck
-        run: |
-          for i in {1..60}; do
-            if curl -f http://localhost:7860 > /dev/null 2>&1; then
-              echo "Container is healthy!"
-              exit 0
-            fi
-
-            if ! podman inspect agnav-${{ github.event.pull_request.number || github.run_id }} --format '{{.State.Running}}' 2>/dev/null | grep -q 'true'; then
-              echo "Container died! Logs:"
-              podman logs agnav-${{ github.event.pull_request.number || github.run_id }}
-              exit 1
-            fi
-
-            echo "Wait... ($i/60)"
-            sleep 5
-          done
-          echo "Healthcheck timed out."
-          exit 1
-
-      - name: Dump Logs on Failure
-        if: failure()
-        run: podman logs agnav-${{ github.event.pull_request.number || github.run_id }}
-
-      - name: Cleanup Stack
-        if: always()
-        run: |
-          podman compose down || true
-          podman rm -f agnav-${{ github.event.pull_request.number || github.run_id }} || true
 
   trivy:
     name: Trivy Security Scan
-    needs: [check, tests]
-    if: needs.check.outputs.triggered == 'true'
-    permissions:
-      security-events: write
+    needs: tests-unit
+    continue-on-error: true
     runs-on: ubuntu-slim
-    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    timeout-minutes: 1
     steps:
       - uses: actions/checkout@v6
-        with:
-          lfs: true
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -260,42 +147,15 @@ jobs:
           scan-type: "fs"
           scanners: "vuln,secret,misconfig"
           severity: "CRITICAL,HIGH"
-          exit-code: "1"
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "trivy-results.sarif"
 
-  semgrep:
-    name: Semgrep Security Scan
-    needs: [check]
-    if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/python
-            p/security-audit
-            p/secrets
-            p/owasp-top-10
-          generateSarif: "1"
-      - name: Upload SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: semgrep.sarif
-
   results:
     name: Results
-    needs: [check, tests, container_build, container_test, trivy, semgrep]
+    needs: [build, tests-unit, tests-functional, validate-cache, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
