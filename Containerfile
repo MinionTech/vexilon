@@ -1,13 +1,9 @@
-# ─── Stage 0: External Binaries ──────────────────────────────────────────────
-FROM ghcr.io/astral-sh/uv:0.11.3 AS uv_source
-
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 # This stage only re-runs if the model name changes.
-FROM python:3.14-slim AS model_fetcher
+FROM astral/uv:python3.14-trixie-slim AS model_fetcher
 
 # Prevent auth attempts for public models
 ENV HF_HUB_DISABLE_IMPLICIT_TOKEN=1
-COPY --from=uv_source /uv /usr/local/bin/uv
 
 # Install huggingface_hub
 RUN uv pip install --system huggingface_hub
@@ -20,7 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
     ls -l /model_cache/config.json # Verify download succeeded
 
 # ─── Stage 2: Builder ─────────────────────────────────────────────────────────
-FROM python:3.14-slim AS builder
+FROM astral/uv:python3.14-trixie-slim AS builder
 
 # Install build dependencies for Python 3.14 (where wheels might be missing)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,12 +31,10 @@ ENV HF_HOME=/hf_cache \
     HF_HUB_OFFLINE=1 \
     EMBED_MODEL=/hf_cache
 
-COPY --from=uv_source /uv /usr/local/bin/uv
+WORKDIR /app
 
 # Create a non-privileged user for both building and running
 RUN useradd --uid 1000 --create-home --shell /sbin/nologin app
-
-WORKDIR /app
 
 # 1. Install dependencies
 COPY --chown=app:app pyproject.toml uv.lock ./
