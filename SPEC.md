@@ -22,7 +22,7 @@ To reduce the "Information Gap" for union stewards by providing a mobile-first, 
 | **Interface** | Gradio 6 | Rapid, high-performance web UI with native streaming support. |
 | **Logic** | Python 3.12 | Standard for LLM orchestration and RAG pipelines. |
 | **LLM (PROD)** | Hugging Face Router | Access to Qwen/Qwen3-4B-Instruct-2507 via high-speed "Flash" API. |
-| **LLM (DEV)** | Ollama | Local execution of Qwen3:4b-instruct for zero-config, offline development. |
+| **LLM (DEV)** | Ollama | Local execution of qwen3:4b-instruct for zero-config, offline development. |
 | **Embeddings** | `BAAI/bge-small-en-v1.5` | State-of-the-art local CPU embeddings; avoids 3GB CUDA dependencies. |
 | **Vector Store** | FAISS | Ultra-fast, in-memory CPU vector index; requires no database server. |
 | **Deployment** | Podman / HF Spaces | Containerized deployment with immutable production parity. |

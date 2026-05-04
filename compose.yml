@@ -56,11 +56,11 @@ services:
       retries: 5
       start_period: 120s
 
-  # ── Production Simulation (Immutable Cloud-Parity) ───────────────────────────
-  # Run with: podman compose --profile prod up prod
-  prod:
+  # ── Staging Simulation (Immutable Cloud-Parity) ───────────────────────────
+  # Run with: podman compose --profile staging up staging
+  staging:
     <<: *service-defaults
-    profiles: [prod]
+    profiles: [staging]
     build: *common-build
     environment:
       <<: *common-env

@@ -33,7 +33,7 @@ jobs:
     name: Unit Tests
     needs: check
     if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     timeout-minutes: 10
