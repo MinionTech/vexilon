@@ -145,10 +145,12 @@ services:
   smoke-test:
     <<: *service-defaults
     profiles: [ci]
-    build: *common-build
+    build:
+      <<: *common-build
+      target: test_builder
     volumes:
-      - ./.venv:/app/.venv:z
       - ./tests:/app/tests:z
+      - ./.pdf_cache:/app/.pdf_cache:z
     environment:
       <<: *common-env
       PYTHONPATH: /app
@@ -158,7 +160,8 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    command: python scripts/smoke_e2e.py
+    command: >
+      sh -c "apt-get update && apt-get install -y libgomp1 && scripts/integration_e2e.sh"
 
 volumes:
   ollama_data: {}

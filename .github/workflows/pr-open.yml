@@ -144,41 +144,13 @@ jobs:
       - name: Start Podman Socket
         run: systemctl --user start podman.socket
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v5
-
-      - name: Build venv for Container
-        run: uv sync --frozen
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Run E2E Smoke Test Stack
         env:
-          IMAGE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
-          export IMAGE="ghcr.io/${OWNER,,}/${REPO,,}/agnav:sha-${IMAGE_SHA}"
-          podman pull $IMAGE
-          
-          # Use volumes to inject dev deps into the unmodified prod image
-          cat <<EOF > compose.override.yml
-          services:
-            smoke-test:
-              image: $IMAGE
-              build: null
-              volumes:
-                - ./.venv:/app/.venv:z
-                - ./tests:/app/tests:z
-          EOF
-          
-          podman compose --profile ci up --exit-code-from smoke-test smoke-test
+          # We use the 'test_builder' stage (where uv is present) 
+          # to run the full heavyweight suite as defined in compose.yml.
+          podman compose --profile ci up --build --exit-code-from smoke-test smoke-test
 
       - name: Dump Logs on Failure
         if: failure()
