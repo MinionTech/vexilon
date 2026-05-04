@@ -86,9 +86,6 @@ services:
       sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py tests/integration/ -v 
       --junitxml=reports/junit.xml 
       --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml"
-    depends_on:
-      index-refresh:
-        condition: service_completed_successfully
 
   # ── Cache Refresh ────────────────────────────────────────────────────────────
   index-refresh:
