@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-privileged user once
+# Create a non-privileged user once (UID 1001 is standard for this repo)
 RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
 WORKDIR /app
 
@@ -42,8 +42,8 @@ ENV HF_HOME=/hf_cache \
     EMBED_MODEL=/hf_cache
 
 # 1. Install dependencies
-# (pyproject.toml was already copied above, but we copy uv.lock now)
-COPY uv.lock ./
+# We copy pyproject.toml and uv.lock as root.
+COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
@@ -55,12 +55,13 @@ COPY prompts/ ./prompts/
 COPY app.py conftest.py ./
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
+# Tests need writable space for reports and cache, but source code stays read-only.
 FROM builder AS test_builder
 COPY --from=model_fetcher /model_cache /hf_cache
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-install-project
 COPY tests/ ./tests/
-RUN chown -R app:app /app
+RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1001:1001 /app/reports /app/.pytest_cache
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
@@ -75,10 +76,10 @@ ENV HF_HOME=/hf_cache \
 COPY --from=builder /app /app
 COPY --from=model_fetcher /model_cache /hf_cache
 
-# Only create and chown the specific directories that MUST be writable
-RUN mkdir -p /app/.pdf_cache && chown app:app /app/.pdf_cache
+# Only create and chown (by UID) the specific directories that MUST be writable
+RUN mkdir -p /app/.pdf_cache && chown 1001:1001 /app/.pdf_cache
 
-USER app
+USER 1001
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
