@@ -144,7 +144,7 @@ services:
   # ── Container Smoke Test (E2E) ──────────────────────────────────────────────
   smoke-test:
     <<: *service-defaults
-    user: root
+    user: app
     profiles: [ci]
     build:
       <<: *common-build

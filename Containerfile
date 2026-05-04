@@ -36,21 +36,22 @@ ENV HF_HOME=/hf_cache \
     EMBED_MODEL=/hf_cache
 
 COPY --from=uv_source /uv /usr/local/bin/uv
+
+# Create a non-privileged user for both building and running
+RUN useradd --uid 1000 --create-home --shell /sbin/nologin app
+
 WORKDIR /app
 
 # 1. Install dependencies
-COPY pyproject.toml uv.lock ./
+COPY --chown=app:app pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
-COPY data/ ./data/
-COPY agnav/ ./agnav/
-COPY scripts/ ./scripts/
-# Data and indexing engine code copied — Indexing prerequisites complete.
-
-COPY prompts/ ./prompts/
-COPY app.py conftest.py ./
-
+COPY --chown=app:app data/ ./data/
+COPY --chown=app:app agnav/ ./agnav/
+COPY --chown=app:app scripts/ ./scripts/
+COPY --chown=app:app prompts/ ./prompts/
+COPY --chown=app:app app.py conftest.py ./
 
 # ─── Stage 2.5: Test Builder ─────────────────────────────────────────────────
 # This stage adds dev dependencies and test suite for the 'tests' service.
@@ -77,8 +78,7 @@ FROM python:3.14-slim AS runner
 # 1. Runtime system deps and setup
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
-    && rm -rf /var/lib/apt/lists/* && \
-    useradd --uid 1000 --create-home --shell /sbin/nologin agnav
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -90,16 +90,14 @@ ENV HF_HOME=/hf_cache \
     PATH="/app/.venv/bin:$PATH"
 
 # 2. Copy the prepared environment and code from builder
-# We chown the entire /app so the 'agnav' user can touch lock files and cache.
-COPY --from=builder --chown=agnav:agnav /app /app
-COPY --from=model_fetcher --chown=agnav:agnav /model_cache /hf_cache
+COPY --from=builder --chown=app:app /app /app
+COPY --from=model_fetcher --chown=app:app /model_cache /hf_cache
 
 # 3. Build index
-# Create persistent cache directory
-RUN mkdir -p /app/.pdf_cache && chown agnav:agnav /app/.pdf_cache
+RUN mkdir -p /app/.pdf_cache && chown app:app /app/.pdf_cache
 
-USER agnav
-RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
+USER app
+RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
