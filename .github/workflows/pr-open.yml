@@ -29,28 +29,10 @@ jobs:
         with:
           triggers: '["./Containerfile", "./pyproject.toml", "./app.py", "./agnav/", "./scripts/", "./prompts/", "./data/", "./tests/", "./.github/workflows/"]'
 
-  cache_validation:
-    name: Validate FAISS Cache
-    needs: check
-    if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          lfs: true
-
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
-
-      - name: Validate Cache Manifest
-        run: podman compose run --rm cache-validator
-
   tests-unit:
     name: Unit Tests
-    needs: cache_validation
+    needs: check
+    if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -83,6 +65,49 @@ jobs:
           name: coverage-report
           path: reports/
 
+  validate-cache:
+    name: Validate FAISS Cache
+    needs: tests-unit
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
+
+      - name: Validate Cache Manifest
+        run: podman compose run --rm cache-validator
+
+  tests-functional:
+    name: Integration & E2E Tests
+    needs: tests-unit
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Start Podman Socket
+        run: systemctl --user start podman.socket
+
+      - name: Run Functional Integration and E2E Tests
+        run: podman compose --profile ci up --build --abort-on-container-exit functional-tests
+
+      - name: Dump Logs on Failure
+        if: failure()
+        run: podman compose --profile ci logs
+
+      - name: Cleanup
+        if: always()
+        run: podman compose --profile ci down -v || true
+
   build:
     name: Build & Push to GHCR
     needs: tests-unit
@@ -110,35 +135,9 @@ jobs:
             VERSION=sha-${{ env.IMAGE_SHA }}
             REPO_URL=https://github.com/${{ github.repository }}
 
-  tests-functional:
-    name: Integration & E2E Tests
-    needs: check
-    if: needs.check.outputs.triggered == 'true'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Start Podman Socket
-        run: systemctl --user start podman.socket
-
-      - name: Run Functional Integration and E2E Tests
-        run: podman compose --profile ci up --build --abort-on-container-exit functional-tests
-
-      - name: Dump Logs on Failure
-        if: failure()
-        run: podman compose --profile ci logs
-
-      - name: Cleanup
-        if: always()
-        run: podman compose --profile ci down -v || true
-
   trivy:
     name: Trivy Security Scan
-    needs: [tests-unit]
+    needs: tests-unit
     continue-on-error: true
     runs-on: ubuntu-slim
     permissions:
@@ -164,7 +163,7 @@ jobs:
 
   results:
     name: Results
-    needs: [build, tests-unit, tests-functional, trivy]
+    needs: [build, tests-unit, tests-functional, validate-cache, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
