@@ -99,8 +99,8 @@ def convert_to_md(input_path: Path, output_path: Path, verify: bool = True, resu
     source_name = input_path.stem
     
     # Defaults for HF Router
-    primary_model = os.getenv("CONVERT_MODEL", "Qwen/Qwen3-7B-Instruct")
-    secondary_model = os.getenv("CONSENSUS_MODEL", "Qwen/Qwen3-7B-Instruct") 
+    primary_model = os.getenv("CONVERT_MODEL", "Qwen/Qwen3-8B-Instruct")
+    secondary_model = os.getenv("CONSENSUS_MODEL", "Qwen/Qwen3-8B-Instruct") 
     
     print(f"[*] Primary Model:   {primary_model}")
     if verify:

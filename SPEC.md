@@ -21,8 +21,8 @@ To reduce the "Information Gap" for union stewards by providing a mobile-first, 
 |---|---|---|
 | **Interface** | Gradio 6 | Rapid, high-performance web UI with native streaming support. |
 | **Logic** | Python 3.12 | Standard for LLM orchestration and RAG pipelines. |
-| **LLM (PROD)** | Hugging Face Router | Access to Qwen/Qwen3-7B-Instruct via high-speed "Flash" API. |
-| **LLM (DEV)** | Ollama | Local execution of Qwen3-7B-Instruct for zero-config, offline development. |
+| **LLM (PROD)** | Hugging Face Router | Access to Qwen/Qwen3-8B-Instruct via high-speed "Flash" API. |
+| **LLM (DEV)** | Ollama | Local execution of Qwen3-8B-Instruct for zero-config, offline development. |
 | **Embeddings** | `BAAI/bge-small-en-v1.5` | State-of-the-art local CPU embeddings; avoids 3GB CUDA dependencies. |
 | **Vector Store** | FAISS | Ultra-fast, in-memory CPU vector index; requires no database server. |
 | **Deployment** | Podman / HF Spaces | Containerized deployment with immutable production parity. |
@@ -61,7 +61,7 @@ AgNav moves beyond messy PDF-to-text extraction by using a specialized Markdown 
 
 | Component | Rate | Estimated Monthly (moderate use) |
 |---|---|---|
-| **Hugging Face Router** | Qwen3-7B-Instruct (Flash) | ~$5–15 CAD |
+| **Hugging Face Router** | Qwen3-8B-Instruct (Flash) | ~$5–15 CAD |
 | **Embeddings** | `bge-small-en-v1.5` | $0 (Runs locally on CPU) |
 | **Total** | | **~$5–15 CAD/month** |
 
@@ -94,7 +94,7 @@ AgNav includes an optional automated reviewer that double-checks its own answers
 | `AGNAV_USERNAME` | `admin` | Basic Auth username |
 | `AGNAV_PASSWORD` | *(None)* | Basic Auth password (enables auth if set) |
 | `AGNAV_LLM_PROVIDER` | `huggingface` | `huggingface` or `ollama` |
-| `AGNAV_DEFAULT_MODEL` | `Qwen/Qwen3-7B-Instruct` | Primary LLM for responses |
+| `AGNAV_DEFAULT_MODEL` | `Qwen/Qwen3-8B-Instruct` | Primary LLM for responses |
 | `HF_TOKEN` | *(Required for HF)* | Hugging Face API token |
 | `PORT` | `7860` | Gradio port |
 | `SIMILARITY_TOP_K` | `40` | Number of chunks retrieved |
