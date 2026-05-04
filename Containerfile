@@ -34,7 +34,7 @@ ENV HF_HOME=/hf_cache \
 WORKDIR /app
 
 # Create a non-privileged user for both building and running
-RUN useradd --uid 1000 --create-home --shell /sbin/nologin app
+RUN useradd --uid 1001 --create-home --shell /sbin/nologin app
 
 # 1. Install dependencies
 COPY --chown=app:app pyproject.toml uv.lock ./
@@ -93,13 +93,19 @@ COPY --from=model_fetcher --chown=app:app /model_cache /hf_cache
 RUN mkdir -p /app/.pdf_cache && chown app:app /app/.pdf_cache
 
 USER app
-RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
+RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1001,gid=1001 \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
+# ── Final Environment ────────────────────────────────────────────────────────
+ARG VERSION="Dev mode"
+ARG REPO_URL="https://github.com/MinionTech/vexilon"
+ENV AGNAV_VERSION=$VERSION
+ENV AGNAV_REPO_URL=$REPO_URL
+
 EXPOSE 7860
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
 CMD ["python", "app.py"]
