@@ -45,8 +45,7 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b #8.1.0
 
       - name: Install System Dependencies (for Pillow source build)
-        run: |
-          sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev
+        run: sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev
 
       - name: Install Dependencies
         run: uv sync --frozen
