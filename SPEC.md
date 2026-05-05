@@ -41,19 +41,26 @@ AgNav features three operational personas that adapt the AI's "brain" to the ste
 
 ## 5. Security & Reliability
 
-- **Basic Auth:** Optional layer for protecting private HF Spaces deployments.
-- **Prompt Injection Protection:** A 16-pattern regex-based sanitizer that blocks "jailbreak" attempts and system-prompt overrides.
-- **Rate Limiting:** Multi-tier (Minute/Hour) protection to prevent API abuse and cost overruns.
-- **Ephemeral RAM-Only Storage:** FAISS index and conversation history exist only in memory; no records are written to disk.
+- **Prompt Injection Protection:** A multi-layered defense using a 16-pattern regex-based sanitizer. It blocks:
+    - Intent overrides (*"ignore previous instructions"*, *"forget the rules"*)
+    - Roleplay attempts (*"you are now a..."*, *"pretend to be..."*)
+    - Technical bypasses (*"jailbreak"*, *"developer mode"*, *"sudo mode"*)
+    - Structural attacks (*"[[SYSTEM]]"*, *"### system instructions"*)
+- **Rate Limiting:** Multi-tier protection (5/min, 100/hour) to prevent API abuse and cost overruns.
+- **Ephemeral RAM-Only Storage:** The FAISS index and conversation history exist only in memory; no records are written to disk.
+- **PIPA Compliance:** Content-blind architecture ensures no user queries or bot responses are logged.
 
 ---
 
 ## 6. The Forensic Markdown Pipeline
 
-AgNav moves beyond messy PDF-to-text extraction by using a specialized Markdown ingestion strategy:
-1. **Geometric Reconstruction:** PyMuPDF extracts text based on physical page coordinates.
-2. **Structural Restructuring:** An LLM pass adds hierarchical Markdown headers (# Article, ## Section) based on the original document structure.
-3. **Integrity Audit:** A side-by-side verification report (`.integrity.md`) ensures no words were lost or added during conversion.
+AgNav moves beyond messy PDF-to-text extraction by using a specialized "Forensic" ingestion strategy:
+1. **Geometric Reconstruction:** PyMuPDF extracts text based on physical page coordinates, ensuring correct word ordering for complex multi-column layouts.
+2. **Zero-Reasoning Transcription:** An LLM pass adds hierarchical Markdown headers (# Article, ## Section) under strict "PARANOID DETERMINISM" rules:
+    - **VERBATIM ONLY:** Forbidden from changing, adding, or removing a single substantive word.
+    - **NO IMPROVEMENT:** Do not fix typos; if the raw text is broken, preserve it.
+    - **NO NOISE:** Removal of page numbers, URLs, and footers is the only structural change allowed.
+3. **Integrity Audit:** A side-by-side verification report (`.integrity.md`) uses diffing to ensure the resulting Markdown preserves 100% of the substantive source content.
 
 ---
 
@@ -76,12 +83,14 @@ To ensure follow-up questions work reliably (e.g., "What about for part-time?"),
 
 ---
 
-## 9. Verification Bot
-
-AgNav includes an optional automated reviewer that double-checks its own answers:
-1. **Trigger:** Runs immediately after a response finishes streaming.
-2. **Verification:** A second LLM pass compares the generated answer against the retrieved quotes.
-3. **Flagging:** If a claim is unsupported by the text, a "Verification Note" is appended to the response.
+AgNav includes an automated "Adversarial Reviewer" that double-checks its own answers:
+1. **Trigger:** Runs as an asynchronous background task immediately after a response finishes streaming.
+2. **Verification:** A second LLM pass (configured via `VERIFY_MODEL`) compares the generated answer against the retrieved quotes.
+3. **Categories:**
+    - **VERIFIED:** The claim is explicitly supported by the verbatim quote.
+    - **DISPUTED:** The claim is unsupported or contradicts the retrieved text.
+    - **UNCERTAIN:** The citation is unclear or incomplete.
+4. **Flagging:** If any claim is disputed, a "Verification Note" is appended to the response, warning the steward to check the source.
 
 ---
 

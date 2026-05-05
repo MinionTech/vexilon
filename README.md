@@ -117,11 +117,19 @@ The app is ready immediately on page load — no dropdown, no Load button.
 
 ---
 
+## Multi-Perspective Retrieval
+
+To ensure follow-up questions work reliably (e.g., "What about for part-time?"), AgNav uses a **Multi-Perspective Context** pattern:
+
+1. **Query Condensing**: A fast LLM pass reconstructs the user's intent into a standalone search query based on conversation history.
+2. **Perspective Generation**: For complex queries, the system generates 3 different search angles (legal, procedural, factual) to ensure maximum retrieval coverage.
+3. **Multi-Perspective Search**: The FAISS index is searched using all generated queries, and the results are ranked and deduplicated.
+
 ## Forensic Integrity Pipeline
 
 To ensure the AI never "hallucinates" contract language, we use a forensic conversion pipeline:
 
-1. **Precision Extraction**: PDFs are converted to Markdown using `scripts/pdf_to_md.py`.
+1. **Precision Extraction**: PDFs are converted to Markdown using `scripts/pdf_to_md.py` via **PyMuPDF**.
 2. **Dual-Pass Verification**: The converter uses two different LLM passes to verify structural integrity.
 3. **Word Fingerprinting**: We verify that every substantive word in the Markdown exists in the original PDF.
 
@@ -157,8 +165,13 @@ Input sanitization prevents prompt injection attacks by detecting and blocking m
 The sanitization checks for 16+ prompt injection patterns including:
 - `ignore all/previous/system instructions`
 - `forget your/the instructions`
+- `disregard your/the rules`
 - `you are now ... instead`
+- `new (system) prompt:`
+- `[[SYSTEM]]`
 - `jailbreak`, `developer mode`, `sudo mode`
+- `roleplay as`, `pretend you are/to be`
+- `override instructions`, `disable safety`
 
 ### Privacy & Data Retention
 
