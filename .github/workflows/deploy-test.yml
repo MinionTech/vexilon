@@ -39,12 +39,9 @@ jobs:
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          BUNDLE: ${{ steps.resolve.outputs.bundle }}
         run: |
-          TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ]; then
-            TAG=$(echo "$BUNDLE" | jq -r '.agnav')
-          fi
+          TAG="${{ inputs.image_tag || steps.resolve.outputs.tag }}"
+          set -x
           ./.github/scripts/deploy.sh "DerekRoberts/landru" "$TAG"
 
       - name: Verify Space boots successfully
