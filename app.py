@@ -633,7 +633,12 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
 
     # 2. Rate Limit & Security Check
-    user_id = request.client.host if request else "default"
+    user_id = "default"
+    if request:
+        # Handle Hugging Face / Proxy transparently by checking X-Forwarded-For
+        forwarded = request.headers.get("x-forwarded-for")
+        user_id = forwarded.split(",")[0] if forwarded else request.client.host
+
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
         yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
@@ -842,8 +847,7 @@ if __name__ == "__main__":
     allowed_paths = [
         str(LABOUR_LAW_DIR.resolve()), 
         str(Path("docs").resolve()),
-        str(Path("data").resolve()),
-        os.getcwd()
+        str(Path("data/labour_law").resolve()),
     ]
     
     # Restore basic auth if configured in environment
