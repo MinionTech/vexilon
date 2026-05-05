@@ -28,7 +28,7 @@ jobs:
       - name: Resolve image
         id: resolve
         if: ${{ !inputs.image_tag }}
-        uses: bcgov/actions/image-tracker@feat/image-tracker-robust-fetch
+        uses: bcgov/actions/image-tracker@main
         with:
           package: agnav
           token: ${{ github.token }}
