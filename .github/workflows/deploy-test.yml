@@ -41,14 +41,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ]; then
-            TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav // empty')
-          fi
-          if [ -z "$TAG" ]; then
-            echo "::error::Could not resolve image tag and no manual tag provided."
-            exit 1
-          fi
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav')
           set -x
           ./.github/scripts/deploy.sh "DerekRoberts/landru" "$TAG"
 

@@ -31,11 +31,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav // empty')
-          if [ -z "$TAG" ]; then
-            echo "::error::Could not resolve image tag."
-            exit 1
-          fi
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav')
           ./.github/scripts/deploy.sh "MinionTech/vexilon" "$TAG"
 
       - name: Verify Space boots successfully

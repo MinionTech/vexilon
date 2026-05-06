@@ -1,8 +1,8 @@
 name: PR Open
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
 
 concurrency:
   group: pr-${{ github.event.number }}
