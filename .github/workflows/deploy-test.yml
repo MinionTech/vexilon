@@ -35,12 +35,20 @@ jobs:
         with:
           package: agnav
           token: ${{ github.token }}
+          commit: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav')
+          TAG="${{ inputs.image_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav // empty')
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::error::Could not resolve image tag and no manual tag provided."
+            exit 1
+          fi
           set -x
           ./.github/scripts/deploy.sh "DerekRoberts/landru" "$TAG"
 

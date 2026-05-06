@@ -25,12 +25,17 @@ jobs:
         with:
           package: agnav
           token: ${{ github.token }}
+          commit: ${{ github.sha }}
 
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG="${{ steps.resolve.outputs.tag }}"
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav // empty')
+          if [ -z "$TAG" ]; then
+            echo "::error::Could not resolve image tag."
+            exit 1
+          fi
           ./.github/scripts/deploy.sh "MinionTech/vexilon" "$TAG"
 
       - name: Verify Space boots successfully
