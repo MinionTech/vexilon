@@ -23,15 +23,15 @@ jobs:
         id: resolve
         uses: bcgov/actions/image-tracker@feat/image-tracker-digest-resolver
         with:
-          package: agnav
+          package: vexilon/agnav
           token: ${{ github.token }}
-          commit: ${{ github.sha }}
+          revision: ${{ github.sha }}
 
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav')
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.["vexilon/agnav"]')
           ./.github/scripts/deploy.sh "MinionTech/vexilon" "$TAG"
 
       - name: Verify Space boots successfully
