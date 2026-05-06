@@ -40,7 +40,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG="${{ inputs.image_tag || steps.resolve.outputs.tag }}"
+          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav')
           set -x
           ./.github/scripts/deploy.sh "DerekRoberts/landru" "$TAG"
 
