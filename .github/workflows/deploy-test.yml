@@ -9,9 +9,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 permissions: {}
 
@@ -33,7 +30,7 @@ jobs:
       - name: Resolve image
         id: resolve
         if: ${{ !inputs.image_tag }}
-        uses: bcgov/actions/image-tracker@feat/image-tracker-digest-resolver
+        uses: bcgov/actions/image-tracker@main
         with:
           package: agnav
           token: ${{ github.token }}
@@ -53,10 +50,10 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: ./.github/scripts/verify_deployment.sh "DerekRoberts/landru"
 
-      # - name: Notify Owners on Failure
-      #   if: failure()
-      #   uses: bcgov/actions/workflow-notifier@main
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     title: "TEST Deployment Failure: Vexilon"
-      #     labels: "failure,deployment,test"
+      - name: Notify Owners on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "TEST Deployment Failure: Vexilon"
+          labels: "failure,deployment,test"
