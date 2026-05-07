@@ -89,6 +89,7 @@ def _get_default_model():
     return "Qwen/Qwen3-4B-Instruct-2507"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
+HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai")
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
 REVIEWER_MODEL = os.getenv("AGNAV_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
 CONDENSE_MODEL = os.getenv("AGNAV_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
@@ -316,7 +317,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     full_messages = _build_messages(messages, system)
     
     # Use the 'model:provider' syntax for the most robust routing on the HF Router
-    actual_model = f"{model}:featherless-ai" if get_llm_provider() == "huggingface" else model
+    actual_model = f"{model}:{HF_PROVIDER}" if get_llm_provider() == "huggingface" else model
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 300.0}
 
     resp = await client.chat.completions.create(**kwargs)
@@ -327,7 +328,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
     full_messages = _build_messages(messages, system)
     
     # Use the 'model:provider' syntax for the most robust routing on the HF Router
-    actual_model = f"{model}:featherless-ai" if get_llm_provider() == "huggingface" else model
+    actual_model = f"{model}:{HF_PROVIDER}" if get_llm_provider() == "huggingface" else model
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "stream": True, "timeout": 300.0}
 
     stream = await client.chat.completions.create(**kwargs)
@@ -581,8 +582,10 @@ def startup(force_rebuild: bool = False):
     provider = get_llm_provider()
     model = DEFAULT_MODEL_LLM
     logger.info(f"[startup] AgNav {AGNAV_VERSION} starting...")
-    logger.info(f"[startup] Provider: {provider}")
-    logger.info(f"[startup] Default Model: {model}")
+    logger.info(f"[startup] Provider: {get_llm_provider()}")
+    logger.info(f"[startup] Default Model: {DEFAULT_MODEL_LLM}")
+    if get_llm_provider() == "huggingface":
+        logger.info(f"[startup] HF Routing: {HF_PROVIDER}")
 
     _test_registry.load(TESTS_DIR)
     # Ensure cache directory is writable
