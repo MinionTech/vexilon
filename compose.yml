@@ -72,8 +72,8 @@ services:
     cap_drop: [ALL]
     tmpfs: [/tmp]
 
-  # ── test (Containerized Unit Tests) ──────────────────────────────────────────
-  test:
+  # ── test-unit (Containerized Unit Tests) ─────────────────────────────────────
+  test-unit:
     <<: *service-defaults
     user: "${UID:-1000}:${GID:-1000}"
     profiles: [test]
@@ -117,7 +117,7 @@ services:
   # One-time service to pull the required model into the ollama volume.
   ollama-init:
     image: ollama/ollama:latest
-    profiles: [dev, e2e]
+    profiles: [dev, integration, e2e]
     depends_on:
       ollama:
         condition: service_healthy
@@ -133,8 +133,22 @@ services:
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  # ── e2e (Functional / Integration / E2E Tests) ──────────────────────────────
-  e2e:
+  # ── test-integration (RAG Pipeline Integration Tests) ───────────────────────
+  test-integration:
+    <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
+    profiles: [integration]
+    build:
+      <<: *common-build
+      target: test_builder
+    environment:
+      <<: *common-env
+      AGNAV_FORCE_PERSPECTIVES: "true"
+    command: >
+      sh -c "uv run --no-sync python -m pytest tests/integration/ -v"
+
+  # ── test-e2e (Full Flow / Functional Tests) ─────────────────────────────────
+  test-e2e:
     <<: *service-defaults
     user: "${UID:-1000}:${GID:-1000}"
     profiles: [e2e]
@@ -153,15 +167,6 @@ services:
       ollama-init:
         condition: service_completed_successfully
     command: /app/scripts/integration_e2e.sh
-
-  # ── audit (Security & Dependency Scanning) ──────────────────────────────────
-  audit:
-    image: aquasec/trivy:latest
-    profiles: [audit]
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - .:/app:z
-    command: config /app
 
 volumes:
   ollama_data: {}

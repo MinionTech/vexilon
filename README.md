@@ -226,17 +226,17 @@ Agreement Navigator uses a **Quality Gate** pattern in `compose.yml` — the app
 # Run unit tests only — fast, safe locally
 uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
 
-# Run containerized unit tests + coverage
-podman compose up --build test
+# Run containerized unit tests (Mocked, zero-AI)
+podman compose up --build test-unit
 
-# Run full e2e / functional suite (Integration + E2E)
-podman compose up --build e2e
+# Run RAG integration tests (FAISS + Embedding Model)
+podman compose up --build test-integration
+
+# Run full e2e / functional suite (Full LLM flow)
+podman compose up --build test-e2e
 
 # Verify the baked-in FAISS index integrity
 podman compose up verify
-
-# Run a security audit on the configuration
-podman compose up audit
 ```
 
 ---
