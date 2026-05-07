@@ -1,5 +1,9 @@
-import sys
 import os
+# Force online mode BEFORE any Hugging Face imports to ensure API access
+os.environ["HF_HUB_OFFLINE"] = "0"
+os.environ["TRANSFORMERS_OFFLINE"] = "0"
+
+import sys
 import re
 # Agreement Navigator - UI Version: 2026-05-03
 # Integrated RAG Backend + Stabilized Gradio 6 UI
