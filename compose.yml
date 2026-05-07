@@ -35,6 +35,7 @@ services:
   # Mounts source code to allow instant feedback.
   dev:
     <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
     profiles: [dev]
     build:
       <<: *common-build
@@ -75,6 +76,7 @@ services:
   # ── test (Containerized Unit Tests) ──────────────────────────────────────────
   test:
     <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
     profiles: [test]
     build:
       <<: *common-build
@@ -91,6 +93,7 @@ services:
   # ── index (Cache Refresh / Rebuild) ─────────────────────────────────────────
   index:
     <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
     profiles: [index]
     build:
       <<: *common-build
@@ -101,6 +104,7 @@ services:
   # ── verify (Cache Validator) ──────────────────────────────────────────────────
   verify:
     <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
     profiles: [verify]
     build:
       <<: *common-build
@@ -146,6 +150,7 @@ services:
   # ── e2e (Functional / Integration / E2E Tests) ──────────────────────────────
   e2e:
     <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
     profiles: [e2e]
     build:
       <<: *common-build
