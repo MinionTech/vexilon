@@ -18,12 +18,12 @@ x-service-defaults: &service-defaults
   mem_limit: *MEM_LIMIT
   memswap_limit: *MEM_LIMIT
   volumes:
-    - pdf_cache:/app/.pdf_cache:z
+    - ./.pdf_cache:/app/.pdf_cache:z
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
   - .:/app:z
-  - pdf_cache:/app/.pdf_cache:z
+  - ./.pdf_cache:/app/.pdf_cache:z
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /app/.venv         # Lifeboat for packages
   - /hf_cache      # Lifeboat for the model
@@ -31,10 +31,11 @@ x-dev-volumes: &dev-volumes
 
 services:
 
-  # ── Agreement Navigator (Default: Local Dev with Hot-Reload) ─────────────────
-  # Mounts source code to allow instant feedback. No profile = starts by default.
-  agnav:
+  # ── dev (Local Development with Hot-Reload) ──────────────────────────────────
+  # Mounts source code to allow instant feedback.
+  dev:
     <<: *service-defaults
+    profiles: [dev]
     build:
       <<: *common-build
       target: test_builder
@@ -71,8 +72,8 @@ services:
     cap_drop: [ALL]
     tmpfs: [/tmp]
 
-  # ── Testing ──────────────────────────────────────────────────────────────────
-  tests-unit:
+  # ── test (Containerized Unit Tests) ──────────────────────────────────────────
+  test:
     <<: *service-defaults
     profiles: [test]
     build:
@@ -87,20 +88,20 @@ services:
       --junitxml=reports/junit.xml 
       --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml"
 
-  # ── Cache Refresh ────────────────────────────────────────────────────────────
-  index-refresh:
+  # ── index (Cache Refresh / Rebuild) ─────────────────────────────────────────
+  index:
     <<: *service-defaults
-    profiles: [tools]
+    profiles: [index]
     build:
       <<: *common-build
       target: builder
     environment: *common-env
     command: python scripts/build_index.py
 
-  # ── Cache Validator ─────────────────────────────────────────────────────────
-  cache-validator:
+  # ── verify (Cache Validator) ──────────────────────────────────────────────────
+  verify:
     <<: *service-defaults
-    profiles: [tools]
+    profiles: [verify]
     build:
       <<: *common-build
       target: test_builder
@@ -111,6 +112,7 @@ services:
   # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
   ollama:
     image: ollama/ollama:latest
+    profiles: [dev, e2e]
     ports: ["11434:11434"]
     environment:
       - OLLAMA_FLASH_ATTENTION=1
@@ -125,6 +127,7 @@ services:
   # One-time service to pull the required model into the ollama volume.
   ollama-init:
     image: ollama/ollama:latest
+    profiles: [dev, e2e]
     depends_on:
       ollama:
         condition: service_healthy
@@ -140,11 +143,10 @@ services:
         echo "Determined target model from app.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  # ── tests-functional (Integration + E2E) ─────────────────────────────────────
-  # Uses the image's baked-in FAISS index — no host mounts needed.
-  tests-functional:
+  # ── e2e (Functional / Integration / E2E Tests) ──────────────────────────────
+  e2e:
     <<: *service-defaults
-    profiles: [ci]
+    profiles: [e2e]
     build:
       <<: *common-build
       target: functional_builder
@@ -161,6 +163,14 @@ services:
         condition: service_completed_successfully
     command: /app/scripts/integration_e2e.sh
 
+  # ── audit (Security & Dependency Scanning) ──────────────────────────────────
+  audit:
+    image: aquasec/trivy:latest
+    profiles: [audit]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app:z
+    command: config /app
+
 volumes:
   ollama_data: {}
-  pdf_cache: {}

@@ -57,11 +57,11 @@ jobs:
       - name: Run Containerized Unit Tests
         run: |
           mkdir -p reports
-          docker compose --profile test up --build --abort-on-container-exit tests-unit
+          docker compose --profile test up --build --abort-on-container-exit test
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose --profile test logs tests-unit
+        run: docker compose --profile test logs test
 
       - name: Upload Coverage
         uses: actions/upload-artifact@v7
@@ -89,7 +89,7 @@ jobs:
         with:
           load: true
           files: compose.yml
-          targets: cache-validator
+          targets: verify
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max

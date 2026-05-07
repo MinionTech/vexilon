@@ -20,10 +20,9 @@ build/
 # ─── Jupyter ──────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 
-# ─── App runtime data (do NOT commit) ────────────────────────────────────────
-# The FAISS binary cache files are built during image build and tracked via Git LFS.
-# The manifest.json IS tracked in git to validate cache freshness.
-.pdf_cache/
+# ─── App runtime data ────────────────────────────────────────────────────────
+# The FAISS binary cache files are tracked via Git LFS.
+# .pdf_cache/ is now tracked to support repo-based index updates.
 .tmp/
 chroma_db/          # Local vector store data
 gradio_cached_examples/
