@@ -29,25 +29,35 @@ while [ $(date +%s) -lt $END_TIME ]; do
 
   # Temporarily disable -e to handle network errors during polling
   set +e
-  STATUS_JSON=$(curl "${CURL_ARGS[@]}" "https://huggingface.co/api/spaces/$SPACE_ID")
+  # Capture both body and HTTP status code
+  HTTP_RESPONSE=$(curl "${CURL_ARGS[@]}" -w "%{http_code}" "https://huggingface.co/api/spaces/$SPACE_ID")
   CURL_EXIT=$?
   set -e
 
+  HTTP_STATUS="${HTTP_RESPONSE: -3}"
+  STATUS_JSON="${HTTP_RESPONSE:0:${#HTTP_RESPONSE}-3}"
+
   if [ $CURL_EXIT -ne 0 ]; then
-      echo "[verify] curl command failed (exit code $CURL_EXIT). This might be a network glitch. Retrying in $INTERVAL seconds..."
+      echo "[verify] curl command failed (exit code $CURL_EXIT). Retrying in $INTERVAL seconds..."
       sleep $INTERVAL
       continue
   fi
 
-  # Check if we got a valid response (not empty or error)
-  if [ -z "$STATUS_JSON" ] || [[ "$STATUS_JSON" == *"\"error\":\""* ]]; then
-      echo "[verify] API returned error or empty response. Body: $STATUS_JSON. Retrying in $INTERVAL seconds..."
+  if [ "$HTTP_STATUS" != "200" ]; then
+      echo "[verify] API returned HTTP $HTTP_STATUS. Body: $STATUS_JSON. Retrying..."
       sleep $INTERVAL
       continue
   fi
 
-  # Robust status extraction using python (already available in GH Actions)
-  CURRENT_STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys, json; print(str(json.load(sys.stdin).get('runtime', {}).get('stage', 'unknown')).lower())")
+  # Check if we got a valid response (not empty)
+  if [ -z "$STATUS_JSON" ]; then
+      echo "[verify] Received empty response from API. Retrying..."
+      sleep $INTERVAL
+      continue
+  fi
+
+  # Robust status extraction
+  CURRENT_STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys, json; data=json.load(sys.stdin); print(str(data.get('runtime', {}).get('stage', 'unknown')).lower())" 2>/dev/null || echo "unknown")
   
   echo "[verify] Current status: $CURRENT_STATUS ($(($(date +%s) - START_TIME))s)"
   
