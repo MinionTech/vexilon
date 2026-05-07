@@ -76,22 +76,22 @@ Docker deployments.
 Agreement Navigator is "Secure by Default" but optimized for a zero-config developer experience via Podman Compose.
 
 **1. Local Development (Zero-Config)**
-This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app. No API keys or tokens are required.
+This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app with hot-reload. No API keys or tokens are required.
 
 ```bash
-podman compose up --build
+podman compose up --build dev
 ```
 
 > [!NOTE]
 > **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the model weights defined in `app.py`.
 
-**2. Production / Cloud Mode**
-Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requires an internet connection and a valid token.
+**2. Production / Cloud Simulation**
+Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requires an internet connection and a valid token. This simulates the exact environment of the Hugging Face Space.
 
 ```bash
 # Add your HF_TOKEN to .env or export it
 export HF_TOKEN=your_token_here
-podman compose up prod --build
+podman compose up --build staging
 ```
 
 > [!TIP]
@@ -226,11 +226,17 @@ Agreement Navigator uses a **Quality Gate** pattern in `compose.yml` — the app
 # Run unit tests only — fast, safe locally
 uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
 
-# Run full suite (unit + integration) inside the memory-capped container
-podman compose run --rm tests
+# Run containerized unit tests + coverage
+podman compose up --build test
 
-# Gated startup — tests must pass before AgNav launches
-podman compose up
+# Run full e2e / functional suite (Integration + E2E)
+podman compose up --build e2e
+
+# Verify the baked-in FAISS index integrity
+podman compose up verify
+
+# Run a security audit on the configuration
+podman compose up audit
 ```
 
 ---
