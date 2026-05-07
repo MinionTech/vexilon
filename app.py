@@ -315,10 +315,12 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     full_messages = _build_messages(messages, system)
     
     if isinstance(client, AsyncInferenceClient):
+        # Explicitly route to Featherless AI for Qwen3 support
         resp = await client.chat_completion(
             model=model,
             messages=full_messages,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            provider="featherless-ai"
         )
     else:
         resp = await client.chat.completions.create(
@@ -334,11 +336,13 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
     full_messages = _build_messages(messages, system)
     
     if isinstance(client, AsyncInferenceClient):
+        # Explicitly route to Featherless AI for Qwen3 support
         stream = await client.chat_completion(
             model=model,
             messages=full_messages,
             max_tokens=max_tokens,
-            stream=True
+            stream=True,
+            provider="featherless-ai"
         )
     else:
         stream = await client.chat.completions.create(
