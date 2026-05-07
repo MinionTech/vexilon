@@ -86,17 +86,19 @@ git checkout --orphan hf-snapshot
 git reset # Clears the index
 
 # Create the Stub Dockerfile
-# Digests use @ syntax, tags use : syntax
-[[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
-
-# The package name is nested as 'repository/package' in this organization
-_REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
-ORG_NAME="${_REPO_REF%/*}"
-REPO_NAME="${_REPO_REF#*/}"
-REPO_PATH="${ORG_NAME,,}/${REPO_NAME,,}/agnav"
+# If IMAGE_REF is already a full OCI reference (contains @ or registry path), use it as is.
+# Otherwise, construct the full reference using the repository path.
+if [[ "$IMAGE_REF" == *"@"* ]] || [[ "$IMAGE_REF" == *"ghcr.io"* ]]; then
+    FULL_IMAGE_REF="$IMAGE_REF"
+else
+    # Fallback path for legacy/local usage
+    [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
+    _REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
+    FULL_IMAGE_REF="ghcr.io/${_REPO_REF,,}/agnav${separator}${IMAGE_REF}"
+fi
 
 cat <<EOF > Dockerfile
-FROM ghcr.io/${REPO_PATH}${separator}$IMAGE_REF
+FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
 COPY app.py /app/app.py
 # Temporary override to fix stale base image environment

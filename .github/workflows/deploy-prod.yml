@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Resolve image
         id: resolve
@@ -25,12 +27,14 @@ jobs:
         with:
           package: agnav
           token: ${{ github.token }}
+          revision: ${{ github.sha }}
+          max_depth: 20
 
       - name: Push image-based stub to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          TAG=$(echo '${{ steps.resolve.outputs.bundle }}' | jq -r '.agnav')
+          TAG=$(echo '${{ steps.resolve.outputs.images }}' | jq -r '.agnav')
           ./.github/scripts/deploy.sh "MinionTech/vexilon" "$TAG"
 
       - name: Verify Space boots successfully
