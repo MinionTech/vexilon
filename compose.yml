@@ -165,7 +165,7 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    command: python scripts/smoke_e2e.py
+    command: uv run --no-sync python scripts/smoke_e2e.py
 
 volumes:
   ollama_data: {}
