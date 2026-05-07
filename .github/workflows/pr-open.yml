@@ -182,46 +182,9 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-  deploy-test:
-    name: Deploy to Test Environment
-    needs: [build, trivy]
-    runs-on: ubuntu-slim
-    environment: test
-    permissions:
-      contents: read
-      packages: read
-      pull-requests: read
-      issues: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Resolve image
-        id: resolve
-        uses: bcgov/actions/image-tracker@feat/image-tracker-digest-resolver
-        with:
-          package: agnav
-          token: ${{ github.token }}
-          revision: ${{ github.event.pull_request.head.sha || github.sha }}
-          max_depth: 20
-
-      - name: Push image-based stub to Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          set -x
-          ./.github/scripts/deploy.sh "DerekRoberts/landru" "${{ steps.resolve.outputs.image }}"
-
-      - name: Verify Space boots successfully
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: ./.github/scripts/verify_deployment.sh "DerekRoberts/landru"
-
   results:
     name: Results
-    needs: [build, tests-unit, tests-functional, validate-cache, trivy, deploy-test]
+    needs: [build, tests-unit, tests-functional, validate-cache, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
