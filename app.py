@@ -1,7 +1,7 @@
 import os
-# Force online mode BEFORE any Hugging Face imports to ensure API access
+# Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
-os.environ["TRANSFORMERS_OFFLINE"] = "0"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
 import re

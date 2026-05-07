@@ -102,7 +102,7 @@ FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
 COPY app.py /app/app.py
 # Temporary override to fix stale base image environment
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "export TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 && python app.py"]
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then

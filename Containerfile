@@ -101,4 +101,4 @@ ENV AGNAV_REPO_URL=$REPO_URL
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')" || exit 1
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 python app.py"]
