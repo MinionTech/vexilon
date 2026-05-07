@@ -6,6 +6,7 @@ x-var:
 # Reusable environment for all services
 x-common-env: &common-env
   HF_TOKEN: ${HF_TOKEN:-}
+  GRADIO_ANALYTICS_ENABLED: "False"
 
 x-common-build: &common-build
   context: .
