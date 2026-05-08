@@ -49,7 +49,7 @@ services:
         condition: service_completed_successfully
     ports:
       - "${PORT:-7860}:7860"
-    command: /app/.venv/bin/python app.py
+    command: /app/.venv/bin/python src/app.py
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7860')\""]
       interval: 30s
@@ -82,10 +82,11 @@ services:
     environment:
       <<: *common-env
       AGNAV_FORCE_PERSPECTIVES: "true"
+      PYTHONPATH: /app/src
     command: >
       sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py -v 
       --junitxml=reports/junit.xml 
-      --cov=agnav --cov=app --cov-report=xml:reports/coverage.xml"
+      --cov=src/agnav --cov=src/app.py --cov-report=xml:reports/coverage.xml"
 
   # ── verify (Cache Validator) ──────────────────────────────────────────────────
   verify:
@@ -120,7 +121,7 @@ services:
       ollama:
         condition: service_healthy
     volumes:
-      - ./app.py:/app/app.py:ro
+      - ./src/app.py:/app/app.py:ro
     environment:
       - OLLAMA_HOST=ollama:11434
     entrypoint: /bin/sh
@@ -157,7 +158,7 @@ services:
     volumes: []
     environment:
       <<: *common-env
-      PYTHONPATH: /app
+      PYTHONPATH: /app/src
       AGNAV_LLM_PROVIDER: ollama
       OLLAMA_HOST: ollama
       OLLAMA_MODEL: qwen3:0.6b  # Tiny model for fast CI
@@ -165,7 +166,7 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    command: uv run --no-sync python scripts/smoke_e2e.py
+    command: uv run --no-sync python src/scripts/smoke_e2e.py
 
 volumes:
   ollama_data: {}
