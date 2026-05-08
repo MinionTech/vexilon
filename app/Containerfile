@@ -22,11 +22,11 @@ FROM base AS model_fetcher
 COPY pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
-RUN uv pip install --system huggingface_hub
-# Download model directly into the consolidated HF_HOME path.
+RUN uv pip install --system sentence-transformers
+# Use the library itself to save the model, ensuring all structural files (modules.json) are created correctly.
 RUN --mount=type=cache,target=/root/.cache/huggingface \
-    python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/huggingface', local_dir='/hf_cache', token=False, local_dir_use_symlinks=False)" && \
-    ls -l /hf_cache/config.json
+    python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('BAAI/bge-small-en-v1.5', cache_folder='/root/.cache/huggingface'); model.save('/hf_cache')" && \
+    ls -l /hf_cache/modules.json
 
 # ─── Stage 2: Builder (Dependencies Only) ────────────────────────────────────
 FROM base AS builder
@@ -46,6 +46,13 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
+# ─── Stage 2.1: Test/Dev Dependency Builder ──────────────────────────────────
+# This stage adds dev dependencies to the base venv using only lockfiles.
+# This ensures that code changes do NOT invalidate the 75+ package install.
+FROM builder AS test_deps_builder
+RUN --mount=type=cache,target=/root/.cache/uv \
+    HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-install-project
+
 # ─── Stage 2.5: Index Builder (Data-Heavy - Cached) ──────────────────────────
 FROM builder AS index_builder
 COPY --from=model_fetcher /hf_cache /hf_cache
@@ -62,15 +69,14 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
     TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
-# ─── Stage 2.6: App Builder (Adds Source Code) ──────────────────────────────
+# ─── Stage 2.6: App Builder (Final Prod Image Source) ──────────────────────────
 FROM index_builder AS app_builder
 COPY . ./
 
-# ─── Stage 2.7: Test Builder (Adds Dev/Test Tools) ──────────────────────────
-FROM app_builder AS functional_builder
-RUN --mount=type=cache,target=/root/.cache/uv \
-    HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-install-project
-COPY tests/ ./tests/
+# ─── Stage 2.7: Functional Builder (Final Test/Dev Image Source) ───────────────
+FROM test_deps_builder AS functional_builder
+COPY --from=index_builder /app/.pdf_cache /app/.pdf_cache
+COPY . ./
 RUN mkdir -p /app/reports /app/.pytest_cache && chown -R 1000:1000 /app/reports /app/.pytest_cache
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
@@ -84,7 +90,7 @@ COPY --from=app_builder /app /app
 COPY --from=model_fetcher /hf_cache /hf_cache
 
 # Only create and chown (by UID) the specific directories that MUST be writable
-RUN mkdir -p /app/.pdf_cache && chown 1000:1000 /app/.pdf_cache
+RUN mkdir -p /app/.pdf_cache /app/reports && chown -R 1000:1000 /app/.pdf_cache /app/reports
 
 USER 1000
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
