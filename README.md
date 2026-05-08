@@ -245,17 +245,15 @@ podman compose up verify
 
 ```
 vexilon/
-├── src/
+├── agnav/                # Core application workspace
+│   ├── data/             # Knowledge base (markdown files)
+│   ├── prompts/          # System prompts and instructions
+│   ├── scripts/          # Build, conversion, and audit utilities
+│   ├── tests/            # pytest test suite (Unit + Integration)
 │   ├── app.py            # Main entry point (Gradio UI)
-│   └── agnav/            # Core application package
-│       ├── data/         # Knowledge base (markdown files)
-│       ├── prompts/      # System prompts and instructions
-│       ├── scripts/      # Build, conversion, and audit utilities
-│       ├── __init__.py
-│       └── indexing.py   # RAG pipeline and FAISS logic
-├── tests/                # pytest test suite (Unit + Integration)
+│   └── indexing.py       # RAG pipeline and FAISS logic
 ├── .agents/              # AI Agent specifications and SOPs
-├── .github/              # CI/CD workflows and instructions
+├── .github/              # CI/CD workflows and scripts
 ├── Containerfile         # High-integrity Docker build
 ├── compose.yml           # Dev, staging, and test profiles
 └── pyproject.toml        # Dependency management (uv)

@@ -22,7 +22,7 @@ x-service-defaults: &service-defaults
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
-  - ./src:/app:z
+  - ./agnav:/app:z
   - /app/.venv         # Lifeboat for packages
   - ./pyproject.toml:/app/pyproject.toml:ro
   - ./uv.lock:/app/uv.lock:ro
@@ -123,7 +123,7 @@ services:
       ollama:
         condition: service_healthy
     volumes:
-      - ./src/app.py:/app/app.py:ro
+      - ./agnav/app.py:/app/app.py:ro
     environment:
       - OLLAMA_HOST=ollama:11434
     entrypoint: /bin/sh

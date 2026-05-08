@@ -51,20 +51,20 @@ FROM builder AS index_builder
 COPY --from=model_fetcher /hf_cache /hf_cache
 
 # Copy ONLY what's needed for indexing
-COPY src/agnav/data/ ./agnav/data/
-COPY src/agnav/scripts/build_index.py ./agnav/scripts/
-COPY src/app.py ./ 
+COPY agnav/data/ ./data/
+COPY agnav/scripts/build_index.py ./scripts/
+COPY agnav/app.py ./ 
 
 # Build FAISS index — cached by Docker unless data/ or indexing code changes.
 RUN --mount=type=cache,target=/app/.pdf_cache_mount \
-    mkdir -p /app/agnav/.pdf_cache && \
-    cp -r /app/.pdf_cache_mount/* /app/agnav/.pdf_cache/ 2>/dev/null || true && \
-    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python agnav/scripts/build_index.py && \
-    cp -r /app/agnav/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
+    mkdir -p /app/.pdf_cache && \
+    cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
+    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
+    cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 # ─── Stage 2.6: App Builder (Adds Source Code) ──────────────────────────────
 FROM index_builder AS app_builder
-COPY src/ ./
+COPY agnav/ ./
 COPY conftest.py README.md Containerfile compose.yml LICENSE* ./
 
 # ─── Stage 2.7: Test Builder (Adds Dev/Test Tools) ──────────────────────────
@@ -89,10 +89,10 @@ RUN mkdir -p /app/.pdf_cache && chown 1000:1000 /app/.pdf_cache
 
 USER 1000
 RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
-    mkdir -p /app/agnav/.pdf_cache && \
-    cp -r /app/.pdf_cache_mount/* /app/agnav/.pdf_cache/ 2>/dev/null || true && \
-    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python agnav/scripts/build_index.py && \
-    cp -r /app/agnav/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
+    mkdir -p /app/.pdf_cache && \
+    cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
+    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
+    cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 ARG VERSION="Dev mode"
 ARG REPO_URL="https://github.com/MinionTech/vexilon"

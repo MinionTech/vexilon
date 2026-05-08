@@ -100,7 +100,7 @@ fi
 cat <<EOF > Dockerfile
 FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
-COPY src/app.py /app/app.py
+COPY agnav/app.py /app/app.py
 # Temporary override to fix stale base image environment
 CMD ["sh", "-c", "export TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 && python app.py"]
 EOF
@@ -120,10 +120,10 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     git config user.name "GitHub Actions"
 fi
 
-# Re-add only the essentials (including src/app.py as requested)
+# Re-add only the essentials (including agnav/app.py as requested)
 # Ensure SDK is set to docker in README.md (portable sed)
 sed 's/^sdk: .*/sdk: docker/' README.md > README.md.tmp && mv README.md.tmp README.md
-git add Dockerfile README.md src/app.py
+git add Dockerfile README.md agnav/app.py
 git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
 # Auth and Push

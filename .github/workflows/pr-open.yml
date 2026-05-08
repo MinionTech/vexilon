@@ -27,7 +27,7 @@ jobs:
       - id: diff
         uses: bcgov/actions/diff-triggers@main
         with:
-          triggers: '["src/**", "pyproject.toml", "uv.lock", "Containerfile", "compose.yml", "tests/**", ".github/workflows/**"]'
+          triggers: '["agnav/**", "pyproject.toml", "uv.lock", "Containerfile", "compose.yml", ".github/workflows/**"]'
 
   prepare-tests:
     name: Prepare Test Cache
