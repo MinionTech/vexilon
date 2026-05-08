@@ -121,8 +121,8 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
 fi
 
 # Re-add only the essentials (including app/app.py as requested)
-# Ensure SDK is set to docker in README.md (portable sed)
-sed 's/^sdk: .*/sdk: docker/' README.md > README.md.tmp && mv README.md.tmp README.md
+# Assemble the Hugging Face README by stitching metadata and app documentation
+cat app/metadata.yml app/README.md > README.md
 git add Dockerfile README.md app/app.py
 git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
