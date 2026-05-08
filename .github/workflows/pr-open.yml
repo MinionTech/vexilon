@@ -56,7 +56,7 @@ jobs:
 
   test-unit:
     name: Unit Tests
-    needs: [check, prepare-tests]
+    needs: check
     if: needs.check.outputs.triggered == 'true'
     runs-on: ubuntu-24.04
     permissions:
