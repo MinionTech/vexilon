@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-_PKG_ROOT = Path(__file__).parent.parent
+_PKG_ROOT = Path(__file__).parent
 PDF_CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", _PKG_ROOT / ".pdf_cache"))
 LABOUR_LAW_DIR = Path(os.getenv("AGNAV_DATA_DIR", _PKG_ROOT / "data/labour_law"))
 INDEX_PATH = PDF_CACHE_DIR / "index.faiss"

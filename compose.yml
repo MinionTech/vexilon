@@ -98,7 +98,7 @@ services:
       <<: *common-build
       target: functional_builder
     environment: *common-env
-    command: /app/.venv/bin/python scripts/generate_cache_manifest.py validate
+    command: /app/.venv/bin/python agnav/scripts/generate_cache_manifest.py validate
 
   # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
   ollama:
@@ -168,7 +168,7 @@ services:
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-    command: uv run --no-sync python scripts/smoke_e2e.py
+    command: uv run --no-sync python agnav/scripts/smoke_e2e.py
 
 volumes:
   ollama_data: {}
