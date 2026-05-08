@@ -27,7 +27,7 @@ x-dev-volumes: &dev-volumes
   - ./app/pyproject.toml:/app/pyproject.toml:ro
   - ./app/uv.lock:/app/uv.lock:ro
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
-  - /hf_cache      # Lifeboat for the model
+  - ./.tmp/hf_cache:/hf_cache:z           # Persistent, writable model cache
   - ./.tmp/pdf_cache:/app/.pdf_cache:z     # Persistent, writable index
   - ./.tmp/pytest_cache:/app/.pytest_cache:z # Persistent test metadata
 
