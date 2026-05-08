@@ -1,7 +1,0 @@
-# Runtime dependencies for Hugging Face Spaces (Gradio SDK).
-# Gradio itself is installed by HF via sdk_version in README.md — do NOT list it here.
-# Use bare package names per https://huggingface.co/docs/hub/en/spaces-sdks-gradio
-openai
-torch
-sentence-transformers
-faiss-cpu
