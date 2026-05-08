@@ -244,22 +244,31 @@ podman compose up verify
 ## Project Structure
 
 ```
-agnav/
-├── app.py            # Main application (RAG pipeline + Gradio UI)
-├── conftest.py       # pytest root path configuration
-├── pyproject.toml    # Python dependencies (managed by uv)
-├── compose.yml       # Podman Compose config (production parity)
-├── SPEC.md           # Product specification
-├── data/             # Knowledge base source files
-│   └── labour_law/   # Hierarchical document library
-│       ├── primary/       # Collective Agreement, Labour Relations Code
-│       ├── statutory/     # Employment Standards Act, Human Rights Code
-│       ├── resources/     # Steward manuals, ethics guides
-│       ├── jurisprudence/ # Arbitration awards, case precedents
-│       └── tests/         # Test/doctrine registry (Millhaven, KVP)
-└── tests/            # pytest test suite
-    ├── conftest.py         # root: mock embedding model + mock OpenAI client
-    ├── test_chunking.py    # chunk_text() unit tests
-    ├── test_sanitize_input.py  # prompt injection detection tests
-    └── integration/        # real model — run via: podman-compose run --rm tests
+vexilon/
+├── src/
+│   ├── app.py            # Main entry point (Gradio UI)
+│   └── agnav/            # Core application package
+│       ├── data/         # Knowledge base (markdown files)
+│       ├── prompts/      # System prompts and instructions
+│       ├── scripts/      # Build, conversion, and audit utilities
+│       ├── __init__.py
+│       └── indexing.py   # RAG pipeline and FAISS logic
+├── tests/                # pytest test suite (Unit + Integration)
+├── .agents/              # AI Agent specifications and SOPs
+├── .github/              # CI/CD workflows and instructions
+├── Containerfile         # High-integrity Docker build
+├── compose.yml           # Dev, staging, and test profiles
+└── pyproject.toml        # Dependency management (uv)
 ```
+
+## Contributing
+
+We encourage contributions to AgNav via **pull requests**. 
+
+- **Workflow**: Create a branch from `main`, commit your changes, and submit a PR.
+- **Merge**: PRs are evaluated by the maintainers and are typically squash-merged to `main`.
+- **Licensing**: By contributing, you grant a world-wide, royalty-free, perpetual, irrevocable, non-exclusive, transferable license to all users under the terms of the [MIT License](./LICENSE).
+
+---
+
+*Agreement Navigator (AgNav) — Empowering Stewards through Forensic RAG.*
