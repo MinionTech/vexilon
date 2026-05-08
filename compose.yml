@@ -144,7 +144,7 @@ services:
       WATCHFILES_FORCE_POLLING: "true"
       PORT: *PORT
     ports:
-      - "*7860:7860"
+      - "7860:7860"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860"]
       interval: 10s
