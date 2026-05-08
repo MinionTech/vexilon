@@ -7,7 +7,7 @@ regardless of how pytest is invoked.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent / "agnav"))
+sys.path.insert(0, str(Path(__file__).parent))
 
 import pytest
 import os

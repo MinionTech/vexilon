@@ -9,7 +9,7 @@ x-common-env: &common-env
   GRADIO_ANALYTICS_ENABLED: "False"
 
 x-common-build: &common-build
-  context: .
+  context: app
   dockerfile: Containerfile
   args:
     VERSION: ${AGNAV_VERSION:-dev}
@@ -22,10 +22,10 @@ x-service-defaults: &service-defaults
 
 # Development volumes: Enables live-reload while protecting internal container data
 x-dev-volumes: &dev-volumes
-  - ./agnav:/app:z
+  - ./app:/app:z
   - /app/.venv         # Lifeboat for packages
-  - ./pyproject.toml:/app/pyproject.toml:ro
-  - ./uv.lock:/app/uv.lock:ro
+  - ./app/pyproject.toml:/app/pyproject.toml:ro
+  - ./app/uv.lock:/app/uv.lock:ro
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
   - /hf_cache      # Lifeboat for the model
   - /app/.pytest_cache # Lifeboat for test metadata
@@ -123,7 +123,7 @@ services:
       ollama:
         condition: service_healthy
     volumes:
-      - ./agnav/app.py:/app/app.py:ro
+      - ./app/app.py:/app/app.py:ro
     environment:
       - OLLAMA_HOST=ollama:11434
     entrypoint: /bin/sh

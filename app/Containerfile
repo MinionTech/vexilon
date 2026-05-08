@@ -51,9 +51,9 @@ FROM builder AS index_builder
 COPY --from=model_fetcher /hf_cache /hf_cache
 
 # Copy ONLY what's needed for indexing
-COPY agnav/data/ ./data/
-COPY agnav/scripts/build_index.py ./scripts/
-COPY agnav/app.py ./ 
+COPY data/ ./data/
+COPY scripts/build_index.py ./scripts/
+COPY app.py ./ 
 
 # Build FAISS index — cached by Docker unless data/ or indexing code changes.
 RUN --mount=type=cache,target=/app/.pdf_cache_mount \
@@ -64,7 +64,7 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
 
 # ─── Stage 2.6: App Builder (Adds Source Code) ──────────────────────────────
 FROM index_builder AS app_builder
-COPY agnav/ ./
+COPY . ./
 COPY conftest.py README.md Containerfile compose.yml LICENSE* ./
 
 # ─── Stage 2.7: Test Builder (Adds Dev/Test Tools) ──────────────────────────
