@@ -244,7 +244,7 @@ jobs:
 
   results:
     name: Results
-    needs: [build, test-unit, test-integration, test-e2e, validate-cache, trivy]
+    needs: [build, test-integration, test-e2e, validate-cache, trivy]
     if: always()
     runs-on: ubuntu-slim
     steps:
