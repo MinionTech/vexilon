@@ -100,7 +100,7 @@ services:
   # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
   ollama:
     image: ollama/ollama:latest
-    profiles: [dev, e2e]
+    profiles: [dev, integration, e2e]
     ports: ["11434:11434"]
     environment:
       - OLLAMA_FLASH_ATTENTION=1
