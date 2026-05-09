@@ -210,7 +210,7 @@ services:
   test-suite:
     container_name: vexilon-test-suite
     <<: *service-defaults
-    profiles: [smoke, all, asuite]
+    profiles: [smoke, all]
     image: vexilon:dev
     depends_on:
       build-dev:
