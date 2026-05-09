@@ -36,31 +36,64 @@ x-dev-volumes: &dev-volumes
 
 services:
 
-  # ── Master Image Builders ───────────────────────────────────────────────────
+  # ── Master Image Builders
   # These services act as the single source of truth for builds.
   # Other services depend on the images produced here to avoid redundant builds.
 
-  image-test:
+  build-dev:
     <<: *service-defaults
     profiles: [all, test, dev, integration, e2e, smoke, verify]
-    image: vexilon-test:latest
+    image: vexilon:dev
     build:
       <<: *common-build
       target: functional_builder
 
-  image-prod:
+  build-staging:
     <<: *service-defaults
     profiles: [all, staging]
-    image: vexilon-prod:latest
+    image: vexilon:staging
     build: *common-build
 
-  # ── test-unit (Containerized Unit Tests) ─────────────────────────────────────
+  # ── Test Containers
+  test-e2e:
+    <<: *service-defaults
+    profiles: [e2e]
+    image: vexilon:dev
+    depends_on:
+      build-dev:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
+    volumes: []
+    environment:
+      <<: *common-env
+      PYTHONPATH: /app
+      AGNAV_LLM_PROVIDER: ollama
+      OLLAMA_HOST: ollama
+    command: >
+      sh -c "uv run --no-sync python -m pytest tests/test_rag_stream.py -v"
+
+  test-integration:
+    <<: *service-defaults
+    profiles: [integration]
+    image: vexilon:dev
+    depends_on:
+      build-dev:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *common-env
+      AGNAV_FORCE_PERSPECTIVES: "true"
+    command: >
+      sh -c "uv run --no-sync python -m pytest tests/integration/ -v"
+
   test-unit:
     <<: *service-defaults
     profiles: [test]
-    image: vexilon-test:latest
+    image: vexilon:dev
     depends_on:
-      image-test:
+      build-dev:
         condition: service_started
     environment:
       <<: *common-env
@@ -71,18 +104,18 @@ services:
       --junitxml=reports/junit.xml 
       --cov=indexing --cov=main --cov-report=xml:reports/coverage.xml"
 
-  # ── verify (Cache Validator) ──────────────────────────────────────────────────
+  # ── verify (Cache Validator)
   verify:
     <<: *service-defaults
     profiles: [verify]
-    image: vexilon-test:latest
+    image: vexilon:dev
     depends_on:
-      image-test:
+      build-dev:
         condition: service_started
     environment: *common-env
     command: /app/.venv/bin/python scripts/generate_cache_manifest.py validate
 
-  # ── Local LLM (Ollama) ──────────────────────────────────────────────────────
+  # ── Local LLM (Ollama)
   ollama:
     image: ollama/ollama:latest
     profiles: [dev, integration, e2e, all]
@@ -117,49 +150,14 @@ services:
         echo "Determined target model from main.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  # ── test-integration (RAG Pipeline Integration Tests) ───────────────────────
-  test-integration:
-    <<: *service-defaults
-    profiles: [integration]
-    image: vexilon-test:latest
-    depends_on:
-      image-test:
-        condition: service_started
-      ollama-init:
-        condition: service_completed_successfully
-    environment:
-      <<: *common-env
-      AGNAV_FORCE_PERSPECTIVES: "true"
-    command: >
-      sh -c "uv run --no-sync python -m pytest tests/integration/ -v"
-
-  # ── test-e2e (Full Flow / Functional Tests) ─────────────────────────────────
-  test-e2e:
-    <<: *service-defaults
-    profiles: [e2e]
-    image: vexilon-test:latest
-    depends_on:
-      image-test:
-        condition: service_started
-      ollama-init:
-        condition: service_completed_successfully
-    volumes: []
-    environment:
-      <<: *common-env
-      PYTHONPATH: /app
-      AGNAV_LLM_PROVIDER: ollama
-      OLLAMA_HOST: ollama
-    command: >
-      sh -c "uv run --no-sync python -m pytest tests/test_rag_stream.py -v"
-
-  # ── dev (Local Development with Hot-Reload) ──────────────────────────────────
+  # ── dev (Local Development with Hot-Reload)
   dev:
     <<: *service-defaults
     user: "${UID:-1000}:${GID:-1000}"
     profiles: [dev, all]
-    image: vexilon-test:latest
+    image: vexilon:dev
     depends_on:
-      image-test:
+      build-dev:
         condition: service_started
       ollama-init:
         condition: service_completed_successfully
@@ -178,13 +176,13 @@ services:
     command: >
       sh -c "uv run watchfiles --ignore-paths .pdf_cache,data,reports 'uv run python main.py' ."
 
-  # ── Staging Simulation (Immutable Cloud-Parity) ───────────────────────────
+  # ── Staging Simulation (Immutable Cloud-Parity)
   staging:
     <<: *service-defaults
     profiles: [staging, all]
-    image: vexilon-prod:latest
+    image: vexilon:staging
     depends_on:
-      image-prod:
+      build-staging:
         condition: service_started
     environment:
       <<: *common-env
@@ -202,9 +200,9 @@ services:
   grand-slam:
     <<: *service-defaults
     profiles: [smoke, all]
-    image: vexilon-test:latest
+    image: vexilon:dev
     depends_on:
-      image-test:
+      build-dev:
         condition: service_started
       dev:
         condition: service_healthy
@@ -225,9 +223,9 @@ services:
   suite:
     <<: *service-defaults
     profiles: [asuite]
-    image: vexilon-test:latest
+    image: vexilon:dev
     depends_on:
-      image-test:
+      build-dev:
         condition: service_started
       ollama-init:
         condition: service_completed_successfully
