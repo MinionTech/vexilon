@@ -18,7 +18,7 @@ This command will:
 1. Build all atomic service images.
 2. Run the complete test battery.
 3. Start `dev` (port 7860) and `staging` (port 7861) environments.
-4. Verify both live environments via the `test-smoke` auditor.
+4. Verify both live environments via the `grand-slam` master auditor.
 5. Automatically shutdown all services on completion.
 
 > [!TIP]

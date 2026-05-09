@@ -74,7 +74,7 @@ services:
   # ── verify (Cache Validator) ──────────────────────────────────────────────────
   verify:
     <<: *service-defaults
-    profiles: [verify, all]
+    profiles: [verify]
     image: vexilon-test:latest
     depends_on:
       image-test:
@@ -101,7 +101,7 @@ services:
   # One-time service to pull the required model into the ollama volume.
   ollama-init:
     image: ollama/ollama:latest
-    profiles: [dev, integration, e2e, all]
+    profiles: [all, dev, integration, e2e]
     depends_on:
       ollama:
         condition: service_healthy
@@ -171,7 +171,7 @@ services:
     ports:
       - "7860:7860"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7860')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -193,7 +193,7 @@ services:
     ports:
       - "7861:7860"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7860')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -206,6 +206,31 @@ services:
     depends_on:
       image-test:
         condition: service_started
+      dev:
+        condition: service_healthy
+      staging:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      SMOKE_TARGET_DEV: "http://dev:7860"
+      SMOKE_TARGET_STAGING: "http://staging:7860"
+    command: >
+      sh -c "
+      echo 'Running Unit Tests...' && uv run --no-sync python -m pytest tests/test_*.py -v &&
+      echo 'Running Integration Tests...' && uv run --no-sync python -m pytest tests/integration/ -v &&
+      echo 'Running E2E Tests...' && uv run --no-sync python -m pytest tests/test_rag_stream.py -v &&
+      echo 'Running Smoke Tests...' && uv run --no-sync python scripts/smoke_multi.py
+      "
+
+  suite:
+    <<: *service-defaults
+    profiles: [asuite]
+    image: vexilon-test:latest
+    depends_on:
+      image-test:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
       dev:
         condition: service_healthy
       staging:

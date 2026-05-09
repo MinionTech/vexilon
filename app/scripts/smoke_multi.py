@@ -20,21 +20,31 @@ def test_target(url, name):
         logger.info(f"[{name}] Sending query: 'What is the nexus test?'")
         # chat_handler inputs: [message, history, persona]
         # persona is index 2, defaults to "Lookup"
-        result = client.predict(
+        # Use submit() instead of predict() for streaming endpoints
+        job = client.submit(
             "What is the nexus test?", 
             [], 
             "Lookup", 
             api_name="/chat_handler"
         )
         
+        # Wait for the stream to complete and get the final result
+        result = None
+        for r in job:
+            result = r
+            
+        if not result:
+            logger.error(f"[{name}] FAILURE: No result returned from stream.")
+            return False
+            
         # Result structure: [chatbot_list, msg_val, submit_val, toolbox_val]
-        # In Gradio 5.x+, chatbot output is a list of message dicts
         chatbot = result[0]
         if not chatbot:
             logger.error(f"[{name}] FAILURE: Chatbot history is empty.")
             return False
             
         last_msg = chatbot[-1]
+        # In Gradio 5, messages are dicts with "content" and "role"
         answer = last_msg.get("content", "")
         
         logger.info(f"[{name}] Received answer (length {len(answer)})")

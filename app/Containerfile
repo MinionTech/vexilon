@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
 # Layer 3: Final Source Code
 COPY . ./
 
-# ─── Stage 2.4: Functional Builder (Dev/Test Source) ──────────────────────────
+# ─── Stage 2.5: Functional Builder (Dev/Test Source) ──────────────────────────
 FROM builder AS functional_builder
 # Layer dev dependencies on top of the production venv
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -77,20 +77,15 @@ FROM base AS runner
 # Use venv path for all subsequent commands
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy everything as root (read-only for the application user)
+# Copy everything from the builder (including the pre-computed index)
 COPY --from=builder /app /app
 COPY --from=model_fetcher /model /model
 
-# Only create and chown (by UID) the specific directories that MUST be writable
+# Ensure the app user owns the directories it needs to write to (reports/cache)
 RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache /model && \
     chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache /model
 
 USER 1000
-RUN --mount=type=cache,target=/app/.pdf_cache_mount,uid=1000,gid=1000 \
-    mkdir -p /app/.pdf_cache && \
-    cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
-    TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
-    cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 ARG VERSION="Dev mode"
 ARG REPO_URL="https://github.com/MinionTech/vexilon"
