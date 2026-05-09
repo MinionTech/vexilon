@@ -43,7 +43,7 @@ services:
   build-dev:
     container_name: vexilon-build-dev
     <<: *service-defaults
-    profiles: [all, test, dev, integration, e2e, smoke, verify]
+    profiles: [test, dev, integration, e2e, all]
     image: vexilon:dev
     build:
       <<: *common-build
@@ -93,7 +93,7 @@ services:
   test-e2e:
     container_name: vexilon-test-e2e
     <<: *service-defaults
-    profiles: [test, e2e, all]
+    profiles: [test, dev, integration, e2e, all]
     image: vexilon:dev
     depends_on:
       test-integration:
@@ -112,7 +112,7 @@ services:
   test-cache:
     container_name: vexilon-test-cache
     <<: *service-defaults
-    profiles: [test, verify, all]
+    profiles: [test, dev, integration, e2e, all]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -124,7 +124,7 @@ services:
   ollama:
     container_name: vexilon-ollama
     image: ollama/ollama:latest
-    profiles: [dev, integration, e2e, all]
+    profiles: [test, dev, integration, e2e, all]
     ports: ["11434:11434"]
     environment:
       OLLAMA_FLASH_ATTENTION: 1
@@ -141,7 +141,7 @@ services:
   ollama-init:
     container_name: vexilon-ollama-init
     image: ollama/ollama:latest
-    profiles: [all, dev, integration, e2e]
+    profiles: [test, dev, integration, e2e, all]
     depends_on:
       ollama:
         condition: service_healthy
@@ -163,7 +163,7 @@ services:
     container_name: vexilon-dev
     <<: *service-defaults
     user: "${UID:-1000}:${GID:-1000}"
-    profiles: [test, dev, all]
+    profiles: [test, dev, integration, e2e, all]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -189,7 +189,7 @@ services:
   staging:
     container_name: vexilon-staging
     <<: *service-defaults
-    profiles: [test, staging, all]
+    profiles: [test, dev, integration, e2e, all]
     image: vexilon:staging
     depends_on:
       build-staging:
