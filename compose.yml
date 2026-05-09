@@ -63,8 +63,8 @@ services:
     profiles: [test, all]
     image: vexilon:dev
     depends_on:
-      build-dev:
-        condition: service_started
+      test-cache:
+        condition: service_completed_successfully
     environment:
       <<: *common-env
       AGNAV_FORCE_PERSPECTIVES: "true"
@@ -109,11 +109,10 @@ services:
     command: >
       sh -c "uv run --no-sync python -m pytest tests/test_rag_stream.py -v"
 
-  # ── verify (Cache Validator)
-  verify:
-    container_name: vexilon-verify
+  test-cache:
+    container_name: vexilon-test-cache
     <<: *service-defaults
-    profiles: [verify]
+    profiles: [verify, all]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -158,7 +157,8 @@ services:
         echo "Determined target model from main.py: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
-  # ── dev (Local Development with Hot-Reload)
+  # ── App Containers
+  # Development with Hot-Reload (Ollama)
   dev:
     container_name: vexilon-dev
     <<: *service-defaults
@@ -185,7 +185,7 @@ services:
     command: >
       sh -c "uv run watchfiles --ignore-paths .pdf_cache,data,reports 'uv run python main.py' ."
 
-  # ── Staging Simulation (Immutable Cloud-Parity)
+  # Staging with Immutable Cloud-Parity (HuggingFace Inference)
   staging:
     container_name: vexilon-staging
     <<: *service-defaults
@@ -234,7 +234,7 @@ services:
       test-smoke:
         condition: service_completed_successfully
     command: >
-      sh -c "echo '🏆 GRAND SLAM SUCCESS: ALL SYSTEMS VERIFIED'"
+      sh -c "echo 'ALL SYSTEMS VERIFIED'"
 
 volumes:
   ollama_data: {}

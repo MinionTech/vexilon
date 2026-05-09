@@ -37,20 +37,40 @@ def test_target(url, name):
             logger.error(f"[{name}] FAILURE: No result returned from stream.")
             return False
             
+        # Log the full result for diagnostics
+        logger.debug(f"[{name}] Full result: {result}")
+        
         # Result structure: [chatbot_list, msg_val, submit_val, toolbox_val]
         chatbot = result[0]
+        logger.info(f"[{name}] Chatbot history length: {len(chatbot)}")
+        
         if not chatbot:
             logger.error(f"[{name}] FAILURE: Chatbot history is empty.")
             return False
             
         last_msg = chatbot[-1]
-        # In Gradio 5, messages are dicts with "content" and "role"
-        answer = last_msg.get("content", "")
+        logger.info(f"[{name}] Last message type: {type(last_msg)}")
+        logger.info(f"[{name}] Last message content: {last_msg}")
         
-        logger.info(f"[{name}] Received answer (length {len(answer)})")
+        # Gradio 6 chatbot format: content is a list of dictionaries (text, images, etc.)
+        answer = ""
+        if isinstance(last_msg, dict):
+            content_val = last_msg.get("content", "")
+            if isinstance(content_val, list):
+                # Extract all text parts and join them
+                answer = "".join([part.get("text", "") for part in content_val if isinstance(part, dict)])
+            else:
+                # Fallback for Gradio 5 or simple strings
+                answer = str(content_val)
+        elif isinstance(last_msg, (list, tuple)):
+            # Old Gradio format: [user_msg, assistant_msg]
+            answer = last_msg[1] if len(last_msg) > 1 else ""
+            
+        logger.info(f"[{name}] Extracted answer (length {len(answer)})")
         
         if len(answer) < 50:
             logger.error(f"[{name}] FAILURE: Answer too short. RAG might be failing.")
+            logger.info(f"[{name}] DEBUG ANSWER: {answer}")
             return False
             
         logger.info(f"[{name}] SUCCESS: Environment verified.")
