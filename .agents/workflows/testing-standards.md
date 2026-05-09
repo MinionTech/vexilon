@@ -24,12 +24,12 @@ This document defines the testing protocols for Vexilon. **All agents must verif
 - **Run**: `pytest app/tests/ -v`
 
 ### Integration Tests (`app/tests/integration/`)
-- **Environment**: REQUIRES `manual-only` profile.
+- **Environment**: Containerized environment.
 - **Focus**: Full RAG pipeline flow from query to response.
-- **Run**: `podman compose --profile manual-only up test-integration-model`
+- **Run**: `podman compose up test-integration-model`
 
 ### E2E / Smoke Tests (`app/scripts/smoke_multi.py`)
-- **Environment**: REQUIRES `manual-only` profile.
+- **Environment**: Containerized environment.
 - **Focus**: Functional validation of the Gradio interface and final response integrity.
 
 ## 3. Coverage & Verification

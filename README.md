@@ -66,7 +66,7 @@ Agreement Navigator is "Secure by Default" but optimized for a zero-config devel
 This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app with hot-reload. No API keys or tokens are required.
 
 ```bash
-podman compose --profile manual-only up --build dev
+podman compose up --build dev
 ```
 
 > [!NOTE]
@@ -78,7 +78,7 @@ Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requir
 ```bash
 # Add your HF_TOKEN to .env or export it
 export HF_TOKEN=your_token_here
-podman compose --profile manual-only up --build staging
+podman compose up --build staging
 ```
 
 > [!TIP]
@@ -215,19 +215,19 @@ Agreement Navigator uses a **Quality Gate** pattern in `compose.yml` — the app
 uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
-podman compose --profile manual-only up --build test-unit
+podman compose up --build test-unit
 
 # Run model integration tests (FAISS + Embedding Model)
-podman compose --profile manual-only up --build test-integration-model
+podman compose up --build test-integration-model
 
 # Run app integration tests (Functional RAG flow)
-podman compose --profile manual-only up --build test-integration-app
+podman compose up --build test-integration-app
 
 # Run full e2e suite (Live UI + Live LLM)
-podman compose --profile manual-only up --build test-e2e
+podman compose up --build test-e2e
 
 # Verify everything at once (The "Grand Slam")
-podman compose --profile manual-only up --build test-everything && podman compose down
+podman compose up --build test-everything && podman compose down
 ```
 
 ---
