@@ -206,11 +206,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── grand-slam (The Master Auditor) ─────────────────────────────────────────
-  grand-slam:
-    container_name: vexilon-grand-slam
+  # ── test-suite (The Master Auditor) ─────────────────────────────────────────
+  test-suite:
+    container_name: vexilon-test-suite
     <<: *service-defaults
-    profiles: [smoke, all]
+    profiles: [smoke, all, asuite]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -231,31 +231,6 @@ services:
       echo 'Running Smoke Tests...' && uv run --no-sync python scripts/smoke_multi.py
       "
 
-  suite:
-    container_name: vexilon-suite
-    <<: *service-defaults
-    profiles: [asuite]
-    image: vexilon:dev
-    depends_on:
-      build-dev:
-        condition: service_started
-      ollama-init:
-        condition: service_completed_successfully
-      dev:
-        condition: service_healthy
-      staging:
-        condition: service_healthy
-    environment:
-      <<: *common-env
-      SMOKE_TARGET_DEV: "http://dev:7860"
-      SMOKE_TARGET_STAGING: "http://staging:7860"
-    command: >
-      sh -c "
-      echo 'Running Unit Tests...' && uv run --no-sync python -m pytest tests/test_*.py -v &&
-      echo 'Running Integration Tests...' && uv run --no-sync python -m pytest tests/integration/ -v &&
-      echo 'Running E2E Tests...' && uv run --no-sync python -m pytest tests/test_rag_stream.py -v &&
-      echo 'Running Smoke Tests...' && uv run --no-sync python scripts/smoke_multi.py
-      "
 
 volumes:
   ollama_data: {}
