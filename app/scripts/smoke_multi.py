@@ -82,12 +82,12 @@ def test_target(url, name):
 async def main():
     targets = {
         "DEV": os.getenv("SMOKE_TARGET_DEV", "http://dev:7860"),
-        "STAGING": os.getenv("SMOKE_TARGET_STAGING", "http://staging:7861")
+        "STAGING": os.getenv("SMOKE_TARGET_STAGING", "http://staging:7860")
     }
     
     # We run these in a threadpool to keep the async loop happy 
     # as gradio_client is primarily synchronous.
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     tasks = [
         loop.run_in_executor(None, test_target, url, name) 
         for name, url in targets.items()

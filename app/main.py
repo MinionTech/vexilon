@@ -827,7 +827,7 @@ with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
     """)
 
     msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox], api_name="chat_handler")
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox], api_name="chat_handler")
+    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
