@@ -49,6 +49,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Model and FAISS Index (Cached unless data/ or scripts change)
 COPY --from=model_fetcher /model /model
 COPY data/ ./data/
+COPY indexing.py ./
 COPY scripts/build_index.py ./scripts/
 COPY main.py ./ 
 
