@@ -10,6 +10,10 @@ concurrency:
 
 permissions: {}
 
+env:
+  OLLAMA_MODEL_ID: tinyllama
+  OLLAMA_DATA_PATH: ./.ollama_data
+
 jobs:
   check:
     name: Check Triggers
@@ -41,6 +45,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           lfs: true
+
+      - name: Cache Ollama Models
+        uses: actions/cache@v4
+        with:
+          path: ./.ollama_data
+          key: ollama-models-${{ env.OLLAMA_MODEL_ID }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -133,6 +143,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Cache Ollama Models
+        uses: actions/cache@v4
+        with:
+          path: ./.ollama_data
+          key: ollama-models-${{ env.OLLAMA_MODEL_ID }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -202,6 +218,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Cache Ollama Models
+        uses: actions/cache@v4
+        with:
+          path: ./.ollama_data
+          key: ollama-models-${{ env.OLLAMA_MODEL_ID }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

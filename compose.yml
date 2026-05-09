@@ -11,6 +11,7 @@ x-common-env: &common-env
   TRANSFORMERS_OFFLINE: "1"
   EMBED_MODEL: /model
   OLLAMA_HOST: ollama:11434
+  OLLAMA_MODEL_ID: ${OLLAMA_MODEL_ID:-qwen3:4b-instruct}
 
 x-common-build: &common-build
   context: app
@@ -90,7 +91,7 @@ services:
       OLLAMA_FLASH_ATTENTION: 1
       OLLAMA_HOST: 0.0.0.0
     volumes:
-      - ollama_data:/root/.ollama
+      - ${OLLAMA_DATA_PATH:-ollama_data}:/root/.ollama
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -112,8 +113,8 @@ services:
     command:
       - -c
       - |
-        TARGET_MODEL=$$(sed -n 's/.*OLLAMA_MODEL_ID = "\(.*\)".*/\1/p' /app/main.py)
-        echo "Determined target model from main.py: $$TARGET_MODEL"
+        TARGET_MODEL=$${OLLAMA_MODEL_ID:-$$(sed -n 's/.*OLLAMA_MODEL_ID = "\(.*\)".*/\1/p' /app/main.py)}
+        echo "Determined target model: $$TARGET_MODEL"
         ollama pull $$TARGET_MODEL
 
   # ── Tests

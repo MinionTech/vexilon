@@ -47,8 +47,9 @@ from indexing import (
 
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
-# Change this here to update the entire stack (including the puller).
 OLLAMA_MODEL_ID = "qwen3:4b-instruct"
+# Allow environment override for CI (e.g. tinyllama for smoke tests)
+CURRENT_MODEL_ID = os.getenv("OLLAMA_MODEL_ID", OLLAMA_MODEL_ID)
 
 # Configure structured logging
 logging.basicConfig(
@@ -85,7 +86,7 @@ def _get_default_model():
     # Default to Hugging Face or Ollama
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
-        return val if (val and val.strip()) else OLLAMA_MODEL_ID
+        return val if (val and val.strip()) else CURRENT_MODEL_ID
     return "Qwen/Qwen3-4B-Instruct-2507"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())

@@ -16,6 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd --uid 1000 --create-home --shell /sbin/nologin app
 WORKDIR /app
 
+# Shared Runtime Configuration
+EXPOSE 7860
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=10 \
+  CMD curl -f http://localhost:7860/ || exit 1
+
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 FROM base AS model_fetcher
 
@@ -94,7 +99,4 @@ ARG REPO_URL="https://github.com/MinionTech/vexilon"
 ENV AGNAV_VERSION=$VERSION
 ENV AGNAV_REPO_URL=$REPO_URL
 
-EXPOSE 7860
-HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=10 \
-  CMD curl -f http://localhost:7860/ || exit 1
 CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 python main.py"]
