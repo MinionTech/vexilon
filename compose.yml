@@ -42,7 +42,7 @@ services:
   build-dev:
     container_name: vexilon-build-dev
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     build:
       <<: *common-build
@@ -51,7 +51,7 @@ services:
   build-staging:
     container_name: vexilon-build-staging
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:staging
     build: *common-build
 
@@ -61,7 +61,7 @@ services:
     container_name: vexilon-dev
     <<: *service-defaults
     user: "${UID:-1000}:${GID:-1000}"
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -87,7 +87,7 @@ services:
   staging:
     container_name: vexilon-staging
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:staging
     depends_on:
       build-staging:
@@ -108,7 +108,7 @@ services:
   ollama:
     container_name: vexilon-ollama
     image: ollama/ollama:latest
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     ports: ["11434:11434"]
     environment:
       OLLAMA_FLASH_ATTENTION: 1
@@ -125,7 +125,7 @@ services:
   ollama-init:
     container_name: vexilon-ollama-init
     image: ollama/ollama:latest
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     depends_on:
       ollama:
         condition: service_healthy
@@ -147,7 +147,7 @@ services:
   test-unit:
     container_name: vexilon-test-unit
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       test-cache:
@@ -166,7 +166,7 @@ services:
   test-integration-model:
     container_name: vexilon-test-integration-model
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       test-cache:
@@ -184,7 +184,7 @@ services:
   test-integration-app:
     container_name: vexilon-test-integration-app
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       test-cache:
@@ -205,7 +205,7 @@ services:
   test-cache:
     container_name: vexilon-test-cache
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -218,7 +218,7 @@ services:
   test-e2e:
     container_name: vexilon-test-e2e
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       dev:
@@ -239,7 +239,7 @@ services:
   test-everything:
     container_name: vexilon-test-everything
     <<: *service-defaults
-    profiles: [test, manual-only]
+    profiles: [manual-only]
     image: vexilon:dev
     depends_on:
       test-unit:

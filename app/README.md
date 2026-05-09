@@ -215,19 +215,19 @@ Agreement Navigator uses a **Quality Gate** pattern in `compose.yml` — the app
 uv run pytest tests/ --ignore=tests/integration --ignore=scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
-podman compose --profile test up --build test-unit
+podman compose --profile manual-only up --build test-unit
 
 # Run model integration tests (FAISS + Embedding Model)
-podman compose --profile test up --build test-integration-model
+podman compose --profile manual-only up --build test-integration-model
 
 # Run app integration tests (Functional RAG flow)
-podman compose --profile test up --build test-integration-app
+podman compose --profile manual-only up --build test-integration-app
 
 # Run full e2e suite (Live UI + Live LLM)
-podman compose --profile test up --build test-e2e
+podman compose --profile manual-only up --build test-e2e
 
 # Verify everything at once (The "Grand Slam")
-podman compose --profile test up --build test-everything
+podman compose --profile manual-only up --build test-everything
 ```
 
 ---

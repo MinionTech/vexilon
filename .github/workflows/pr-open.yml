@@ -82,11 +82,11 @@ jobs:
       - name: Run Containerized Unit Tests
         run: |
           mkdir -p reports
-          docker compose --profile test up --build --abort-on-container-exit test-unit
+          docker compose --profile manual-only up --build --abort-on-container-exit test-unit
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose --profile test logs test-unit
+        run: docker compose --profile manual-only logs test-unit
 
       - name: Upload Coverage
         uses: actions/upload-artifact@v7
@@ -120,7 +120,7 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Validate Cache Manifest
-        run: docker compose --profile test up --build test-cache
+        run: docker compose --profile manual-only up --build test-cache
 
   test-integration-model:
     name: Integration Tests (Model)
@@ -147,15 +147,15 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Run Integration Tests
-        run: docker compose --profile test up --build test-integration-model
+        run: docker compose --profile manual-only up --build test-integration-model
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose --profile test logs
+        run: docker compose --profile manual-only logs
 
       - name: Cleanup
         if: always()
-        run: docker compose --profile test down -v || true
+        run: docker compose --profile manual-only down -v || true
 
   test-integration-app:
     name: Integration Tests (App)
@@ -182,15 +182,15 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Run Integration Tests (App)
-        run: docker compose --profile test up --build test-integration-app
+        run: docker compose --profile manual-only up --build test-integration-app
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose --profile test logs
+        run: docker compose --profile manual-only logs
 
       - name: Cleanup
         if: always()
-        run: docker compose --profile test down -v || true
+        run: docker compose --profile manual-only down -v || true
 
   test-e2e:
     name: End-to-End Tests
@@ -217,15 +217,15 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Run E2E Tests
-        run: docker compose --profile test up --build test-everything
+        run: docker compose --profile manual-only up --build test-everything
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose --profile test logs
+        run: docker compose --profile manual-only logs
 
       - name: Cleanup
         if: always()
-        run: docker compose --profile test down -v || true
+        run: docker compose --profile manual-only down -v || true
 
   build:
     name: Build & Push to GHCR

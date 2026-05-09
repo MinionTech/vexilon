@@ -11,7 +11,7 @@ For the full project documentation, please see [app/README.md](./app/README.md).
 To verify the entire repository (Unit, Integration, E2E, and Live Smoke Tests) in a single "Grand Slam" pass, run:
 
 ```bash
-podman compose --profile test up --build test-everything && podman compose down
+podman compose --profile manual-only up --build test-everything && podman compose down
 ```
 
 This command will:
