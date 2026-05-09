@@ -11,14 +11,14 @@ For the full project documentation, please see [app/README.md](./app/README.md).
 To verify the entire repository (Unit, Integration, E2E, and Live Smoke Tests) in a single "Grand Slam" pass, run:
 
 ```bash
-podman compose --profile all up --build --abort-on-container-exit test-suite
+podman compose --profile all up --build --abort-on-container-exit test-everything
 ```
 
 This command will:
 1. Build all atomic service images.
 2. Run the complete test battery.
 3. Start `dev` (port 7860) and `staging` (port 7861) environments.
-4. Verify both live environments via the `test-suite` master auditor.
+4. Verify both live environments via the `test-everything` master auditor.
 5. Automatically shutdown all services on completion.
 
 > [!TIP]

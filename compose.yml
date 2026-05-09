@@ -206,9 +206,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── test-suite (The Master Auditor) ─────────────────────────────────────────
-  test-suite:
-    container_name: vexilon-test-suite
+  # ── test-everything (The Master Auditor) ─────────────────────────────────────────
+  test-everything:
+    container_name: vexilon-test-everything
     <<: *service-defaults
     profiles: [smoke, all]
     image: vexilon:dev
@@ -230,7 +230,6 @@ services:
       echo 'Running E2E Tests...' && uv run --no-sync python -m pytest tests/test_rag_stream.py -v &&
       echo 'Running Smoke Tests...' && uv run --no-sync python scripts/smoke_multi.py
       "
-
 
 volumes:
   ollama_data: {}
