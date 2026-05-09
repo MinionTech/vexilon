@@ -49,7 +49,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           files: compose.yml
-          targets: test-unit,test-integration,test-e2e
+          targets: build-dev,build-staging
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
@@ -74,7 +74,7 @@ jobs:
         with:
           load: true
           files: compose.yml
-          targets: test-unit
+          targets: build-dev
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
@@ -114,13 +114,13 @@ jobs:
         with:
           load: true
           files: compose.yml
-          targets: verify
+          targets: build-dev
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
 
       - name: Validate Cache Manifest
-        run: docker compose --profile verify up --build verify
+        run: docker compose --profile all up --build test-cache
 
   test-integration:
     name: RAG Integration Tests
@@ -141,7 +141,7 @@ jobs:
         with:
           load: true
           files: compose.yml
-          targets: test-integration
+          targets: build-dev
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
@@ -176,13 +176,13 @@ jobs:
         with:
           load: true
           files: compose.yml
-          targets: test-e2e
+          targets: build-dev,build-staging
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
 
       - name: Run E2E Smoke Test
-        run: docker compose --profile e2e up --build --abort-on-container-exit test-e2e
+        run: docker compose --profile all up --build test-everything
 
       - name: Dump Logs on Failure
         if: failure()
