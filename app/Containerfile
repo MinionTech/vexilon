@@ -52,7 +52,6 @@ COPY --from=model_fetcher /model /model
 COPY data/ ./data/
 COPY indexing.py ./
 COPY scripts/build_index.py ./scripts/
-COPY main.py ./ 
 
 RUN --mount=type=cache,target=/app/.pdf_cache_mount \
     mkdir -p /app/.pdf_cache && \
@@ -61,6 +60,7 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
 # Final Source Code
+COPY main.py ./
 COPY . ./
 
 # ─── Stage 2.5: Functional Builder (Dev/Test Source) ──────────────────────────
