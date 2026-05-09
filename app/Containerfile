@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/hf_v4 \
     python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('BAAI/bge-small-en-v1.5', cache_folder='/root/.cache/hf_v4'); model.save('/model')" && \
     ls -l /model/modules.json
 
-# ─── Stage 2: Builder (Dependencies Only) ────────────────────────────────────
+# ─── Stage 2: Builder (Dependencies, Indexing, and Source) ────────────────────
 FROM base AS builder
 
 # Extract uv version from pyproject.toml
@@ -41,17 +41,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies (No code yet)
+# Install dependencies (Layer 1: Cached unless uv.lock changes)
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
-# ─── Stage 2.3: App Builder (Production Source with Indexing) ────────────────
-FROM builder AS app_builder
+# Layer 2: Model and FAISS Index (Cached unless data/ or scripts change)
 COPY --from=model_fetcher /model /model
-
-# Cache-efficient Indexing: Only copy what's needed for the FAISS build.
-# This prevents the index from rebuilding on every unrelated code change.
 COPY data/ ./data/
 COPY scripts/build_index.py ./scripts/
 COPY main.py ./ 
@@ -62,11 +58,11 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
     TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
 
-# Copy the remaining source code
+# Layer 3: Final Source Code
 COPY . ./
 
 # ─── Stage 2.4: Functional Builder (Dev/Test Source) ──────────────────────────
-FROM app_builder AS functional_builder
+FROM builder AS functional_builder
 # Layer dev dependencies on top of the production venv
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
@@ -82,7 +78,7 @@ FROM base AS runner
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy everything as root (read-only for the application user)
-COPY --from=app_builder /app /app
+COPY --from=builder /app /app
 COPY --from=model_fetcher /model /model
 
 # Only create and chown (by UID) the specific directories that MUST be writable
