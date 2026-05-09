@@ -216,7 +216,7 @@ uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
 # Run containerized unit tests (Mocked, zero-AI)
 podman compose up --build test-unit
 
-# Run RAG integration tests (FAISS + Embedding Model)
+# Run integration tests (FAISS + Embedding Model)
 podman compose up --build test-integration
 
 # Run full e2e / functional suite (Full LLM flow)

@@ -165,7 +165,7 @@ services:
     profiles: [test, integration, all]
     image: vexilon:dev
     depends_on:
-      test-unit:
+      test-cache:
         condition: service_completed_successfully
       ollama-init:
         condition: service_completed_successfully
@@ -181,7 +181,7 @@ services:
     profiles: [test, dev, integration, e2e, all]
     image: vexilon:dev
     depends_on:
-      test-integration:
+      test-cache:
         condition: service_completed_successfully
       ollama-init:
         condition: service_completed_successfully
@@ -211,12 +211,12 @@ services:
     profiles: [test, all, staging]
     image: vexilon:dev
     depends_on:
-      test-e2e:
-        condition: service_completed_successfully
       dev:
         condition: service_healthy
       staging:
         condition: service_healthy
+      test-cache:
+        condition: service_completed_successfully
     environment:
       <<: *common-env
       SMOKE_TARGET_DEV: "http://dev:7860"
@@ -230,6 +230,12 @@ services:
     profiles: [test, all]
     image: vexilon:dev
     depends_on:
+      test-unit:
+        condition: service_completed_successfully
+      test-integration:
+        condition: service_completed_successfully
+      test-e2e:
+        condition: service_completed_successfully
       test-smoke:
         condition: service_completed_successfully
     command: >
