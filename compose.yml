@@ -1,4 +1,4 @@
-# ── Reusable Variables ───────────────────────────────────────────────────────
+# ── Reusable Variables
 x-var:
   - &PORT "7860"
   - &MEM_LIMIT 6g
@@ -57,45 +57,10 @@ services:
     build: *common-build
 
   # ── Test Containers
-  test-e2e:
-    container_name: vexilon-test-e2e
-    <<: *service-defaults
-    profiles: [e2e]
-    image: vexilon:dev
-    depends_on:
-      build-dev:
-        condition: service_started
-      ollama-init:
-        condition: service_completed_successfully
-    volumes: []
-    environment:
-      <<: *common-env
-      PYTHONPATH: /app
-      AGNAV_LLM_PROVIDER: ollama
-      OLLAMA_HOST: ollama
-    command: >
-      sh -c "uv run --no-sync python -m pytest tests/test_rag_stream.py -v"
-
-  test-integration:
-    container_name: vexilon-test-integration
-    <<: *service-defaults
-    profiles: [integration]
-    image: vexilon:dev
-    depends_on:
-      build-dev:
-        condition: service_started
-      ollama-init:
-        condition: service_completed_successfully
-    environment:
-      <<: *common-env
-      AGNAV_FORCE_PERSPECTIVES: "true"
-    command: >
-      sh -c "uv run --no-sync python -m pytest tests/integration/ -v"
-
   test-unit:
     container_name: vexilon-test-unit
     <<: *service-defaults
-    profiles: [test]
+    profiles: [test, all]
     image: vexilon:dev
     depends_on:
       build-dev:
@@ -108,6 +73,41 @@ services:
       sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py -v 
       --junitxml=reports/junit.xml 
       --cov=indexing --cov=main --cov-report=xml:reports/coverage.xml"
+
+  test-integration:
+    container_name: vexilon-test-integration
+    <<: *service-defaults
+    profiles: [integration, all]
+    image: vexilon:dev
+    depends_on:
+      test-unit:
+        condition: service_completed_successfully
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *common-env
+      AGNAV_FORCE_PERSPECTIVES: "true"
+    command: >
+      sh -c "uv run --no-sync python -m pytest tests/integration/ -v"
+
+  test-e2e:
+    container_name: vexilon-test-e2e
+    <<: *service-defaults
+    profiles: [e2e, all]
+    image: vexilon:dev
+    depends_on:
+      test-integration:
+        condition: service_completed_successfully
+      ollama-init:
+        condition: service_completed_successfully
+    volumes: []
+    environment:
+      <<: *common-env
+      PYTHONPATH: /app
+      AGNAV_LLM_PROVIDER: ollama
+      OLLAMA_HOST: ollama
+    command: >
+      sh -c "uv run --no-sync python -m pytest tests/test_rag_stream.py -v"
 
   # ── verify (Cache Validator)
   verify:
@@ -206,15 +206,14 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── test-everything (The Master Auditor) ─────────────────────────────────────────
-  test-everything:
-    container_name: vexilon-test-everything
+  test-smoke:
+    container_name: vexilon-test-smoke
     <<: *service-defaults
     profiles: [smoke, all]
     image: vexilon:dev
     depends_on:
-      build-dev:
-        condition: service_started
+      test-e2e:
+        condition: service_completed_successfully
       dev:
         condition: service_healthy
       staging:
@@ -224,12 +223,18 @@ services:
       SMOKE_TARGET_DEV: "http://dev:7860"
       SMOKE_TARGET_STAGING: "http://staging:7860"
     command: >
-      sh -c "
-      echo 'Running Unit Tests...' && uv run --no-sync python -m pytest tests/test_*.py -v &&
-      echo 'Running Integration Tests...' && uv run --no-sync python -m pytest tests/integration/ -v &&
-      echo 'Running E2E Tests...' && uv run --no-sync python -m pytest tests/test_rag_stream.py -v &&
-      echo 'Running Smoke Tests...' && uv run --no-sync python scripts/smoke_multi.py
-      "
+      sh -c "uv run --no-sync python scripts/smoke_multi.py"
+
+  test-everything:
+    container_name: vexilon-test-everything
+    <<: *service-defaults
+    profiles: [all]
+    image: vexilon:dev
+    depends_on:
+      test-smoke:
+        condition: service_completed_successfully
+    command: >
+      sh -c "echo '🏆 GRAND SLAM SUCCESS: ALL SYSTEMS VERIFIED'"
 
 volumes:
   ollama_data: {}
