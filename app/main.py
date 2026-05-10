@@ -233,16 +233,16 @@ UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
 2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
    EXAMPLE: > "verbatim text" [Document Name, Page X]
-3. STRICT BREVITY: Be extremely concise. No introductory filler (e.g., "Based on the documents...").
-4. NO SUMMARIZING: Do NOT use arrows (→) or bullet points to summarize excerpts. Use literal text.
-5. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
+3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
+4. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
+5. GRIEVANCE FILING: Facilitate the filing process by identifying potential contract violations.
 """
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
 2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
    EXAMPLE: > "verbatim text" [Document Name, Page X]
-3. STRICT BREVITY: Be extremely concise. No introductory filler.
+3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
 4. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
 5. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
 6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
@@ -512,6 +512,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             matched_tests = _test_registry.find_matches(message + " " + queries[0])
             for test in matched_tests:
                 audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+                audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
                 audit_rules += f"Criteria:\n{test.content}\n"
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
