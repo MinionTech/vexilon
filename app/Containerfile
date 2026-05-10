@@ -52,12 +52,9 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
-# Final Source Code
-COPY main.py ./
-COPY . ./
-
 # ─── Stage 2.1: Test Builder (Unit Tests - Lightweight) ──────────────────────
 FROM builder AS test_builder
+COPY . ./
 # Layer dev dependencies on top of the production venv
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
@@ -71,12 +68,18 @@ FROM builder AS indexed_builder
 
 # Model and FAISS Index (Cached unless data/ or scripts change)
 COPY --from=model_fetcher /model /model
+COPY data/ ./data/
+COPY indexing.py ./
+COPY scripts/build_index.py ./scripts/
 
 RUN --mount=type=cache,target=/app/.pdf_cache_mount \
     mkdir -p /app/.pdf_cache && \
     cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
     TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PATH="/app/.venv/bin:$PATH" python scripts/build_index.py && \
     cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
+
+# Copy remaining source code for the runner and functional tests
+COPY . ./
 
 # ─── Stage 2.5: Functional Builder (Dev/Test Source) ──────────────────────────
 FROM indexed_builder AS functional_builder

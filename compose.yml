@@ -157,7 +157,7 @@ services:
   test-unit:
     container_name: vexilon-test-unit
     <<: *service-defaults
-    image: vexilon:dev
+    image: vexilon:test-unit
     build:
       <<: *common-build
       target: test_builder
