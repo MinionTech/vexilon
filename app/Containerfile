@@ -104,16 +104,16 @@ FROM base AS runner
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy everything from the builder (including the pre-computed index)
-COPY --from=indexed_builder --chown=1000:1000 /app /app
-COPY --from=model_fetcher --chown=1000:1000 /model /model
+COPY --from=indexed_builder /app /app
+COPY --from=model_fetcher /model /model
 
 # Copy the actual application source code
-COPY --chown=1000:1000 main.py ./
-COPY --chown=1000:1000 prompts/ ./prompts/
+COPY main.py ./
+COPY prompts/ ./prompts/
 
-# Ensure the app user owns the directories it needs to write to
-RUN mkdir -p /hf_cache && \
-    chown -R 1000:1000 /hf_cache
+# Only create and chown (by UID) the specific directories that MUST be writable
+RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache && \
+    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache
 
 USER 1000
 
