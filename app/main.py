@@ -512,7 +512,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             matched_tests = _test_registry.find_matches(message + " " + queries[0])
             for test in matched_tests:
                 audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-                audit_rules += f"This case involves potential {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern.\n"
+                audit_rules += f"This case involves potential issues related to {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern (Explain the principle, ask the relevant Question, Apply it to the facts, and Cite the source).\n"
                 audit_rules += f"Criteria:\n{test.content}\n"
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
