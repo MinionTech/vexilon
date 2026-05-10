@@ -11,7 +11,7 @@ x-common-env: &common-env
   TRANSFORMERS_OFFLINE: "1"
   EMBED_MODEL: /model
   OLLAMA_HOST: ollama:11434
-  OLLAMA_MODEL_ID: qwen3:4b-instruct
+  OLLAMA_MODEL_ID: qwen2.5:3b-instruct
 
 x-test-env: &test-env
   <<: *common-env
