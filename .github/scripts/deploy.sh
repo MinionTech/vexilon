@@ -100,9 +100,9 @@ fi
 cat <<EOF > Dockerfile
 FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
-COPY app.py /app/app.py
+COPY app/main.py /app/main.py
 # Temporary override to fix stale base image environment
-CMD ["sh", "-c", "export TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 && python app.py"]
+CMD ["sh", "-c", "export TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 && python main.py"]
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then
@@ -120,10 +120,10 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
     git config user.name "GitHub Actions"
 fi
 
-# Re-add only the essentials (including app.py as requested)
-# Ensure SDK is set to docker in README.md (portable sed)
-sed 's/^sdk: .*/sdk: docker/' README.md > README.md.tmp && mv README.md.tmp README.md
-git add Dockerfile README.md app.py
+# Re-add only the essentials (including app/main.py as requested)
+# Assemble the Hugging Face README by stitching metadata and app documentation
+cat app/metadata.yml README.md > README-hf.md && mv README-hf.md README.md
+git add Dockerfile README.md app/main.py app/LICENSE
 git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 
 # Auth and Push

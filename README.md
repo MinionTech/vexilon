@@ -1,16 +1,3 @@
----
-title: Agreement Navigator (AgNav)
-emoji: 📋
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860 # DO NOT EDIT: must match Containerfile EXPOSE to prevent sync-drift
-startup_duration_timeout: 10m
-pinned: true
-license: mit
-short_description: Look up the BCGEU 19th Main Public Service Agreement
----
-
 # Agreement Navigator (AgNav)
 
 AI chatbot built to empower BCGEU union stewards with instant, cited answers from a broad library
@@ -44,7 +31,7 @@ Agreement Navigator is programmed to prioritize the **Collective Agreement** abo
 
 Agreement Navigator indexes **Markdown files** (`.md`), not PDFs. PDFs are kept only for the "Download Original" links in the UI.
 
-Add or replace Markdown files in `data/labour_law/` using the naming convention:
+Add or replace Markdown files in `app/data/labour_law/` using the naming convention:
 
 | Category | Path | Use case |
 |---|---|---|
@@ -83,7 +70,7 @@ podman compose up --build dev
 ```
 
 > [!NOTE]
-> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the model weights defined in `app.py`.
+> **Performance:** Local LLM execution speed depends on your CPU/GPU. The first run will be slower as it pulls the model weights defined in `app/main.py`.
 
 **2. Production / Cloud Simulation**
 Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requires an internet connection and a valid token. This simulates the exact environment of the Hugging Face Space.
@@ -129,13 +116,13 @@ To ensure follow-up questions work reliably (e.g., "What about for part-time?"),
 
 To ensure the AI never "hallucinates" contract language, we use a forensic conversion pipeline:
 
-1. **Precision Extraction**: PDFs are converted to Markdown using `scripts/pdf_to_md.py` via **PyMuPDF**.
+1. **Precision Extraction**: PDFs are converted to Markdown using `app/scripts/pdf_to_md.py` via **PyMuPDF**.
 2. **Dual-Pass Verification**: The converter uses two different LLM passes to verify structural integrity.
 3. **Word Fingerprinting**: We verify that every substantive word in the Markdown exists in the original PDF.
 
 ```bash
 # Convert a new PDF to high-integrity Markdown
-python scripts/pdf_to_md.py path/to/document.pdf
+python app/scripts/pdf_to_md.py path/to/document.pdf
 ```
 
 ---
@@ -181,7 +168,7 @@ Agreement Navigator is a "content-blind" application designed for maximum privac
 - **No Content Logging**: We **never** log user queries, bot responses, or search reasoning.
 - **Anonymized Metrics**: We only track non-sensitive technical metadata (token counts, query frequency) to monitor system health.
 
-For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see [PRIVACY.md](docs/PRIVACY.md).
+For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see [PRIVACY.md](app/docs/PRIVACY.md).
 
 ---
 
@@ -216,27 +203,31 @@ Agreement Navigator uses a **Quality Gate** pattern in `compose.yml` — the app
 
 | Tier | Location | Model | When to run |
 |---|---|---|---|
-| **Unit** | `tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
-| **Integration** | `tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
-| **Smoke** | `tests/smoke/` | Real HF/Ollama API | Manually, to verify live API connectivity |
+| **Unit** | `app/tests/test_*.py` | Mocked (no download) | Every commit — fast, zero RAM cost |
+| **Integration (Model)** | `app/tests/integration/` | Real `BAAI/bge-small-en-v1.5` (~800 MB) | In container — memory-capped at 2 GB |
+| **Integration (App)** | `app/tests/test_rag_stream.py` | Functional app logic (mocked LLM) | Verify RAG flow and token streaming |
+| **E2E (Live)** | `app/scripts/smoke_multi.py` | Real HF/Ollama API | Manually, to verify live API connectivity |
 
 ### Commands
 
 ```bash
 # Run unit tests only — fast, safe locally
-uv run pytest tests/ --ignore=tests/integration --ignore=tests/smoke
+uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
 podman compose up --build test-unit
 
-# Run RAG integration tests (FAISS + Embedding Model)
-podman compose up --build test-integration
+# Run model integration tests (FAISS + Embedding Model)
+podman compose up --build test-integration-model
 
-# Run full e2e / functional suite (Full LLM flow)
+# Run app integration tests (Functional RAG flow)
+podman compose up --build test-integration-app
+
+# Run full e2e suite (Live UI + Live LLM)
 podman compose up --build test-e2e
 
-# Verify the baked-in FAISS index integrity
-podman compose up verify
+# Verify everything at once (The "Grand Slam")
+podman compose up --build test-everything && podman compose down
 ```
 
 ---
@@ -244,22 +235,31 @@ podman compose up verify
 ## Project Structure
 
 ```
-agnav/
-├── app.py            # Main application (RAG pipeline + Gradio UI)
-├── conftest.py       # pytest root path configuration
-├── pyproject.toml    # Python dependencies (managed by uv)
-├── compose.yml       # Podman Compose config (production parity)
-├── SPEC.md           # Product specification
-├── data/             # Knowledge base source files
-│   └── labour_law/   # Hierarchical document library
-│       ├── primary/       # Collective Agreement, Labour Relations Code
-│       ├── statutory/     # Employment Standards Act, Human Rights Code
-│       ├── resources/     # Steward manuals, ethics guides
-│       ├── jurisprudence/ # Arbitration awards, case precedents
-│       └── tests/         # Test/doctrine registry (Millhaven, KVP)
-└── tests/            # pytest test suite
-    ├── conftest.py         # root: mock embedding model + mock OpenAI client
-    ├── test_chunking.py    # chunk_text() unit tests
-    ├── test_sanitize_input.py  # prompt injection detection tests
-    └── integration/        # real model — run via: podman-compose run --rm tests
+.
+├── .agents/              # AI Agent specifications and SOPs
+├── .github/              # CI/CD workflows and scripts
+├── app/                  # Core application workspace
+│   ├── data/             # Knowledge base (markdown files)
+│   ├── docs/             # Technical and Privacy documentation
+│   ├── prompts/          # System prompts and instructions
+│   ├── scripts/          # Build, conversion, and audit utilities
+│   ├── tests/            # pytest test suite (Unit + Integration)
+│   ├── main.py           # Main entry point (Gradio UI)
+│   └── indexing.py       # RAG pipeline and FAISS logic
+├── Containerfile         # High-integrity Docker build
+├── compose.yml           # Dev, staging, and test profiles
+├── pyproject.toml        # Dependency management (uv)
+└── README.md             # The document you are reading
 ```
+
+## Contributing
+
+We encourage contributions to AgNav via **pull requests**. 
+
+- **Workflow**: Create a branch from `main`, commit your changes, and submit a PR.
+- **Merge**: PRs are evaluated by the maintainers and are typically squash-merged to `main`.
+- **Licensing**: By contributing, you grant a world-wide, royalty-free, perpetual, irrevocable, non-exclusive, transferable license to all users under the terms of the [MIT License](./LICENSE).
+
+---
+
+*Agreement Navigator (AgNav) — Empowering Stewards through Forensic RAG.*

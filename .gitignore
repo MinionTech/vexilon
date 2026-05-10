@@ -29,12 +29,6 @@ gradio_cached_examples/
 flagged/
 # HuggingFace model weight cache (baked into image, not repo)
 hf_cache/
-.tmp/
-chroma_db/          # Local vector store data
-gradio_cached_examples/
-flagged/
-# HuggingFace model weight cache (baked into image, not repo)
-hf_cache/
 
 # ─── Logs
 logs
