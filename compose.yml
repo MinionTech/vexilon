@@ -11,13 +11,12 @@ x-common-env: &common-env
   TRANSFORMERS_OFFLINE: "1"
   EMBED_MODEL: /model
   OLLAMA_HOST: ollama:11434
-  OLLAMA_MODEL_ID: qwen3:4b-instruct
+  OLLAMA_MODEL_ID: qwen3:14b-instruct
 
 x-test-env: &test-env
   <<: *common-env
   OLLAMA_MODEL_ID: tinyllama
   AGNAV_FORCE_PERSPECTIVES: "true"
-
 x-healthcheck: &app-healthcheck
   test: ["CMD", "curl", "-f", "http://localhost:7860/"]
   interval: 10s

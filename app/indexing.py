@@ -32,8 +32,8 @@ class FileIntegrityError(Exception):
 # Models
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 MAX_EMBED_TOKENS = int(os.getenv("AGNAV_MAX_EMBED_TOKENS", 4096))
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 450))
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1200))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
 EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
 SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))
 
@@ -335,7 +335,14 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
         logger.warning("[build] No source files found!")
         return None, None
 
-    current_manifest = {}
+    current_manifest = {
+        "config": {
+            "chunk_size": CHUNK_SIZE,
+            "chunk_overlap": CHUNK_OVERLAP,
+            "embed_model": EMBED_MODEL,
+        },
+        "files": {}
+    }
     for source_file in all_files:
         hasher = hashlib.sha256()
         with open(source_file, "rb") as f:
@@ -343,14 +350,14 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
                 hasher.update(chunk)
         # Use relative path to avoid clashes with duplicate names in subdirs
         rel_key = str(source_file.relative_to(LABOUR_LAW_DIR))
-        current_manifest[rel_key] = hasher.hexdigest()
+        current_manifest["files"][rel_key] = hasher.hexdigest()
 
     if not force and MANIFEST_PATH.exists():
         try:
             with open(MANIFEST_PATH, "r") as f:
                 stored_manifest = json.load(f)
             if stored_manifest == current_manifest and INDEX_PATH.exists() and CHUNKS_PATH.exists():
-                logger.info("[build] Smart Refresh: No changes detected in sources. Skipping build.")
+                logger.info("[build] Smart Refresh: No changes detected in sources or config. Skipping build.")
                 return load_precomputed_index()
         except Exception:
             pass
