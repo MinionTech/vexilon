@@ -54,6 +54,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # ─── Stage 2.1: Test Builder (Unit Tests - Lightweight) ──────────────────────
 FROM builder AS test_builder
+COPY --from=model_fetcher /model /model
 COPY . ./
 # Layer dev dependencies on top of the production venv
 RUN --mount=type=cache,target=/root/.cache/uv \
