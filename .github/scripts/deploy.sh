@@ -100,9 +100,6 @@ fi
 cat <<EOF > Dockerfile
 FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
-COPY app/main.py /app/main.py
-# Temporary override to fix stale base image environment
-CMD ["sh", "-c", "export TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 && python main.py"]
 EOF
 
 if [ "$DRY_RUN" == "true" ]; then
