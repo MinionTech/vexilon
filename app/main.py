@@ -370,17 +370,35 @@ MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
-def get_persona_prompt(mode_name: str) -> str:
+def get_persona_prompt(persona_key: str) -> str:
     """Return the combined mandatory rules and persona guidelines."""
-    if mode_name == "Manage":
+    if persona_key == "Manage":
         rules = MANAGER_MANDATORY_RULES
         persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework."
-    elif mode_name == "Grieve":
+    elif persona_key == "Grieve":
+        rules = UNION_MANDATORY_RULES
+        persona = (
+            "You are an expert in workplace grievances. Analyze the provided context and history to suggest a strategy.\n"
+            "CRITICAL: Cite the relevant articles and page numbers from the documents to support your strategy, e.g., [Collective Agreement, Page 45].\n"
+            "Maintain a professional, supportive, and analytical tone."
+        )
+    elif persona_key == "Train":
+        rules = UNION_MANDATORY_RULES
+        persona = (
+            "You are an expert in labor relations training. Explain the concepts in the context using a helpful, educational tone.\n"
+            "CRITICAL: Always mention which document and page number you are referencing, e.g., [Stewards Manual, Page 3].\n"
+            "Focus on empowering the user with knowledge."
+        )
+    elif persona_key == "Audit":
         rules = UNION_MANDATORY_RULES
         persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases."
     else:
         rules = UNION_MANDATORY_RULES
-        persona = "You are a BCGEU Steward Navigator. Your goal is to find specific clauses and provide literal guidance."
+        persona = (
+            "You are a forensic labor law expert. Your goal is to provide precise, fact-based answers using ONLY the provided context.\n"
+            "CRITICAL: For every claim you make, you MUST cite the document name and page number in square brackets, e.g., [Collective Agreement, Page 12].\n"
+            "If the information is not in the context, state that you don't know."
+        )
     
     return f"{rules}\n\nROLE: {persona}"
 
