@@ -245,7 +245,7 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Run E2E Tests
-        run: docker compose up test-everything
+        run: docker compose up test-e2e
 
       - name: Dump Logs on Failure
         if: failure()
