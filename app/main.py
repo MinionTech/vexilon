@@ -879,25 +879,7 @@ async def on_message(message: cl.Message) -> None:
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
     try:
-        # Show progress step for RAG search
-        async with cl.Step(name="Searching Knowledge Base...") as step:
-            queries, context, snippets = await get_multi_perspective_context(sanitized, history)
-            step.input = " + ".join(queries)
-            
-            elements = []
-            seen_sources = set()
-            for s in snippets:
-                source_name = s.get("source", "Unknown")
-                if source_name not in seen_sources:
-                    path = _source_path_map.get(source_name)
-                    if path and path.suffix.lower() == ".pdf":
-                        elements.append(cl.Pdf(name=source_name, path=str(path), display="side"))
-                    else:
-                        elements.append(cl.Text(name=source_name, content=s.get("text", ""), display="side"))
-                    seen_sources.add(source_name)
-            
-            out.elements = elements
-            step.output = f"Retrieved {len(snippets)} relevant excerpts from {len(seen_sources)} documents."
+        queries, context, snippets = await get_multi_perspective_context(sanitized, history)
 
         async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
             if not chunk:
@@ -914,15 +896,10 @@ async def on_message(message: cl.Message) -> None:
     # Async Verification pass as per SPEC.md Section 9
     if VERIFY_ENABLED:
         async def verify_and_update():
-            async with cl.Step(name="Adversarial Verification") as vstep:
-                vstep.input = "Validating assistant claims against source context..."
-                report = await verify_response(accumulated, context)
-                if not report or "ALL_CLAIMS_VERIFIED" in report:
-                    vstep.output = "✅ All claims verified against source context."
-                else:
-                    vstep.output = "⚠️ Disputed claims found."
-                    out.content += f"\n\n---\n**Forensic Verification Note:**\n{report}"
-                    await out.update()
+            report = await verify_response(accumulated, context)
+            if report and "ALL_CLAIMS_VERIFIED" not in report:
+                out.content += f"\n\n---\n**Verification Note:**\n{report}"
+                await out.update()
         
         cl.run_task(verify_and_update())
 
