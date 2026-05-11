@@ -112,8 +112,8 @@ COPY main.py ./
 COPY prompts/ ./prompts/
 
 # Only create and chown (by UID) the specific directories that MUST be writable
-RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache && \
-    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache
+RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache /app/.files && \
+    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache /app/.files
 
 USER 1000
 

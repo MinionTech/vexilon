@@ -68,9 +68,7 @@ async def _patched_wait_for(fut, timeout=None, **kwargs):
     try:
         return await waiter
     except asyncio.CancelledError:
-        if not fut.done():
-            raise asyncio.TimeoutError()
-        return await waiter
+        raise asyncio.TimeoutError() from None
     finally:
         timeout_handle.cancel()
 
@@ -556,7 +554,7 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 source = c.get("source", "Unknown")
                 page = c.get("page", "?")
                 context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
-    return queries, "\n\n".join(context_parts)
+    return queries, "\n\n".join(context_parts), unique_snippets
 
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
     try:
@@ -652,6 +650,8 @@ def startup(force_rebuild: bool = False):
     # Ensure cache directory is writable
     import indexing
     indexing.PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    # Ensure Chainlit's upload directory is writable (Fixes PermissionError in 3.14)
+    Path(".files").mkdir(parents=True, exist_ok=True)
     try:
         test_file = indexing.PDF_CACHE_DIR / "permissions_test"
         test_file.touch()
