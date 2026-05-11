@@ -1,4 +1,10 @@
 import os
+from pathlib import Path
+# Force Chainlit to use a writable directory for temporary files
+# This MUST be done before any imports that might initialize Chainlit logic.
+os.environ["CHAINLIT_FILES_DIR"] = "./.pdf_cache/.files"
+Path("./.pdf_cache/.files").mkdir(parents=True, exist_ok=True)
+
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -82,7 +88,7 @@ class SafeTaskStates:
     def __getitem__(self, key):
         if key is None:
             from anyio._backends._asyncio import TaskState
-            return TaskState(None)
+            return TaskState(None, None)
         return _orig_task_states[key]
     def __setitem__(self, key, value):
         if key is not None: _orig_task_states[key] = value
@@ -672,11 +678,6 @@ def startup(force_rebuild: bool = False):
     # Ensure cache directory is writable
     import indexing
     indexing.PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    # Redirect Chainlit's upload directory to a known-writable location
-    # (Fixes PermissionError in environments with restricted /app)
-    upload_dir = indexing.PDF_CACHE_DIR / ".files"
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    os.environ["CHAINLIT_FILES_DIR"] = str(upload_dir)
     try:
         test_file = indexing.PDF_CACHE_DIR / "permissions_test"
         test_file.touch()
