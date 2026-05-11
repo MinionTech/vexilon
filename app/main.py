@@ -576,8 +576,8 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
     else:
         condensed = await condense_query(message, history)
 
-    # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
-    if (not IS_DEV or os.getenv("AGNAV_FORCE_PERSPECTIVES") == "true") and len(condensed.split()) > 10:
+    # Issue #361: Heuristic for complexity - Use perspectives for long/complex queries
+    if len(condensed.split()) > 10 or os.getenv("AGNAV_FORCE_PERSPECTIVES") == "true":
         queries = await generate_perspective_queries(condensed, history)
     else:
         queries = [condensed]
@@ -881,10 +881,15 @@ async def on_message(message: cl.Message) -> None:
     # Async Verification pass as per SPEC.md Section 9
     if VERIFY_ENABLED:
         async def verify_and_update():
-            report = await verify_response(accumulated, context)
-            if report and "ALL_CLAIMS_VERIFIED" not in report:
-                out.content += f"\n\n---\n**Verification Note:**\n{report}"
-                await out.update()
+            async with cl.Step(name="Adversarial Verification") as vstep:
+                vstep.input = "Validating assistant claims against source context..."
+                report = await verify_response(accumulated, context)
+                if not report or "ALL_CLAIMS_VERIFIED" in report:
+                    vstep.output = "✅ All claims verified against source context."
+                else:
+                    vstep.output = "⚠️ Disputed claims found."
+                    out.content += f"\n\n---\n**Forensic Verification Note:**\n{report}"
+                    await out.update()
         
         cl.run_task(verify_and_update())
 
