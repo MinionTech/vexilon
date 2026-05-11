@@ -14,8 +14,8 @@ import faiss
 import numpy as np
 import pytest
 from pathlib import Path
-from unittest.mock import MagicMock
-
+from unittest.mock import AsyncMock, patch, MagicMock
+from contextlib import asynccontextmanager
 import main as app
 import indexing
 
@@ -138,7 +138,7 @@ def test_startup_raises_on_failure(monkeypatch):
         raise RuntimeError("disk on fire")
 
     monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", _boom)
-    monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", _boom)
+    monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", _boom)
 
     with pytest.raises(RuntimeError, match="disk on fire"):
         monkeypatch.setattr(app, "get_llm_client", MagicMock())
@@ -151,17 +151,16 @@ def test_startup_uses_precomputed_index_when_available(monkeypatch):
     monkeypatch.setattr(app, "_index", None)
     monkeypatch.setattr(app, "_test_registry", MagicMock()) # FEEDBACK: Avoid disk I/O
     monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", lambda: None)
-    monkeypatch.setattr(app, "_fetch_pdf_cache_if_missing", lambda: None)
+    monkeypatch.setattr(indexing, "_fetch_pdf_cache_if_missing", lambda: None)
 
     fake_index, fake_chunks = _tiny_index(n=2)
 
     # Mock load_precomputed_index to return a faked precomputed index
     mock_load = MagicMock(return_value=(fake_index, fake_chunks))
-    monkeypatch.setattr(app, "load_precomputed_index", mock_load)
-
+    monkeypatch.setattr(indexing, "load_precomputed_index", mock_load)
     # Ensure build_index_from_sources is NOT called
-    mock_build = MagicMock(return_value=(None, None)) # FEEDBACK: Unpack safety
-    monkeypatch.setattr(app, "build_index_from_sources", mock_build)
+    mock_build = MagicMock(return_value=(None, None))
+    monkeypatch.setattr(indexing, "build_index_from_sources", mock_build)
 
     monkeypatch.setattr(app, "get_llm_client", MagicMock())
     app.startup()
@@ -179,10 +178,11 @@ def test_startup_delegates_to_indexing(monkeypatch):
     
     fake_index, fake_chunks = _tiny_index(n=1)
     mock_build = MagicMock(return_value=(fake_index, fake_chunks))
-    monkeypatch.setattr(app, "build_index_from_sources", mock_build)
+    monkeypatch.setattr(indexing, "build_index_from_sources", mock_build)
 
-    monkeypatch.setattr(app, "get_llm_client", MagicMock())
-    app.startup(force_rebuild=True)
+    with patch("main.get_llm_client", return_value=MagicMock()):
+        with patch("indexing.get_embed_model"):
+            app.startup(force_rebuild=True)
 
     assert app._index is fake_index
     assert app._chunks is fake_chunks

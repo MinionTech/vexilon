@@ -9,6 +9,7 @@ import openai
 import pytest
 
 import main as app
+import indexing
 
 @pytest.fixture(autouse=True)
 def enable_verify(monkeypatch):
@@ -90,7 +91,7 @@ async def test_rag_stream_yields_context(monkeypatch):
     def mock_search_batch(*a, **kw):
         return [fake_chunks]
 
-    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
+    monkeypatch.setattr(indexing, "search_index_batch", mock_search_batch)
 
     async def _mock_openai_stream(*args, **kwargs):
         if kwargs.get("stream"):

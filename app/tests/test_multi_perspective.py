@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from contextlib import asynccontextmanager
 import main as app
+import indexing
 
 @pytest.mark.asyncio
 async def test_generate_perspective_queries_simple():
@@ -71,7 +72,7 @@ async def test_rag_stream_aggregates_multiple_queries(monkeypatch):
         # Return a list of lists (one list of chunks per query)
         return [[chunk1], [chunk1, chunk2]]
 
-    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
+    monkeypatch.setattr(indexing, "search_index_batch", mock_search_batch)
 
     # Mock OpenAI stream
     mock_client = MagicMock()

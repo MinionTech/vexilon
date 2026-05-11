@@ -13,6 +13,7 @@ import openai
 import pytest
 
 import main as app
+import indexing
 
 def test_compose_yml_does_not_hardcode_model_name():
     """compose.yml must not hardcode a model name default."""
@@ -54,7 +55,7 @@ async def test_rag_stream_yields_tokens_from_llm(monkeypatch):
     def mock_search_batch(index, chunks, queries, top_ks):
         return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
+    monkeypatch.setattr(indexing, "search_index_batch", mock_search_batch)
 
     async def _mock_openai_stream(*args, **kwargs):
         if kwargs.get("stream"):
@@ -85,7 +86,7 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     def mock_search_batch(index, chunks, queries, top_ks):
         return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
+    monkeypatch.setattr(indexing, "search_index_batch", mock_search_batch)
 
     captured = {}
 
@@ -122,7 +123,7 @@ async def test_rag_stream_api_error_yields_error_message(monkeypatch):
     def mock_search_batch(index, chunks, queries, top_ks):
         return [_fake_chunks() for _ in queries]
 
-    monkeypatch.setattr(app, "search_index_batch", mock_search_batch)
+    monkeypatch.setattr(indexing, "search_index_batch", mock_search_batch)
 
     async def _raising_stream(**kwargs):
         raise openai.APIStatusError(

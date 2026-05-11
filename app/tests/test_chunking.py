@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
-import main as app
-from main import chunk_text, CHUNK_SIZE, CHUNK_OVERLAP
+import indexing as app
+from indexing import chunk_text, CHUNK_SIZE, CHUNK_OVERLAP
 
 @pytest.fixture(autouse=True)
 def mock_tokenizer(monkeypatch):

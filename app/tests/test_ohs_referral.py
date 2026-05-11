@@ -1,11 +1,12 @@
 import pytest
-from main import _test_registry, TESTS_DIR, rag_review_stream
+from main import _test_registry, rag_review_stream
+from indexing import LABOUR_LAW_DIR
 from unittest.mock import MagicMock, patch, AsyncMock
 from contextlib import asynccontextmanager
 
 def test_ohs_registry_loading():
     """Verify that the OHS referral test is loaded into the registry."""
-    _test_registry.load(TESTS_DIR)
+    _test_registry.load(LABOUR_LAW_DIR / "tests")
     ohs_test = next((t for t in _test_registry.tests if "Ohs" in t.name), None)
     assert ohs_test is not None
 
@@ -27,7 +28,7 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     
     def mock_search_batch(*a, **kw):
         return [fake_chunks]
-    monkeypatch.setattr("main.search_index_batch", mock_search_batch)
+    monkeypatch.setattr("indexing.search_index_batch", mock_search_batch)
     
     all_captured_kwargs = []
     

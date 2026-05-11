@@ -1,9 +1,35 @@
 import os
+import sys
+
+# Force anyio to use asyncio to resolve loop detection issues on Python 3.14
+os.environ["ANYIO_BACKEND"] = "asyncio"
+
+# Python 3.14 AnyIO loop detection fix
+if sys.version_info >= (3, 14):
+    try:
+        import anyio
+        import anyio._core._eventloop
+        _original_get_backend = anyio.get_async_backend
+        def _patched_get_backend(backend=None, backend_options=None):
+            if backend is None:
+                return anyio._core._eventloop.backends['asyncio']()
+            return _original_get_backend(backend, backend_options)
+        anyio.get_async_backend = _patched_get_backend
+    except Exception:
+        pass
+
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
+from pathlib import Path
+
+# Add /app to sys.path to ensure local modules are found
+_app_root = str(Path(__file__).parent.resolve())
+if _app_root not in sys.path:
+    sys.path.insert(0, _app_root)
+
 import re
 # Agreement Navigator - UI Version: 2026-05-03
 # Integrated RAG Backend + Stabilized Gradio 6 UI
@@ -25,26 +51,11 @@ import numpy as np
 import openai
 from openai import AsyncOpenAI
 
-import faiss
+# faiss and indexing moved to avoid early initialization issues
 import chainlit as cl
 from chainlit.input_widget import Select
 
-# ─── Agnav Imports ────────────────────────────────────────────────────────
-from indexing import (
-    _get_source_name,
-    _get_rag_source_files,
-    build_index_from_sources,
-    get_integrity_report,
-    load_precomputed_index,
-    search_index_batch,
-    _fetch_pdf_cache_if_missing,
-    LABOUR_LAW_DIR,
-    get_embed_model,
-    EMBED_DIM,
-    chunk_text,
-    CHUNK_SIZE,
-    CHUNK_OVERLAP,
-)
+# Heavy imports moved inside functions to prevent event loop poisoning on Python 3.14
 
 # ─── Global State & Config ──────────────────────────────────────────────────
 # Single Source of Truth for local development models.
@@ -61,6 +72,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 _chunks: list[dict] = []
 _index: "faiss.IndexFlatIP | None" = None
+_startup_lock = False
 INTEGRITY_WARNING: str | None = None
 
 AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
@@ -158,6 +170,7 @@ class TestRegistry:
         self._lock = Lock()
 
     def load(self, directory: Path) -> None:
+        from indexing import LABOUR_LAW_DIR
         if not directory.exists(): return
         with self._lock:
             self.tests = []
@@ -189,7 +202,7 @@ class TestRegistry:
             return [test for test in self.tests if any(k in q_lower for k in test.keywords)]
 
 _test_registry = TestRegistry()
-TESTS_DIR = LABOUR_LAW_DIR / "tests"
+# TESTS_DIR is now derived inside TestRegistry.load
 
 # ─── Rate Limiter ───────────────────────────────────────────────────────────
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "999999" if IS_DEV else "10"))
@@ -477,6 +490,7 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
         return [message]
 
 async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
+    from indexing import search_index_batch, LABOUR_LAW_DIR
     # Optimization: Skip condensation in DEV or if no history exists to save ~30s of latency
     if IS_DEV or not history:
         condensed = message
@@ -541,6 +555,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
     """Scan LABOUR_LAW_DIR for PDF files (human downloads). Excludes tests/."""
+    from indexing import LABOUR_LAW_DIR
     if not LABOUR_LAW_DIR.exists(): return []
     tests_dir = LABOUR_LAW_DIR / "tests"
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
@@ -548,6 +563,14 @@ def _get_download_source_files() -> list[Path]:
 
 
 def startup(force_rebuild: bool = False):
+    from indexing import (
+        _fetch_pdf_cache_if_missing,
+        load_precomputed_index,
+        build_index_from_sources,
+        get_integrity_report,
+        LABOUR_LAW_DIR,
+    )
+    tests_dir = LABOUR_LAW_DIR / "tests"
     global _index, _chunks, INTEGRITY_WARNING
     
     # Identify environment
@@ -559,7 +582,7 @@ def startup(force_rebuild: bool = False):
     if get_llm_provider() == "huggingface":
         logger.info(f"[startup] HF Routing: {HF_PROVIDER}")
 
-    _test_registry.load(TESTS_DIR)
+    _test_registry.load(tests_dir)
     # Ensure cache directory is writable
     import indexing
     indexing.PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -580,116 +603,150 @@ def startup(force_rebuild: bool = False):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
 # ─── Chainlit App Logic ─────────────────────────────────────────────────────
-@cl.on_chat_start
-async def on_chat_start():
-    # Ensure index is loaded
-    if _index is None:
-        startup()
-        
-    settings = await cl.ChatSettings(
-        [
-            Select(
-                id="Persona",
-                label="Persona",
-                values=["Lookup", "Grieve", "Manage"],
-                initial_index=0,
-            )
-        ]
-    ).send()
-    cl.user_session.set("Persona", "Lookup")
-    cl.user_session.set("history", [])
-
-    elements = []
-    files = _get_download_source_files()
-    for f in files:
-        display_name = f.stem.replace("_", " ").title()
-        display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
-        display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
-        elements.append(cl.File(name=display_name, path=str(f.resolve()), display="inline"))
-    
-    msg_content = "### BCGEU Navigator\nWelcome! Select your persona in settings and ask a question."
-    if INTEGRITY_WARNING:
-        msg_content += f"\n\n⚠️ {INTEGRITY_WARNING}"
-        
-    await cl.Message(content=msg_content, elements=elements).send()
+@cl.set_chat_profiles
+async def set_chat_profile():
+    return [
+        cl.ChatProfile(
+            name="🔍 Lookup",
+            markdown_description="Fast factual retrieval of articles, clauses, and definitions.",
+            default=True,
+        ),
+        cl.ChatProfile(
+            name="⚖️ Grieve",
+            markdown_description="Forensic analysis of contract violations and grievance language recommendations.",
+        ),
+        cl.ChatProfile(
+            name="📋 Manage",
+            markdown_description="Compliance-focused guidance on employer rights and operational risk mitigation.",
+        ),
+    ]
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    cl.user_session.set("Persona", settings["Persona"])
+    doc_path = settings.get("Document Navigator")
+    if doc_path and doc_path != "none":
+        f = Path(doc_path)
+        if f.exists():
+            display_name = f.stem.replace("_", " ").title().replace("Bcgeu", "BCGEU")
+            await cl.Message(
+                content=f"### 📂 {display_name}\nYou can download or view the document below:",
+                elements=[cl.File(name=display_name, path=str(f.resolve()), display="inline")]
+            ).send()
+
+@cl.on_chat_start
+async def on_chat_start():
+    # Ensure index is loaded exactly once
+    global _index, _startup_lock
+    if _index is None and not _startup_lock:
+        _startup_lock = True
+        startup()
+
+    # Set persona from the selected chat profile
+    profile_name = cl.user_session.get("chat_profile")
+    persona = "Lookup"
+    if profile_name:
+        if "Grieve" in profile_name: persona = "Grieve"
+        elif "Manage" in profile_name: persona = "Manage"
+    
+    cl.user_session.set("Persona", persona)
+    cl.user_session.set("history", [])
+
+    # Configure Settings-based Document Library
+    files = _get_download_source_files()
+    items = {f.stem.replace("_", " ").title().replace("Bcgeu", "BCGEU"): str(f.resolve()) for f in files}
+    
+    await cl.ChatSettings([
+        Select(
+            id="Document Navigator",
+            label="📚 Document Library",
+            values=list(items.values()),
+            items=items,
+            initial_value="none"
+        )
+    ]).send()
 
 @cl.set_starters
 async def set_starters():
     return [
         cl.Starter(
+            label="📚 Browse Library",
+            message="Browse Library",
+        ),
+        cl.Starter(
             label="Just Cause",
             message="What are the just cause requirements for discipline?",
-            icon="/public/favicon.ico",
         ),
         cl.Starter(
             label="Stewards' Rights",
             message="What rights do stewards have in investigation meetings?",
-            icon="/public/favicon.ico",
         ),
         cl.Starter(
             label="Off-duty Conduct",
             message="What is the nexus test for establishing a link in off-duty conduct cases?",
-            icon="/public/favicon.ico",
         ),
         cl.Starter(
             label="Harassment Test",
             message="Show me the Harassment Threshold test.",
-            icon="/public/favicon.ico",
         ),
         cl.Starter(
             label="Social Media",
             message="Does my employer have a social media policy?",
-            icon="/public/favicon.ico",
-        )
+        ),
     ]
 
 @cl.on_message
 async def on_message(message: cl.Message):
     persona = cl.user_session.get("Persona") or "Lookup"
     history = cl.user_session.get("history") or []
-    
+
     # Rate Limit & Security Check
-    # Use x-forwarded-for for IP-based limiting on HF Spaces/proxies, fall back to session ID
-    headers = cl.context.session.http_headers
-    user_id = headers.get("x-forwarded-for", "").split(",")[0].strip() or cl.context.session.id or "default"
+    user_id = cl.context.session.id if hasattr(cl.context.session, 'id') else cl.user_session.get("id") or "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
         await cl.Message(content=rate_msg).send()
         return
 
     sanitized, flagged = sanitize_input(message.content)
+
+    # Handle "Browse Library" — serve all PDFs as downloadable File elements
+    if sanitized.lower() == "browse library":
+        files = _get_download_source_files()
+        elements = []
+        for f in files:
+            display_name = f.stem.replace("_", " ").title()
+            display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
+            display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
+            elements.append(cl.File(name=display_name, path=str(f.resolve()), display="inline"))
+        await cl.Message(
+            content="### 📚 Document Library\nClick any document below to download:",
+            elements=elements,
+        ).send()
+        return
+
     if flagged:
         await cl.Message(content="⚠️ Input flagged for security review.").send()
         return
-        
+
     # Show thinking step
     async with cl.Step(name="Analyzing knowledge base...") as step:
         step.type = "run"
         queries, context = await get_multi_perspective_context(sanitized, history)
         step.output = f"**Searched Perspectives:**\n" + "\n".join([f"- {q}" for q in queries])
-        
+
     # Main response stream
     msg = cl.Message(content="")
     await msg.send()
-    
+
     async for chunk in rag_review_stream(sanitized, history, persona, queries=queries, context=context):
         await msg.stream_token(chunk)
-        
+
     await msg.update()
-    
+
     # Save to session history
     new_history = history + [
         {"role": "user", "content": sanitized},
-        {"role": "assistant", "content": msg.content}
+        {"role": "assistant", "content": msg.content},
     ]
     cl.user_session.set("history", new_history)
 
-# ─── Startup ───────────────────────────────────────────────────────────────
-# Pre-load the index at the module level so workers are ready immediately.
-# This prevents a massive delay for the first user connecting to a fresh worker.
-startup()
-
+# Chainlit runs main.py as a module; startup() is called inside on_chat_start.

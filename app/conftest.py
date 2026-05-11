@@ -37,14 +37,17 @@ def mock_embedding_model(request, monkeypatch):
         encoding = MagicMock()
         encoding.input_ids = tokens
         encoding.offset_mapping = offsets
+        # Support dict-like access used in indexing.py
+        encoding.get.side_effect = lambda k, default=None: offsets if k == "offset_mapping" else (tokens if k == "input_ids" else default)
         return encoding
         
     mock_model.tokenizer = mock_tokenize
     mock_model.encode = MagicMock(return_value=[[0.1]*384])
     
+    import indexing
     # We only patch if the test isn't an integration test that specifically wants the real deal
     # (By default we mock, integration tests can un-mock if needed)
-    monkeypatch.setattr(app, "get_embed_model", lambda: mock_model)
+    monkeypatch.setattr(indexing, "get_embed_model", lambda: mock_model)
     return mock_model
 
 @pytest.fixture
