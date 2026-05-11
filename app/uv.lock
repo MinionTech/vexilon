@@ -23,6 +23,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "chainlit" },
     { name = "faiss-cpu" },
+    { name = "nest-asyncio" },
     { name = "openai" },
     { name = "pymupdf" },
     { name = "pymupdf4llm" },
@@ -46,6 +47,7 @@ dev = [
 requires-dist = [
     { name = "chainlit", specifier = ">=1.1.0" },
     { name = "faiss-cpu", specifier = ">=1.8.0" },
+    { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "openai", specifier = ">=1.60.0" },
     { name = "pymupdf", specifier = ">=1.27.2.2" },
     { name = "pymupdf4llm", specifier = ">=1.27.2.2" },
