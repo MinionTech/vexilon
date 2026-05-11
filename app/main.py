@@ -921,6 +921,18 @@ async def on_message(message: cl.Message) -> None:
                 continue
             accumulated += chunk
             await out.stream_token(chunk)
+        
+        # Automatic Source Footer (Hard-coded safety net)
+        if seen_sources:
+            footer = "\n\n---\n**Sources Reference:**\n"
+            for source_name in sorted(list(seen_sources)):
+                # Find the page number from the snippets
+                pages = sorted(list(set(str(s.get("page", "?")) for s in snippets if s.get("source") == source_name)))
+                page_str = ", ".join(pages)
+                footer += f"- **{source_name}**, Page(s): {page_str}\n"
+            accumulated += footer
+            out.content = accumulated
+            await out.update()
     except Exception as exc:  # defensive — rag_review_stream already catches
         logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
         accumulated = f"⚠️ API error: {exc}"
