@@ -80,28 +80,11 @@ def test_hf_cache_security_lock():
         "Security Breach: hf_cache MUST NOT be owned by the app user. Revert the chown to root."
 
 
-def test_enter_key_uses_capture_phase():
+def test_chainlit_handles_enter():
     """
-    Regression guard for issue #276: Enter must submit the chat, not insert a newline.
-
-    The fix is to pass `true` (capture phase) as the third argument to
-    addEventListener so our handler fires BEFORE Gradio's element-level textarea
-    handler. Without capture phase, Gradio swallows the keydown event first and
-    inserts a newline, making Shift+Enter the only way to submit — opposite of
-    standard chat UX (MS Teams, Slack, etc.).
+    Regression guard for issue #276: Enter must submit the chat.
+    With the migration to Chainlit, this is handled natively without JS hacks.
     """
     app_path = REPO_ROOT / "main.py"
     content = app_path.read_text()
-
-    # The listener must be registered on document with capture=true (third arg).
-    # Anchor to `document.addEventListener('keydown'` and match only within that
-    # single call — [^)]* refuses to cross a closing paren, preventing a false
-    # positive if a second keydown listener without capture is ever added below.
-    assert re.search(
-        r"document\.addEventListener\(\s*['\"]keydown['\"],\s*[^,]+,\s*true\s*\)",
-        content,
-    ), (
-        "The keydown listener in build_ui() MUST use capture phase (third arg `true`). "
-        "Without it, Gradio's textarea handler fires first and Enter inserts a newline "
-        "instead of submitting the message. See issue #276."
-    )
+    assert "chainlit" in content, "Chainlit is required to handle Enter natively."

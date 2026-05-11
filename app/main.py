@@ -26,7 +26,8 @@ import openai
 from openai import AsyncOpenAI
 
 import faiss
-import gradio as gr
+import chainlit as cl
+from chainlit.input_widget import Select
 
 # ─── Agnav Imports ────────────────────────────────────────────────────────
 from indexing import (
@@ -502,9 +503,10 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
     return queries, "\n\n".join(context_parts)
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup") -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", queries: list[str] = None, context: str = "") -> AsyncIterator[str]:
     try:
-        queries, context = await get_multi_perspective_context(message, history)
+        if not context or not queries:
+            queries, context = await get_multi_perspective_context(message, history)
         
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
@@ -544,39 +546,7 @@ def _get_download_source_files() -> list[Path]:
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(list(set(pdfs)), key=lambda p: str(p))
 
-def history_to_markdown(history: list) -> str:
-    """Convert chat history to a Markdown string for export."""
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    lines = [f"# BCGEU Navigator Conversation Export - {timestamp}\n"]
-    for turn in (history or []):
-        role = turn["role"].capitalize()
-        content = turn["content"]
-        lines.append(f"### {role}\n{content}\n")
-    return "\n".join(lines)
 
-def markdown_to_history(file_path: str) -> list:
-    """Parse a Markdown conversation file back into a list of dicts."""
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    history, current_role, current_content = [], None, []
-    for line in lines:
-        new_role = None
-        if line.startswith("### User"): new_role = "user"
-        elif line.startswith("### BCGEU Navigator") or line.startswith("### Assistant"): new_role = "assistant"
-        
-        if new_role:
-            if current_role:
-                history.append({"role": current_role, "content": "\n".join(current_content).strip()})
-            current_role, current_content = new_role, []
-        elif current_role:
-            current_content.append(line.rstrip("\n"))
-            
-    # Final flush
-    if current_role:
-        history.append({"role": current_role, "content": "\n".join(current_content).strip()})
-    return history
-
-# ─── Gradio App Logic ───────────────────────────────────────────────────────
 def startup(force_rebuild: bool = False):
     global _index, _chunks, INTEGRITY_WARNING
     
@@ -609,252 +579,113 @@ def startup(force_rebuild: bool = False):
         if report.get("failed_files"):
             INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
 
-async def chat_handler(message, history, persona, request: gr.Request = None):
-    """Unified atomic handler using modern dicts (messages) format."""
-    msg_str = message
-    if isinstance(message, list):
-        msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
-    
-    msg_str = msg_str.strip() if msg_str else ""
-    if not msg_str:
-        yield history or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
-        return
+# ─── Chainlit App Logic ─────────────────────────────────────────────────────
+@cl.on_chat_start
+async def on_chat_start():
+    # Ensure index is loaded
+    if _index is None:
+        startup()
         
-    # 1. Update server state and clear textbox IMMEDIATELY
-    new_history = (history or []) + [{"role": "user", "content": msg_str}]
-    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
+    settings = await cl.ChatSettings(
+        [
+            Select(
+                id="Persona",
+                label="Persona",
+                values=["Lookup", "Grieve", "Manage"],
+                initial_index=0,
+            )
+        ]
+    ).send()
+    cl.user_session.set("Persona", "Lookup")
+    cl.user_session.set("history", [])
 
-    # 2. Rate Limit & Security Check
-    user_id = "default"
-    if request:
-        # Handle Hugging Face / Proxy transparently by checking X-Forwarded-For
-        forwarded = request.headers.get("x-forwarded-for")
-        user_id = forwarded.split(",")[0] if forwarded else request.client.host
+    elements = []
+    files = _get_download_source_files()
+    for f in files:
+        display_name = f.stem.replace("_", " ").title()
+        display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
+        display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
+        elements.append(cl.File(name=display_name, path=str(f.resolve()), display="inline"))
+    
+    msg_content = "### BCGEU Navigator\nWelcome! Select your persona in settings and ask a question."
+    if INTEGRITY_WARNING:
+        msg_content += f"\n\n⚠️ {INTEGRITY_WARNING}"
+        
+    await cl.Message(content=msg_content, elements=elements).send()
 
+@cl.on_settings_update
+async def setup_agent(settings):
+    cl.user_session.set("Persona", settings["Persona"])
+
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="Just Cause",
+            message="What are the just cause requirements for discipline?",
+            icon="/public/favicon.ico",
+        ),
+        cl.Starter(
+            label="Stewards' Rights",
+            message="What rights do stewards have in investigation meetings?",
+            icon="/public/favicon.ico",
+        ),
+        cl.Starter(
+            label="Off-duty Conduct",
+            message="What is the nexus test for establishing a link in off-duty conduct cases?",
+            icon="/public/favicon.ico",
+        ),
+        cl.Starter(
+            label="Harassment Test",
+            message="Show me the Harassment Threshold test.",
+            icon="/public/favicon.ico",
+        ),
+        cl.Starter(
+            label="Social Media",
+            message="Does my employer have a social media policy?",
+            icon="/public/favicon.ico",
+        )
+    ]
+
+@cl.on_message
+async def on_message(message: cl.Message):
+    persona = cl.user_session.get("Persona") or "Lookup"
+    history = cl.user_session.get("history") or []
+    
+    # Rate Limit & Security Check
+    user_id = cl.user_session.get("id") or "default"
     allowed, rate_msg = _rate_limiter.is_allowed(user_id)
     if not allowed:
-        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        await cl.Message(content=rate_msg).send()
         return
 
-    sanitized, flagged = sanitize_input(msg_str)
+    sanitized, flagged = sanitize_input(message.content)
     if flagged:
-        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+        await cl.Message(content="⚠️ Input flagged for security review.").send()
         return
-
-    # 3. Show thinking message
-    thinking_msg = "*(Analyzing knowledge base...)*\n\n"
-    current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(interactive=False), gr.update()
+        
+    # Show thinking step
+    async with cl.Step(name="Analyzing knowledge base...") as step:
+        step.type = "run"
+        queries, context = await get_multi_perspective_context(sanitized, history)
+        step.output = f"**Searched Perspectives:**\n" + "\n".join([f"- {q}" for q in queries])
+        
+    # Main response stream
+    msg = cl.Message(content="")
+    await msg.send()
     
-    # 4. Stream assistant response
-    accumulated = ""
-    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
-        accumulated += chunk
-        current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(interactive=False), gr.update()
+    async for chunk in rag_review_stream(sanitized, history, persona, queries=queries, context=context):
+        await msg.stream_token(chunk)
+        
+    await msg.update()
     
-    # 5. Restore interactivity
-    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
-    logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
-
-# ─── UI Layout ──────────────────────────────────────────────────────────────
-EXAMPLES = [
-    "What are the just cause requirements for discipline?",
-    "What rights do stewards have in investigation meetings?",
-    "What is the nexus test for establishing a link in off-duty conduct cases?",
-    "Show me the Harassment Threshold test.",
-    "Does my employer have a social media policy?"
-]
-
-CLOSE_ACCORDION_JS = """
-() => {
-    const btn = document.querySelector('#quick-questions-accordion .label-wrap');
-    if (btn && btn.classList.contains('open')) {
-        btn.click();
-    }
-}
-"""
-
-_CSS = """
-footer { display: none !important; }
-/* Hanging indent for the Resources & Utilities list items */
-#steward-toolbox .prose ul {
-    list-style-position: outside;
-    padding-left: 1.5rem;
-}
-#steward-toolbox .prose li {
-    margin-bottom: 0.5rem;
-}
-/* Aggressive button suppression for Gradio 6.x UI stability */
-.message-buttons, .share-button, .undo-button, .retry-button, .copy-button, .clear-button, button[aria-label="Clear"] {
-    display: none !important;
-}
-/* Prevent infinite growth in iframes while maintaining responsiveness */
-.is-iframe .gradio-chatbot {
-    max-height: 75vh !important;
-    height: auto !important;
-}
-"""
+    # Save to session history
+    new_history = history + [
+        {"role": "user", "content": sanitized},
+        {"role": "assistant", "content": msg.content}
+    ]
+    cl.user_session.set("history", new_history)
 
 if __name__ == "__main__":
     startup()
 
-def build_ui() -> gr.Blocks:
-    """Export the demo object for tests."""
-    return demo
-
-_HEAD = """
-<script>
-    if (window.self !== window.top) {
-        document.documentElement.classList.add('is-iframe');
-    }
-    // Handle Enter key for submission (Issue #118)
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            const textarea = document.querySelector('.gradio-container textarea');
-            if (textarea && document.activeElement === textarea) {
-                e.preventDefault();
-                const sendBtn = document.querySelector('button.primary');
-                if (sendBtn) sendBtn.click();
-            }
-        }
-    }, true);
-</script>
-"""
-
-with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
-    with gr.Row():
-        gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
-        persona = gr.Dropdown(
-            choices=["Lookup", "Grieve", "Manage"],
-            value="Lookup",
-            show_label=False,
-            container=False,
-            min_width=100,
-            interactive=True,
-            elem_id="persona_selector"
-        )
-    
-    chatbot = gr.Chatbot(
-        show_label=False, 
-        scale=1, 
-        height="70vh", 
-        min_height=400, 
-        buttons=[]
-    )
-    
-    with gr.Row():
-        msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
-        submit = gr.Button("Send", variant="primary", scale=1)
-
-    with gr.Accordion("Toolbox", open=False, elem_id="steward-toolbox") as toolbox:
-        gr.Markdown("### Examples")
-        with gr.Row():
-            for q in EXAMPLES:
-                example_btn = gr.Button(q, size="sm", variant="secondary")
-                def make_handler(q_text):
-                    async def handler(hist, pers, req: gr.Request = None):
-                        async for update in chat_handler(q_text, hist, pers, req):
-                            yield update
-                    return handler
-
-                example_btn.click(
-                    make_handler(q), 
-                    [chatbot, persona], 
-                    outputs=[chatbot, msg, submit, toolbox],
-                    js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
-                )
-
-        gr.Markdown("---")
-        if INTEGRITY_WARNING:
-            gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-        gr.Markdown("### Reference Documents")
-        
-        # Use native Gradio components for reliable file serving on HF Spaces and Localhost
-        files = _get_download_source_files()
-        for f in files:
-            display_name = f.stem.replace("_", " ").title()
-            display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
-            display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
-            
-            # Restore the relative path improvement for container reliability
-            try:
-                val = str(f.relative_to(Path.cwd()))
-            except ValueError:
-                val = str(f.resolve())
-                
-            gr.DownloadButton(display_name, value=val, size="sm", variant="secondary")
-            
-        gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
-        
-        gr.Markdown("---")
-        gr.Markdown("### Conversation Tools")
-        with gr.Row():
-            export_btn = gr.DownloadButton("⬇️ Save Conversation", variant="secondary", size="sm")
-            import_btn = gr.UploadButton("⬆️ Load Conversation", file_types=[".md"], variant="secondary", size="sm")
-
-    # ── Export / Import Handlers ──────────────────────────────────────────
-    def handle_export(history):
-        if not history: return None
-        md_str = history_to_markdown(history)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        filename = f"bcgeu_chat_{timestamp}.md"
-        save_path = os.path.join(tempfile.gettempdir(), filename)
-        with open(save_path, "w", encoding="utf-8") as f:
-            f.write(md_str)
-        threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
-        return save_path
-
-    export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
-
-    def handle_import(file):
-        try:
-            hist = markdown_to_history(file.name)
-            return hist
-        except Exception:
-            logger.error("[ui] Import failed", exc_info=True)
-            return gr.update()
-
-    import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-
-    gr.HTML(f"""
-        <div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
-            <a href="{AGNAV_REPO_URL}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">GitHub</a>
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{AGNAV_REPO_URL}/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">Privacy</a>
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{AGNAV_REPO_URL}/pkgs/container/agnav" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">{AGNAV_VERSION[:11]}</a>
-        </div>
-    """)
-
-    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox], api_name="chat_handler")
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 7860))
-    
-    # Restore allowed_paths for local file serving (fixes 404s for PDFs)
-    # Using resolve() ensures we handle symlinks and container volume mounts correctly
-    allowed_paths = [
-        str(LABOUR_LAW_DIR.resolve()), 
-        str(Path("docs").resolve()),
-        str(Path("data/labour_law").resolve()),
-    ]
-    
-    # Restore basic auth if configured in environment
-    agn_password = os.getenv("AGNAV_PASSWORD")
-    auth = None
-    if agn_password:
-        agn_user = os.getenv("AGNAV_USERNAME", "admin")
-        auth = (agn_user, agn_password)
-        logger.info(f"[startup] Authentication enabled for user '{agn_user}'")
-
-    demo.queue().launch(
-        server_name="0.0.0.0", 
-        server_port=port, 
-        allowed_paths=allowed_paths,
-        auth=auth,
-        css=_CSS, 
-        head=_HEAD
-    )

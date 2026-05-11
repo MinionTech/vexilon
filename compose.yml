@@ -76,7 +76,7 @@ services:
       - "7860:7860"
     healthcheck: *app-healthcheck
     command: >
-      sh -c "uv run watchfiles --ignore-paths .pdf_cache,data,reports 'uv run python main.py' ."
+      sh -c "uv run watchfiles --ignore-paths .pdf_cache,data,reports 'uv run chainlit run main.py --port 7860 -h 0.0.0.0 --headless' ."
 
   dev-test:
     <<: *dev-service

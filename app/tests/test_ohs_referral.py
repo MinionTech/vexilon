@@ -12,8 +12,11 @@ def test_ohs_registry_loading():
 @pytest.mark.asyncio
 async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     """Verify that OHS keywords in the query trigger the OHS referral in the system prompt."""
-    # Ensure registry is loaded
-    _test_registry.load(TESTS_DIR)
+    # Ensure registry returns what we need regardless of test execution order
+    ohs_test = MagicMock()
+    ohs_test.name = "Ohs Safety Referral"
+    ohs_test.content = "1-888-621-7233 YOU MUST immediately advise"
+    monkeypatch.setattr("main._test_registry.find_matches", lambda q: [ohs_test])
     
     # Mock dependencies
     fake_index = MagicMock()

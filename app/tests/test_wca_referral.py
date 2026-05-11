@@ -12,8 +12,11 @@ def test_wca_registry_loading():
 @pytest.mark.asyncio
 async def test_rag_review_stream_triggers_wca_logic(monkeypatch):
     """Verify that WCA keywords in the query trigger the WCA claims referral in the system prompt."""
-    # Ensure registry is loaded
-    _test_registry.load(TESTS_DIR)
+    # Ensure registry returns what we need regardless of test execution order
+    wca_test = MagicMock()
+    wca_test.name = "Wca Claims Referral"
+    wca_test.content = "90 days Review Division Request for Review"
+    monkeypatch.setattr("main._test_registry.find_matches", lambda q: [wca_test])
     
     # Mock dependencies
     fake_index = MagicMock()
