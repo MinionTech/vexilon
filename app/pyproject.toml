@@ -5,9 +5,8 @@ description = "BCGEU Collective Agreement RAG Chatbot"
 requires-python = ">=3.12"
 dependencies = [
     # ── Web UI ──────────────────────────────────────────────────────────────
-    "gradio==6.14.0",
+    "chainlit>=2.11.0,<3.0.0",
     "numpy",
-    "python-multipart==0.0.27",
     # ── LLM ─────────────────────────────────────────────────────────────────
     "openai>=1.60.0",               # OpenAI-compatible client (HF, Ollama, DeepSeek)
     # ── Embeddings (local CPU, no API key required) ──────────────────────────
@@ -32,7 +31,6 @@ dev = [
     "pytest-mock>=3.14.0",          # Mocking fixtures (mocker)
     "watchfiles>=0.21.0",           # Hot-reload engine
     "httpx>=0.27.0",                # Async HTTP client for smoke tests
-    "gradio-client>=1.6.0",         # Official client for smoke tests
 ]
 
 

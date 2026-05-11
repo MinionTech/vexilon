@@ -1,34 +1,29 @@
+"""Smoke probe for the running staging container.
+
+After the Chainlit migration there is no gradio_client API to call, so this
+script just verifies the server is reachable on the expected port and serving
+HTTP. End-to-end RAG verification lives in scripts/smoke_e2e.py.
+"""
 
 import os
-from gradio_client import Client
+import sys
 
-def test_staging():
-    print("[*] Connecting to Staging at http://localhost:7860...")
+import httpx
+
+
+def test_staging() -> None:
+    target = os.getenv("SMOKE_TARGET_STAGING", "http://localhost:7860")
+    print(f"[*] Probing Staging at {target} ...")
     try:
-        client = Client("http://localhost:7860")
-        print("[*] Sending test query to '/chat_handler'...")
-        # predict(message, history, persona, api_name="/chat_handler")
-        job = client.submit(
-            "What rights do stewards have?", 
-            [], # history
-            "Lookup", # persona
-            api_name="/chat_handler"
-        )
-        for chunk in job:
-            # Chunk is (chatbot_value, textbox_value)
-            # chatbot_value is a list of messages
-            if chunk and len(chunk) > 0:
-                chatbot_messages = chunk[0]
-                if len(chatbot_messages) > 1: # Index 0 is user, 1 is assistant
-                    last_msg = chatbot_messages[-1]
-                    content = last_msg.get('content', [])
-                    if content and len(content) > 0:
-                        text = content[0].get('text', '')
-                        if text:
-                            print(f"\n[SUCCESS] Received response: {text[:100]}...")
-                            return
-    except Exception as e:
-        print(f"[ERROR] {e}")
+        resp = httpx.get(target, timeout=15.0, follow_redirects=True)
+        if resp.status_code >= 500:
+            print(f"[ERROR] Server returned {resp.status_code}")
+            sys.exit(1)
+        print(f"[SUCCESS] Server responded with {resp.status_code}")
+    except Exception as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     test_staging()
