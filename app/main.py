@@ -502,7 +502,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
         yield "⚠️ Knowledge base not loaded.", ""
         return
     try:
-        queries, context = await get_multi_perspective_context(message, history)
+        queries, context, snippets = await get_multi_perspective_context(message, history)
         
         system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
 

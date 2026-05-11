@@ -21,8 +21,8 @@ async def run_test():
         answer = "".join(tokens)
         logger.info(f"Received answer (length {len(answer)})")
         
-        if len(answer) < 10:
-            logger.error("FAILURE: Response too short. LLM might not be responding correctly.")
+        if len(answer) < 10 or "⚠️" in answer:
+            logger.error(f"FAILURE: Invalid response or error detected: {answer}")
             sys.exit(1)
             
         logger.info("SUCCESS: E2E Smoke Test Passed!")
