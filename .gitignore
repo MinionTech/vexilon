@@ -27,8 +27,9 @@ build/
 chroma_db/          # Local vector store data
 gradio_cached_examples/
 flagged/
-# Chainlit auto-generates this on first run with default settings
+# Chainlit auto-generates these on first run with default settings
 app/.chainlit/
+app/chainlit.md
 # Scratch dir for local experiments
 app/scratch/
 # HuggingFace model weight cache (baked into image, not repo)
