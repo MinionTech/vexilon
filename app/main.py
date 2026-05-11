@@ -885,11 +885,11 @@ Click one of the common queries below to begin immediately:
     
     # ── Quick Start Actions ───────────────────────────────────────────────
     actions = [
-        cl.Action(name="starter_query", value="What are the just cause requirements for discipline?", label="⚖️ Just Cause"),
-        cl.Action(name="starter_query", value="What is the nexus test for off-duty conduct?", label="🔍 Nexus Test"),
-        cl.Action(name="starter_query", value="What rights do stewards have in investigation meetings?", label="🛡️ Steward Rights"),
-        cl.Action(name="starter_query", value="What are the standard grievance timelines?", label="📅 Timelines"),
-        cl.Action(name="starter_query", value="How should an employer conduct a fair investigation?", label="📝 Investigations"),
+        cl.Action(name="starter_query", payload={"value": "What are the just cause requirements for discipline?"}, label="⚖️ Just Cause"),
+        cl.Action(name="starter_query", payload={"value": "What is the nexus test for off-duty conduct?"}, label="🔍 Nexus Test"),
+        cl.Action(name="starter_query", payload={"value": "What rights do stewards have in investigation meetings?"}, label="🛡️ Steward Rights"),
+        cl.Action(name="starter_query", payload={"value": "What are the standard grievance timelines?"}, label="📅 Timelines"),
+        cl.Action(name="starter_query", payload={"value": "How should an employer conduct a fair investigation?"}, label="📝 Investigations"),
     ]
 
     # ── Side Panel Library ────────────────────────────────────────────────
@@ -945,10 +945,13 @@ def _client_id(message: cl.Message) -> str:
 
 @cl.action_callback("starter_query")
 async def on_action(action: cl.Action):
+    query = action.payload.get("value")
+    if not query:
+        return
     # This simulates the user sending the message
-    await cl.Message(content=f"Sent query: {action.value}", author="System").send()
-    # Now we trigger the on_message logic manually or via cl.process_message
-    await on_message(cl.Message(content=action.value))
+    await cl.Message(content=f"Sent query: {query}", author="System").send()
+    # Now we trigger the on_message logic manually
+    await on_message(cl.Message(content=query))
     # Remove the buttons after use to keep the chat clean
     await action.remove()
 
