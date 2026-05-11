@@ -52,6 +52,30 @@ async def _patched_anyio_run_sync(func, *args, abandon_on_cancel=False, limiter=
 
 anyio.to_thread.run_sync = _patched_anyio_run_sync
 
+# 3. Patch asyncio.wait_for to handle calls outside a Task
+# Required for engineio/chainlit compatibility on Python 3.14.
+_orig_wait_for = asyncio.wait_for
+
+async def _patched_wait_for(fut, timeout=None, **kwargs):
+    if timeout is None:
+        return await fut
+    if asyncio.current_task() is not None:
+        return await _orig_wait_for(fut, timeout=timeout, **kwargs)
+    
+    loop = asyncio.get_running_loop()
+    waiter = asyncio.ensure_future(fut, loop=loop)
+    timeout_handle = loop.call_later(timeout, waiter.cancel)
+    try:
+        return await waiter
+    except asyncio.CancelledError:
+        if not fut.done():
+            raise asyncio.TimeoutError()
+        return await waiter
+    finally:
+        timeout_handle.cancel()
+
+asyncio.wait_for = _patched_wait_for
+
 # ─── Agnav Imports ────────────────────────────────────────────────────────
 from indexing import (
     _get_source_name,
