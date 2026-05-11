@@ -85,15 +85,23 @@ asyncio.wait_for = _patched_wait_for
 _orig_task_states = _anyio_asyncio_backend._task_states
 
 class SafeTaskStates:
+    def __init__(self):
+        self._dummy_state = None
     def __getitem__(self, key):
         if key is None or not isinstance(key, asyncio.Task):
-            from anyio._backends._asyncio import TaskState
-            return TaskState(None, None)
+            if self._dummy_state is None:
+                from anyio._backends._asyncio import TaskState
+                # TaskState(parent_id, cancel_scope)
+                self._dummy_state = TaskState(None, None)
+            return self._dummy_state
         return _orig_task_states[key]
     def __setitem__(self, key, value):
         if isinstance(key, asyncio.Task): _orig_task_states[key] = value
+        else: self._dummy_state = value
     def __delitem__(self, key):
-        if isinstance(key, asyncio.Task): del _orig_task_states[key]
+        if isinstance(key, asyncio.Task):
+            if key in _orig_task_states: del _orig_task_states[key]
+        else: self._dummy_state = None
     def __contains__(self, key):
         return key is None or not isinstance(key, asyncio.Task) or key in _orig_task_states
     def get(self, key, default=None):
@@ -102,20 +110,36 @@ class SafeTaskStates:
 
 _anyio_asyncio_backend._task_states = SafeTaskStates()
 
-# 5. Patch anyio.CancelScope to prevent AssertionError on Python 3.14
+# 5. Patch anyio.CancelScope to prevent AssertionError and RuntimeError on Python 3.14
 from anyio._backends._asyncio import CancelScope as _AnyioCancelScope
 _orig_cancel_scope_enter = _AnyioCancelScope.__enter__
+_orig_cancel_scope_exit = _AnyioCancelScope.__exit__
 
 def _patched_cancel_scope_enter(self):
     host_task = asyncio.current_task()
     if host_task is None:
-        # Pre-emptively set a dummy task so anyio doesn't skip logic 
-        # but also doesn't crash on the 'assert self._host_task is not None' in __exit__
         self._host_task = "dummy_task"
+        from anyio._backends._asyncio import _task_states
+        task_state = _task_states[self._host_task]
+        self._parent_scope = task_state.current_cancel_scope
+        task_state.current_cancel_scope = self
         return self
     return _orig_cancel_scope_enter(self)
 
+def _patched_cancel_scope_exit(self, exc_type, exc_val, tb):
+    try:
+        return _orig_cancel_scope_exit(self, exc_type, exc_val, tb)
+    except RuntimeError as e:
+        if "is not active" in str(e) and self._host_task == "dummy_task":
+            # Manually clean up if anyio's internal state check failed but we know we're dummy
+            from anyio._backends._asyncio import _task_states
+            task_state = _task_states[self._host_task]
+            task_state.current_cancel_scope = self._parent_scope
+            return None
+        raise
+
 _AnyioCancelScope.__enter__ = _patched_cancel_scope_enter
+_AnyioCancelScope.__exit__ = _patched_cancel_scope_exit
 
 # 6. Force Chainlit to use a writable directory for temporary files (v2.x fix)
 # Chainlit 2.x ignores CHAINLIT_FILES_DIR and hardcodes Path(os.getcwd()) / ".files"

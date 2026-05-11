@@ -20,6 +20,7 @@ async def run_test():
         
         answer = "".join(tokens)
         logger.info(f"Received answer (length {len(answer)})")
+        logger.info(f"Answer snippet: {answer[:200]}...")
         
         if len(answer) < 10 or "⚠️" in answer:
             logger.error(f"FAILURE: Invalid response or error detected: {answer}")
