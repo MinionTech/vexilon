@@ -756,35 +756,7 @@ def startup(force_rebuild: bool = False):
         all_files = _get_rag_source_files()
         _source_path_map = { _get_source_name(p.stem): p for p in all_files }
         report = get_integrity_report()
-    # ── Dynamic Readme Generation ─────────────────────────────────────────
-    doc_list = _get_download_source_files()
-    doc_markdown = "\n".join([f"- {p.name}" for p in doc_list])
-    readme_path = Path("chainlit.md")
-    
-    # Forensic Footer Content
-    git_sha = "c50a0e2" # Dynamically retrieved earlier
-    github_url = "https://github.com/MinionTech/vexilon"
-    privacy_url = "/privacy" # Placeholder or link if exists
-    
-    readme_content = f"""# BCGEU Navigator
-Welcome to the forensic labor law assistant. Use the chat profiles to switch between analytical modes.
-
-### 📚 Document Library
-{doc_markdown}
-
----
-### 🛠️ Forensic Information
-- **Source Code**: [GitHub Repository]({github_url})
-- **Privacy Policy**: [Policy Information]({privacy_url})
-- **Build Revision**: `{git_sha}`
-- **Status**: Operational
-"""
-    try:
-        # Note: In some restricted environments, this might fail, so we wrap it
-        readme_path.write_text(readme_content, encoding="utf-8")
-        logger.info(f"[startup] Dynamic chainlit.md generated with SHA {git_sha}")
-    except Exception as e:
-        logger.warning(f"[startup] Could not write chainlit.md: {e}")
+    logger.info(f"[startup] {len(doc_list)} reference documents found.")
 
     logger.info(f"[startup] {len(doc_list)} reference documents found.")
 
@@ -908,11 +880,20 @@ async def start():
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
 
-    # ── Document Library (System Message) ────────────────────────────────────
+    # ── Document Library (Side Panel) ─────────────────────────────────────
     doc_list = _get_download_source_files()
     doc_markdown = "\n".join([f"- {p.name}" for p in doc_list])
-    readme_content = f"### 📚 Indexed Reference Documents\n{doc_markdown}\n\n*Use the gear icon (bottom right) to change personas.*"
-    await cl.Message(content=readme_content, author="System").send()
+    git_sha = "af7022d"
+    
+    side_panel_content = f"""### 📚 Indexed Reference Documents
+{doc_markdown}
+
+---
+**🛠️ Forensic Footer**
+- **Revision**: `{git_sha}`
+- **Status**: Operational
+"""
+    await cl.Text(name="Vexilon Library", content=side_panel_content, display="side").send()
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
