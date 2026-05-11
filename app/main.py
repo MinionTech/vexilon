@@ -121,8 +121,8 @@ def _patched_cancel_scope_enter(self):
         self._host_task = "dummy_task"
         from anyio._backends._asyncio import _task_states
         task_state = _task_states[self._host_task]
-        self._parent_scope = task_state.current_cancel_scope
-        task_state.current_cancel_scope = self
+        self._parent_scope = task_state.cancel_scope
+        task_state.cancel_scope = self
         return self
     return _orig_cancel_scope_enter(self)
 
@@ -134,7 +134,7 @@ def _patched_cancel_scope_exit(self, exc_type, exc_val, tb):
             # Manually clean up if anyio's internal state check failed but we know we're dummy
             from anyio._backends._asyncio import _task_states
             task_state = _task_states[self._host_task]
-            task_state.current_cancel_scope = self._parent_scope
+            task_state.cancel_scope = self._parent_scope
             return None
         raise
 
