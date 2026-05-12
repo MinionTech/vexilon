@@ -615,7 +615,298 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     if isinstance(message, list):
         msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
+<<<<<<< Updated upstream
     msg_str = msg_str.strip() if msg_str else ""
+=======
+    # ── Document Library Preparation ──────────────────────────────────────
+    doc_list = _get_download_source_files()
+    logger.info(f"[startup] {len(doc_list)} reference documents found.")
+
+# ─── Chainlit UI ────────────────────────────────────────────────────────────
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="Just Cause Requirements",
+            message="What are the just cause requirements for discipline?",
+            icon="/public/learn.svg",
+        ),
+        cl.Starter(
+            label="Nexus Test",
+            message="What is the nexus test for off-duty conduct?",
+            icon="/public/search.svg",
+        ),
+        cl.Starter(
+            label="Steward Rights",
+            message="What rights do stewards have in investigation meetings?",
+            icon="/public/terminal.svg",
+        ),
+        cl.Starter(
+            label="Grievance Timelines",
+            message="What are the standard grievance timelines in the 19th Main Agreement?",
+            icon="/public/history.svg",
+        ),
+        cl.Starter(
+            label="Investigation Procedures",
+            message="How should an employer conduct a fair investigation?",
+            icon="/public/edit.svg",
+        ),
+    ]
+
+# Module-level startup gate. startup() is sync (it does blocking I/O: PDF
+# fetch, FAISS index build/load, registry load). We run it exactly once,
+# off the event loop, on the first chat session.
+_startup_done = False
+_startup_lock = asyncio.Lock()
+
+
+async def _ensure_startup() -> None:
+    global _startup_done
+    if _startup_done:
+        return
+    async with _startup_lock:
+        if _startup_done:
+            return
+        
+        msg = None
+        try:
+            # Attempt to show progress if we're in a chat session
+            msg = cl.Message(content="Initializing Knowledge Base... This may take a moment if indexing is required.")
+            await msg.send()
+        except Exception:
+            pass
+
+        await asyncio.to_thread(startup)
+        
+        if msg:
+            try:
+                msg.content = "Knowledge Base initialized."
+                await msg.update()
+            except Exception:
+                pass
+        
+        _startup_done = True
+
+
+# ── Auth ────────────────────────────────────────────────────────────────────
+# Match the previous Gradio behaviour: enable password auth only when the
+# AGNAV_PASSWORD env var is set. Chainlit only registers the callback if it
+# is decorated, so we gate the decoration itself.
+if os.getenv("AGNAV_PASSWORD"):
+    _agn_user = os.getenv("AGNAV_USERNAME", "admin")
+    _agn_password = os.environ["AGNAV_PASSWORD"]
+    logger.info(f"[startup] Authentication enabled for user '{_agn_user}'")
+
+    @cl.password_auth_callback
+    async def auth_callback(username: str, password: str) -> "cl.User | None":
+        if username == _agn_user and password == _agn_password:
+            return cl.User(identifier=username)
+        return None
+
+
+@cl.on_settings_update
+async def setup_agent(settings):
+    cl.user_session.set("persona", settings["Persona"])
+    cl.user_session.set("show_reasoning", settings["ShowReasoning"])
+    await cl.Message(content=f"Settings updated: Persona is **{settings['Persona']}**, Reasoning is **{'Visible' if settings['ShowReasoning'] else 'Hidden'}**").send()
+
+@cl.on_chat_start
+async def start():
+    await _ensure_startup()
+    
+    # ── Welcome Header ────────────────────────────────────────────────────
+    welcome_msg = """# BCGEU Navigator
+Welcome! I am your forensic labor law assistant. 
+
+**Quick Tips:**
+- Click the **Knowledge Base** tab (top-left) to access reference documents.
+- Use the **Persona Selector** in the header to switch perspectives.
+- Use the **Forensic Sidebar** (right) to access forensic references.
+"""
+    
+    # ── Persona Selector Actions ──────────────────────────────────────────
+    persona_actions = [
+        cl.Action(name="set_persona", payload={"value": "Lookup"}, label="Lookup Perspective"),
+        cl.Action(name="set_persona", payload={"value": "Grieve"}, label="Grieve Perspective"),
+        cl.Action(name="set_persona", payload={"value": "Manage"}, label="Manage Perspective"),
+    ]
+    
+    # ── Starter Questions ─────────────────────────────────────────────────
+    actions = [
+        cl.Action(name="starter_query", payload={"value": "What are the just cause requirements for discipline?"}, label="Just Cause"),
+        cl.Action(name="starter_query", payload={"value": "What rights do stewards have in investigation meetings?"}, label="Steward Rights"),
+        cl.Action(name="starter_query", payload={"value": "What is the nexus test for establishing a link in off-duty conduct cases?"}, label="Nexus Test"),
+        cl.Action(name="starter_query", payload={"value": "Show me the Harassment Threshold test."}, label="Harassment Threshold"),
+        cl.Action(name="starter_query", payload={"value": "Does my employer have a social media policy?"}, label="Social Media Policy"),
+    ]
+
+    await cl.Message(
+        content=welcome_msg, 
+        author="System", 
+        actions=persona_actions + actions
+    ).send()
+
+    if INTEGRITY_WARNING:
+        await cl.Message(content=INTEGRITY_WARNING, author="system").send()
+
+# ── File Serving (FastAPI) ────────────────────────────────────────────────
+from chainlit.server import app
+from fastapi.responses import FileResponse
+from fastapi import HTTPException
+from fastapi.routing import APIRoute
+import os
+
+async def serve_kb_file(category: str, filename: str):
+    """Serve documents directly from the local Navigator Knowledge Base."""
+    import mimetypes
+    from fastapi.responses import Response
+    
+    base_dir = os.path.join(os.path.dirname(__file__), "data/labour_law")
+    target_path = os.path.join(base_dir, category, filename)
+    
+    # Security: Ensure the path is within the knowledge base directory
+    if not os.path.abspath(target_path).startswith(os.path.abspath(base_dir)):
+        raise HTTPException(status_code=403, detail="Forbidden: Path traversal detected")
+        
+    if os.path.exists(target_path):
+        with open(target_path, "rb") as f:
+            content = f.read()
+        mime, _ = mimetypes.guess_type(target_path)
+        return Response(content=content, media_type=mime or "application/octet-stream")
+    
+    raise HTTPException(status_code=404, detail=f"File not found: {category}/{filename}")
+
+# Prepend the route to ensure it wins over the catch-all
+kb_route = APIRoute("/knowledge-base/{category}/{filename}", serve_kb_file, methods=["GET"])
+app.routes.insert(0, kb_route)
+
+@cl.action_callback("set_persona")
+async def on_set_persona(action: cl.Action):
+    p = action.payload.get("value", "Lookup")
+    cl.user_session.set("persona", p)
+    await cl.Message(content=f"Forensic Perspective switched to: **{p}**").send()
+    await action.remove()
+
+
+def _client_id(message: cl.Message) -> str:
+    """Best-effort client identifier for rate limiting.
+
+    Chainlit doesn't expose request headers on cl.Message directly; fall back
+    to the session id, which keeps per-user limits sensible without leaking
+    real client IPs.
+    """
+    sid = getattr(cl.user_session, "id", None) or cl.user_session.get("id")
+    return str(sid) if sid else "default"
+
+
+@cl.action_callback("export_chat")
+async def on_export_chat(action: cl.Action):
+    history = cl.user_session.get("history") or []
+    if not history:
+        await cl.Message(content="No chat history to export yet.").send()
+        return
+    
+    import tempfile
+    md_content = history_to_markdown(history)
+    
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write(md_content)
+        temp_path = f.name
+        
+    await cl.Message(
+        content="Forensic Export: Your conversation record is ready.",
+        elements=[cl.File(name="vexilon_chat_export.md", path=temp_path, display="inline")]
+    ).send()
+
+@cl.action_callback("import_chat")
+async def on_import_chat(action: cl.Action):
+    files = await cl.AskFileMessage(
+        content="Please upload a BCGEU Navigator Export (.md) file to hydrate your session.",
+        accept=[".md"],
+        max_size_mb=2
+    ).send()
+    
+    if files:
+        import_file = files[0]
+        try:
+            history = markdown_to_history(import_file.path)
+            cl.user_session.set("history", history)
+            # Re-send the last message to confirm hydration
+            last_msg = history[-1]["content"] if history else "Conversation hydrated."
+            await cl.Message(content=f"Conversation hydrated. Last record: \n\n{last_msg[:200]}...").send()
+        except Exception as e:
+            await cl.Message(content=f"Import failed: {str(e)}").send()
+
+@cl.action_callback("toggle_toolbox")
+async def on_toggle_toolbox(action: cl.Action):
+    toolbox_content = """# Forensic Toolbox
+### Reference Documents
+- [19th Main Agreement](/knowledge-base/01_primary/BCGEU%2019th%20Main%20Agreement.pdf)
+- [Labour Relations Code](/knowledge-base/01_primary/BC%20Labour%20Relations%20Code.pdf)
+- [Employment Standards](/knowledge-base/02_statutory/BC%20Employment%20Standards%20Act.md)
+
+### Steward Tools
+- [Grievance Guide](/knowledge-base/forms/BCGEU%20Grievance%20Form%20Guide.md)
+- [Nexus Test PDF](/knowledge-base/04_jurisprudence/Nexus%20Test%20and%20Off-Duty%20Conduct.pdf)
+
+*Click the Toolbox in the header at any time to recover this sidebar.*
+"""
+    # To make it a SIDEBAR in Chainlit 2.x, we send it as an element attached to a message
+    await cl.Message(
+        content="Forensic Toolbox recovered.", 
+        elements=[cl.Text(name="Forensic Toolbox", content=toolbox_content, display="side")]
+    ).send()
+
+def history_to_markdown(history: list) -> str:
+    """Convert chat history to a Markdown string for export."""
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    lines = [f"# BCGEU Navigator Conversation Export - {timestamp}\n"]
+    for turn in (history or []):
+        role = turn.get("role", "Unknown").capitalize()
+        content = turn.get("content", "")
+        lines.append(f"### {role}\n{content}\n")
+    return "\n".join(lines)
+
+def markdown_to_history(file_path: str) -> list:
+    """Parse a Markdown conversation file back into a list of dicts."""
+    with open(file_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    history, current_role, current_content = [], None, []
+    for line in lines:
+        new_role = None
+        if line.startswith("### User"): new_role = "user"
+        elif line.startswith("### Assistant") or line.startswith("### Bcgeu"): new_role = "assistant"
+        
+        if new_role:
+            if current_role:
+                history.append({"role": current_role, "content": "\n".join(current_content).strip()})
+            current_role, current_content = new_role, []
+        elif current_role:
+            current_content.append(line.rstrip("\n"))
+            
+    if current_role:
+        history.append({"role": current_role, "content": "\n".join(current_content).strip()})
+    return history
+
+@cl.action_callback("starter_query")
+async def on_action(action: cl.Action):
+    query = action.payload.get("value")
+    if not query:
+        return
+    # This simulates the user sending the message
+    await cl.Message(content=f"Sent query: {query}", author="System").send()
+    # Now we trigger the on_message logic manually
+    await on_message(cl.Message(content=query))
+    # Remove the buttons after use to keep the chat clean
+    await action.remove()
+
+@cl.on_message
+async def on_message(message: cl.Message) -> None:
+    await _ensure_startup()
+
+    msg_str = (message.content or "").strip()
+>>>>>>> Stashed changes
     if not msg_str:
         yield history or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
         return
@@ -638,7 +929,11 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
 
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
+<<<<<<< Updated upstream
         yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+=======
+        await cl.Message(content="Input flagged for security review.").send()
+>>>>>>> Stashed changes
         return
 
     # 3. Show thinking message
@@ -649,6 +944,7 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     # 4. Stream assistant response
     accumulated = ""
     logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
+<<<<<<< Updated upstream
     async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
         accumulated += chunk
         current_history = new_history + [{"role": "assistant", "content": accumulated}]
@@ -656,6 +952,61 @@ async def chat_handler(message, history, persona, request: gr.Request = None):
     
     # 5. Restore interactivity
     yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
+=======
+    try:
+        queries, context, snippets = await get_multi_perspective_context(sanitized, history)
+        
+        # Attach unique sources as inline downloadable files
+        elements = []
+        seen_sources = set()
+        for s in snippets:
+            source_name = s.get("source", "Unknown")
+            if source_name not in seen_sources:
+                path = _source_path_map.get(source_name)
+                if path:
+                    # 'inline' ensures they appear as chips at the bottom, not auto-opening side-panels
+                    elements.append(cl.File(name=source_name, path=str(path), display="inline"))
+                seen_sources.add(source_name)
+        out.elements = elements
+
+        async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
+            if not chunk:
+                continue
+            accumulated += chunk
+            await out.stream_token(chunk)
+        
+        # Automatic Source Footer (Hard-coded safety net)
+        if seen_sources:
+            footer = "\n\n---\n**Sources Reference:**\n"
+            for source_name in sorted(list(seen_sources)):
+                # Find the page number from the snippets
+                pages = sorted(list(set(str(s.get("page", "?")) for s in snippets if s.get("source") == source_name)))
+                page_str = ", ".join(pages)
+                footer += f"- **{source_name}**, Page(s): {page_str}\n"
+            accumulated += footer
+            out.content = accumulated
+            await out.update()
+    except Exception as exc:  # defensive — rag_review_stream already catches
+        logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
+        accumulated = f"API error: {exc}"
+        out.content = accumulated
+
+    await out.update()
+
+    # Async Verification pass as per SPEC.md Section 9
+    if VERIFY_ENABLED:
+        async def verify_and_update():
+            report = await verify_response(accumulated, context)
+            if report and "ALL_CLAIMS_VERIFIED" not in report:
+                out.content += f"\n\n---\n**Verification Note:**\n{report}"
+                await out.update()
+        
+        cl.run_task(verify_and_update())
+
+    history.append({"role": "user", "content": sanitized})
+    history.append({"role": "assistant", "content": accumulated})
+    cl.user_session.set("history", history)
+>>>>>>> Stashed changes
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
 # ─── UI Layout ──────────────────────────────────────────────────────────────
