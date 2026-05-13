@@ -21,6 +21,7 @@ dependencies = [
     # ── PDF processing ───────────────────────────────────────────────────────
     "pymupdf>=1.27.2.2",
     "pymupdf4llm>=1.27.2.2",
+    "chainlit>=2.11.1",
 ]
 
 [dependency-groups]

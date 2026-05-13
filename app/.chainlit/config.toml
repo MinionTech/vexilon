@@ -131,7 +131,7 @@ cot = "full"
 
 # Specify a JavaScript file that can be used to customize the user interface.
 # The JavaScript file can be served from the public directory.
-custom_js = "/public/custom.js"
+custom_js = "/public/custom.js?v=33"
 
 # The style of alert boxes. Can be "classic" or "modern".
 alert_style = "classic"
@@ -166,26 +166,7 @@ default_avatar_file_url = ""
 # Be careful: If this is a relative path, it should not start with a slash.
 # custom_build = "./public/build"
 
-[[UI.header_links]]
-    name = "Knowledge Base"
-    display_name = "Knowledge Base"
-    icon_url = ""
-    url = "/knowledge-base"
-    target = "_self"
 
-[[UI.header_links]]
-    name = "GitHub"
-    display_name = "Source Code"
-    icon_url = "https://github.githubassets.com/favicons/favicon.svg"
-    url = "https://github.com/MinionTech/vexilon"
-    target = "_blank"
-
-[[UI.header_links]]
-    name = "Privacy"
-    display_name = "Privacy Policy"
-    icon_url = "https://www.gstatic.com/images/branding/product/1x/privacy_shield_24dp.png"
-    url = "/privacy"
-    target = "_blank"
 
 [meta]
 generated_by = "2.11.1"
