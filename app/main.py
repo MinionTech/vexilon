@@ -722,6 +722,25 @@ async def setup_agent(settings):
     cl.user_session.set("show_reasoning", settings["ShowReasoning"])
 
 
+DEFAULT_PERSONA = "Lookup"
+
+WELCOME_MSG = """# 🛡️ BCGEU Navigator
+Welcome! I am your forensic labor law assistant. 
+
+**Quick Tips:**
+- 📖 Click the **Readme** link (top-right) to access the **Knowledge Base**.
+- ⚙️ Mode switching and reasoning settings are in the **Chat Settings** (bottom-left or sidebar).
+"""
+
+def get_welcome_actions():
+    return [
+        cl.Action(name="export_history", payload={}, label="📤 Export Session"),
+        cl.Action(name="clear_session", payload={}, label="🗑️ Clear Session"),
+        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="⚖️ Discipline Analysis"),
+        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="📝 Grievance Builder"),
+        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="🛡️ Steward Rights"),
+    ]
+
 @cl.on_chat_start
 async def start():
     await _ensure_startup()
@@ -730,6 +749,12 @@ async def start():
     # ── Chat Settings (Gear Icon) ─────────────────────────────────────────
     await cl.ChatSettings(
         [
+            cl.input_widget.Select(
+                id="Persona",
+                label="Navigator Persona",
+                values=["Lookup", "Grieve", "Audit", "Manage"],
+                initial="Lookup",
+            ),
             cl.input_widget.Switch(
                 id="ShowReasoning",
                 label="Show Internal Reasoning",
@@ -744,33 +769,10 @@ async def start():
     cl.user_session.set("persona", "Lookup")
 
     # ── Welcome Header ────────────────────────────────────────────────────
-    welcome_msg = """# 🛡️ BCGEU Navigator
-Welcome! I am your forensic labor law assistant. 
-
-**Quick Tips:**
-- 📖 Click the **Readme** tab (top-left) to access the **Knowledge Base**.
-- 🛠️ Use the buttons below to switch modes, manage your session, or start a common query.
-"""
-
-    actions = [
-        # Personas
-        cl.Action(name="set_persona", payload={"value": "Lookup"}, label="🔍 Lookup"),
-        cl.Action(name="set_persona", payload={"value": "Grieve"}, label="⚖️ Grieve"),
-        cl.Action(name="set_persona", payload={"value": "Audit"}, label="🕵️ Audit"),
-        cl.Action(name="set_persona", payload={"value": "Manage"}, label="📊 Manage"),
-        # Session
-        cl.Action(name="export_history", payload={}, label="📤 Export Session"),
-        cl.Action(name="clear_session", payload={}, label="🗑️ Clear Session"),
-        # Starters
-        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="⚖️ Discipline Analysis"),
-        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="📝 Grievance Builder"),
-        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="🛡️ Steward Rights"),
-    ]
-
     await cl.Message(
-        content=welcome_msg, 
+        content=WELCOME_MSG, 
         author="System", 
-        actions=actions
+        actions=get_welcome_actions()
     ).send()
 
     if INTEGRITY_WARNING:
@@ -801,7 +803,6 @@ async def on_export(action: cl.Action):
 async def on_clear(action: cl.Action):
     cl.user_session.set("history", [])
 
-@cl.action_callback("set_persona")
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
     if persona:
@@ -809,18 +810,14 @@ async def on_persona_action(action: cl.Action):
 
 @cl.action_callback("starter_query")
 async def on_action(action: cl.Action):
-    query = action.payload.get("value")
+    query = action.payload.get('value')
     if not query:
         return
-    # This simulates the user sending the message
-    await cl.Message(
-        content=welcome_msg,
-        author="System",
-        actions=actions
-    ).send()
-    # Now we trigger the on_message logic manually
+    # Show the query the user selected
+    await cl.Message(content=f"**Query:** {query}", author="System").send()
+    # Trigger the processing
     await on_message(cl.Message(content=query))
-    # Remove the buttons after use to keep the chat clean
+    # Remove the buttons to keep it clean
     await action.remove()
 
 @cl.on_message

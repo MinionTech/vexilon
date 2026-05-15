@@ -72,6 +72,8 @@ services:
       WATCHFILES_FORCE_POLLING: "true"
       PORT: *PORT
       CHAINLIT_APP_ROOT: "/app/.pdf_cache"
+    mem_limit: 2g
+    memswap_limit: 2g
     ports:
       - "7860:7860"
     healthcheck: *app-healthcheck
@@ -118,6 +120,8 @@ services:
       OLLAMA_HOST: 0.0.0.0
     volumes:
       - ${OLLAMA_DATA_PATH:-ollama_data}:/root/.ollama
+    mem_limit: 4g
+    memswap_limit: 4g
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s

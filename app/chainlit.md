@@ -1,33 +1,78 @@
-# 📚 Knowledge Base
-Welcome to the BCGEU Navigator Knowledge Base. Below are the indexed reference documents available for forensic lookup.
+# 🛡️ BCGEU Navigator
+Welcome! I am your forensic labor law assistant. 
 
-## 🏛️ Primary Sources
-- [BCGEU 19th Main Agreement](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/01_primary/BCGEU%2019th%20Main%20Agreement.pdf)
-- [BC Labour Relations Code](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/01_primary/BC%20Labour%20Relations%20Code.pdf)
+**Quick Tips:**
+- 📖 Click the **Readme** tab (top-right) to access the **Knowledge Base**.
+- 🛠️ Use the buttons below to switch modes, manage your session, or start a common query.
 
-## 📜 Statutory
-- [BC Employment Standards Act](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/02_statutory/BC%20Employment%20Standards%20Act.md)
-- [BC Human Rights Code](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/02_statutory/BC%20Human%20Rights%20Code.md)
-- [BC OHS Regulation - Introduction](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/02_statutory/BC%20OHS%20Regulation%20-%20Introduction.md)
-- [BC OHS Regulation - Part 01 to 34](https://github.com/MinionTech/vexilon/tree/main/app/data/labour_law/02_statutory)
-- [BC Workers Compensation Act - Introduction](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/02_statutory/BC%20Workers%20Compensation%20Act%20-%20Introduction.md)
-- [BC Workers Compensation Act - Part 01 to 08](https://github.com/MinionTech/vexilon/tree/main/app/data/labour_law/02_statutory)
 
-## 📋 Resources
-- [BCGEU Steward Resources](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/03_resources/BCGEU%20Steward%20Resources.pdf)
-- [BC Social Media Guidance for Public Service Employees](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/03_resources/BC%20Social%20Media%20Guidance%20for%20Public%20Service%20Employees.pdf)
-- [Gov BC Standards of Conduct](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/03_resources/Gov%20BC%20Standards%20of%20Conduct.pdf)
+# 🛡️ Knowledge Base Manifest
 
-## ⚖️ Jurisprudence
-- [Nexus Test and Off-Duty Conduct](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/04_jurisprudence/Nexus%20Test%20and%20Off-Duty%20Conduct.pdf)
+The following documents are currently indexed and available for forensic analysis:
 
-## 📝 Forms
-- [BCGEU Grievance Form Guide](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/forms/BCGEU%20Grievance%20Form%20Guide.md)
-- [Grievance - 0 - Instructions](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/forms/Grievance%20-%200%20-%20Instructions.pdf)
-- [Grievance - A - Grievor Case](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/forms/Grievance%20-%20A%20-%20Grievor%20Case.pdf)
-- [Grievance - B - Notify Designates](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/forms/Grievance%20-%20B%20-%20Notify%20Designates.pdf)
-- [Grievance - C - Steward Case](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/forms/Grievance%20-%20C%20-%20Steward%20Case.pdf)
-- [Policy Grievance Form Guide](https://github.com/MinionTech/vexilon/blob/main/app/data/labour_law/forms/Policy%20Grievance%20Form%20Guide.md)
-
----
-*Visit the [GitHub Repository](https://github.com/MinionTech/vexilon/tree/main/app/data/labour_law) for the full source collection.*
+| Document Name | Format | Status |
+| :--- | :--- | :--- |
+| Bc Labour Relations Code | MD | ✅ Indexed |
+| Bc Labour Relations Code | PDF | ✅ Indexed |
+| Bcgeu 19Th Main Agreement | MD | ✅ Indexed |
+| Bcgeu 19Th Main Agreement | PDF | ✅ Indexed |
+| Bc Employment Standards Act | MD | ✅ Indexed |
+| Bc Human Rights Code | MD | ✅ Indexed |
+| Bc Ohs Regulation - Introduction | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 01 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 02 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 03 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 04 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 05 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 06 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 07 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 08 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 09 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 10 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 11 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 12 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 13 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 14 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 15 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 16 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 17 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 18 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 19 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 20 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 21 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 22 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 23 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 24 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 25 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 26 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 27 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 28 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 29 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 30 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 31 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 32 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 33 | MD | ✅ Indexed |
+| Bc Ohs Regulation - Part 34 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Introduction | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 01 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 02 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 03 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 04 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 05 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 06 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 07 | MD | ✅ Indexed |
+| Bc Workers Compensation Act - Part 08 | MD | ✅ Indexed |
+| Bc Social Media Guidance For Public Service Employees | MD | ✅ Indexed |
+| Bc Social Media Guidance For Public Service Employees | PDF | ✅ Indexed |
+| Bcgeu Steward Resources | MD | ✅ Indexed |
+| Bcgeu Steward Resources | PDF | ✅ Indexed |
+| Gov Bc Standards Of Conduct | MD | ✅ Indexed |
+| Gov Bc Standards Of Conduct | PDF | ✅ Indexed |
+| Nexus Test And Off-Duty Conduct | MD | ✅ Indexed |
+| Nexus Test And Off-Duty Conduct | PDF | ✅ Indexed |
+| Bcgeu Grievance Form Guide | MD | ✅ Indexed |
+| Grievance - 0 - Instructions | PDF | ✅ Indexed |
+| Grievance - A - Grievor Case | PDF | ✅ Indexed |
+| Grievance - B - Notify Designates | PDF | ✅ Indexed |
+| Grievance - C - Steward Case | PDF | ✅ Indexed |
+| Policy Grievance Form Guide | MD | ✅ Indexed |
