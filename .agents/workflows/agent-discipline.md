@@ -32,6 +32,7 @@ Work is only marked "Done" once the following are verified via terminal:
 
 ## 6. Technology Constraints
 To prevent accidental regression and "downgrades" that frustrate the team, the following versions are NON-NEGOTIABLE:
-- **Python**: MUST remain at **3.14** (experimental/dev baseline). NEVER downgrade to 3.12 or lower.
-- **LLM Models**: **Qwen 3** is the target. NEVER downgrade to Qwen 2.5 or lower in configurations.
+- **Python**: MUST remain at **3.14**. Any version other than 3.14 (including 3.12, 3.13, or lower) is FORBIDDEN.
+- **LLM Models**: **Qwen 3** is the primary target. Do not use Qwen 2.5, 2.9, or any non-Qwen 3 model in production configurations.
+- **Exemptions**: Lightweight models for CI/testing (e.g., `tinyllama` in `compose.yml`) are EXEMPT from the model regression rule, but the core application logic must target Qwen 3.
 - **Verification**: Any change affecting `compose.yml`, `Containerfile`, or `pyproject.toml` MUST be double-checked against these constraints.

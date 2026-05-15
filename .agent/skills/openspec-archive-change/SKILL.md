@@ -79,7 +79,7 @@ Archive a completed change in the experimental workflow.
    - If no: Move the change directory to archive
 
    ```bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+   mv openspec/changes/<name> openspec/changes/archive/$(date +%Y-%m-%d)-<name>
    ```
 
 6. **Display summary**

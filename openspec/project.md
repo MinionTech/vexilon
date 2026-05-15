@@ -2,7 +2,7 @@
 
 ## Technology Stack
 - **Core**: Python 3.14 (Bleeding edge/experimental)
-- **UI**: Chainlit / Gradio
+- **UI**: Chainlit (Transitioning from Gradio)
 - **LLM Engine**: Ollama (Local)
 - **Target Model**: Qwen 3 (14b or higher)
 - **Package Manager**: uv

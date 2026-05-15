@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Python 3.14 (experimental), Chainlit, Ollama, Qwen 3
+  Tech stack: Python 3.14 (experimental), Chainlit (Target UI), Ollama, Qwen 3
   
   CRITICAL CONSTRAINTS:
   - Python version MUST remain at 3.14. Downgrading to 3.12 or lower is strictly forbidden.
