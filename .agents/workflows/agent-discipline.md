@@ -29,3 +29,10 @@ Work is only marked "Done" once the following are verified via terminal:
 - **NEVER** report "Done" without terminal verification.
 - **NEVER** push code that fails linting or basic functional tests.
 - **ALWAYS** stop on the first error and fix the root cause before proceeding.
+
+## 6. Technology Constraints
+To prevent accidental regression and "downgrades" that frustrate the team, the following versions are NON-NEGOTIABLE:
+- **Python**: MUST remain at **3.14**. Any version other than 3.14 (including 3.12, 3.13, or lower) is FORBIDDEN.
+- **LLM Models**: **Qwen 3** is the primary target. Do not use Qwen 2.5, 2.9, or any non-Qwen 3 model in production configurations.
+- **Exemptions**: Lightweight models for CI/testing (e.g., `tinyllama` in `compose.yml`) are EXEMPT from the model regression rule, but the core application logic must target Qwen 3.
+- **Verification**: Any change affecting `compose.yml`, `Containerfile`, or `pyproject.toml` MUST be double-checked against these constraints.
