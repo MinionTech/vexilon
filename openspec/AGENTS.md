@@ -9,5 +9,6 @@ You MUST adhere to the following rules at all times:
     - NEVER downgrade Python 3.14 to 3.12 or lower.
     - NEVER downgrade Qwen 3 to Qwen 2.5 or lower.
 3. **Verification**: After any change to `compose.yml` or `Containerfile`, verify that the versions haven't been reverted.
-4. **Communication**: If you encounter a situation where a downgrade seems necessary, STOP and ask the human. Do not make the decision yourself.
+4. **The Receipt Rule**: Every claim of success MUST be backed by terminal output. For incremental work, use `podman compose up --build dev` and show the logs. For final work, run the relevant `test-*` services.
+5. **Communication**: If you encounter a situation where a downgrade seems necessary, STOP and ask the human. Do not make the decision yourself.
 </openspec-instructions>

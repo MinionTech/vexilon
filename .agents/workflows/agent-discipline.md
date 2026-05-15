@@ -36,3 +36,13 @@ To prevent accidental regression and "downgrades" that frustrate the team, the f
 - **LLM Models**: **Qwen 3** is the primary target. Do not use Qwen 2.5, 2.9, or any non-Qwen 3 model in production configurations.
 - **Exemptions**: Lightweight models for CI/testing (e.g., `tinyllama` in `compose.yml`) are EXEMPT from the model regression rule, but the core application logic must target Qwen 3.
 - **Verification**: Any change affecting `compose.yml`, `Containerfile`, or `pyproject.toml` MUST be double-checked against these constraints.
+
+## 7. Verification Protocol
+- **Incremental Verification (The "Dev" Check)**: 
+  - For iterative work, use `podman compose up --build dev` (or equivalent) to verify logs and manual output.
+  - **The Log Receipt**: If you claim a feature is running, you must show the relevant log lines from the container output.
+- **Final Verification (The "Pre-Flight" Check)**:
+  - Before declaring a task "Done" or opening a PR, the agent MUST attempt to run specific test services (e.g., `test-unit` or `test-cache`) if they are relevant to the change.
+- **Environment Awareness**: 
+  - Always prefer `podman` over `docker` if available in the environment, following the project's established patterns.
+- **No Psychic Claims**: Never assume code works because it "looks correct." You are not a compiler. If there is no terminal output, the verification didn't happen.
