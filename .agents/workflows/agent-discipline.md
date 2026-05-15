@@ -29,3 +29,9 @@ Work is only marked "Done" once the following are verified via terminal:
 - **NEVER** report "Done" without terminal verification.
 - **NEVER** push code that fails linting or basic functional tests.
 - **ALWAYS** stop on the first error and fix the root cause before proceeding.
+
+## 6. Technology Constraints
+To prevent accidental regression and "downgrades" that frustrate the team, the following versions are NON-NEGOTIABLE:
+- **Python**: MUST remain at **3.14** (experimental/dev baseline). NEVER downgrade to 3.12 or lower.
+- **LLM Models**: **Qwen 3** is the target. NEVER downgrade to Qwen 2.5 or lower in configurations.
+- **Verification**: Any change affecting `compose.yml`, `Containerfile`, or `pyproject.toml` MUST be double-checked against these constraints.
