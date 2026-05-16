@@ -70,7 +70,10 @@ body {
 #share-button,
 #undo-button,
 #retry-button,
-#clear-button {
+#clear-button,
+button[aria-label="New chat"],
+button[aria-label="new chat"],
+a[aria-label="New chat"] {
     display: none !important;
 }
 
