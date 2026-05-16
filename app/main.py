@@ -693,7 +693,6 @@ if os.getenv("AGNAV_PASSWORD"):
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
-    cl.user_session.set("show_reasoning", settings["ShowReasoning"])
 
 
 PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
@@ -756,17 +755,11 @@ async def on_chat_start():
                 values=["Lookup", "Grieve", "Audit", "Manage"],
                 initial="Lookup",
             ),
-            cl.input_widget.Switch(
-                id="ShowReasoning",
-                label="Show Internal Reasoning",
-                initial=False,
-            )
         ]
     ).send()
     
     # Initialize session state
     cl.user_session.set("history", [])
-    cl.user_session.set("show_reasoning", False)
     cl.user_session.set("persona", "Lookup")
 
     # ── Welcome Header ────────────────────────────────────────────────────
