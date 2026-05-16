@@ -75,7 +75,16 @@ body {
     display: none !important;
 }
 
-/* 3. Header Standardization */
+/* 3. Rename "Readme" → "Knowledge Base" without JS flicker */
+#readme-button {
+    font-size: 0;
+}
+#readme-button::after {
+    content: "Knowledge Base";
+    font-size: 0.875rem;
+}
+
+/* 4. Header Standardization */
 .header {
     border-bottom: 1px solid #e0e0e0 !important;
     background-color: #ffffff !important;
