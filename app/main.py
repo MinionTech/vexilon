@@ -895,47 +895,40 @@ async def on_message(message: cl.Message) -> None:
     try:
         queries, context, snippets = await get_multi_perspective_context(sanitized, history)
         
-        # Attach unique sources as inline downloadable files
+        # Attach sources as inline file chips (PDF preferred, MD fallback)
         elements = []
         seen_sources = set()
         for s in snippets:
             source_name = s.get("source", "Unknown")
             if source_name not in seen_sources:
-                path = _source_path_map.get(source_name)
-                if path:
-                    # 'inline' ensures they appear as chips at the bottom, not auto-opening side-panels
-                    elements.append(cl.File(name=source_name, path=str(path), display="inline"))
+                md_path = _source_path_map.get(source_name)
+                if md_path:
+                    pdf_path = md_path.with_suffix(".pdf")
+                    download_path = pdf_path if pdf_path.exists() else md_path
+                    elements.append(cl.File(
+                        name=f"{source_name} ({download_path.suffix.lstrip('.').upper()})",
+                        path=str(download_path),
+                        display="inline",
+                    ))
                 seen_sources.add(source_name)
         out.elements = elements
-        await out.update()  # flush elements (message was already sent)
 
         async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
             if not chunk:
                 continue
             accumulated += chunk
             await out.stream_token(chunk)
-        
-        # Automatic Source Footer (Hard-coded safety net)
+
+        # Append plain-text page reference footer (Chainlit only linkifies http/https)
         if seen_sources:
-            import urllib.parse
-            footer = "\n\n---\n**Sources Reference:**\n"
-            for source_name in sorted(list(seen_sources)):
-                pages = sorted(list(set(str(s.get("page", "?")) for s in snippets if s.get("source") == source_name)))
-                page_str = ", ".join(pages)
-                # Build a public download link: prefer PDF, fall back to MD
-                src_path = _source_path_map.get(source_name)
-                if src_path:
-                    rel = src_path.relative_to(LABOUR_LAW_DIR)
-                    pdf_path = src_path.with_suffix(".pdf")
-                    if pdf_path.exists():
-                        rel = pdf_path.relative_to(LABOUR_LAW_DIR)
-                    url = "/public/docs/labour_law/" + urllib.parse.quote(str(rel))
-                    footer += f"- [{source_name}]({url}), Page(s): {page_str}\n"
-                else:
-                    footer += f"- {source_name}, Page(s): {page_str}\n"
+            footer = "\n\n---\n**Sources:** "
+            parts = []
+            for source_name in sorted(seen_sources):
+                pages = sorted(set(str(s.get("page", "?")) for s in snippets if s.get("source") == source_name))
+                parts.append(f"{source_name} p.{', '.join(pages)}")
+            footer += " · ".join(parts)
             accumulated += footer
-            out.content = accumulated
-            await out.update()
+            await out.stream_token(footer)
     except Exception as exc:  # defensive — rag_review_stream already catches
         logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
         accumulated = f"⚠️ API error: {exc}"
