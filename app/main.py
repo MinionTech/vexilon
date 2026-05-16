@@ -10,6 +10,7 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
 import re
+import time
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
 import asyncio
