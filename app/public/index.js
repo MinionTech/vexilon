@@ -25,7 +25,24 @@
         chatInput.dataset.listenerAttached = "true";
     }
 
+    /**
+     * Rebranding: Rename 'Readme' to 'Knowledge Base'
+     */
+    function renameReadme() {
+        const elements = document.querySelectorAll('button, a, span, p');
+        elements.forEach(el => {
+            if (el.textContent.trim() === 'Readme') {
+                el.textContent = 'Knowledge Base';
+            }
+        });
+    }
+
     // Run periodically to catch re-renders
-    setInterval(setupEnterToSubmit, 1000);
+    setInterval(() => {
+        setupEnterToSubmit();
+        renameReadme();
+    }, 1000);
+    
     setupEnterToSubmit();
+    renameReadme();
 })();
