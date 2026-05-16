@@ -32,12 +32,20 @@
         });
     }
 
+    function hideDisclaimer() {
+        document.querySelectorAll('div[role="article"]').forEach(el => {
+            if (el.textContent.trim() === 'LLMs can make mistakes. Check important info.') el.style.display = 'none';
+        });
+    }
+
     // Run periodically to catch re-renders
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
+        hideDisclaimer();
     }, 500);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
+    hideDisclaimer();
 })();
