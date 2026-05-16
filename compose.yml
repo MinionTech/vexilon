@@ -73,14 +73,13 @@ services:
       <<: *common-env
       WATCHFILES_FORCE_POLLING: "true"
       PORT: *PORT
-      CHAINLIT_FILES_DIR: /tmp/chainlit_files
     mem_limit: 2g
     memswap_limit: 2g
     ports:
       - "7860:7860"
     healthcheck: *app-healthcheck
     command: >
-      sh -c "cd /app && CHAINLIT_FILES_DIR=/tmp/chainlit_files uv run watchfiles --filter python 'uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless' ."
+      sh -c "cd /app && uv run watchfiles --filter python 'uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless' ."
 
   dev-test:
     <<: *dev-service
