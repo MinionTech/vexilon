@@ -112,8 +112,8 @@ COPY main.py ./
 COPY prompts/ ./prompts/
 
 # Only create and chown (by UID) the specific directories that MUST be writable
-RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache && \
-    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache
+RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache /app/.files && \
+    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache /app/.files
 
 USER 1000
 
@@ -122,4 +122,4 @@ ARG REPO_URL="https://github.com/MinionTech/vexilon"
 ENV AGNAV_VERSION=$VERSION
 ENV AGNAV_REPO_URL=$REPO_URL
 
-CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 python main.py"]
+CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 chainlit run main.py --host 0.0.0.0 --port 7860 --headless"]

@@ -1,33 +1,37 @@
 import os
+from pathlib import Path
+# 2026-05-15: Removed hardcoded paths for portability (PR #495)
+CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
+os.environ["CHAINLIT_FILES_DIR"] = str(CACHE_DIR / ".files")
+CACHE_DIR.joinpath(".files").mkdir(parents=True, exist_ok=True)
+
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
 import re
-# Agreement Navigator - UI Version: 2026-05-03
-# Integrated RAG Backend + Stabilized Gradio 6 UI
-import html
+# Agreement Navigator - UI Version: 2026-05-10
+# Integrated RAG Backend + Chainlit UI
 import time
 import logging
 import asyncio
 import datetime
-import textwrap
-import urllib.parse
-from collections import OrderedDict
 from collections.abc import AsyncIterator
 from pathlib import Path
-import threading
-import tempfile
 from threading import Lock
 
-import numpy as np
 import openai
 from openai import AsyncOpenAI
 
 import faiss
-import gradio as gr
+import chainlit as cl
+import anyio.to_thread
+import anyio._backends._asyncio as _anyio_asyncio_backend
+import sniffio
 
+from patches import apply_patches
+apply_patches()
 # ─── Agnav Imports ────────────────────────────────────────────────────────
 from indexing import (
     _get_source_name,
@@ -248,17 +252,32 @@ MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
-def get_persona_prompt(mode_name: str) -> str:
+def get_persona_prompt(persona_key: str) -> str:
     """Return the combined mandatory rules and persona guidelines."""
-    if mode_name == "Manage":
+    if persona_key == "Manage":
         rules = MANAGER_MANDATORY_RULES
-        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework."
-    elif mode_name == "Grieve":
+        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework. Provide precise, fact-based answers using the provided context."
+    elif persona_key == "Grieve":
         rules = UNION_MANDATORY_RULES
-        persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases."
+        persona = (
+            "You are an expert in workplace grievances. Analyze the provided context and history to suggest a strategy.\n"
+            "Focus on identifying relevant articles and supporting the member's case. Maintain a professional, supportive, and analytical tone."
+        )
+    elif persona_key == "Train":
+        rules = UNION_MANDATORY_RULES
+        persona = (
+            "You are an expert in labor relations training. Explain the concepts in the context using a helpful, educational tone.\n"
+            "Focus on empowering the user with knowledge and clear explanations."
+        )
+    elif persona_key == "Audit":
+        rules = UNION_MANDATORY_RULES
+        persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases using the provided context."
     else:
         rules = UNION_MANDATORY_RULES
-        persona = "You are a BCGEU Steward Navigator. Your goal is to find specific clauses and provide literal guidance."
+        persona = (
+            "You are a forensic labor law expert. Your goal is to provide precise, fact-based answers using ONLY the provided context.\n"
+            "If the information is not in the context, state that you don't know."
+        )
     
     return f"{rules}\n\nROLE: {persona}"
 
@@ -288,7 +307,8 @@ def get_llm_client():
             # Use the OpenAI-compatible router endpoint for reliable routing
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=os.environ.get("HF_TOKEN")
+                api_key=os.environ.get("HF_TOKEN"),
+                timeout=60.0 # PR Feedback: Added explicit timeout
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
@@ -319,8 +339,9 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     
     # Use the 'model:provider' syntax for the most robust routing on the HF Router
     actual_model = f"{model}:{HF_PROVIDER}" if get_llm_provider() == "huggingface" else model
-    kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 300.0}
+    kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
 
+    # timeout is handled by the client initialization or default
     resp = await client.chat.completions.create(**kwargs)
     return resp.choices[0].message.content
 
@@ -383,6 +404,10 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
                         else:
                             buffer = ""
                             break
+    
+    # Final flush of the buffer if there's remaining content that isn't a think block
+    if buffer and not in_think_block:
+        yield buffer
 
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
@@ -408,7 +433,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
         yield "⚠️ Knowledge base not loaded.", ""
         return
     try:
-        queries, context = await get_multi_perspective_context(message, history)
+        queries, context, snippets = await get_multi_perspective_context(message, history)
         
         system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
 
@@ -475,36 +500,40 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
     except Exception:
         return [message]
 
-async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str]:
+async def get_multi_perspective_context(message: str, history: list[dict]) -> tuple[list[str], str, list[dict]]:
     # Optimization: Skip condensation in DEV or if no history exists to save ~30s of latency
     if IS_DEV or not history:
         condensed = message
     else:
         condensed = await condense_query(message, history)
 
-    # Issue #361: Heuristic for complexity - Skip perspectives in DEV for speed
-    if (not IS_DEV or os.getenv("AGNAV_FORCE_PERSPECTIVES") == "true") and len(condensed.split()) > 10:
+    # Issue #361: Heuristic for complexity - Use perspectives for long/complex queries
+    if len(condensed.split()) > 10 or os.getenv("AGNAV_FORCE_PERSPECTIVES") == "true":
         queries = await generate_perspective_queries(condensed, history)
     else:
         queries = [condensed]
     
     # Optimization: Fewer chunks in dev to speed up inference
     top_k_count = 3 if IS_DEV else 5
-    all_res = search_index_batch(_index, _chunks, queries, [top_k_count] * len(queries))
+    # Embedding is CPU-heavy; offload to thread to keep the event loop alive
+    all_res = await asyncio.to_thread(search_index_batch, _index, _chunks, queries, [top_k_count] * len(queries))
     seen = set()
     context_parts = []
+    unique_snippets = []
     for res_list in all_res:
         for c in res_list:
             if c["text"] not in seen:
                 seen.add(c["text"])
+                unique_snippets.append(c)
                 source = c.get("source", "Unknown")
                 page = c.get("page", "?")
-                context_parts.append(f"[Source: {source}, Page: {page}]\n{c['text']}")
-    return queries, "\n\n".join(context_parts)
+                context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
+    return queries, "\n\n".join(context_parts), unique_snippets
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup") -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
     try:
-        queries, context = await get_multi_perspective_context(message, history)
+        if not context:
+            queries, context, snippets = await get_multi_perspective_context(message, history)
         
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
@@ -576,15 +605,17 @@ def markdown_to_history(file_path: str) -> list:
         history.append({"role": current_role, "content": "\n".join(current_content).strip()})
     return history
 
-# ─── Gradio App Logic ───────────────────────────────────────────────────────
+# ─── App Logic ──────────────────────────────────────────────────────────────
+_source_path_map: dict[str, Path] = {}
+
 def startup(force_rebuild: bool = False):
-    global _index, _chunks, INTEGRITY_WARNING
+    global _index, _chunks, INTEGRITY_WARNING, _source_path_map
     
     # Identify environment
     provider = get_llm_provider()
     model = DEFAULT_MODEL_LLM
     logger.info(f"[startup] AgNav {AGNAV_VERSION} starting...")
-    logger.info(f"[startup] Provider: {get_llm_provider()}")
+    logger.info(f"[startup] Provider: {provider}")
     logger.info(f"[startup] Default Model: {DEFAULT_MODEL_LLM}")
     if get_llm_provider() == "huggingface":
         logger.info(f"[startup] HF Routing: {HF_PROVIDER}")
@@ -605,256 +636,308 @@ def startup(force_rebuild: bool = False):
     if _index is None or force_rebuild:
         _index, _chunks = build_index_from_sources(force=True)
     if _index is not None:
+        all_files = _get_rag_source_files()
+        _source_path_map = { _get_source_name(p.stem): p for p in all_files }
         report = get_integrity_report()
-        if report.get("failed_files"):
-            INTEGRITY_WARNING = f"⚠️ Index Incomplete: {len(report['failed_files'])} documents failed."
-
-async def chat_handler(message, history, persona, request: gr.Request = None):
-    """Unified atomic handler using modern dicts (messages) format."""
-    msg_str = message
-    if isinstance(message, list):
-        msg_str = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in message])
     
-    msg_str = msg_str.strip() if msg_str else ""
-    if not msg_str:
-        yield history or [], gr.update(interactive=True), gr.update(interactive=True), gr.update()
+    # ── Document Library Preparation ──────────────────────────────────────
+    doc_list = _get_download_source_files()
+    logger.info(f"[startup] {len(doc_list)} reference documents found.")
+
+# ─── Chainlit UI ────────────────────────────────────────────────────────────
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="⚖️ Discipline Analysis",
+            message="What are the Article 14 (Discipline) requirements for just cause?",
+        ),
+        cl.Starter(
+            label="📝 Grievance Builder",
+            message="I need to file a grievance for a member. What steps should I take?",
+        ),
+        cl.Starter(
+            label="🛡️ Steward Rights",
+            message="What are my rights as a steward during an investigation meeting?",
+        ),
+        cl.Starter(
+            label="📝 Grievance Builder",
+            message="How does the nexus test apply to off-duty conduct discipline?",
+        ),
+    ]
+
+# Module-level startup gate. startup() is sync (it does blocking I/O: PDF
+# fetch, FAISS index build/load, registry load). We run it exactly once,
+# off the event loop, on the first chat session.
+_startup_done = False
+_startup_lock = asyncio.Lock()
+
+
+async def _ensure_startup() -> None:
+    global _startup_done
+    if _startup_done:
         return
+    async with _startup_lock:
+        if _startup_done:
+            return
         
-    # 1. Update server state and clear textbox IMMEDIATELY
-    new_history = (history or []) + [{"role": "user", "content": msg_str}]
-    yield new_history, gr.update(value="", interactive=False, placeholder="Steward is thinking..."), gr.update(interactive=False), gr.update()
+        msg = None
+        try:
+            # Attempt to show progress if we're in a chat session
+            msg = cl.Message(content="⚙️ Initializing Knowledge Base... This may take a moment if indexing is required.")
+            await msg.send()
+        except Exception:
+            pass
 
-    # 2. Rate Limit & Security Check
-    user_id = "default"
-    if request:
-        # Handle Hugging Face / Proxy transparently by checking X-Forwarded-For
-        forwarded = request.headers.get("x-forwarded-for")
-        user_id = forwarded.split(",")[0] if forwarded else request.client.host
+        await asyncio.to_thread(startup)
+        
+        if msg:
+            try:
+                msg.content = "✅ Knowledge Base initialized."
+                await msg.update()
+            except Exception:
+                pass
+        
+        _startup_done = True
 
-    allowed, rate_msg = _rate_limiter.is_allowed(user_id)
-    if not allowed:
-        yield new_history + [{"role": "assistant", "content": rate_msg}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
-        return
 
-    sanitized, flagged = sanitize_input(msg_str)
-    if flagged:
-        yield new_history[:-1] + [{"role": "user", "content": sanitized}, {"role": "assistant", "content": "⚠️ Input flagged for security review."}], gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
-        return
+# ── Auth ────────────────────────────────────────────────────────────────────
+# Match the previous Gradio behaviour: enable password auth only when the
+# AGNAV_PASSWORD env var is set. Chainlit only registers the callback if it
+# is decorated, so we gate the decoration itself.
+if os.getenv("AGNAV_PASSWORD"):
+    _agn_user = os.getenv("AGNAV_USERNAME", "admin")
+    _agn_password = os.environ["AGNAV_PASSWORD"]
+    logger.info(f"[startup] Authentication enabled for user '{_agn_user}'")
 
-    # 3. Show thinking message
-    thinking_msg = "*(Analyzing knowledge base...)*\n\n"
-    current_history = new_history + [{"role": "assistant", "content": thinking_msg}]
-    yield current_history, gr.update(), gr.update(interactive=False), gr.update()
-    
-    # 4. Stream assistant response
-    accumulated = ""
-    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
-    async for chunk in rag_review_stream(sanitized, new_history[:-1], persona):
-        accumulated += chunk
-        current_history = new_history + [{"role": "assistant", "content": accumulated}]
-        yield current_history, gr.update(), gr.update(interactive=False), gr.update()
-    
-    # 5. Restore interactivity
-    yield current_history, gr.update(interactive=True, placeholder="Type a message..."), gr.update(interactive=True), gr.update()
-    logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
+    @cl.password_auth_callback
+    async def auth_callback(username: str, password: str) -> "cl.User | None":
+        if username == _agn_user and password == _agn_password:
+            return cl.User(identifier=username)
+        return None
 
-# ─── UI Layout ──────────────────────────────────────────────────────────────
+
+@cl.on_settings_update
+async def setup_agent(settings):
+    cl.user_session.set("persona", settings["Persona"])
+    cl.user_session.set("show_reasoning", settings["ShowReasoning"])
+
+
+PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
+DEFAULT_PERSONA = "Lookup"
+
 EXAMPLES = [
-    "What are the just cause requirements for discipline?",
-    "What rights do stewards have in investigation meetings?",
-    "What is the nexus test for establishing a link in off-duty conduct cases?",
-    "Show me the Harassment Threshold test.",
-    "Does my employer have a social media policy?"
+    "What are the Article 14 (Discipline) requirements for just cause?",
+    "I need to file a grievance for a member. What steps should I take?",
+    "What are my rights as a steward during an investigation meeting?",
 ]
 
-CLOSE_ACCORDION_JS = """
-() => {
-    const btn = document.querySelector('#quick-questions-accordion .label-wrap');
-    if (btn && btn.classList.contains('open')) {
-        btn.click();
-    }
-}
+WELCOME_MSG = """# 🛡️ BCGEU Navigator
+Welcome! I am your forensic labor law assistant. 
+
+**Quick Tips:**
+- 📖 Click the **Readme** link (top-right) to access the **Knowledge Base**.
+- ⚙️ Mode switching and reasoning settings are in the **Chat Settings** (bottom-left or sidebar).
 """
 
-_CSS = """
-footer { display: none !important; }
-/* Hanging indent for the Resources & Utilities list items */
-#steward-toolbox .prose ul {
-    list-style-position: outside;
-    padding-left: 1.5rem;
-}
-#steward-toolbox .prose li {
-    margin-bottom: 0.5rem;
-}
-/* Aggressive button suppression for Gradio 6.x UI stability */
-.message-buttons, .share-button, .undo-button, .retry-button, .copy-button, .clear-button, button[aria-label="Clear"] {
-    display: none !important;
-}
-/* Prevent infinite growth in iframes while maintaining responsiveness */
-.is-iframe .gradio-chatbot {
-    max-height: 75vh !important;
-    height: auto !important;
-}
-"""
-
-if __name__ == "__main__":
-    startup()
-
-def build_ui() -> gr.Blocks:
-    """Export the demo object for tests."""
-    return demo
-
-_HEAD = """
-<script>
-    if (window.self !== window.top) {
-        document.documentElement.classList.add('is-iframe');
-    }
-    // Handle Enter key for submission (Issue #118)
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            const textarea = document.querySelector('.gradio-container textarea');
-            if (textarea && document.activeElement === textarea) {
-                e.preventDefault();
-                const sendBtn = document.querySelector('button.primary');
-                if (sendBtn) sendBtn.click();
-            }
-        }
-    }, true);
-</script>
-"""
-
-with gr.Blocks(title="BCGEU Navigator", fill_height=True) as demo:
-    with gr.Row():
-        gr.HTML("<div style='display: flex; height: 100%; align-items: center;'><h3 style='margin: 0;'>BCGEU Navigator</h3></div>")
-        persona = gr.Dropdown(
-            choices=["Lookup", "Grieve", "Manage"],
-            value="Lookup",
-            show_label=False,
-            container=False,
-            min_width=100,
-            interactive=True,
-            elem_id="persona_selector"
-        )
-    
-    chatbot = gr.Chatbot(
-        show_label=False, 
-        scale=1, 
-        height="70vh", 
-        min_height=400, 
-        buttons=[]
-    )
-    
-    with gr.Row():
-        msg = gr.Textbox(show_label=False, placeholder="Type a message...", container=False, scale=7)
-        submit = gr.Button("Send", variant="primary", scale=1)
-
-    with gr.Accordion("Toolbox", open=False, elem_id="steward-toolbox") as toolbox:
-        gr.Markdown("### Examples")
-        with gr.Row():
-            for q in EXAMPLES:
-                example_btn = gr.Button(q, size="sm", variant="secondary")
-                def make_handler(q_text):
-                    async def handler(hist, pers, req: gr.Request = None):
-                        async for update in chat_handler(q_text, hist, pers, req):
-                            yield update
-                    return handler
-
-                example_btn.click(
-                    make_handler(q), 
-                    [chatbot, persona], 
-                    outputs=[chatbot, msg, submit, toolbox],
-                    js=CLOSE_ACCORDION_JS.replace("quick-questions-accordion", "steward-toolbox")
-                )
-
-        gr.Markdown("---")
-        if INTEGRITY_WARNING:
-            gr.Markdown(f"⚠️ {INTEGRITY_WARNING}")
-        gr.Markdown("### Reference Documents")
-        
-        # Use native Gradio components for reliable file serving on HF Spaces and Localhost
-        files = _get_download_source_files()
-        for f in files:
-            display_name = f.stem.replace("_", " ").title()
-            display_name = display_name.replace("Bcgeu", "BCGEU").replace("Main Agreement", "Agreement")
-            display_name = display_name.replace("Bc ", "BC ").replace(" Bc", " BC")
-            
-            # Restore the relative path improvement for container reliability
-            try:
-                val = str(f.relative_to(Path.cwd()))
-            except ValueError:
-                val = str(f.resolve())
-                
-            gr.DownloadButton(display_name, value=val, size="sm", variant="secondary")
-            
-        gr.Markdown(f"[Browse Full Knowledge Base on GitHub]({GITHUB_LABOUR_LAW_URL})")
-        
-        gr.Markdown("---")
-        gr.Markdown("### Conversation Tools")
-        with gr.Row():
-            export_btn = gr.DownloadButton("⬇️ Save Conversation", variant="secondary", size="sm")
-            import_btn = gr.UploadButton("⬆️ Load Conversation", file_types=[".md"], variant="secondary", size="sm")
-
-    # ── Export / Import Handlers ──────────────────────────────────────────
-    def handle_export(history):
-        if not history: return None
-        md_str = history_to_markdown(history)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        filename = f"bcgeu_chat_{timestamp}.md"
-        save_path = os.path.join(tempfile.gettempdir(), filename)
-        with open(save_path, "w", encoding="utf-8") as f:
-            f.write(md_str)
-        threading.Timer(600, lambda: os.path.exists(save_path) and os.remove(save_path)).start()
-        return save_path
-
-    export_btn.click(fn=handle_export, inputs=[chatbot], outputs=[export_btn])
-
-    def handle_import(file):
-        try:
-            hist = markdown_to_history(file.name)
-            return hist
-        except Exception:
-            logger.error("[ui] Import failed", exc_info=True)
-            return gr.update()
-
-    import_btn.upload(fn=handle_import, inputs=[import_btn], outputs=[chatbot])
-
-    gr.HTML(f"""
-        <div style="text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
-            <a href="{AGNAV_REPO_URL}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">GitHub</a>
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{AGNAV_REPO_URL}/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">Privacy</a>
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            <a href="{AGNAV_REPO_URL}/pkgs/container/agnav" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none;">{AGNAV_VERSION[:11]}</a>
-        </div>
-    """)
-
-    msg.submit(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox], api_name="chat_handler")
-    submit.click(chat_handler, [msg, chatbot, persona], [chatbot, msg, submit, toolbox])
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 7860))
-    
-    # Restore allowed_paths for local file serving (fixes 404s for PDFs)
-    # Using resolve() ensures we handle symlinks and container volume mounts correctly
-    allowed_paths = [
-        str(LABOUR_LAW_DIR.resolve()), 
-        str(Path("docs").resolve()),
-        str(Path("data/labour_law").resolve()),
+def get_welcome_actions():
+    return [
+        cl.Action(name="export_history", payload={}, label="📤 Export Session"),
+        cl.Action(name="clear_session", payload={}, label="🗑️ Clear Session"),
+        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="⚖️ Discipline Analysis"),
+        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="📝 Grievance Builder"),
+        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="🛡️ Steward Rights"),
     ]
-    
-    # Restore basic auth if configured in environment
-    agn_password = os.getenv("AGNAV_PASSWORD")
-    auth = None
-    if agn_password:
-        agn_user = os.getenv("AGNAV_USERNAME", "admin")
-        auth = (agn_user, agn_password)
-        logger.info(f"[startup] Authentication enabled for user '{agn_user}'")
 
-    demo.queue().launch(
-        server_name="0.0.0.0", 
-        server_port=port, 
-        allowed_paths=allowed_paths,
-        auth=auth,
-        css=_CSS, 
-        head=_HEAD
-    )
+
+@cl.set_chat_profiles
+async def chat_profiles(user: cl.User):
+    return [
+        cl.ChatProfile(
+            name="Lookup",
+            default=True,
+            markdown_description="🔍 Forensic lookup of labor law excerpts.",
+            icon="https://www.gstatic.com/images/branding/product/1x/search_64dp.png",
+            starters=[cl.Starter(label="Discipline Analysis", message=EXAMPLES[0])],
+        ),
+        cl.ChatProfile(
+            name="Grieve",
+            markdown_description="⚖️ Strategic guidance for grievance filing.",
+            icon="https://www.gstatic.com/images/icons/material/system/1x/gavel_black_24dp.png",
+            starters=[cl.Starter(label="Grievance Builder", message=EXAMPLES[1])],
+        ),
+        cl.ChatProfile(
+            name="Audit",
+            markdown_description="🕵️ Forensic auditing of compliance risks.",
+            icon="https://www.gstatic.com/images/icons/material/system/1x/fact_check_black_24dp.png",
+            starters=[cl.Starter(label="Audit Analysis", message=EXAMPLES[2])],
+        ),
+        cl.ChatProfile(
+            name="Manage",
+            markdown_description="📊 Strategic management consulting.",
+            icon="https://www.gstatic.com/images/icons/material/system/1x/analytics_black_24dp.png",
+            starters=[cl.Starter(label="Strategy Session", message=EXAMPLES[0])],
+        ),
+    ]
+
+
+@cl.on_chat_start
+async def on_chat_start():
+    await _ensure_startup()
+    
+
+    # ── Chat Settings (Gear Icon) ─────────────────────────────────────────
+    await cl.ChatSettings(
+        [
+            cl.input_widget.Select(
+                id="Persona",
+                label="Navigator Persona",
+                values=["Lookup", "Grieve", "Audit", "Manage"],
+                initial="Lookup",
+            ),
+            cl.input_widget.Switch(
+                id="ShowReasoning",
+                label="Show Internal Reasoning",
+                initial=False,
+            )
+        ]
+    ).send()
+    
+    # Initialize session state
+    cl.user_session.set("history", [])
+    cl.user_session.set("show_reasoning", False)
+    cl.user_session.set("persona", "Lookup")
+
+    # ── Welcome Header ────────────────────────────────────────────────────
+    await cl.Message(
+        content=WELCOME_MSG, 
+        author="System", 
+        actions=get_welcome_actions()
+    ).send()
+
+    if INTEGRITY_WARNING:
+        await cl.Message(content=INTEGRITY_WARNING, author="system").send()
+
+
+# ── Message handler ────────────────────────────────────────────────────────
+def _client_id(message: cl.Message) -> str:
+    """Best-effort client identifier for rate limiting.
+
+    Chainlit doesn't expose request headers on cl.Message directly; fall back
+    to the session id, which keeps per-user limits sensible without leaking
+    real client IPs.
+    """
+    sid = getattr(cl.user_session, "id", None) or cl.user_session.get("id")
+    return str(sid) if sid else "default"
+
+
+@cl.action_callback("export_history")
+async def on_export(action: cl.Action):
+    history = cl.user_session.get("history")
+    if not history:
+        return
+    md_content = history_to_markdown(history)
+    file = cl.File(name="agnav_conversation.md", content=md_content.encode("utf-8"), display="inline")
+
+@cl.action_callback("clear_session")
+async def on_clear(action: cl.Action):
+    cl.user_session.set("history", [])
+
+async def on_persona_action(action: cl.Action):
+    persona = action.payload.get("value")
+    if persona:
+        cl.user_session.set("persona", persona)
+
+@cl.action_callback("starter_query")
+async def on_action(action: cl.Action):
+    query = action.payload.get('value')
+    if not query:
+        return
+    # Show the query the user selected
+    await cl.Message(content=f"**Query:** {query}", author="System").send()
+    # Trigger the processing
+    await on_message(cl.Message(content=query))
+    # Remove the buttons to keep it clean
+    await action.remove()
+
+@cl.on_message
+async def on_message(message: cl.Message) -> None:
+    await _ensure_startup()
+
+    msg_str = (message.content or "").strip()
+    if not msg_str:
+        return
+
+    # Rate limit (per session)
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id(message))
+    if not allowed:
+        return
+
+    # Prompt-injection / length sanitisation
+    sanitized, flagged = sanitize_input(msg_str)
+    if flagged:
+        return
+
+    # Order of precedence: session['persona'] (settings) -> session['chat_profile'] (profiles) -> DEFAULT_PERSONA
+    persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    history: list[dict] = cl.user_session.get("history") or []
+
+    out = cl.Message(content="")
+    await out.send()
+
+    accumulated = ""
+    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
+    try:
+        queries, context, snippets = await get_multi_perspective_context(sanitized, history)
+        
+        # Attach unique sources as inline downloadable files
+        elements = []
+        seen_sources = set()
+        for s in snippets:
+            source_name = s.get("source", "Unknown")
+            if source_name not in seen_sources:
+                path = _source_path_map.get(source_name)
+                if path:
+                    # 'inline' ensures they appear as chips at the bottom, not auto-opening side-panels
+                    elements.append(cl.File(name=source_name, path=str(path), display="inline"))
+                seen_sources.add(source_name)
+        out.elements = elements
+
+        async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
+            if not chunk:
+                continue
+            accumulated += chunk
+            await out.stream_token(chunk)
+        
+        # Automatic Source Footer (Hard-coded safety net)
+        if seen_sources:
+            footer = "\n\n---\n**Sources Reference:**\n"
+            for source_name in sorted(list(seen_sources)):
+                # Find the page number from the snippets
+                pages = sorted(list(set(str(s.get("page", "?")) for s in snippets if s.get("source") == source_name)))
+                page_str = ", ".join(pages)
+                footer += f"- **{source_name}**, Page(s): {page_str}\n"
+            accumulated += footer
+            out.content = accumulated
+            await out.update()
+    except Exception as exc:  # defensive — rag_review_stream already catches
+        logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
+        accumulated = f"⚠️ API error: {exc}"
+        out.content = accumulated
+
+    await out.update()
+
+    # Async Verification pass as per SPEC.md Section 9
+    if VERIFY_ENABLED:
+        async def verify_and_update():
+            report = await verify_response(accumulated, context)
+            if report and "ALL_CLAIMS_VERIFIED" not in report:
+                out.content += f"\n\n---\n**Verification Note:**\n{report}"
+                await out.update()
+        
+        cl.run_task(verify_and_update())
+
+    history.append({"role": "user", "content": sanitized})
+    history.append({"role": "assistant", "content": accumulated})
+    cl.user_session.set("history", history)
+    logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")

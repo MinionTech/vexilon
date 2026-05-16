@@ -306,11 +306,19 @@ def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
     import faiss
     import numpy as np
     texts = [c["text"] for c in chunks]
-    logger.info("[index] Indexing... Please expect a wait (this can take 5-10 minutes on CPU).")
-    logger.info(f"[index] Embedding {len(texts)} chunks locally...")
-    t0 = time.time()
-    vectors = embed_texts(texts)
-    logger.info(f"[index] Embeddings complete in {time.time() - t0:.1f}s")
+    logger.info(f"[index] Indexing {len(texts)} chunks (Batched for memory safety)...")
+    
+    # 2026-05-15: Optimization to prevent OOM on 2GB limits
+    batch_size = 64
+    all_vectors = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        all_vectors.append(embed_texts(batch))
+        if (i // batch_size) % 5 == 0:
+            logger.info(f"[index] Progress: {min(i + batch_size, len(texts))}/{len(texts)} chunks embedded...")
+            
+    vectors = np.vstack(all_vectors)
+    logger.info(f"[index] Embeddings complete. Normalizing...")
     faiss.normalize_L2(vectors)
     index = faiss.IndexFlatIP(EMBED_DIM)
     index.add(vectors)

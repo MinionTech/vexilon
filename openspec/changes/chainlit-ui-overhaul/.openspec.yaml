@@ -1,0 +1,16 @@
+name: chainlit-ui-overhaul
+description: Overhaul Chainlit UI to Forensic premium standards
+status: in-progress
+artifacts:
+  - id: proposal
+    path: proposal.md
+    status: done
+  - id: design
+    path: design.md
+    status: todo
+  - id: tasks
+    path: tasks.md
+    status: todo
+apply:
+  requires:
+    - tasks

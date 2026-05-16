@@ -1,0 +1,59 @@
+/* app/public/style.css */
+
+/* Modern Forensic Look */
+.header {
+    border-bottom: 1px solid var(--divider) !important;
+    background-color: var(--background-paper) !important;
+    padding: 0 16px !important;
+    height: 56px !important;
+}
+
+.header .title {
+    font-weight: 700 !important;
+    font-family: 'Inter', sans-serif;
+    color: var(--primary-main) !important;
+    font-size: 1.1rem !important;
+}
+
+/* Custom Persona Selector Container */
+#persona-selector-container {
+    margin-left: 1.5rem;
+    display: flex;
+    align-items: center;
+    background: var(--background-default);
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    padding: 2px 8px;
+    transition: all 0.2s ease;
+}
+
+#persona-selector-container:hover {
+    border-color: var(--primary-main);
+    box-shadow: 0 0 0 1px var(--primary-main);
+}
+
+#persona-selector-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+#persona-selector {
+    background-color: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    padding: 4px 0;
+}
+
+#persona-selector option {
+    background-color: var(--background-paper);
+    color: var(--text-primary);
+}

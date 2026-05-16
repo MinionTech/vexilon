@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, patch, MagicMock
 import main as app
 
 @pytest.mark.asyncio
-async def test_condense_query_with_gradio_blocks():
+async def test_condense_query_with_block_content():
     """
-    Verify that condense_query handles Gradio 6's list-based message blocks
-    without raising a TypeError.
+    Verify that condense_query handles list-of-dict message content
+    (e.g. multi-part text blocks) without raising a TypeError.
     """
     history = [
         {

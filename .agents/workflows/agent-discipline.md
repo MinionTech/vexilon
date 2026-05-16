@@ -51,3 +51,14 @@ To prevent accidental regression and "downgrades" that frustrate the team, the f
 
 ## 9. The Anti-Regression Law
 - **NO DOWNGRADING WITHOUT DISCUSSION**: Agents are strictly forbidden from decreasing any version number (runtime, dependency, or GitHub Action version) unless explicitly directed by the user. If a downgrade seems necessary, STOP and ask the human.
+
+## 10. Implementation Restraint
+- **Basic Overhaul Rule**: If a "basic" or "minimal" overhaul is requested, agents MUST NOT add new navigation components (sidebars, tabs, menus) or change established layouts without explicit, itemized confirmation in a design spec.
+- **Discussion First**: Proposed "innovative" UI features or "aesthetic improvements" MUST be presented as options in a proposal first. They can ONLY be implemented after the user explicitly selects them.
+- **Respect User Preferences**: User-stated preferences for specific UI elements (e.g., "I like the Readme tab") are immutable constraints.
+- **Zero Hallucinated Specs**: Do not write "innovative" features into an OpenSpec design unless they were explicitly requested or discussed.
+
+## 11. The Verification Receipt
+- **Definition of "Functional"**: An app is only "functional" when the primary happy-path workflow (e.g., sending a message and getting a response) has been verified via logs or browser.
+- **Log Proof**: You MUST provide a snippet of the successful execution logs (e.g., `[chat] Stream completed`) before declaring a turn complete if logic was changed.
+- **No Psychic Claims**: Never assume code works because it "looks correct." If there is no terminal output, the verification didn't happen.

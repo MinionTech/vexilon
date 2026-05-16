@@ -6,12 +6,11 @@ x-var:
 # Reusable environment for all services
 x-common-env: &common-env
   HF_TOKEN: ${HF_TOKEN:-}
-  GRADIO_ANALYTICS_ENABLED: "False"
   HF_HUB_OFFLINE: "1"
   TRANSFORMERS_OFFLINE: "1"
   EMBED_MODEL: /model
   OLLAMA_HOST: ollama:11434
-  OLLAMA_MODEL_ID: qwen3:14b
+  OLLAMA_MODEL_ID: tinyllama
 
 x-test-env: &test-env
   <<: *common-env
@@ -72,11 +71,13 @@ services:
       <<: *common-env
       WATCHFILES_FORCE_POLLING: "true"
       PORT: *PORT
+    mem_limit: 2g
+    memswap_limit: 2g
     ports:
       - "7860:7860"
     healthcheck: *app-healthcheck
     command: >
-      sh -c "uv run watchfiles --ignore-paths .pdf_cache,data,reports 'uv run python main.py' ."
+      sh -c "cd /app && CHAINLIT_FILES_DIR=/app/.pdf_cache/.files uv run watchfiles --filter python 'uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless' ."
 
   dev-test:
     <<: *dev-service
@@ -118,6 +119,8 @@ services:
       OLLAMA_HOST: 0.0.0.0
     volumes:
       - ${OLLAMA_DATA_PATH:-ollama_data}:/root/.ollama
+    mem_limit: 4g
+    memswap_limit: 4g
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -137,6 +140,12 @@ services:
       <<: *common-env
     entrypoint: /bin/sh
 
+    command:
+      - -c
+      - |
+        TARGET_MODEL=$${OLLAMA_MODEL_ID:-tinyllama}
+        echo "Pulling model: $$TARGET_MODEL"
+        ollama pull $$TARGET_MODEL
   ollama-init-test:
     <<: *ollama-init-service
     container_name: vexilon-ollama-init-test
@@ -211,7 +220,7 @@ services:
     environment: *common-env
     command: /app/.venv/bin/python scripts/generate_cache_manifest.py validate
 
-  # True End-to-End tests against the live running Gradio application.
+  # True End-to-End tests against the live running Chainlit application.
   # Verifies actual HTTP responses from both Dev (Ollama) and Staging (HF).
   test-e2e:
     container_name: vexilon-test-e2e
