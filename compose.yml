@@ -176,7 +176,7 @@ services:
     command: >
       sh -c "VERIFY_ENABLED=true uv run --no-sync python -m pytest tests/test_*.py -v 
       --junitxml=reports/junit.xml 
-      --cov=indexing --cov=main --cov_report=xml:reports/coverage.xml"
+      --cov=indexing --cov=main --cov-report=xml:reports/coverage.xml"
 
   # Validates integration between app code and the local model services.
   # Hits live Ollama instance; requires pre-warmed model weights.
