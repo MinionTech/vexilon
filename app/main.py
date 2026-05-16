@@ -707,10 +707,6 @@ EXAMPLES = [
 
 WELCOME_MSG = """# BCGEU Navigator
 Welcome! I am your forensic labor law assistant. 
-
-**Quick Tips:**
-- Click the **Readme** link (top-right) to access the **Knowledge Base**.
-- Mode switching and reasoning settings are in the **Chat Settings** (bottom-left or sidebar).
 """
 
 def get_welcome_actions():
