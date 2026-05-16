@@ -44,7 +44,6 @@ header img, header svg, header [role="img"],
 #welcome-screen img, #welcome-screen svg, #welcome-screen [role="img"],
 h1 svg, h2 svg, h3 svg,
 h1 > span:first-child, h2 > span:first-child,
-button img, button svg,
 .step-icon, .sparkle,
 [aria-label="logo"], [aria-label="Chainlit"],
 .MuiSvgIcon-root:not(#persona-selector-container svg) {
@@ -151,18 +150,20 @@ main {
     padding-bottom: 40px !important;
 }
 
-/* Forensic Color Overrides (Eliminate any remaining Pink) */
-button[type="submit"], 
-[aria-label="send message"],
-.MuiButton-containedPrimary {
-    background-color: #2563eb !important;
+
+/* Allow and style the Readme close button X */
+button.absolute.right-4.top-4 svg {
+    display: block !important;
+    visibility: visible !important;
+    width: 20px !important;
+    height: 20px !important;
+    opacity: 1 !important;
+    color: var(--text-primary) !important;
 }
 
-[aria-label="send message"] svg {
-    display: block !important; /* Allow the SEND arrow SVG to show */
-    visibility: visible !important;
-    width: 24px !important;
-    height: 24px !important;
-    opacity: 1 !important;
-    color: white !important;
+/* Fix the 'tiny red box' issue by ensuring the button itself has no weird border */
+button.absolute.right-4.top-4 {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }

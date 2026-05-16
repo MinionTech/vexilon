@@ -164,13 +164,9 @@
                 }
             }
         });
-        // Also target any SVG that might have survived (except functional ones)
-        document.querySelectorAll('svg').forEach(svg => {
-            const isPersona = svg.closest('#persona-selector-container');
-            const isSubmit = svg.closest('[aria-label="send message"]') || svg.closest('button[type="submit"]');
-            if (!isPersona && !isSubmit) {
-                svg.style.display = 'none';
-            }
+        // Targeted sparkle suppression only
+        document.querySelectorAll('.sparkle, [class*="sparkle"]').forEach(sparkle => {
+            sparkle.style.display = 'none';
         });
     }
 
