@@ -3,50 +3,6 @@
 (function() {
     console.log("Vexilon Forensic UI Initialized");
 
-    /**
-     * KB Sidebar: parse chainlit.md markdown table and render as fixed sidebar
-     */
-    function buildKbSidebar() {
-        if (document.getElementById('kb-sidebar')) return;
-
-        fetch('/project/settings')
-            .then(r => r.json())
-            .then(data => {
-                const md = data.markdown || '';
-
-                // Extract the table rows from the markdown
-                const lines = md.split('\n');
-                let rows = [];
-                let inTable = false;
-                lines.forEach(line => {
-                    if (line.startsWith('|') && !line.startsWith('| :')) {
-                        inTable = true;
-                        const cells = line.split('|').slice(1, -1).map(c => c.trim());
-                        if (cells.length >= 3) rows.push(cells);
-                    } else if (inTable && !line.startsWith('|')) {
-                        inTable = false;
-                    }
-                });
-
-                if (rows.length < 2) return; // header + at least one row
-                const [header, ...dataRows] = rows;
-
-                let tableHtml = `<table><thead><tr>${header.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-                dataRows.forEach(cells => {
-                    tableHtml += '<tr>' + cells.map(c => {
-                        // convert [text](url) to <a>
-                        return '<td>' + c.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>') + '</td>';
-                    }).join('') + '</tr>';
-                });
-                tableHtml += '</tbody></table>';
-
-                const sidebar = document.createElement('div');
-                sidebar.id = 'kb-sidebar';
-                sidebar.innerHTML = `<h2>Knowledge Base</h2>${tableHtml}`;
-                document.body.appendChild(sidebar);
-            })
-            .catch(() => {}); // sidebar is cosmetic — fail silently
-    }
 
     /**
      * Interaction Logic: Enter-to-Submit
