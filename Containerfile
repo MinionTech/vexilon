@@ -95,15 +95,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # 2. Config files next
 # 3. Application code last (most frequent changes)
 COPY PRIVACY.md ./public/docs/
-COPY app/.chainlit/ ./app/.chainlit/
-COPY app/public/ ./app/public/
+COPY app/.chainlit/ ./.chainlit/
+COPY app/public/ ./public/
 
 # Then source code (code changes often; trigger only code rebuilds)
 COPY app/main.py ./
 COPY app/indexing.py ./
 COPY app/patches.py ./
 COPY app/prompts/ ./prompts/
-COPY app/tests/ ./tests/
+COPY app/tests/ ./data/labour_law/tests/
 
 # Prepare directories for testing and Chainlit runtime, ensure permissions
 RUN mkdir -p /app/reports /app/.pytest_cache /app/.files /hf_cache && \
@@ -115,12 +115,9 @@ FROM base AS runner
 # Use venv path for all subsequent commands
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy everything from the builder (including the pre-computed index and venv)
-COPY --from=indexed_builder /app /app
+# Copy everything from functional_builder (includes venv, source code, index, config)
+COPY --from=functional_builder /app /app
 COPY --from=model_fetcher /model /model
-
-# No need to duplicate COPY commands—indexed_builder already has all source files
-# and functional_builder layers them optimally. The runner stage just needs to copy the venv.
 
 # Only create and chown (by UID) the specific directories that MUST be writable
 RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache /app/.files && \

@@ -16,6 +16,7 @@ import json
 import logging
 import asyncio
 import datetime
+import tempfile
 from collections.abc import AsyncIterator
 from pathlib import Path
 from threading import Lock
@@ -268,6 +269,10 @@ def deserialize_conversation(json_str: str) -> tuple[list[dict], str, str]:
     
     if not isinstance(messages, list):
         raise ValueError("Messages must be a list")
+    
+    for msg in messages:
+        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
+            raise ValueError("Each message must be a dictionary with 'role' and 'content' keys")
     
     return messages, persona, saved_at
 
@@ -865,9 +870,10 @@ async def on_save_conversation(action: cl.Action):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"conversation_{timestamp}.json"
         
-        # Create a temporary file and send it to user
-        file_path = Path("/tmp") / filename
-        file_path.write_text(json_content, encoding="utf-8")
+        # Create a temporary file in a managed temp directory (auto-cleanup)
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', prefix='conversation_', delete=False, encoding='utf-8') as tmp_file:
+            tmp_file.write(json_content)
+            file_path = tmp_file.name
         
         msg = cl.Message(
             content=f"Conversation saved. Click below to download.",
@@ -875,7 +881,7 @@ async def on_save_conversation(action: cl.Action):
             elements=[cl.File(name=filename, path=str(file_path), display="inline")]
         )
         await msg.send()
-        logger.info(f"[save] Conversation saved by {_client_id(cl.message)} ({len(history)} messages)")
+        logger.info(f"[save] Conversation saved by {_client_id(None)} ({len(history)} messages)")
     except Exception as e:
         logger.error(f"[save] Failed to save conversation: {e}")
         await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
@@ -891,7 +897,7 @@ async def on_load_conversation(action: cl.Action):
     
     file_path = files[0]
     try:
-        json_content = Path(file_path).read_text(encoding="utf-8")
+        json_content = file_path
         messages, saved_persona, saved_at = deserialize_conversation(json_content)
         
         # Append to current history
@@ -915,7 +921,7 @@ async def on_load_conversation(action: cl.Action):
             msg_obj.metadata = {"restored": True, "readonly": True}
             await msg_obj.send()
         
-        logger.info(f"[load] Conversation loaded by {_client_id(cl.message)} ({len(messages)} messages)")
+        logger.info(f"[load] Conversation loaded by {_client_id(None)} ({len(messages)} messages)")
     except json.JSONDecodeError as e:
         logger.error(f"[load] Invalid JSON in file: {e}")
         await cl.Message(content="Invalid conversation file format. Expected JSON.", author="System").send()
