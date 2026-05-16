@@ -37,11 +37,13 @@ Documentation-only PRs (`.md`, `LICENSE`, etc.) skip CI builds. This means some 
 
 ### HuggingFace Docker Space metadata (README.md)
 The README.md YAML frontmatter controls the HF Space configuration:
-- `sdk: docker` — REQUIRED. Tells HF this is a Docker Space, not Gradio.
+- `sdk: docker` — REQUIRED. Tells HF this is a Docker Space.
 - `app_port: 7860` — REQUIRED. Tells HF which port to healthcheck.
 - `startup_duration_timeout: 10m` — REQUIRED. Model loading takes ~30-60s.
-- `sdk_version` — DO NOT USE. This is a Gradio-only field.
-- `app_file` — DO NOT USE. This is a Gradio-only field.
+- `sdk_version` — DO NOT USE.
+- `app_file` — DO NOT USE.
+- `base_path` — DO NOT USE.
+- `pinned: false` — REQUIRED.
 
 ### hf_cache must remain root-owned
 The `COPY --from=builder /app/hf_cache /app/hf_cache` line in the Containerfile must NOT include `--chown`. The cache directory must remain root-owned (read-only) for security.

@@ -30,7 +30,7 @@ This document defines the testing protocols for Vexilon. **All agents must verif
 
 ### E2E / Smoke Tests (`app/scripts/smoke_multi.py`)
 - **Environment**: Containerized environment.
-- **Focus**: Functional validation of the Gradio interface and final response integrity.
+- **Focus**: Functional validation of the Chainlit UI and final response integrity.
 
 ## 3. Coverage & Verification
 

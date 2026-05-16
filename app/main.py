@@ -11,7 +11,6 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
 import re
-# Agreement Navigator - UI Version: 2026-05-10
 # Integrated RAG Backend + Chainlit UI
 import time
 import logging

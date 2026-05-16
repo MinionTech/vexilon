@@ -1,0 +1,16 @@
+name: pr-496-finalization
+description: Finalize PR #496 with forensic standards, test coverage, and UI refinements.
+status: in-progress
+artifacts:
+  - id: proposal
+    path: proposal.md
+    status: done
+  - id: design
+    path: design.md
+    status: done
+  - id: tasks
+    path: tasks.md
+    status: done
+apply:
+  requires:
+    - tasks

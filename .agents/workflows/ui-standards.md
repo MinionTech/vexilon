@@ -1,21 +1,18 @@
----
-description: Gradio 6 UI architecture, mobile-first constraints, and CSS/JS overrides
----
+description: Chainlit UI architecture, mobile-first constraints, and CSS/JS overrides
 
 # UI & UX Standards
 
 This document defines the interface standards for Vexilon. **Maintain these aesthetics and behaviors for all UI modifications.**
 
-## 1. Gradio 6 Architectural Constraints
+## 1. Chainlit Architectural Constraints
 
 ### Stability First
-- **Version**: Enforce `gradio==6.14.0`. Do not upgrade without verifying the custom CSS/JS injection stability.
-- **Fill Height**: Always use `fill_height=True` in the main `gr.Blocks` to ensure the chatbot expands correctly on mobile.
+- **Version**: Enforce `chainlit>=2.11.0`. 
+- **Header**: Use `custom_css` and `custom_js` in `.chainlit/config.toml` for UI overrides.
 
 ### Suppressed Elements
-To maintain a clean, high-integrity "Forensic" look, several default Gradio elements are suppressed via CSS:
+To maintain a clean, high-integrity "Forensic" look, several default UI elements are suppressed via CSS:
 - **Buttons**: `share-button`, `undo-button`, `retry-button`, and `clear-button` are hidden.
-- **Footers**: Standard Gradio footers are disabled.
 
 ## 2. Mobile-First Design
 
