@@ -41,35 +41,86 @@
     /**
      * Save/Load Buttons
      * Add Save and Load buttons beside the settings gear in the bottom-left UI area
+     * Chainlit's default settings location is "message_composer" (bottom of chat area)
      */
     function setupSaveLoadButtons() {
         // Check if buttons already exist to avoid duplication
         if (document.getElementById('save-conversation-btn')) return;
 
-        // Find the gear icon container (settings button area)
-        const settingsBtn = document.querySelector('[aria-label="Open settings"]');
-        if (!settingsBtn) return;
+        // Try to find the message composer / settings area
+        // Chainlit places settings buttons in a toolbar near the message input
+        let container = null;
 
-        const container = settingsBtn.parentElement || settingsBtn.closest('[class*="bottom"]');
-        if (!container) return;
+        // Strategy 1: Find by looking for elements near the textarea
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+            // Walk up the DOM to find a button container (usually parent has buttons)
+            let elem = textarea;
+            for (let i = 0; i < 5; i++) {
+                elem = elem.parentElement;
+                if (!elem) break;
+                // Check if this element contains buttons (likely a toolbar)
+                const buttons = elem.querySelectorAll('button');
+                if (buttons.length > 0) {
+                    container = elem;
+                    break;
+                }
+            }
+        }
+
+        // Strategy 2: Look for common Chainlit button container classes
+        if (!container) {
+            const selectors = [
+                '[class*="composer"]',
+                '[class*="message-input"]',
+                '[class*="actions"]',
+                'footer',
+            ];
+            for (const sel of selectors) {
+                const elem = document.querySelector(sel);
+                if (elem && elem.querySelectorAll('button').length > 0) {
+                    container = elem;
+                    break;
+                }
+            }
+        }
+
+        if (!container) {
+            console.log('[Save/Load] Container not found yet (UI may still be initializing)');
+            return;
+        }
+
+        console.log('[Save/Load] Found container, injecting buttons');
+
+        // Create button styles
+        const buttonStyle = `
+            padding: 6px 12px;
+            margin-right: 8px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #2c3e50;
+            transition: all 0.2s;
+        `;
 
         // Create Save button
         const saveBtn = document.createElement('button');
         saveBtn.id = 'save-conversation-btn';
         saveBtn.textContent = 'Save';
         saveBtn.title = 'Save conversation to file';
-        saveBtn.style.cssText = `
-            padding: 6px 12px;
-            margin-right: 8px;
-            background: none;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            color: #2c3e50;
-        `;
-        saveBtn.addEventListener('click', () => {
+        saveBtn.style.cssText = buttonStyle;
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('[Save/Load] Save clicked');
             window.chainlit?.callAction({id: 'save_conversation', payload: {}});
+        });
+        saveBtn.addEventListener('mouseover', () => {
+            saveBtn.style.backgroundColor = '#f5f5f5';
+        });
+        saveBtn.addEventListener('mouseout', () => {
+            saveBtn.style.backgroundColor = '#fff';
         });
 
         // Create Load button
@@ -77,26 +128,22 @@
         loadBtn.id = 'load-conversation-btn';
         loadBtn.textContent = 'Load';
         loadBtn.title = 'Load conversation from file';
-        loadBtn.style.cssText = `
-            padding: 6px 12px;
-            background: none;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            color: #2c3e50;
-        `;
-        loadBtn.addEventListener('click', () => {
+        loadBtn.style.cssText = buttonStyle;
+        loadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('[Save/Load] Load clicked');
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
-            input.addEventListener('change', (e) => {
-                const file = e.target.files?.[0];
+            input.addEventListener('change', (changeEvent) => {
+                const file = changeEvent.target.files?.[0];
                 if (!file) return;
+                console.log('[Save/Load] File selected:', file.name);
                 const reader = new FileReader();
-                reader.addEventListener('load', (event) => {
-                    const content = event.target?.result;
+                reader.addEventListener('load', (loadEvent) => {
+                    const content = loadEvent.target?.result;
                     if (typeof content === 'string') {
+                        console.log('[Save/Load] File loaded, calling load_conversation');
                         window.chainlit?.callAction({
                             id: 'load_conversation',
                             payload: {files: [content]}
@@ -107,15 +154,17 @@
             });
             input.click();
         });
+        loadBtn.addEventListener('mouseover', () => {
+            loadBtn.style.backgroundColor = '#f5f5f5';
+        });
+        loadBtn.addEventListener('mouseout', () => {
+            loadBtn.style.backgroundColor = '#fff';
+        });
 
-        // Insert buttons before settings button (or in the same container)
-        if (container && container !== settingsBtn) {
-            container.insertBefore(loadBtn, settingsBtn);
-            container.insertBefore(saveBtn, settingsBtn);
-        } else {
-            settingsBtn.parentElement?.insertBefore(loadBtn, settingsBtn);
-            settingsBtn.parentElement?.insertBefore(saveBtn, settingsBtn);
-        }
+        // Append buttons to container (at the end, before any existing buttons)
+        container.appendChild(saveBtn);
+        container.appendChild(loadBtn);
+        console.log('[Save/Load] Buttons injected successfully');
     }
 
     // Run periodically to catch re-renders
