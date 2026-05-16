@@ -11,6 +11,7 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 import sys
 import re
 import time
+import json
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
 import asyncio
@@ -225,6 +226,50 @@ class RateLimiter:
             return True, ""
 
 _rate_limiter = RateLimiter(RATE_LIMIT_PER_MINUTE, RATE_LIMIT_PER_HOUR)
+
+# ─── Save/Load Conversation ─────────────────────────────────────────────────
+def serialize_conversation(history: list[dict], persona: str) -> str:
+    """Serialize conversation history to JSON with timestamps and metadata.
+    
+    Args:
+        history: List of message dicts with 'role' and 'content' keys
+        persona: Current persona (Lookup/Grieve/Audit/Manage)
+    
+    Returns:
+        JSON string representation of conversation
+    """
+    payload = {
+        "saved_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "persona": persona,
+        "messages": history,
+    }
+    return json.dumps(payload, indent=2)
+
+
+def deserialize_conversation(json_str: str) -> tuple[list[dict], str, str]:
+    """Deserialize JSON conversation file.
+    
+    Args:
+        json_str: JSON string from saved conversation
+    
+    Returns:
+        Tuple of (messages, persona, saved_at timestamp)
+    
+    Raises:
+        ValueError: If JSON is invalid or missing required fields
+    """
+    data = json.loads(json_str)
+    if not isinstance(data, dict):
+        raise ValueError("Invalid conversation file format")
+    
+    messages = data.get("messages", [])
+    persona = data.get("persona", "Lookup")
+    saved_at = data.get("saved_at", "Unknown")
+    
+    if not isinstance(messages, list):
+        raise ValueError("Messages must be a list")
+    
+    return messages, persona, saved_at
 
 # ─── RAG Pipeline Constants ─────────────────────────────────────────────────
 _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
@@ -802,6 +847,84 @@ async def on_action(action: cl.Action):
     await on_message(cl.Message(content=query))
     # Remove the buttons to keep it clean
     await action.remove()
+
+@cl.action_callback("save_conversation")
+async def on_save_conversation(action: cl.Action):
+    """Save conversation history to downloadable JSON file."""
+    history: list[dict] = cl.user_session.get("history") or []
+    persona: str = cl.user_session.get("persona") or "Lookup"
+    
+    if not history:
+        await cl.Message(content="No conversation to save yet.", author="System").send()
+        return
+    
+    try:
+        json_content = serialize_conversation(history, persona)
+        
+        # Generate timestamped filename (client-side, user controls final location)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"conversation_{timestamp}.json"
+        
+        # Create a temporary file and send it to user
+        file_path = Path("/tmp") / filename
+        file_path.write_text(json_content, encoding="utf-8")
+        
+        msg = cl.Message(
+            content=f"Conversation saved. Click below to download.",
+            author="System",
+            elements=[cl.File(name=filename, path=str(file_path), display="inline")]
+        )
+        await msg.send()
+        logger.info(f"[save] Conversation saved by {_client_id(cl.message)} ({len(history)} messages)")
+    except Exception as e:
+        logger.error(f"[save] Failed to save conversation: {e}")
+        await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
+
+
+@cl.action_callback("load_conversation")
+async def on_load_conversation(action: cl.Action):
+    """Load conversation from uploaded JSON file."""
+    files = action.payload.get("files", [])
+    if not files:
+        await cl.Message(content="No file selected.", author="System").send()
+        return
+    
+    file_path = files[0]
+    try:
+        json_content = Path(file_path).read_text(encoding="utf-8")
+        messages, saved_persona, saved_at = deserialize_conversation(json_content)
+        
+        # Append to current history
+        current_history: list[dict] = cl.user_session.get("history") or []
+        current_history.extend(messages)
+        cl.user_session.set("history", current_history)
+        
+        # Display notification with restore marker
+        msg = cl.Message(
+            content=f"**Restored Conversation** (Persona: {saved_persona}, Saved: {saved_at})\n\nLoaded {len(messages)} messages. These are read-only.",
+            author="System",
+        )
+        msg.metadata = {"restored": True}
+        await msg.send()
+        
+        # Re-render loaded messages as read-only in UI
+        for i, loaded_msg in enumerate(messages):
+            display_role = "👤 You" if loaded_msg["role"] == "user" else "🤖 Assistant"
+            msg_content = loaded_msg["content"]
+            msg_obj = cl.Message(content=msg_content, author=display_role)
+            msg_obj.metadata = {"restored": True, "readonly": True}
+            await msg_obj.send()
+        
+        logger.info(f"[load] Conversation loaded by {_client_id(cl.message)} ({len(messages)} messages)")
+    except json.JSONDecodeError as e:
+        logger.error(f"[load] Invalid JSON in file: {e}")
+        await cl.Message(content="Invalid conversation file format. Expected JSON.", author="System").send()
+    except ValueError as e:
+        logger.error(f"[load] Conversation validation error: {e}")
+        await cl.Message(content=f"Conversation file is invalid: {e}", author="System").send()
+    except Exception as e:
+        logger.error(f"[load] Failed to load conversation: {e}")
+        await cl.Message(content=f"Error loading conversation: {e}", author="System").send()
 
 @cl.on_message
 async def on_message(message: cl.Message) -> None:

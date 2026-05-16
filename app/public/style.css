@@ -120,3 +120,16 @@ body {
 .message-user {
     background-color: #f1f3f4 !important;
 }
+
+/* Restored/loaded messages styling */
+.message[data-restored="true"],
+.message.restored {
+    background-color: #f0f0f0 !important;
+    border-left: 3px solid #999 !important;
+    opacity: 0.9;
+}
+
+.message.restored .message-content {
+    color: #555;
+    font-style: italic;
+}
