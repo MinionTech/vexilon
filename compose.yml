@@ -47,7 +47,6 @@ x-dev-volumes: &dev-volumes
   - ./app:/app:z
   - ./PRIVACY.md:/app/public/docs/PRIVACY.md:ro
   - ./app/data/labour_law:/app/public/docs/labour_law:ro
-  - /app/.venv         # Lifeboat for packages
   - ./app/pyproject.toml:/app/pyproject.toml:ro
   - ./app/uv.lock:/app/uv.lock:ro
   - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
