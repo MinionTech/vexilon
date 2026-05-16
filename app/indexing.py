@@ -91,12 +91,10 @@ def _get_rag_source_files() -> list[Path]:
     return sorted(files, key=lambda p: str(p))
 
 def _get_source_name(stem: str) -> str:
-    parts = stem.split("_", 2)
-    if len(parts) == 3:
-        return parts[2]
-    elif len(parts) == 2:
-        return parts[1]
-    return stem.replace("_", " ").title()
+    parts = stem.split("_")
+    if len(parts) > 2 and parts[0].isdigit():
+        return " ".join(parts[2:])
+    return stem.replace("_", " ")
 
 def _clean_page_text(text: str) -> str:
     import re

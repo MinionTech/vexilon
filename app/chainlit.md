@@ -1,17 +1,14 @@
 # BCGEU Navigator
-Welcome! I am your forensic labor law assistant. 
+Welcome! I am your forensic labor law assistant.
 
-**Quick Tips:**
-- Click the **Readme** tab (top-right) to access the **Knowledge Base**.
-- Use the buttons below to switch modes, manage your session, or start a common query.
+---
 
+# Knowledge Base Library
+The following reference documents are currently available for your review and download. These form the primary authority for my analytical responses.
 
-# Knowledge Base Manifest
-
-The following documents are currently indexed and available for forensic analysis:
-
-| Document Name | Format | Status |
+| Document Name | Format | Access |
 | :--- | :--- | :--- |
+<<<<<<< Updated upstream
 | Bc Labour Relations Code | MD | [OK] Indexed |
 | Bc Labour Relations Code | PDF | [OK] Indexed |
 | Bcgeu 19Th Main Agreement | MD | [OK] Indexed |
@@ -76,3 +73,19 @@ The following documents are currently indexed and available for forensic analysi
 | Grievance - B - Notify Designates | PDF | [OK] Indexed |
 | Grievance - C - Steward Case | PDF | [OK] Indexed |
 | Policy Grievance Form Guide | MD | [OK] Indexed |
+=======
+| BCGEU 19th Main Agreement | PDF | [Download](/public/docs/labour_law/01_primary/BCGEU_19th_Main_Agreement.pdf) |
+| BC Labour Relations Code | PDF | [Download](/public/docs/labour_law/01_primary/BC_Labour_Relations_Code.pdf) |
+| BCGEU Steward Resources | PDF | [Download](/public/docs/labour_law/03_resources/BCGEU_Steward_Resources.pdf) |
+| BC Social Media Guidance for Public Service Employees | PDF | [Download](/public/docs/labour_law/03_resources/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf) |
+| Gov BC Standards of Conduct | PDF | [Download](/public/docs/labour_law/03_resources/Gov_BC_Standards_of_Conduct.pdf) |
+| Nexus Test and Off-Duty Conduct | PDF | [Download](/public/docs/labour_law/04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.pdf) |
+| Grievance - 0 - Instructions | PDF | [Download](/public/docs/labour_law/forms/Grievance_-_0_-_Instructions.pdf) |
+| Grievance - A - Grievor Case | PDF | [Download](/public/docs/labour_law/forms/Grievance_-_A_-_Grievor_Case.pdf) |
+| Grievance - B - Notify Designates | PDF | [Download](/public/docs/labour_law/forms/Grievance_-_B_-_Notify_Designates.pdf) |
+| Grievance - C - Steward Case | PDF | [Download](/public/docs/labour_law/forms/Grievance_-_C_-_Steward_Case.pdf) |
+
+---
+
+**Note**: This library is dynamically synchronized with the forensic database.
+>>>>>>> Stashed changes

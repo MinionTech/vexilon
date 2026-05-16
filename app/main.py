@@ -527,10 +527,22 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
     return queries, "\n\n".join(context_parts), unique_snippets
 
+<<<<<<< Updated upstream
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
     try:
         if not context:
             queries, context, snippets = await get_multi_perspective_context(message, history)
+=======
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str | None = None, queries: list[str] | None = None) -> AsyncIterator[str]:
+    try:
+        if not context or not queries:
+            q_new, c_new, s_new = await get_multi_perspective_context(message, history)
+            context = context or c_new
+            queries = queries or q_new
+
+        # 2. Forensic Analysis & Logic Injection
+        system_prompt = get_persona_prompt(persona_mode)
+>>>>>>> Stashed changes
         
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
@@ -570,37 +582,37 @@ def _get_download_source_files() -> list[Path]:
     pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
     return sorted(list(set(pdfs)), key=lambda p: str(p))
 
-def history_to_markdown(history: list) -> str:
-    """Convert chat history to a Markdown string for export."""
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    lines = [f"# BCGEU Navigator Conversation Export - {timestamp}\n"]
-    for turn in (history or []):
-        role = turn["role"].capitalize()
-        content = turn["content"]
-        lines.append(f"### {role}\n{content}\n")
-    return "\n".join(lines)
+def _update_readme_kb():
+    """Dynamically update chainlit.md with the current human-readable library."""
+    doc_list = _get_download_source_files()
+    
+    # Header of the chainlit.md
+    content = """# BCGEU Navigator
+Welcome! I am your forensic labor law assistant.
 
-def markdown_to_history(file_path: str) -> list:
-    """Parse a Markdown conversation file back into a list of dicts."""
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    history, current_role, current_content = [], None, []
-    for line in lines:
-        new_role = None
-        if line.startswith("### User"): new_role = "user"
-        elif line.startswith("### BCGEU Navigator") or line.startswith("### Assistant"): new_role = "assistant"
+---
+
+# Knowledge Base Library
+The following reference documents are currently available for your review and download. These form the primary authority for my analytical responses.
+
+| Document Name | Format | Access |
+| :--- | :--- | :--- |
+"""
+    
+    import urllib.parse
+    for doc_path in doc_list:
+        name = _get_source_name(doc_path.stem)
+        rel_path = str(doc_path.relative_to(LABOUR_LAW_DIR))
+        safe_path = urllib.parse.quote(rel_path)
+        content += f"| {name} | PDF | [Download](/public/docs/labour_law/{safe_path}) |\n"
         
-        if new_role:
-            if current_role:
-                history.append({"role": current_role, "content": "\n".join(current_content).strip()})
-            current_role, current_content = new_role, []
-        elif current_role:
-            current_content.append(line.rstrip("\n"))
-            
-    # Final flush
-    if current_role:
-        history.append({"role": current_role, "content": "\n".join(current_content).strip()})
-    return history
+    content += "\n---\n\n**Note**: This library is dynamically synchronized with the forensic database."
+    
+    readme_path = Path("chainlit.md")
+    if readme_path.exists():
+        readme_path.write_text(content, encoding="utf-8")
+        logger.info(f"[startup] Synchronized Knowledge Base with {len(doc_list)} documents.")
+
 
 # ─── App Logic ──────────────────────────────────────────────────────────────
 _source_path_map: dict[str, Path] = {}
@@ -638,6 +650,7 @@ def startup(force_rebuild: bool = False):
         report = get_integrity_report()
     
     # ── Document Library Preparation ──────────────────────────────────────
+    _update_readme_kb()
     doc_list = _get_download_source_files()
     logger.info(f"[startup] {len(doc_list)} reference documents found.")
 
@@ -739,11 +752,17 @@ Welcome! I am your forensic labor law assistant.
 
 def get_welcome_actions():
     return [
+<<<<<<< Updated upstream
         cl.Action(name="export_history", payload={}, label="Export Session"),
         cl.Action(name="clear_session", payload={}, label="Clear Session"),
         cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="Discipline Analysis"),
         cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="Grievance Builder"),
         cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="Steward Rights"),
+=======
+        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
+        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
+        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
+>>>>>>> Stashed changes
     ]
 
 
@@ -824,6 +843,7 @@ def _client_id(message: cl.Message) -> str:
     return str(sid) if sid else "default"
 
 
+<<<<<<< Updated upstream
 @cl.action_callback("export_history")
 async def on_export(action: cl.Action):
     history = cl.user_session.get("history")
@@ -835,6 +855,8 @@ async def on_export(action: cl.Action):
 @cl.action_callback("clear_session")
 async def on_clear(action: cl.Action):
     cl.user_session.set("history", [])
+=======
+>>>>>>> Stashed changes
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
