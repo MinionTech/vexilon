@@ -160,21 +160,6 @@ default_avatar_file_url = ""
 # Be careful: If this is a relative path, it should not start with a slash.
 # custom_build = "./public/build"
 
-<<<<<<< Updated upstream
-# Specify optional one or more custom links in the header.
-[[UI.header_links]]
-    name = "GitHub"
-    display_name = "Source Code"
-    url = "https://github.com/MinionTech/vexilon"
-    target = "_blank"
-
-[[UI.header_links]]
-    name = "Privacy"
-    display_name = "Privacy Policy"
-    url = "/privacy"
-    target = "_blank"
-=======
->>>>>>> Stashed changes
 
 [meta]
 generated_by = "2.11.1"

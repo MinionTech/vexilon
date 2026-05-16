@@ -527,12 +527,6 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
     return queries, "\n\n".join(context_parts), unique_snippets
 
-<<<<<<< Updated upstream
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
-    try:
-        if not context:
-            queries, context, snippets = await get_multi_perspective_context(message, history)
-=======
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str | None = None, queries: list[str] | None = None) -> AsyncIterator[str]:
     try:
         if not context or not queries:
@@ -542,7 +536,6 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
 
         # 2. Forensic Analysis & Logic Injection
         system_prompt = get_persona_prompt(persona_mode)
->>>>>>> Stashed changes
         
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
@@ -576,16 +569,27 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
-    """Scan LABOUR_LAW_DIR for PDF files (human downloads). Excludes tests/."""
+    """Scan LABOUR_LAW_DIR for PDF and MD files. Excludes tests/."""
     if not LABOUR_LAW_DIR.exists(): return []
     tests_dir = LABOUR_LAW_DIR / "tests"
-    pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
-    return sorted(list(set(pdfs)), key=lambda p: str(p))
+    files = [p for p in LABOUR_LAW_DIR.rglob("*") if p.suffix.lower() in (".pdf", ".md") 
+             and not p.is_relative_to(tests_dir)
+             and not p.name.endswith(".integrity.md")]
+    return sorted(list(set(files)), key=lambda p: str(p))
 
 def _update_readme_kb():
-    """Dynamically update chainlit.md with the current human-readable library."""
-    doc_list = _get_download_source_files()
+    """Dynamically update chainlit.md with PDF-first fallback library."""
+    all_files = _get_download_source_files()
     
+    # Deduplicate: Group by normalized name, prefer PDF
+    library = {}
+    for p in all_files:
+        name = _get_source_name(p.stem)
+        ext = p.suffix.lower().replace(".", "").upper()
+        
+        if name not in library or ext == "PDF":
+            library[name] = {"path": p, "format": ext}
+
     # Header of the chainlit.md
     content = """# BCGEU Navigator
 Welcome! I am your forensic labor law assistant.
@@ -593,25 +597,28 @@ Welcome! I am your forensic labor law assistant.
 ---
 
 # Knowledge Base Library
-The following reference documents are currently available for your review and download. These form the primary authority for my analytical responses.
+The following reference documents form the primary authority for my analytical responses. PDFs are provided for human review where available; Markdown versions are used as a fallback.
 
 | Document Name | Format | Access |
 | :--- | :--- | :--- |
 """
     
     import urllib.parse
-    for doc_path in doc_list:
-        name = _get_source_name(doc_path.stem)
+    # Sort library by name for a professional alphabetical list
+    for name in sorted(library.keys()):
+        item = library[name]
+        doc_path = item["path"]
+        fmt = item["format"]
         rel_path = str(doc_path.relative_to(LABOUR_LAW_DIR))
         safe_path = urllib.parse.quote(rel_path)
-        content += f"| {name} | PDF | [Download](/public/docs/labour_law/{safe_path}) |\n"
+        content += f"| {name} | {fmt} | [Download](/public/docs/labour_law/{safe_path}) |\n"
         
     content += "\n---\n\n**Note**: This library is dynamically synchronized with the forensic database."
     
     readme_path = Path("chainlit.md")
     if readme_path.exists():
         readme_path.write_text(content, encoding="utf-8")
-        logger.info(f"[startup] Synchronized Knowledge Base with {len(doc_list)} documents.")
+        logger.info(f"[startup] Synchronized Knowledge Base with {len(library)} unique documents.")
 
 
 # ─── App Logic ──────────────────────────────────────────────────────────────
@@ -752,17 +759,9 @@ Welcome! I am your forensic labor law assistant.
 
 def get_welcome_actions():
     return [
-<<<<<<< Updated upstream
-        cl.Action(name="export_history", payload={}, label="Export Session"),
-        cl.Action(name="clear_session", payload={}, label="Clear Session"),
-        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="Discipline Analysis"),
-        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="Grievance Builder"),
-        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="Steward Rights"),
-=======
         cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
         cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
         cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
->>>>>>> Stashed changes
     ]
 
 
@@ -843,20 +842,6 @@ def _client_id(message: cl.Message) -> str:
     return str(sid) if sid else "default"
 
 
-<<<<<<< Updated upstream
-@cl.action_callback("export_history")
-async def on_export(action: cl.Action):
-    history = cl.user_session.get("history")
-    if not history:
-        return
-    md_content = history_to_markdown(history)
-    file = cl.File(name="agnav_conversation.md", content=md_content.encode("utf-8"), display="inline")
-
-@cl.action_callback("clear_session")
-async def on_clear(action: cl.Action):
-    cl.user_session.set("history", [])
-=======
->>>>>>> Stashed changes
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
