@@ -886,7 +886,9 @@ async def on_message(message: cl.Message) -> None:
     await out.send()
 
     accumulated = ""
-    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
+    word_count = len(sanitized.split())
+    char_count = len(sanitized)
+    logger.info(f"[chat] Starting stream for {persona} mode (Words: {word_count}, Chars: {char_count})")
     try:
         queries, context, snippets = await get_multi_perspective_context(sanitized, history)
         
