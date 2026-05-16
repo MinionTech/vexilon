@@ -98,6 +98,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY PRIVACY.md ./public/docs/
 COPY app/.chainlit/ ./.chainlit/
 COPY app/public/ ./public/
+COPY app/chainlit.md ./
 COPY app/data/labour_law/ ./public/docs/labour_law/
 
 # Then source code (code changes often; trigger only code rebuilds)

@@ -147,10 +147,10 @@ alert_style = "modern"
 # custom_meta_image_url = "https://chainlit-cloud.s3.eu-west-3.amazonaws.com/logo/chainlit_banner.png"
 
 # Load assistant logo directly from URL.
-logo_file_url = ""
+logo_file_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 
 # Load assistant avatar image directly from URL.
-default_avatar_file_url = ""
+default_avatar_file_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 
 # Avatar size in pixels (default: 20).
 # avatar_size = 20
@@ -160,6 +160,19 @@ default_avatar_file_url = ""
 # Be careful: If this is a relative path, it should not start with a slash.
 # custom_build = "./public/build"
 
+[[UI.header_links]]
+    name = "GitHub"
+    display_name = "Source Code"
+    icon_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    url = "https://github.com/MinionTech/vexilon"
+    target = "_blank"
+
+[[UI.header_links]]
+    name = "Privacy"
+    display_name = "Privacy Policy"
+    icon_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    url = "https://github.com/MinionTech/vexilon/blob/main/app/docs/PRIVACY.md"
+    target = "_blank"
 
 [meta]
 generated_by = "2.11.1"
