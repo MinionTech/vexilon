@@ -175,8 +175,10 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 screenshots/
 *.png
+!app/public/logo_*.png
 test_output*.txt
 
 # Git worktrees
 .worktrees
 reports/
+.worktree/

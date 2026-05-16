@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
-os.environ["CHAINLIT_FILES_DIR"] = str(CACHE_DIR / ".files")
-CACHE_DIR.joinpath(".files").mkdir(parents=True, exist_ok=True)
+os.environ["CHAINLIT_FILES_DIR"] = "/tmp/chainlit_files"
+Path("/tmp/chainlit_files").mkdir(parents=True, exist_ok=True)
 
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
@@ -10,6 +10,7 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
 import re
+import time
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
 import asyncio
@@ -527,10 +528,15 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
     return queries, "\n\n".join(context_parts), unique_snippets
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str | None = None, queries: list[str] | None = None) -> AsyncIterator[str]:
     try:
-        if not context:
-            queries, context, snippets = await get_multi_perspective_context(message, history)
+        if not context or not queries:
+            q_new, c_new, s_new = await get_multi_perspective_context(message, history)
+            context = context or c_new
+            queries = queries or q_new
+
+        # 2. Forensic Analysis & Logic Injection
+        # Removed unused variable (was identical to base_persona)
         
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
@@ -564,43 +570,14 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
-    """Scan LABOUR_LAW_DIR for PDF files (human downloads). Excludes tests/."""
+    """Scan LABOUR_LAW_DIR for PDF and MD files. Excludes tests/."""
     if not LABOUR_LAW_DIR.exists(): return []
     tests_dir = LABOUR_LAW_DIR / "tests"
-    pdfs = [p for p in LABOUR_LAW_DIR.rglob("*.pdf") if not p.is_relative_to(tests_dir)]
-    return sorted(list(set(pdfs)), key=lambda p: str(p))
+    files = [p for p in LABOUR_LAW_DIR.rglob("*") if p.suffix.lower() in (".pdf", ".md")
+             and not p.is_relative_to(tests_dir)
+             and not p.name.endswith(".integrity.md")]
+    return sorted(list(set(files)), key=lambda p: str(p))
 
-def history_to_markdown(history: list) -> str:
-    """Convert chat history to a Markdown string for export."""
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    lines = [f"# BCGEU Navigator Conversation Export - {timestamp}\n"]
-    for turn in (history or []):
-        role = turn["role"].capitalize()
-        content = turn["content"]
-        lines.append(f"### {role}\n{content}\n")
-    return "\n".join(lines)
-
-def markdown_to_history(file_path: str) -> list:
-    """Parse a Markdown conversation file back into a list of dicts."""
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    history, current_role, current_content = [], None, []
-    for line in lines:
-        new_role = None
-        if line.startswith("### User"): new_role = "user"
-        elif line.startswith("### BCGEU Navigator") or line.startswith("### Assistant"): new_role = "assistant"
-        
-        if new_role:
-            if current_role:
-                history.append({"role": current_role, "content": "\n".join(current_content).strip()})
-            current_role, current_content = new_role, []
-        elif current_role:
-            current_content.append(line.rstrip("\n"))
-            
-    # Final flush
-    if current_role:
-        history.append({"role": current_role, "content": "\n".join(current_content).strip()})
-    return history
 
 # ─── App Logic ──────────────────────────────────────────────────────────────
 _source_path_map: dict[str, Path] = {}
@@ -637,7 +614,6 @@ def startup(force_rebuild: bool = False):
         _source_path_map = { _get_source_name(p.stem): p for p in all_files }
         report = get_integrity_report()
     
-    # ── Document Library Preparation ──────────────────────────────────────
     doc_list = _get_download_source_files()
     logger.info(f"[startup] {len(doc_list)} reference documents found.")
 
@@ -717,7 +693,6 @@ if os.getenv("AGNAV_PASSWORD"):
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
-    cl.user_session.set("show_reasoning", settings["ShowReasoning"])
 
 
 PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
@@ -729,21 +704,13 @@ EXAMPLES = [
     "What are my rights as a steward during an investigation meeting?",
 ]
 
-WELCOME_MSG = """# BCGEU Navigator
-Welcome! I am your forensic labor law assistant. 
-
-**Quick Tips:**
-- Click the **Readme** link (top-right) to access the **Knowledge Base**.
-- Mode switching and reasoning settings are in the **Chat Settings** (bottom-left or sidebar).
-"""
+WELCOME_MSG = """# BCGEU Navigator"""
 
 def get_welcome_actions():
     return [
-        cl.Action(name="export_history", payload={}, label="Export Session"),
-        cl.Action(name="clear_session", payload={}, label="Clear Session"),
-        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="Discipline Analysis"),
-        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="Grievance Builder"),
-        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="Steward Rights"),
+        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
+        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
+        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
     ]
 
 
@@ -788,17 +755,11 @@ async def on_chat_start():
                 values=["Lookup", "Grieve", "Audit", "Manage"],
                 initial="Lookup",
             ),
-            cl.input_widget.Switch(
-                id="ShowReasoning",
-                label="Show Internal Reasoning",
-                initial=False,
-            )
         ]
     ).send()
     
     # Initialize session state
     cl.user_session.set("history", [])
-    cl.user_session.set("show_reasoning", False)
     cl.user_session.set("persona", "Lookup")
 
     # ── Welcome Header ────────────────────────────────────────────────────
@@ -824,17 +785,6 @@ def _client_id(message: cl.Message) -> str:
     return str(sid) if sid else "default"
 
 
-@cl.action_callback("export_history")
-async def on_export(action: cl.Action):
-    history = cl.user_session.get("history")
-    if not history:
-        return
-    md_content = history_to_markdown(history)
-    file = cl.File(name="agnav_conversation.md", content=md_content.encode("utf-8"), display="inline")
-
-@cl.action_callback("clear_session")
-async def on_clear(action: cl.Action):
-    cl.user_session.set("history", [])
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
@@ -879,20 +829,28 @@ async def on_message(message: cl.Message) -> None:
     await out.send()
 
     accumulated = ""
-    logger.info(f"[chat] Starting stream for query: {sanitized[:50]}...")
+    word_count = len(sanitized.split())
+    char_count = len(sanitized)
+    logger.info(f"[chat] Starting stream for {persona} mode (Words: {word_count}, Chars: {char_count})")
     try:
         queries, context, snippets = await get_multi_perspective_context(sanitized, history)
         
-        # Attach unique sources as inline downloadable files
+        # Attach sources as inline file chips (PDF preferred, MD fallback)
+        # TODO: clickable links blocked by Chainlit only linkifying http/https — see issue #501
         elements = []
         seen_sources = set()
         for s in snippets:
             source_name = s.get("source", "Unknown")
             if source_name not in seen_sources:
-                path = _source_path_map.get(source_name)
-                if path:
-                    # 'inline' ensures they appear as chips at the bottom, not auto-opening side-panels
-                    elements.append(cl.File(name=source_name, path=str(path), display="inline"))
+                md_path = _source_path_map.get(source_name)
+                if md_path:
+                    pdf_path = md_path.with_suffix(".pdf")
+                    download_path = pdf_path if pdf_path.exists() else md_path
+                    elements.append(cl.File(
+                        name=f"{source_name} ({download_path.suffix.lstrip('.').upper()})",
+                        path=str(download_path),
+                        display="inline",
+                    ))
                 seen_sources.add(source_name)
         out.elements = elements
 
@@ -901,18 +859,6 @@ async def on_message(message: cl.Message) -> None:
                 continue
             accumulated += chunk
             await out.stream_token(chunk)
-        
-        # Automatic Source Footer (Hard-coded safety net)
-        if seen_sources:
-            footer = "\n\n---\n**Sources Reference:**\n"
-            for source_name in sorted(list(seen_sources)):
-                # Find the page number from the snippets
-                pages = sorted(list(set(str(s.get("page", "?")) for s in snippets if s.get("source") == source_name)))
-                page_str = ", ".join(pages)
-                footer += f"- **{source_name}**, Page(s): {page_str}\n"
-            accumulated += footer
-            out.content = accumulated
-            await out.update()
     except Exception as exc:  # defensive — rag_review_stream already catches
         logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
         accumulated = f"⚠️ API error: {exc}"

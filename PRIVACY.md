@@ -26,7 +26,7 @@ Agreement Navigator is built with a "Privacy-by-Design" architecture, specifical
 ### 5. Limiting Use, Disclosure, and Retention
 *   **Ephemeral History**: Chat history exists only in the user's browser session. Refreshing the page permanently deletes the conversation.
 *   **No Persistence**: AgNav does *not* write user queries or bot responses to a database. 
-*   **Log Sanitization**: Technical logs (for debugging) do not include the content of user queries.
+*   **Surgical Log Masking**: Technical logs for forensic health monitoring include non-PII metadata (word counts, character counts, and persona modes), but **never** the actual content of user queries or bot responses.
 
 ### 6. Accuracy
 *   **Source Integrity**: AgNav uses a "Forensic Markdown Pipeline" to ensure that the collective agreements used for grounding are accurate representations of the official source documents.
@@ -47,7 +47,6 @@ Agreement Navigator is built with a "Privacy-by-Design" architecture, specifical
 
 ### 10. Challenging Compliance
 *   **Reporting**: Users can report privacy concerns or potential vulnerabilities through GitHub Issues or by contacting the project maintainer.
-*   **Third-Parties**: AgNav uses Hugging Face (Router) for processing. All data sent to the LLM provider is subject to their standard data processing agreements.
 *   **Recourse**: As a tool for union stewards, we encourage users to consult their BCGEU representative if they believe privacy standards are not being met.
 
 ---

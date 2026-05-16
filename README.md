@@ -165,10 +165,10 @@ The sanitization checks for 16+ prompt injection patterns including:
 Agreement Navigator is a "content-blind" application designed for maximum privacy and to support compliance with the British Columbia **Personal Information Protection Act (PIPA)**.
 
 - **Ephemeral Conversations**: Chats are tied only to your current browser session and are permanently deleted upon refresh or closure.
-- **No Content Logging**: We **never** log user queries, bot responses, or search reasoning.
-- **Anonymized Metrics**: We only track non-sensitive technical metadata (token counts, query frequency) to monitor system health.
+- **Surgical Query Masking**: We log the occurrence of queries (including technical metadata like word/character counts) to monitor system health, but the **actual content** of user messages and bot responses is never logged.
+- **Anonymized Metrics**: We only track non-sensitive technical metadata to monitor system performance and rate-limiting compliance.
 
-For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see [PRIVACY.md](app/docs/PRIVACY.md).
+For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see [PRIVACY.md](./PRIVACY.md).
 
 ---
 

@@ -3,6 +3,7 @@
 (function() {
     console.log("Vexilon Forensic UI Initialized");
 
+
     /**
      * Interaction Logic: Enter-to-Submit
      * (Mandated by UI Standards Section 2.3)
@@ -25,7 +26,26 @@
         chatInput.dataset.listenerAttached = "true";
     }
 
+    function hideReadmeDrawerTitle() {
+        document.querySelectorAll('h2').forEach(el => {
+            if (el.textContent.trim() === 'Readme') el.style.display = 'none';
+        });
+    }
+
+    function hideDisclaimer() {
+        document.querySelectorAll('div[role="article"]').forEach(el => {
+            if (el.textContent.trim() === 'LLMs can make mistakes. Check important info.') el.style.display = 'none';
+        });
+    }
+
     // Run periodically to catch re-renders
-    setInterval(setupEnterToSubmit, 1000);
+    setInterval(() => {
+        setupEnterToSubmit();
+        hideReadmeDrawerTitle();
+        hideDisclaimer();
+    }, 500);
+
     setupEnterToSubmit();
+    hideReadmeDrawerTitle();
+    hideDisclaimer();
 })();

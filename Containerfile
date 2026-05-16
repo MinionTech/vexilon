@@ -24,8 +24,8 @@ HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=10 \
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 FROM base AS model_fetcher
 
-# Extract uv version from pyproject.toml to stay in sync with Renovate
-COPY pyproject.toml .
+# Extract uv version from app/pyproject.toml to stay in sync with Renovate
+COPY app/pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
 RUN uv pip install --system sentence-transformers
@@ -37,8 +37,8 @@ RUN --mount=type=cache,target=/root/.cache/hf_v4 \
 # ─── Stage 2: Builder (Dependencies, Indexing, and Source) ────────────────────
 FROM base AS builder
 
-# Extract uv version from pyproject.toml
-COPY pyproject.toml .
+# Extract uv version from app/pyproject.toml
+COPY app/pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies (Cached unless uv.lock changes)
-COPY pyproject.toml uv.lock ./
+COPY app/pyproject.toml app/uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     HF_HUB_OFFLINE=1 UV_LINK_MODE=copy uv sync --frozen --no-dev --no-install-project
 
@@ -59,7 +59,9 @@ COPY --from=model_fetcher /model /model
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
-COPY . ./
+COPY app/ ./
+COPY app/data/labour_law/ ./public/docs/labour_law/
+COPY PRIVACY.md ./public/docs/
 
 # Prepare directories for testing and ensure permissions
 RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache && \
@@ -70,9 +72,9 @@ FROM builder AS indexed_builder
 
 # Model and FAISS Index (Cached unless data/ or scripts change)
 COPY --from=model_fetcher /model /model
-COPY data/ ./data/
-COPY indexing.py ./
-COPY scripts/build_index.py ./scripts/
+COPY app/data/ ./data/
+COPY app/indexing.py ./
+COPY app/scripts/build_index.py ./scripts/
 
 RUN --mount=type=cache,target=/app/.pdf_cache_mount \
     mkdir -p /app/.pdf_cache && \
@@ -91,7 +93,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
 # Now copy the remaining source code (Fast, frequently changed)
-COPY . ./
+COPY app/ ./
+COPY app/data/labour_law/ ./public/docs/labour_law/
+COPY PRIVACY.md ./public/docs/
 
 # Prepare directories for testing and ensure permissions
 RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache && \
@@ -108,8 +112,10 @@ COPY --from=indexed_builder /app /app
 COPY --from=model_fetcher /model /model
 
 # Copy the actual application source code
-COPY main.py ./
-COPY prompts/ ./prompts/
+COPY app/main.py ./
+COPY app/prompts/ ./prompts/
+COPY app/data/labour_law/ ./public/docs/labour_law/
+COPY PRIVACY.md ./public/docs/
 
 # Only create and chown (by UID) the specific directories that MUST be writable
 RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache /app/.files && \

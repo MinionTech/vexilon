@@ -24,7 +24,7 @@ x-healthcheck: &app-healthcheck
   start_period: 120s
 
 x-common-build: &common-build
-  context: app
+  context: .
   dockerfile: Containerfile
   args:
     VERSION: ${AGNAV_VERSION:-dev}
@@ -42,18 +42,20 @@ x-service-defaults: &service-defaults
   memswap_limit: *MEM_LIMIT
   volumes: []
 
-# Development volumes: Enables live-reload while protecting internal container data
+# Development volumes: Mount source files for hot-reload, preserve built venv
 x-dev-volumes: &dev-volumes
-  - ./app:/app:z
-  - /app/.venv         # Lifeboat for packages
-  - ./app/pyproject.toml:/app/pyproject.toml:ro
-  - ./app/uv.lock:/app/uv.lock:ro
-  - ./reports:/app/reports:z  # Artifact extraction "Lifeboat"
-  - ./.pdf_cache:/app/.pdf_cache:z     # Persistent, writable index
-  - ./.pytest_cache:/app/.pytest_cache:z # Persistent test metadata
+  - ./app/main.py:/app/main.py:ro
+  - ./app/indexing.py:/app/indexing.py:ro
+  - ./app/.chainlit:/app/.chainlit:ro
+  - ./app/public:/app/public:ro,z
+  - ./app/prompts:/app/prompts:ro
+  - ./PRIVACY.md:/app/public/docs/PRIVACY.md:ro
+  - ./app/data/labour_law:/app/public/docs/labour_law:ro
+  - ./reports:/app/reports:z
+  - ./.pdf_cache:/app/.pdf_cache:z
+  - ./.pytest_cache:/app/.pytest_cache:z
 
 services:
-
 
   # ── Main Application
   # Development with Hot-Reload (Ollama)
