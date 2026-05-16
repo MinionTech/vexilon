@@ -92,45 +92,64 @@
 
         console.log('[Save/Load] Found container, injecting buttons');
 
-        // Create button styles
+        // Create a wrapper div for our buttons (to group them and control layout)
+        const buttonWrapper = document.createElement('div');
+        buttonWrapper.id = 'save-load-button-wrapper';
+        buttonWrapper.style.cssText = `
+            display: inline-flex !important;
+            gap: 6px !important;
+            margin-right: 8px !important;
+            height: auto !important;
+        `;
+
+        // Create button styles (must override Chainlit's aggressive styling)
         const buttonStyle = `
-            padding: 6px 12px;
-            margin-right: 8px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            color: #2c3e50;
-            transition: all 0.2s;
+            padding: 6px 10px !important;
+            min-width: 50px !important;
+            width: auto !important;
+            height: auto !important;
+            background: #fff !important;
+            border: 1px solid #ccc !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            font-size: 0.8rem !important;
+            color: #2c3e50 !important;
+            transition: all 0.2s !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            display: inline-block !important;
         `;
 
         // Create Save button
         const saveBtn = document.createElement('button');
         saveBtn.id = 'save-conversation-btn';
+        saveBtn.type = 'button';
         saveBtn.textContent = 'Save';
         saveBtn.title = 'Save conversation to file';
         saveBtn.style.cssText = buttonStyle;
         saveBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             console.log('[Save/Load] Save clicked');
             window.chainlit?.callAction({id: 'save_conversation', payload: {}});
         });
         saveBtn.addEventListener('mouseover', () => {
-            saveBtn.style.backgroundColor = '#f5f5f5';
+            saveBtn.style.backgroundColor = '#f5f5f5 !important';
         });
         saveBtn.addEventListener('mouseout', () => {
-            saveBtn.style.backgroundColor = '#fff';
+            saveBtn.style.backgroundColor = '#fff !important';
         });
 
         // Create Load button
         const loadBtn = document.createElement('button');
         loadBtn.id = 'load-conversation-btn';
+        loadBtn.type = 'button';
         loadBtn.textContent = 'Load';
         loadBtn.title = 'Load conversation from file';
         loadBtn.style.cssText = buttonStyle;
         loadBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             console.log('[Save/Load] Load clicked');
             const input = document.createElement('input');
             input.type = 'file';
@@ -155,15 +174,18 @@
             input.click();
         });
         loadBtn.addEventListener('mouseover', () => {
-            loadBtn.style.backgroundColor = '#f5f5f5';
+            loadBtn.style.backgroundColor = '#f5f5f5 !important';
         });
         loadBtn.addEventListener('mouseout', () => {
-            loadBtn.style.backgroundColor = '#fff';
+            loadBtn.style.backgroundColor = '#fff !important';
         });
 
-        // Append buttons to container (at the end, before any existing buttons)
-        container.appendChild(saveBtn);
-        container.appendChild(loadBtn);
+        // Add buttons to wrapper
+        buttonWrapper.appendChild(saveBtn);
+        buttonWrapper.appendChild(loadBtn);
+
+        // Prepend wrapper to container (before other buttons)
+        container.insertBefore(buttonWrapper, container.firstChild);
         console.log('[Save/Load] Buttons injected successfully');
     }
 
