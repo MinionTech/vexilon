@@ -244,7 +244,7 @@ podman compose up --build test-everything && podman compose down
 │   ├── prompts/          # System prompts and instructions
 │   ├── scripts/          # Build, conversion, and audit utilities
 │   ├── tests/            # pytest test suite (Unit + Integration)
-│   ├── main.py           # Main entry point (Gradio UI)
+│   ├── main.py           # Main entry point (Chainlit UI)
 │   └── indexing.py       # RAG pipeline and FAISS logic
 ├── Containerfile         # High-integrity Docker build
 ├── compose.yml           # Dev, staging, and test profiles

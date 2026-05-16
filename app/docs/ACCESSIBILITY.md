@@ -81,12 +81,12 @@ Tested on:
 
 ## Known Limitations
 
-- Gradio framework may have some built-in accessibility limitations
+- Chainlit framework accessibility features are used where available
 - Third-party PDF viewer accessibility depends on browser implementation
-- Copy button in chatbot depends on Gradio's implementation
+- Copy button in chatbot is provided by Chainlit's standard UI
 
 ## Resources
 
 - [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
-- [Gradio Accessibility](https://www.gradio.app/guides/accessibility)
+- [Chainlit Accessibility](https://github.com/Chainlit/chainlit)
 - [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)

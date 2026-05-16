@@ -1,59 +1,55 @@
 /* app/public/style.css */
 
-/* Modern Forensic Look */
+/* 1. Forensic Typography & Base */
+:root {
+    --primary-main: #2c3e50; /* Deep Slate for Forensic Look */
+    --background-default: #f8f9fa;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-default);
+}
+
+/* 2. Suppressed Elements (Per UI Standards) */
+#share-button,
+#undo-button,
+#retry-button,
+#clear-button {
+    display: none !important;
+}
+
+/* 3. Header Standardization */
 .header {
-    border-bottom: 1px solid var(--divider) !important;
-    background-color: var(--background-paper) !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    background-color: #ffffff !important;
     padding: 0 16px !important;
-    height: 56px !important;
+    height: 50px !important;
+    box-shadow: none !important;
 }
 
 .header .title {
-    font-weight: 700 !important;
-    font-family: 'Inter', sans-serif;
+    font-weight: 600 !important;
     color: var(--primary-main) !important;
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
 }
 
-/* Custom Persona Selector Container */
-#persona-selector-container {
-    margin-left: 1.5rem;
-    display: flex;
-    align-items: center;
-    background: var(--background-default);
-    border: 1px solid var(--divider);
-    border-radius: 6px;
-    padding: 2px 8px;
-    transition: all 0.2s ease;
+/* 4. Chat Customization */
+.message-list {
+    background-color: var(--background-default) !important;
 }
 
-#persona-selector-container:hover {
-    border-color: var(--primary-main);
-    box-shadow: 0 0 0 1px var(--primary-main);
+.message {
+    border-radius: 4px !important;
+    margin-bottom: 12px !important;
+    border: 1px solid transparent !important;
 }
 
-#persona-selector-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.6;
-    margin-right: 8px;
-    white-space: nowrap;
+.message-assistant {
+    background-color: #ffffff !important;
+    border-color: #e0e0e0 !important;
 }
 
-#persona-selector {
-    background-color: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    outline: none;
-    padding: 4px 0;
-}
-
-#persona-selector option {
-    background-color: var(--background-paper);
-    color: var(--text-primary);
+.message-user {
+    background-color: #f1f3f4 !important;
 }

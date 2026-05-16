@@ -19,7 +19,7 @@ To reduce the "Information Gap" for union stewards by providing a mobile-first, 
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| **Interface** | Gradio 6 | Rapid, high-performance web UI with native streaming support. |
+| **Interface** | Chainlit 2.11 | Rapid, high-performance web UI with native streaming support. |
 | **Logic** | Python 3.12 | Standard for LLM orchestration and RAG pipelines. |
 | **LLM (PROD)** | Hugging Face Router | Access to Qwen/Qwen3-4B-Instruct-2507 via high-speed "Flash" API. |
 | **LLM (DEV)** | Ollama | Local execution of qwen3:4b-instruct for zero-config, offline development. |
@@ -105,7 +105,7 @@ AgNav includes an automated "Adversarial Reviewer" that double-checks its own an
 | `AGNAV_LLM_PROVIDER` | `huggingface` | `huggingface` or `ollama` |
 | `AGNAV_DEFAULT_MODEL` | `Qwen/Qwen3-4B-Instruct-2507` | Primary LLM for responses |
 | `HF_TOKEN` | *(Required for HF)* | Hugging Face API token |
-| `PORT` | `7860` | Gradio port |
+| `PORT` | `7860` | Application port |
 | `SIMILARITY_TOP_K` | `40` | Number of chunks retrieved |
 | `VERIFY_ENABLED` | `true` | Enable the verification bot |
 | `RATE_LIMIT_PER_HOUR` | `100` | Max requests per hour per client IP |
