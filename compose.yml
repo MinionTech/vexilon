@@ -47,7 +47,7 @@ x-dev-volumes: &dev-volumes
   - ./app/main.py:/app/main.py:ro
   - ./app/indexing.py:/app/indexing.py:ro
   - ./app/.chainlit:/app/.chainlit:ro
-  - ./app/public:/app/public:ro
+  - ./app/public:/app/public:ro,z
   - ./app/prompts:/app/prompts:ro
   - ./PRIVACY.md:/app/public/docs/PRIVACY.md:ro
   - ./app/data/labour_law:/app/public/docs/labour_law:ro
