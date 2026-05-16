@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-# Force Chainlit to use a writable directory for temporary files
-# This MUST be done before any imports that might initialize Chainlit logic.
-os.environ["CHAINLIT_FILES_DIR"] = "./.pdf_cache/.files"
-Path("./.pdf_cache/.files").mkdir(parents=True, exist_ok=True)
+# 2026-05-15: Removed hardcoded paths for portability (PR #495)
+CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
+os.environ["CHAINLIT_FILES_DIR"] = str(CACHE_DIR / ".files")
+CACHE_DIR.joinpath(".files").mkdir(parents=True, exist_ok=True)
 
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
@@ -307,7 +307,8 @@ def get_llm_client():
             # Use the OpenAI-compatible router endpoint for reliable routing
             _llm_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=os.environ.get("HF_TOKEN")
+                api_key=os.environ.get("HF_TOKEN"),
+                timeout=60.0 # PR Feedback: Added explicit timeout
             )
         elif provider == "ollama":
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
@@ -338,7 +339,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     
     # Use the 'model:provider' syntax for the most robust routing on the HF Router
     actual_model = f"{model}:{HF_PROVIDER}" if get_llm_provider() == "huggingface" else model
-    kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages}
+    kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
 
     # timeout is handled by the client initialization or default
     resp = await client.chat.completions.create(**kwargs)
@@ -526,13 +527,13 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 unique_snippets.append(c)
                 source = c.get("source", "Unknown")
                 page = c.get("page", "?")
-                context_parts.append(f"<<< SOURCE: {source} | PAGE: {page} >>>\n{c['text']}")
+                context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
     return queries, "\n\n".join(context_parts), unique_snippets
 
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
     try:
         if not context:
-            queries, context = await get_multi_perspective_context(message, history)
+            queries, context, snippets = await get_multi_perspective_context(message, history)
         
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
@@ -722,7 +723,14 @@ async def setup_agent(settings):
     cl.user_session.set("show_reasoning", settings["ShowReasoning"])
 
 
+PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
 DEFAULT_PERSONA = "Lookup"
+
+EXAMPLES = [
+    "What are the Article 14 (Discipline) requirements for just cause?",
+    "I need to file a grievance for a member. What steps should I take?",
+    "What are my rights as a steward during an investigation meeting?",
+]
 
 WELCOME_MSG = """# 🛡️ BCGEU Navigator
 Welcome! I am your forensic labor law assistant. 
@@ -741,8 +749,40 @@ def get_welcome_actions():
         cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="🛡️ Steward Rights"),
     ]
 
+
+@cl.set_chat_profiles
+async def chat_profiles(user: cl.User):
+    return [
+        cl.ChatProfile(
+            name="Lookup",
+            default=True,
+            markdown_description="🔍 Forensic lookup of labor law excerpts.",
+            icon="https://www.gstatic.com/images/branding/product/1x/search_64dp.png",
+            starters=[cl.Starter(label="Discipline Analysis", message=EXAMPLES[0])],
+        ),
+        cl.ChatProfile(
+            name="Grieve",
+            markdown_description="⚖️ Strategic guidance for grievance filing.",
+            icon="https://www.gstatic.com/images/icons/material/system/1x/gavel_black_24dp.png",
+            starters=[cl.Starter(label="Grievance Builder", message=EXAMPLES[1])],
+        ),
+        cl.ChatProfile(
+            name="Audit",
+            markdown_description="🕵️ Forensic auditing of compliance risks.",
+            icon="https://www.gstatic.com/images/icons/material/system/1x/fact_check_black_24dp.png",
+            starters=[cl.Starter(label="Audit Analysis", message=EXAMPLES[2])],
+        ),
+        cl.ChatProfile(
+            name="Manage",
+            markdown_description="📊 Strategic management consulting.",
+            icon="https://www.gstatic.com/images/icons/material/system/1x/analytics_black_24dp.png",
+            starters=[cl.Starter(label="Strategy Session", message=EXAMPLES[0])],
+        ),
+    ]
+
+
 @cl.on_chat_start
-async def start():
+async def on_chat_start():
     await _ensure_startup()
     
 
@@ -838,7 +878,8 @@ async def on_message(message: cl.Message) -> None:
     if flagged:
         return
 
-    persona = cl.user_session.get("persona") or DEFAULT_PERSONA
+    # Order of precedence: session['persona'] (settings) -> session['chat_profile'] (profiles) -> DEFAULT_PERSONA
+    persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     history: list[dict] = cl.user_session.get("history") or []
 
     out = cl.Message(content="")

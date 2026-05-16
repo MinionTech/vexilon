@@ -109,8 +109,8 @@ async def test_rag_stream_includes_page_context_in_system_prompt(monkeypatch):
     messages = captured.get("messages", [])
     system_prompt = next((m["content"] for m in messages if m["role"] == "system"), "")
     
-    assert "<<< SOURCE: Unknown | PAGE: 5 >>>" in system_prompt
-    assert "<<< SOURCE: Unknown | PAGE: 6 >>>" in system_prompt
+    assert "<<< SOURCE: Unknown | Page: 5 >>>" in system_prompt
+    assert "<<< SOURCE: Unknown | Page: 6 >>>" in system_prompt
     assert "Article 1 says something important." in system_prompt
 
 async def test_rag_stream_api_error_yields_error_message(monkeypatch):
