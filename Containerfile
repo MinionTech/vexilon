@@ -1,9 +1,10 @@
 # ─── Stage 0: Base ────────────────────────────────────────────────────────────
 FROM python:3.14-slim AS base
 
-# Silence Hugging Face nag messages globally
+# Global environment configuration
 ENV HF_HOME=/hf_cache \
-    EMBED_MODEL=/model
+    EMBED_MODEL=/model \
+    CHAINLIT_FILES_DIR=/tmp/chainlit_files
 
 # Install common runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -86,10 +87,6 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
 # ─── Stage 2.5: Functional Builder (Dev/Test Source) ──────────────────────────
 FROM indexed_builder AS functional_builder
 
-# PIPA: ephemeral file storage in /tmp (cleared on container restart).
-# Set BEFORE chainlit imports so it overrides chainlit's default /app/.files.
-ENV CHAINLIT_FILES_DIR=/tmp/chainlit_files
-
 # Layer dev dependencies on top of the production venv (Cached unless uv.lock changes)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
@@ -121,10 +118,6 @@ FROM base AS runner
 
 # Use venv path for all subsequent commands
 ENV PATH="/app/.venv/bin:$PATH"
-
-# PIPA: ephemeral file storage in /tmp (cleared on container restart).
-# Set BEFORE chainlit imports so it overrides chainlit's default /app/.files.
-ENV CHAINLIT_FILES_DIR=/tmp/chainlit_files
 
 # Copy everything from functional_builder (includes venv, source code, index, config)
 COPY --from=functional_builder /app /app
