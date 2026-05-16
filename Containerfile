@@ -86,6 +86,10 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
 # ─── Stage 2.5: Functional Builder (Dev/Test Source) ──────────────────────────
 FROM indexed_builder AS functional_builder
 
+# PIPA: ephemeral file storage in /tmp (cleared on container restart).
+# Set BEFORE chainlit imports so it overrides chainlit's default /app/.files.
+ENV CHAINLIT_FILES_DIR=/tmp/chainlit_files
+
 # Layer dev dependencies on top of the production venv (Cached unless uv.lock changes)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
