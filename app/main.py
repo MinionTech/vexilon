@@ -30,7 +30,7 @@ import anyio._backends._asyncio as _anyio_asyncio_backend
 import sniffio
 
 from patches import apply_patches
-34: apply_patches()
+apply_patches()
 # ─── Agnav Imports ────────────────────────────────────────────────────────
 from indexing import (
     _get_source_name,
@@ -188,7 +188,8 @@ class TestRegistry:
     def find_matches(self, query: str) -> list[TestDoctrine]:
         q_lower = query.lower()
         with self._lock:
-            return [test for test in self.tests if any(k in q_lower for k in test.keywords)]
+            matches = [test for test in self.tests if any(k in q_lower for k in test.keywords)]
+            return matches
 
 _test_registry = TestRegistry()
 TESTS_DIR = LABOUR_LAW_DIR / "tests"
@@ -529,22 +530,28 @@ async def get_multi_perspective_context(message: str, history: list[dict]) -> tu
                 context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
     return queries, "\n\n".join(context_parts), unique_snippets
 
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str = "", queries: list[str] = None) -> AsyncIterator[str]:
+async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str | None = None) -> AsyncIterator[str]:
     try:
         if not context:
             queries, context, snippets = await get_multi_perspective_context(message, history)
-        
-        base_persona = get_persona_prompt(persona_mode)
-        audit_rules = ""
-        if persona_mode in ("Grieve", "Manage"):
-            matched_tests = _test_registry.find_matches(message + " " + queries[0])
-            for test in matched_tests:
-                audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-                audit_rules += f"This case involves potential issues related to {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern (Explain the principle, ask the relevant Question, Apply it to the facts, and Cite the source).\n"
-                audit_rules += f"Criteria:\n{test.content}\n"
+        else:
+            queries = [message] # Fallback for keyword matching if context is provided
 
+        # 2. Forensic Analysis & Logic Injection
+        system_prompt = get_persona_prompt(persona_mode)
+        
+        if persona_mode in ["Audit", "Grieve", "Manage"]:
+            # Search for mandatory logic checks (e.g. Nexus, Scott)
+            matched_tests = _test_registry.find_matches(message + " " + (queries[0] if queries else ""))
+            for test in matched_tests:
+                system_prompt += f"\n\n### MANDATORY LOGIC CHECK: {test.name.upper()}\n"
+                system_prompt += f"This case involves potential issues related to {test.name}.\n"
+                system_prompt += f"You MUST follow the forensic pattern: EXPLAIN the principle, ASK the relevant question, APPLY to the facts, and CITE the source.\n"
+                system_prompt += f"Logic Criteria:\n{test.content}\n"
+
+        # 3. Final Assembly
         master_rules = get_system_prompt().format(manifest="", verify_message="")
-        system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        final_system = f"{master_rules}\n\n{system_prompt}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
         
         # Cap history to last 2 turns, truncated to reduce prompt size on CPU
         capped = []
@@ -556,7 +563,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         async for text in unified_chat_stream(
             model=REVIEWER_MODEL,
             max_tokens=1024,
-            system=system,
+            system=final_system,
             messages=messages
         ):
             yield text
@@ -742,6 +749,7 @@ Welcome! I am your forensic labor law assistant.
 def get_welcome_actions():
     return [
         cl.Action(name="export_history", payload={}, label="Export Session"),
+        cl.Action(name="import_history", payload={}, label="Import Session"),
         cl.Action(name="clear_session", payload={}, label="Clear Session"),
         cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="Discipline Analysis"),
         cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="Grievance Builder"),
@@ -832,9 +840,44 @@ def _client_id(message: cl.Message) -> str:
 async def on_export(action: cl.Action):
     history = cl.user_session.get("history")
     if not history:
+        await cl.Message(content="No history to export.").send()
         return
     md_content = history_to_markdown(history)
-    file = cl.File(name="agnav_conversation.md", content=md_content.encode("utf-8"), display="inline")
+    
+    file_element = cl.File(
+        name="agnav_conversation.md", 
+        content=md_content.encode("utf-8"), 
+        display="inline"
+    )
+    await cl.Message(
+        content="Forensic Export Complete. You can download the session log below.",
+        elements=[file_element]
+    ).send()
+
+@cl.action_callback("import_history")
+async def on_import(action: cl.Action):
+    files = await cl.AskFileMessage(
+        content="Please upload an AgNav conversation export (.md) to restore your session.",
+        accept=["text/markdown"]
+    ).send()
+    
+    if files:
+        import_file = files[0]
+        try:
+            # cl.File objects have a 'path' attribute if saved locally
+            history = markdown_to_history(import_file.path)
+            cl.user_session.set("history", history)
+            
+            # Display a summary of imported messages
+            summary = f"Successfully imported {len(history)} messages from forensic log."
+            await cl.Message(content=summary).send()
+            
+            # Repopulate the UI with the last assistant message if it exists
+            if history and history[-1]["role"] == "assistant":
+                await cl.Message(content=f"**Restored Last Response:**\n\n{history[-1]['content']}").send()
+        except Exception as e:
+            logger.error(f"[import] Failed to parse history: {e}")
+            await cl.Message(content=f"Error: Failed to parse forensic log: {e}").send()
 
 @cl.action_callback("clear_session")
 async def on_clear(action: cl.Action):

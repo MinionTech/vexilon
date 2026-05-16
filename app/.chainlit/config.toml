@@ -170,12 +170,14 @@ default_avatar_file_url = ""
 [[UI.header_links]]
     name = "GitHub"
     display_name = "Source Code"
+    icon_url = ""
     url = "https://github.com/MinionTech/vexilon"
     target = "_blank"
 
 [[UI.header_links]]
     name = "Privacy"
     display_name = "Privacy Policy"
+    icon_url = ""
     url = "https://github.com/MinionTech/vexilon/blob/main/app/docs/PRIVACY.md"
     target = "_blank"
 

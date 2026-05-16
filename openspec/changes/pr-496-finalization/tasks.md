@@ -7,19 +7,19 @@
 - [x] **T2: Link & Footer Restoration**
     - Correct Source Code and Privacy Policy links in `config.toml` and `index.js`.
     - Restore the project-standard AgNav footer in `index.js`.
-- [ ] **T3: Settings Optimization**
+- [x] **T3: Settings Optimization**
     - Refine the native Chat Settings gear icon content in `main.py`.
 
 ## Phase 2: Functional Hardening
-- [ ] **T4: Upload Governance**
+- [x] **T4: Upload Governance**
     - Ensure spontaneous file uploads are disabled and verify in the UI.
-- [ ] **T5: Knowledge Base & Manifest**
+- [x] **T5: Knowledge Base & Manifest**
     - Finalize agreement excerpts and manifest navigation in `chainlit.md`.
-- [ ] **T6: Save/Load Persistence**
+- [x] **T6: Save/Load Persistence**
     - Implement robust conversation history management in `main.py`.
 
 ## Phase 3: Logic & Verification
-- [ ] **T7: Advanced Forensic Logic**
+- [x] **T7: Advanced Forensic Logic**
     - Implement multi-hop reasoning and expanded audit rule-sets in `main.py`.
 - [ ] **T8: 100% Test Coverage**
     - Add surgical fixes for remaining edge cases in `test_chainlit_ui.py`.
