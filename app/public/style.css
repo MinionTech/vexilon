@@ -71,9 +71,7 @@ body {
 #undo-button,
 #retry-button,
 #clear-button,
-button[aria-label="New chat"],
-button[aria-label="new chat"],
-a[aria-label="New chat"] {
+#new-chat-button {
     display: none !important;
 }
 
