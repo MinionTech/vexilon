@@ -105,9 +105,9 @@ COPY app/patches.py ./
 COPY app/prompts/ ./prompts/
 COPY app/tests/ ./tests/
 
-# Prepare directories for testing and ensure permissions
-RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache && \
-    chown -R 1000:1000 /app/reports /app/.pytest_cache /hf_cache
+# Prepare directories for testing and Chainlit runtime, ensure permissions
+RUN mkdir -p /app/reports /app/.pytest_cache /app/.files /hf_cache && \
+    chown -R 1000:1000 /app/reports /app/.pytest_cache /app/.files /hf_cache
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
