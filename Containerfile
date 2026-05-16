@@ -103,9 +103,7 @@ COPY app/main.py ./
 COPY app/indexing.py ./
 COPY app/patches.py ./
 COPY app/prompts/ ./prompts/
-
-# Finally, test config (if present)
-COPY tests/ ./tests/ 2>/dev/null || true
+COPY tests/ ./tests/
 
 # Prepare directories for testing and ensure permissions
 RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache && \
