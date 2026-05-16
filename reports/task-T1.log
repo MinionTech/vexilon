@@ -1,0 +1,4 @@
+Fri 15 May 2026 06:15:48 PM PDT
+--- VERIFY T1: Patch Decoupling ---
+from patches import apply_patches
+-rw-r--r--. 1 derek derek 5094 May 15 18:14 app/patches.py

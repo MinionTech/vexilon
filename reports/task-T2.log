@@ -1,0 +1,18 @@
+Fri 15 May 2026 06:15:52 PM PDT
+--- VERIFY T2: Forensic Starters ---
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="Discipline Analysis",
+            message="What are the Article 14 (Discipline) requirements for just cause?",
+        ),
+        cl.Starter(
+            label="Grievance Builder",
+            message="I need to file a grievance for a member. What steps should I take?",
+        ),
+        cl.Starter(
+            label="Steward Rights",
+            message="What are my rights as a steward during an investigation meeting?",
+        ),
+        cl.Starter(
