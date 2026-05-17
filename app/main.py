@@ -854,7 +854,48 @@ if os.getenv("AGNAV_PASSWORD"):
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    cl.user_session.set("persona", settings["Persona"])
+    persona = settings.get("Persona", "Lookup")
+    cl.user_session.set("persona", persona)
+    
+    action = settings.get("SessionAction", "None")
+    if action == "Save Session":
+        await trigger_session_save()
+        # Reset state to 'None' so it doesn't trigger again on persona change
+        await cl.ChatSettings(
+            [
+                cl.input_widget.Select(
+                    id="Persona",
+                    label="Navigator Persona",
+                    values=["Lookup", "Grieve", "Audit", "Manage"],
+                    initial=persona,
+                ),
+                cl.input_widget.Select(
+                    id="SessionAction",
+                    label="Session Actions",
+                    values=["None", "Save Session", "Load Session"],
+                    initial="None",
+                ),
+            ]
+        ).send()
+    elif action == "Load Session":
+        asyncio.create_task(_ask_for_session_file())
+        # Reset state to 'None'
+        await cl.ChatSettings(
+            [
+                cl.input_widget.Select(
+                    id="Persona",
+                    label="Navigator Persona",
+                    values=["Lookup", "Grieve", "Audit", "Manage"],
+                    initial=persona,
+                ),
+                cl.input_widget.Select(
+                    id="SessionAction",
+                    label="Session Actions",
+                    values=["None", "Save Session", "Load Session"],
+                    initial="None",
+                ),
+            ]
+        ).send()
 
 
 PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
@@ -922,6 +963,12 @@ async def on_chat_start():
                 label="Navigator Persona",
                 values=["Lookup", "Grieve", "Audit", "Manage"],
                 initial="Lookup",
+            ),
+            cl.input_widget.Select(
+                id="SessionAction",
+                label="Session Actions",
+                values=["None", "Save Session", "Load Session"],
+                initial="None",
             ),
         ]
     ).send()
@@ -1015,12 +1062,11 @@ async def trigger_session_save():
     except Exception as e:
         logger.error(f"[save] Failed to save conversation: {e}")
         await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
-    finally:
         if file_path:
             try:
                 Path(file_path).unlink(missing_ok=True)
-            except OSError as cleanup_err:
-                logger.warning(f"[save] Failed to clean up tempfile: {cleanup_err}")
+            except OSError:
+                pass
 
 
 @cl.action_callback("save_conversation")
