@@ -1,6 +1,5 @@
 ---
 
-# Knowledge Base
 The following reference documents form the primary authority for my analytical responses. PDFs are provided for human review where available; Markdown versions are used as a fallback.
 
 | Document Name | Format | Access |
