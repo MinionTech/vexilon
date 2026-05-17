@@ -32,9 +32,16 @@
         });
     }
 
-    function hideDisclaimer() {
+    function setupInputFooter() {
         document.querySelectorAll('div[role="article"]').forEach(el => {
-            if (el.textContent.trim() === 'LLMs can make mistakes. Check important info.') el.style.display = 'none';
+            if (el.textContent.trim().includes('LLMs can make mistakes') && !el.dataset.footerInjected) {
+                el.innerHTML = `
+                    <a href="https://github.com/MinionTech/vexilon" class="input-footer-link" target="_blank">Source Code</a>
+                    <span class="input-footer-separator">•</span>
+                    <a href="/public/docs/PRIVACY.md" class="input-footer-link" target="_blank">Privacy Policy</a>
+                `;
+                el.dataset.footerInjected = "true";
+            }
         });
     }
 
@@ -42,10 +49,10 @@
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
-        hideDisclaimer();
+        setupInputFooter();
     }, 500);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
-    hideDisclaimer();
+    setupInputFooter();
 })();

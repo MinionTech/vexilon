@@ -120,3 +120,34 @@ body {
 .message-user {
     background-color: #f1f3f4 !important;
 }
+
+/* 5. Custom Input-Anchored Footer Links */
+.input-footer-link {
+    color: #6b7280 !important; /* Elegant muted grey */
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    font-size: 11px !important;
+    transition: color 0.15s ease-in-out !important;
+}
+
+.input-footer-link:hover {
+    color: #2563eb !important; /* Beautiful clinical blue on hover */
+    text-decoration: underline !important;
+}
+
+/* Dark mode adaptation */
+.dark .input-footer-link {
+    color: #9ca3af !important;
+}
+.dark .input-footer-link:hover {
+    color: #58a6ff !important;
+}
+
+.input-footer-separator {
+    color: #9ca3af !important;
+    margin: 0 8px !important;
+    font-size: 11px !important;
+}
+.dark .input-footer-separator {
+    color: #4b5563 !important;
+}
