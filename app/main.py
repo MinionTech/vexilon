@@ -968,13 +968,8 @@ async def on_action(action: cl.Action):
     # Remove the buttons to keep it clean
     await action.remove()
 
-@cl.action_callback("save_conversation")
-async def on_save_conversation(action: cl.Action):
-    """Save conversation history to downloadable markdown file (PIPA-compliant).
-    
-    File is human-readable markdown with JSON metadata embedded. Saved to
-    ephemeral /tmp and deleted after Chainlit serves the download.
-    """
+async def trigger_session_save():
+    """Save conversation history to downloadable markdown file (PIPA-compliant)."""
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         await cl.Message(content=rate_msg, author="System").send()
@@ -1025,25 +1020,19 @@ async def on_save_conversation(action: cl.Action):
                 logger.warning(f"[save] Failed to clean up tempfile: {cleanup_err}")
 
 
-@cl.action_callback("load_conversation")
-async def on_load_conversation(action: cl.Action):
-    """Load conversation from uploaded markdown or JSON file.
-    
-    NOTE: payload.files[0] is the file content string (read by FileReader in browser),
-    not a server-side path. Browser handles the upload stream; no server tempfile.
-    """
+@cl.action_callback("save_conversation")
+async def on_save_conversation(action: cl.Action):
+    """Callback for native Chainlit Action button."""
+    await trigger_session_save()
+
+
+async def trigger_session_load(file_content: str):
+    """Load conversation from uploaded markdown or JSON file."""
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         await cl.Message(content=rate_msg, author="System").send()
         return
-
-    files = action.payload.get("files", [])
-    if not files:
-        await cl.Message(content="No file selected.", author="System").send()
-        return
-    
-    # Content was read by FileReader in browser as text
-    file_content = files[0]
+        
     try:
         messages, saved_persona, saved_at, warnings = deserialize_conversation(file_content)
         
@@ -1087,12 +1076,32 @@ async def on_load_conversation(action: cl.Action):
         logger.error(f"[load] Failed to load conversation: {e}")
         await cl.Message(content=f"Error loading conversation: {e}", author="System").send()
 
+
+@cl.action_callback("load_conversation")
+async def on_load_conversation(action: cl.Action):
+    """Callback for native Chainlit Action button."""
+    files = action.payload.get("files", [])
+    if not files:
+        await cl.Message(content="No file selected.", author="System").send()
+        return
+    await trigger_session_load(files[0])
+
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
     await _ensure_startup()
 
     msg_str = (message.content or "").strip()
     if not msg_str:
+        return
+
+    # Clinical session commands interceptor
+    if msg_str == "/persist save":
+        await trigger_session_save()
+        return
+        
+    if msg_str.startswith("/persist load "):
+        file_content = msg_str[len("/persist load "):]
+        await trigger_session_load(file_content)
         return
 
     # Rate limit (per session)

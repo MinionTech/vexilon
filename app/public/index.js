@@ -56,7 +56,7 @@
         });
     }
     /**
-     * Interaction Logic: Session Save/Load Click Handlers
+     * Interaction Logic: Session Save/Load Click Handlers via clinical `/persist` command pipeline
      */
     function setupSessionClickHandlers() {
         if (document.datasetSessionHandlersAttached) return;
@@ -68,24 +68,48 @@
             const href = target.getAttribute('href');
             if (href === '#save') {
                 e.preventDefault();
-                if (!window.chainlit) {
-                    alert("System error: Chainlit interface not initialized. Please wait a moment and try again.");
-                    return;
-                }
                 console.log("[session] Triggering save_conversation...");
-                window.chainlit.callAction({ id: 'save_conversation', payload: {} });
+                if (window.chainlit) {
+                    window.chainlit.callAction({ id: 'save_conversation', payload: {} });
+                } else {
+                    submitTechnicalCommand('/persist save');
+                }
             } else if (href === '#load') {
                 e.preventDefault();
-                if (!window.chainlit) {
-                    alert("System error: Chainlit interface not initialized. Please wait a moment and try again.");
-                    return;
-                }
                 console.log("[session] Prompting for file upload...");
                 triggerFilePicker();
             }
         });
         
         document.datasetSessionHandlersAttached = "true";
+    }
+
+    function submitTechnicalCommand(command) {
+        const chatInput = document.querySelector('textarea');
+        if (!chatInput) {
+            alert("System notice: Unable to find chat input text area. Please make sure the chat tab is active.");
+            return;
+        }
+        
+        chatInput.value = command;
+        chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        setTimeout(() => {
+            const sendBtn = document.querySelector('button[aria-label="Send message"]') || 
+                            document.querySelector('button.send-button');
+            if (sendBtn && !sendBtn.disabled) {
+                sendBtn.click();
+            } else {
+                const enterEvent = new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    code: 'Enter',
+                    keyCode: 13,
+                    which: 13,
+                    bubbles: true
+                });
+                chatInput.dispatchEvent(enterEvent);
+            }
+        }, 50);
     }
 
     function triggerFilePicker() {
@@ -120,10 +144,14 @@
                 }
 
                 console.log(`[session] File parsed successfully, sending to backend: ${file.name}`);
-                window.chainlit?.callAction({
-                    id: 'load_conversation',
-                    payload: { files: [content] }
-                });
+                if (window.chainlit) {
+                    window.chainlit.callAction({
+                        id: 'load_conversation',
+                        payload: { files: [content] }
+                    });
+                } else {
+                    submitTechnicalCommand(`/persist load ${content}`);
+                }
             });
 
             reader.addEventListener('error', () => {
@@ -136,16 +164,29 @@
         input.click();
     }
 
+    function hidePersistCommands() {
+        document.querySelectorAll('.message, .message-user, .message-content').forEach(el => {
+            if (el.textContent.includes('/persist')) {
+                const messageContainer = el.closest('.message');
+                if (messageContainer && messageContainer.style.display !== 'none') {
+                    messageContainer.style.display = 'none';
+                }
+            }
+        });
+    }
+
     // Run periodically to catch re-renders
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
         replaceBuildSha();
         setupSessionClickHandlers();
-    }, 500);
+        hidePersistCommands();
+    }, 100);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
     replaceBuildSha();
     setupSessionClickHandlers();
+    hidePersistCommands();
 })();
