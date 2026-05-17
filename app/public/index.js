@@ -68,12 +68,8 @@
             const href = target.getAttribute('href');
             if (href === '#save') {
                 e.preventDefault();
-                console.log("[session] Triggering save_conversation...");
-                if (window.chainlit) {
-                    window.chainlit.callAction({ id: 'save_conversation', payload: {} });
-                } else {
-                    submitTechnicalCommand('/persist save');
-                }
+                console.log("[session] Triggering save_conversation via clinical pipeline...");
+                submitTechnicalCommand('/persist save');
             } else if (href === '#load') {
                 e.preventDefault();
                 console.log("[session] Prompting for file upload...");
@@ -85,17 +81,24 @@
     }
 
     function submitTechnicalCommand(command) {
-        const chatInput = document.querySelector('textarea');
+        const chatInput = document.getElementById('chat-input') || document.querySelector('textarea');
         if (!chatInput) {
             alert("System notice: Unable to find chat input text area. Please make sure the chat tab is active.");
             return;
         }
         
-        chatInput.value = command;
+        // React 16+ setter bypass hack
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+        if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(chatInput, command);
+        } else {
+            chatInput.value = command; // fallback
+        }
         chatInput.dispatchEvent(new Event('input', { bubbles: true }));
         
         setTimeout(() => {
-            const sendBtn = document.querySelector('button[aria-label="Send message"]') || 
+            const sendBtn = document.getElementById('send-button') || 
+                            document.querySelector('button[aria-label="Send message"]') || 
                             document.querySelector('button.send-button');
             if (sendBtn && !sendBtn.disabled) {
                 sendBtn.click();
@@ -144,14 +147,7 @@
                 }
 
                 console.log(`[session] File parsed successfully, sending to backend: ${file.name}`);
-                if (window.chainlit) {
-                    window.chainlit.callAction({
-                        id: 'load_conversation',
-                        payload: { files: [content] }
-                    });
-                } else {
-                    submitTechnicalCommand(`/persist load ${content}`);
-                }
+                submitTechnicalCommand(`/persist load ${content}`);
             });
 
             reader.addEventListener('error', () => {
