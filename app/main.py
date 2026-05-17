@@ -1080,10 +1080,19 @@ async def on_message(message: cl.Message) -> None:
 
 # ─── Custom FastAPI Routes ───────────────────────────────────────────────────
 from chainlit.server import app as cl_app
+from fastapi.routing import APIRoute
 
-@cl_app.get("/api/version")
 def get_version():
     return {
         "version": AGNAV_VERSION,
         "sha": os.getenv("BUILD_SHA", "dev mode")
     }
+
+# Prepend the API route to bypass Chainlit's catch-all wildcard router
+version_route = APIRoute(
+    "/api/version",
+    endpoint=get_version,
+    methods=["GET"],
+    include_in_schema=False
+)
+cl_app.router.routes.insert(0, version_route)
