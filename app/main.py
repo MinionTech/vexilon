@@ -589,11 +589,40 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
-        # More robust extraction using regex to find the JSON block
-        match = re.search(r"\[.*\]", text, re.DOTALL)
+        # More robust extraction using regex to find the JSON block (list or object)
+        match = re.search(r"(\[.*\]|\{.*\})", text, re.DOTALL)
         if match:
             import json
-            return json.loads(match.group(0))
+            parsed = json.loads(match.group(0))
+            
+            # Handle if the LLM returned a dict with a list inside
+            if isinstance(parsed, dict):
+                for val in parsed.values():
+                    if isinstance(val, list):
+                        parsed = val
+                        break
+            
+            if isinstance(parsed, list):
+                sanitized_queries = []
+                for item in parsed:
+                    if isinstance(item, str):
+                        sanitized_queries.append(item)
+                    elif isinstance(item, dict):
+                        # Extract the query string from common keys, or fallback to the first string value
+                        q_val = item.get("q") or item.get("query") or item.get("text")
+                        if not q_val:
+                            for val in item.values():
+                                if isinstance(val, str):
+                                    q_val = val
+                                    break
+                        if q_val:
+                            sanitized_queries.append(str(q_val))
+                    else:
+                        sanitized_queries.append(str(item))
+                
+                final_queries = [q.strip() for q in sanitized_queries if q and isinstance(q, str)]
+                if final_queries:
+                    return final_queries
         return [message]
     except Exception:
         return [message]
