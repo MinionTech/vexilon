@@ -9,12 +9,12 @@ import os
 import re
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent
 
 
 def test_readme_metadata_sync():
     """Ensures metadata.yml has the critical metadata for Docker HF Spaces."""
-    metadata_path = REPO_ROOT / "metadata.yml"
+    metadata_path = REPO_ROOT / "app" / "metadata.yml"
     content = metadata_path.read_text()
     
     # 1. Must be sdk: docker
@@ -39,7 +39,7 @@ def test_readme_metadata_sync():
 
 def test_app_py_build_safety():
     """Ensures app.py doesn't contain global thread-pinning that hangs Docker builds."""
-    app_path = REPO_ROOT / "main.py"
+    app_path = REPO_ROOT / "app" / "main.py"
     content = app_path.read_text()
     
     # Check for OMP_NUM_THREADS or MKL_NUM_THREADS at top level (not inside a function)

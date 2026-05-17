@@ -32,9 +32,27 @@
         });
     }
 
-    function hideDisclaimer() {
-        document.querySelectorAll('div[role="article"]').forEach(el => {
-            if (el.textContent.trim() === 'LLMs can make mistakes. Check important info.') el.style.display = 'none';
+    let buildSha = "unknown";
+
+    // Fetch version info dynamically from endpoint
+    fetch('/api/version')
+        .then(res => res.json())
+        .then(data => {
+            if (data.version === "Dev mode") {
+                buildSha = "Dev mode";
+            } else {
+                const shaShort = data.sha ? data.sha.substring(0, 7) : "";
+                buildSha = `${data.version}${shaShort ? ` (${shaShort})` : ""}`;
+            }
+            replaceBuildSha();
+        })
+        .catch(err => console.error("Error fetching version:", err));
+
+    function replaceBuildSha() {
+        document.querySelectorAll('code, span, p, li, a').forEach(el => {
+            if (el.textContent.includes('{{BUILD_SHA}}')) {
+                el.innerHTML = el.innerHTML.replace('{{BUILD_SHA}}', buildSha);
+            }
         });
     }
 
@@ -42,10 +60,10 @@
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
-        hideDisclaimer();
+        replaceBuildSha();
     }, 500);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
-    hideDisclaimer();
+    replaceBuildSha();
 })();

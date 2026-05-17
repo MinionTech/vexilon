@@ -11,6 +11,7 @@ x-common-env: &common-env
   EMBED_MODEL: /model
   OLLAMA_HOST: ollama:11434
   OLLAMA_MODEL_ID: tinyllama
+  CHAINLIT_FILES_DIR: /tmp/chainlit_files
 
 x-test-env: &test-env
   <<: *common-env
@@ -47,12 +48,12 @@ x-dev-volumes: &dev-volumes
   - ./app/main.py:/app/main.py:ro
   - ./app/indexing.py:/app/indexing.py:ro
   - ./app/.chainlit:/app/.chainlit:ro
+  - ./app/chainlit.md:/app/chainlit.md:ro
   - ./app/public:/app/public:ro,z
   - ./app/prompts:/app/prompts:ro
   - ./PRIVACY.md:/app/public/docs/PRIVACY.md:ro
   - ./app/data/labour_law:/app/public/docs/labour_law:ro
   - ./reports:/app/reports:z
-  - ./.pdf_cache:/app/.pdf_cache:z
   - ./.pytest_cache:/app/.pytest_cache:z
 
 services:
@@ -79,7 +80,7 @@ services:
       - "7860:7860"
     healthcheck: *app-healthcheck
     command: >
-      sh -c "cd /app && CHAINLIT_FILES_DIR=/app/.pdf_cache/.files uv run watchfiles --filter python 'uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless' ."
+      sh -c "cd /app && uv run watchfiles --filter python 'uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless' ."
 
   dev-test:
     <<: *dev-service

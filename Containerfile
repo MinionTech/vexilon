@@ -3,7 +3,8 @@ FROM python:3.14-slim AS base
 
 # Silence Hugging Face nag messages globally
 ENV HF_HOME=/hf_cache \
-    EMBED_MODEL=/model
+    EMBED_MODEL=/model \
+    CHAINLIT_FILES_DIR=/tmp/chainlit_files
 
 # Install common runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -28,9 +29,8 @@ FROM base AS model_fetcher
 COPY app/pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
-RUN uv pip install --system sentence-transformers
+RUN uv pip install --system --extra-index-url https://download.pytorch.org/whl/cpu torch sentence-transformers
 RUN --mount=type=cache,target=/root/.cache/hf_v4 \
-    echo "Cache-buster: 2026-05-08-v5" && \
     python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('BAAI/bge-small-en-v1.5', cache_folder='/root/.cache/hf_v4'); model.save('/model')" && \
     ls -l /model/modules.json
 
@@ -87,39 +87,49 @@ RUN --mount=type=cache,target=/app/.pdf_cache_mount \
 # ─── Stage 2.5: Functional Builder (Dev/Test Source) ──────────────────────────
 FROM indexed_builder AS functional_builder
 
-
 # Layer dev dependencies on top of the production venv (Cached unless uv.lock changes)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
-# Now copy the remaining source code (Fast, frequently changed)
-COPY app/ ./
-COPY app/data/labour_law/ ./public/docs/labour_law/
+# Copy source files in optimal cache order:
+# 1. Static files first (least frequent changes)
+# 2. Config files next
+# 3. Application code last (most frequent changes)
 COPY PRIVACY.md ./public/docs/
+COPY app/.chainlit/ ./.chainlit/
+COPY app/public/ ./public/
+COPY app/chainlit.md ./
+COPY app/data/labour_law/ ./public/docs/labour_law/
 
-# Prepare directories for testing and ensure permissions
-RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache && \
-    chown -R 1000:1000 /app/reports /app/.pytest_cache /hf_cache
+# Then source code (code changes often; trigger only code rebuilds)
+COPY app/main.py ./
+COPY app/indexing.py ./
+COPY app/patches.py ./
+COPY app/prompts/ ./prompts/
+COPY app/tests/ ./tests/
+
+# Prepare directories for testing and Chainlit runtime, ensure permissions.
+# CHAINLIT_FILES_DIR points at /tmp (set in runner stage ENV) so we don't
+# need to create /app/.files here. Keep /app/reports and /app/.pytest_cache
+# writable for tests; /hf_cache for HF model cache.
+RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache /app/.files /app/.pdf_cache && \
+    chown -R 1000:1000 /app/reports /app/.pytest_cache /hf_cache /app/.files /app/.pdf_cache
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
 
 # Use venv path for all subsequent commands
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH" \
+    CHAINLIT_FILES_DIR=/tmp/chainlit_files
 
-# Copy everything from the builder (including the pre-computed index)
-COPY --from=indexed_builder /app /app
+# Copy everything from functional_builder (includes venv, source code, index, config)
+COPY --from=functional_builder /app /app
 COPY --from=model_fetcher /model /model
 
-# Copy the actual application source code
-COPY app/main.py ./
-COPY app/prompts/ ./prompts/
-COPY app/data/labour_law/ ./public/docs/labour_law/
-COPY PRIVACY.md ./public/docs/
-
-# Only create and chown (by UID) the specific directories that MUST be writable
-RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache /app/.files && \
-    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache /app/.files
+# Writable dirs: /tmp is world-writable already (sticky bit), Chainlit will
+# create /tmp/chainlit_files at startup. Only chown what HF Spaces requires.
+RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache && \
+    chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache
 
 USER 1000
 

@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
 CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
-os.environ["CHAINLIT_FILES_DIR"] = "/tmp/chainlit_files"
-Path("/tmp/chainlit_files").mkdir(parents=True, exist_ok=True)
+# CHAINLIT_FILES_DIR is set in Containerfile ENV (must be set before
+# chainlit imports). Defensive fallback for non-container dev:
+os.environ.setdefault("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")
+Path(os.environ["CHAINLIT_FILES_DIR"]).mkdir(parents=True, exist_ok=True)
 
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
@@ -11,10 +13,12 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 import sys
 import re
 import time
+import json
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
 import asyncio
 import datetime
+import tempfile
 from collections.abc import AsyncIterator
 from pathlib import Path
 from threading import Lock
@@ -225,6 +229,102 @@ class RateLimiter:
             return True, ""
 
 _rate_limiter = RateLimiter(RATE_LIMIT_PER_MINUTE, RATE_LIMIT_PER_HOUR)
+
+# ─── Save/Load Conversation ─────────────────────────────────────────────────
+def serialize_conversation(history: list[dict], persona: str) -> str:
+    """Serialize conversation history to markdown with JSON metadata.
+    
+    PIPA Compliance: Metadata and conversation are end-user readable markdown
+    (not encrypted, but client-side only). No PII logged on server.
+    
+    Args:
+        history: List of message dicts with 'role' and 'content' keys
+        persona: Current persona (Lookup/Grieve/Audit/Manage)
+    
+    Returns:
+        Markdown string with YAML front matter and conversation turns
+    """
+    saved_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    
+    # YAML front matter (end-user readable metadata)
+    md = f"""---
+saved_at: {saved_at}
+persona: {persona}
+message_count: {len(history)}
+---
+
+# Conversation Export
+
+**Persona:** {persona}  
+**Saved:** {saved_at}  
+**Messages:** {len(history)}
+
+---
+
+"""
+    
+    # Convert each turn to readable markdown
+    for i, msg in enumerate(history, 1):
+        role_label = "👤 You" if msg["role"] == "user" else "🤖 Assistant"
+        md += f"## Turn {i}: {role_label}\n\n{msg['content']}\n\n"
+    
+    # Append JSON payload at end in code block for re-import
+    payload = {
+        "saved_at": saved_at,
+        "persona": persona,
+        "messages": history,
+    }
+    md += "---\n\n<details><summary>Technical Metadata (JSON)</summary>\n\n```json\n"
+    md += json.dumps(payload, indent=2)
+    md += "\n```\n\n</details>"
+    
+    return md
+
+
+def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
+    """Deserialize conversation from markdown file (JSON fallback for compatibility).
+    
+    Extracts JSON metadata from either:
+    1. The technical JSON section in markdown export
+    2. Raw JSON (for backward compat)
+    
+    Args:
+        content: Markdown file contents or raw JSON string
+    
+    Returns:
+        Tuple of (messages, persona, saved_at timestamp)
+    
+    Raises:
+        ValueError: If format is invalid or missing required fields
+    """
+    # Try to extract JSON from markdown <details> section
+    json_matches = re.findall(r'```json\s*\n(.*?)\n\s*```', content, re.DOTALL)
+    if json_matches:
+        json_str = json_matches[-1]
+    else:
+        # Fallback: assume raw JSON (for old exports or direct JSON files)
+        json_str = content
+    
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Could not parse conversation data: {e}")
+    
+    if not isinstance(data, dict):
+        raise ValueError("Invalid conversation file format: root must be an object")
+    
+    messages = data.get("messages", [])
+    persona = data.get("persona", "Lookup")
+    saved_at = data.get("saved_at", "Unknown")
+    
+    if not isinstance(messages, list):
+        raise ValueError("Messages must be a list")
+    
+    for msg in messages:
+        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
+            raise ValueError("Each message must be a dictionary with 'role' and 'content' keys")
+    
+    return messages, persona, saved_at
 
 # ─── RAG Pipeline Constants ─────────────────────────────────────────────────
 _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
@@ -489,11 +589,40 @@ async def generate_perspective_queries(message: str, history: list[dict]) -> lis
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
-        # More robust extraction using regex to find the JSON block
-        match = re.search(r"\[.*\]", text, re.DOTALL)
+        # More robust extraction using regex to find the JSON block (list or object)
+        match = re.search(r"(\[.*\]|\{.*\})", text, re.DOTALL)
         if match:
             import json
-            return json.loads(match.group(0))
+            parsed = json.loads(match.group(0))
+            
+            # Handle if the LLM returned a dict with a list inside
+            if isinstance(parsed, dict):
+                for val in parsed.values():
+                    if isinstance(val, list):
+                        parsed = val
+                        break
+            
+            if isinstance(parsed, list):
+                sanitized_queries = []
+                for item in parsed:
+                    if isinstance(item, str):
+                        sanitized_queries.append(item)
+                    elif isinstance(item, dict):
+                        # Extract the query string from common keys, or fallback to the first string value
+                        q_val = item.get("q") or item.get("query") or item.get("text")
+                        if not q_val:
+                            for val in item.values():
+                                if isinstance(val, str):
+                                    q_val = val
+                                    break
+                        if q_val:
+                            sanitized_queries.append(str(q_val))
+                    else:
+                        sanitized_queries.append(str(item))
+                
+                final_queries = [q.strip() for q in sanitized_queries if q and isinstance(q, str)]
+                if final_queries:
+                    return final_queries
         return [message]
     except Exception:
         return [message]
@@ -594,6 +723,10 @@ def startup(force_rebuild: bool = False):
     if get_llm_provider() == "huggingface":
         logger.info(f"[startup] HF Routing: {HF_PROVIDER}")
 
+    # Resolve dynamic build SHA (CI environment or local 'dev mode' default)
+    build_sha = os.getenv("BUILD_SHA", "dev mode")
+    logger.info(f"[startup] Build Integrity: {build_sha}")
+
     _test_registry.load(TESTS_DIR)
     # Ensure cache directory is writable
     import indexing
@@ -618,26 +751,7 @@ def startup(force_rebuild: bool = False):
     logger.info(f"[startup] {len(doc_list)} reference documents found.")
 
 # ─── Chainlit UI ────────────────────────────────────────────────────────────
-@cl.set_starters
-async def set_starters():
-    return [
-        cl.Starter(
-            label="Discipline Analysis",
-            message="What are the Article 14 (Discipline) requirements for just cause?",
-        ),
-        cl.Starter(
-            label="Grievance Builder",
-            message="I need to file a grievance for a member. What steps should I take?",
-        ),
-        cl.Starter(
-            label="Steward Rights",
-            message="What are my rights as a steward during an investigation meeting?",
-        ),
-        cl.Starter(
-            label="Nexus Analysis",
-            message="How does the nexus test apply to off-duty conduct discipline?",
-        ),
-    ]
+# Starters are handled by ChatProfiles now.
 
 # Module-level startup gate. startup() is sync (it does blocking I/O: PDF
 # fetch, FAISS index build/load, registry load). We run it exactly once,
@@ -719,22 +833,26 @@ async def chat_profiles(user: cl.User):
     return [
         cl.ChatProfile(
             name="Lookup",
+            icon="",
             default=True,
             markdown_description="Forensic lookup of labor law excerpts.",
             starters=[cl.Starter(label="Discipline Analysis", message=EXAMPLES[0])],
         ),
         cl.ChatProfile(
             name="Grieve",
+            icon="",
             markdown_description="Strategic guidance for grievance filing.",
             starters=[cl.Starter(label="Grievance Builder", message=EXAMPLES[1])],
         ),
         cl.ChatProfile(
             name="Audit",
+            icon="",
             markdown_description="Forensic auditing of compliance risks.",
             starters=[cl.Starter(label="Audit Analysis", message=EXAMPLES[2])],
         ),
         cl.ChatProfile(
             name="Manage",
+            icon="",
             markdown_description="Strategic management consulting.",
             starters=[cl.Starter(label="Strategy Session", message=EXAMPLES[0])],
         ),
@@ -774,7 +892,7 @@ async def on_chat_start():
 
 
 # ── Message handler ────────────────────────────────────────────────────────
-def _client_id(message: cl.Message) -> str:
+def _client_id() -> str:
     """Best-effort client identifier for rate limiting.
 
     Chainlit doesn't expose request headers on cl.Message directly; fall back
@@ -803,6 +921,117 @@ async def on_action(action: cl.Action):
     # Remove the buttons to keep it clean
     await action.remove()
 
+@cl.action_callback("save_conversation")
+async def on_save_conversation(action: cl.Action):
+    """Save conversation history to downloadable markdown file (PIPA-compliant).
+    
+    File is human-readable markdown with JSON metadata embedded. Saved to
+    ephemeral /tmp and deleted after Chainlit serves the download.
+    """
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
+    if not allowed:
+        await cl.Message(content=rate_msg, author="System").send()
+        return
+
+    history: list[dict] = cl.user_session.get("history") or []
+    persona: str = cl.user_session.get("persona") or "Lookup"
+    
+    if not history:
+        await cl.Message(content="No conversation to save yet.", author="System").send()
+        return
+    
+    file_path = None
+    try:
+        markdown_content = serialize_conversation(history, persona)
+        
+        # Generate timestamped filename (client-side, user controls final location)
+        timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
+        filename = f"conversation_{timestamp}.md"
+        
+        # PIPA: write to ephemeral CHAINLIT_FILES_DIR (/tmp), delete after download
+        chainlit_files_dir = Path(os.environ.get("CHAINLIT_FILES_DIR", "/tmp/chainlit_files"))
+        chainlit_files_dir.mkdir(parents=True, exist_ok=True)
+        
+        with tempfile.NamedTemporaryFile(
+            mode='w', suffix='.md', prefix='conversation_',
+            dir=str(chainlit_files_dir), delete=False, encoding='utf-8'
+        ) as tmp_file:
+            tmp_file.write(markdown_content)
+            file_path = tmp_file.name
+        
+        msg = cl.Message(
+            content=f"Conversation saved as markdown. Click below to download.",
+            author="System",
+            elements=[cl.File(name=filename, path=str(file_path), display="inline")]
+        )
+        await msg.send()
+        
+        logger.info(f"[save] Conversation saved by {_client_id()} ({len(history)} messages)")
+    except Exception as e:
+        logger.error(f"[save] Failed to save conversation: {e}")
+        await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
+    finally:
+        if file_path:
+            try:
+                Path(file_path).unlink(missing_ok=True)
+            except OSError as cleanup_err:
+                logger.warning(f"[save] Failed to clean up tempfile: {cleanup_err}")
+
+
+@cl.action_callback("load_conversation")
+async def on_load_conversation(action: cl.Action):
+    """Load conversation from uploaded markdown or JSON file.
+    
+    NOTE: payload.files[0] is the file content string (read by FileReader in browser),
+    not a server-side path. Browser handles the upload stream; no server tempfile.
+    """
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
+    if not allowed:
+        await cl.Message(content=rate_msg, author="System").send()
+        return
+
+    files = action.payload.get("files", [])
+    if not files:
+        await cl.Message(content="No file selected.", author="System").send()
+        return
+    
+    # Content was read by FileReader in browser as text
+    file_content = files[0]
+    try:
+        messages, saved_persona, saved_at = deserialize_conversation(file_content)
+        
+        # Append to current history
+        current_history: list[dict] = cl.user_session.get("history") or []
+        current_history.extend(messages)
+        cl.user_session.set("history", current_history)
+        
+        # Display notification with restore marker
+        msg = cl.Message(
+            content=f"**Restored Conversation** (Persona: {saved_persona}, Saved: {saved_at})\n\nLoaded {len(messages)} messages. These are read-only.",
+            author="System",
+        )
+        msg.metadata = {"restored": True}
+        await msg.send()
+        
+        # Re-render loaded messages as read-only in UI
+        for i, loaded_msg in enumerate(messages):
+            display_role = "👤 You" if loaded_msg["role"] == "user" else "🤖 Assistant"
+            msg_content = loaded_msg["content"]
+            msg_obj = cl.Message(content=msg_content, author=display_role)
+            msg_obj.metadata = {"restored": True, "readonly": True}
+            await msg_obj.send()
+        
+        logger.info(f"[load] Conversation loaded by {_client_id()} ({len(messages)} messages)")
+    except json.JSONDecodeError as e:
+        logger.error(f"[load] Invalid JSON in file: {e}")
+        await cl.Message(content="Invalid conversation file format. Expected JSON.", author="System").send()
+    except ValueError as e:
+        logger.error(f"[load] Conversation validation error: {e}")
+        await cl.Message(content=f"Conversation file is invalid: {e}", author="System").send()
+    except Exception as e:
+        logger.error(f"[load] Failed to load conversation: {e}")
+        await cl.Message(content=f"Error loading conversation: {e}", author="System").send()
+
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
     await _ensure_startup()
@@ -812,7 +1041,7 @@ async def on_message(message: cl.Message) -> None:
         return
 
     # Rate limit (per session)
-    allowed, rate_msg = _rate_limiter.is_allowed(_client_id(message))
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         return
 
@@ -849,6 +1078,7 @@ async def on_message(message: cl.Message) -> None:
                     elements.append(cl.File(
                         name=f"{source_name} ({download_path.suffix.lstrip('.').upper()})",
                         path=str(download_path),
+                        mime="application/pdf" if download_path.suffix.lower() == ".pdf" else "text/markdown",
                         display="inline",
                     ))
                 seen_sources.add(source_name)
@@ -880,3 +1110,23 @@ async def on_message(message: cl.Message) -> None:
     history.append({"role": "assistant", "content": accumulated})
     cl.user_session.set("history", history)
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
+
+
+# ─── Custom FastAPI Routes ───────────────────────────────────────────────────
+from chainlit.server import app as cl_app
+from fastapi.routing import APIRoute
+
+def get_version():
+    return {
+        "version": AGNAV_VERSION,
+        "sha": os.getenv("BUILD_SHA", "dev mode")
+    }
+
+# Prepend the API route to bypass Chainlit's catch-all wildcard router
+version_route = APIRoute(
+    "/api/version",
+    endpoint=get_version,
+    methods=["GET"],
+    include_in_schema=False
+)
+cl_app.router.routes.insert(0, version_route)

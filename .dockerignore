@@ -1,0 +1,47 @@
+# Git metadata
+.git
+.gitignore
+.gitattributes
+
+# Development artifacts
+.pytest_cache
+.pdf_cache
+reports
+.tmp
+.files
+*.log
+
+# IDE and local files
+.cursor*
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.env.local
+
+# Python artifacts
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.coverage
+
+# CI/CD
+.github
+.agent
+.agents
+.worktree
+.worktrees
+.openspec.yaml
+openspec/
+
+# Documentation
+README.md
+LICENSE
+old-run.log
+25616569181-prepare.log
+
+# Config (not needed in image)
+compose.yml
+.dockerignore

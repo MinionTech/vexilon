@@ -11,6 +11,11 @@ from pathlib import Path
 
 @pytest.mark.asyncio
 async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path):
+    app_root = Path(__file__).parent.parent.parent
+    source_md = app_root / "data/labour_law/04_jurisprudence/Nexus Test and Off-Duty Conduct.md"
+    if not source_md.exists():
+        pytest.skip(f"Agreement Markdown missing at {source_md}; cannot run full integration test.")
+
     # Set environment variables BEFORE importing app or indexing
     test_data_dir = tmp_path / "data/labour_law"
     cache_dir = tmp_path / "pdf_cache"
@@ -30,10 +35,6 @@ async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path)
     Uses the real MD agreement and real embedding model.
     """
     # 1. Setup: Use a smaller document for isolation to save memory/time in CI
-    app_root = Path(__file__).parent.parent.parent
-    source_md = app_root / "data/labour_law/04_jurisprudence/Nexus Test and Off-Duty Conduct.md"
-    if not source_md.exists():
-        pytest.skip(f"Agreement Markdown missing at {source_md}; cannot run full integration test.")
 
     # Redirect app paths to the temp dir
     test_data_dir.mkdir(parents=True, exist_ok=True)
@@ -41,6 +42,7 @@ async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path)
     
     import shutil
     shutil.copy(source_md, test_data_dir / source_md.name)
+    shutil.copytree(app_root / "data/labour_law/tests", test_data_dir / "tests", dirs_exist_ok=True)
 
     # Mock the LLM client globally for the app
     monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)

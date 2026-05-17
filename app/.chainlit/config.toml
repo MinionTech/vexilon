@@ -103,7 +103,7 @@ name = "BCGEU Navigator"
 # If not set, the browser's language will be used
 # language = "en-US"
 
-# layout = "wide"
+layout = "wide"
 
 # default_sidebar_state = "open"  # Options: "open", "closed", "hidden"
 
@@ -117,7 +117,7 @@ name = "BCGEU Navigator"
 confirm_new_chat = true
 
 # Description of the assistant. This is used for HTML tags.
-# description = ""
+description = "BCGEU Agreement Navigator"
 
 # Chain of Thought (CoT) display mode. Can be "hidden", "tool_call" or "full".
 cot = "full"
@@ -147,10 +147,10 @@ alert_style = "modern"
 # custom_meta_image_url = "https://chainlit-cloud.s3.eu-west-3.amazonaws.com/logo/chainlit_banner.png"
 
 # Load assistant logo directly from URL.
-logo_file_url = ""
+logo_file_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 
 # Load assistant avatar image directly from URL.
-default_avatar_file_url = ""
+default_avatar_file_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 
 # Avatar size in pixels (default: 20).
 # avatar_size = 20
@@ -159,7 +159,6 @@ default_avatar_file_url = ""
 # This can be used to customize the frontend code.
 # Be careful: If this is a relative path, it should not start with a slash.
 # custom_build = "./public/build"
-
 
 [meta]
 generated_by = "2.11.1"

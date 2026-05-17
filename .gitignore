@@ -5,7 +5,11 @@ __pycache__/
 *.so
 .Python
 .venv/
+**/.venv
+**/.venv/
 venv/
+**/venv
+**/venv/
 env/
 ENV/
 *.egg-info/
@@ -182,3 +186,6 @@ test_output*.txt
 .worktrees
 reports/
 .worktree/
+
+# Dynamic build metadata
+app/public/build_metadata.json
