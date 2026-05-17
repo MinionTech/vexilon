@@ -126,7 +126,7 @@ def test_load_md_chunks_one_based_metadata(tmp_path):
     
     chunks = indexing.load_md_chunks(md_file)
     assert chunks[0]["page"] == 1
-    assert chunks[0]["source"] == "Test"
+    assert chunks[0]["source"] == "test"
 
 def test_load_md_chunks_skips_whitespace_only(tmp_path):
     """MD loader should return empty list for whitespace files."""

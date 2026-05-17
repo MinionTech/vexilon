@@ -298,9 +298,9 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
         ValueError: If format is invalid or missing required fields
     """
     # Try to extract JSON from markdown <details> section
-    json_match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
-    if json_match:
-        json_str = json_match.group(1)
+    json_matches = re.findall(r'```json\s*\n(.*?)\n\s*```', content, re.DOTALL)
+    if json_matches:
+        json_str = json_matches[-1]
     else:
         # Fallback: assume raw JSON (for old exports or direct JSON files)
         json_str = content
@@ -891,6 +891,11 @@ async def on_save_conversation(action: cl.Action):
     File is human-readable markdown with JSON metadata embedded. Saved to
     ephemeral /tmp and deleted after Chainlit serves the download.
     """
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
+    if not allowed:
+        await cl.Message(content=rate_msg, author="System").send()
+        return
+
     history: list[dict] = cl.user_session.get("history") or []
     persona: str = cl.user_session.get("persona") or "Lookup"
     
@@ -903,7 +908,7 @@ async def on_save_conversation(action: cl.Action):
         markdown_content = serialize_conversation(history, persona)
         
         # Generate timestamped filename (client-side, user controls final location)
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"conversation_{timestamp}.md"
         
         # PIPA: write to ephemeral CHAINLIT_FILES_DIR (/tmp), delete after download
@@ -924,17 +929,16 @@ async def on_save_conversation(action: cl.Action):
         )
         await msg.send()
         
-        # PIPA: best-effort cleanup. Chainlit streams the file into its element
-        # registry during send(), so it's safe to delete immediately after.
-        try:
-            Path(file_path).unlink(missing_ok=True)
-        except OSError as cleanup_err:
-            logger.warning(f"[save] Failed to clean up tempfile: {cleanup_err}")
-        
         logger.info(f"[save] Conversation saved by {_client_id()} ({len(history)} messages)")
     except Exception as e:
         logger.error(f"[save] Failed to save conversation: {e}")
         await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
+    finally:
+        if file_path:
+            try:
+                Path(file_path).unlink(missing_ok=True)
+            except OSError as cleanup_err:
+                logger.warning(f"[save] Failed to clean up tempfile: {cleanup_err}")
 
 
 @cl.action_callback("load_conversation")
@@ -944,6 +948,11 @@ async def on_load_conversation(action: cl.Action):
     NOTE: payload.files[0] is the file content string (read by FileReader in browser),
     not a server-side path. Browser handles the upload stream; no server tempfile.
     """
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
+    if not allowed:
+        await cl.Message(content=rate_msg, author="System").send()
+        return
+
     files = action.payload.get("files", [])
     if not files:
         await cl.Message(content="No file selected.", author="System").send()

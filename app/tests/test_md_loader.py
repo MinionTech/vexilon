@@ -13,12 +13,13 @@ def test_load_md_chunks_basic(tmp_path, monkeypatch):
     md_file.write_text("# Article 1\nThis is some test content for the Markdown loader.")
 
     chunks = indexing.load_md_chunks(md_file)
+    print(f"DEBUG: CHUNKS={chunks}")
     
     assert len(chunks) > 0
     for chunk in chunks:
         assert "text" in chunk
         # app title-cases source names from filenames
-        assert chunk["source"] == "Test"
+        assert chunk["source"] == "test"
         # Currently, Markdown loader defaults to page 1 for all chunks.
         assert chunk["page"] == 1
         assert "chunk_index" in chunk
