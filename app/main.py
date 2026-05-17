@@ -804,22 +804,26 @@ async def chat_profiles(user: cl.User):
     return [
         cl.ChatProfile(
             name="Lookup",
+            icon="",
             default=True,
             markdown_description="Forensic lookup of labor law excerpts.",
             starters=[cl.Starter(label="Discipline Analysis", message=EXAMPLES[0])],
         ),
         cl.ChatProfile(
             name="Grieve",
+            icon="",
             markdown_description="Strategic guidance for grievance filing.",
             starters=[cl.Starter(label="Grievance Builder", message=EXAMPLES[1])],
         ),
         cl.ChatProfile(
             name="Audit",
+            icon="",
             markdown_description="Forensic auditing of compliance risks.",
             starters=[cl.Starter(label="Audit Analysis", message=EXAMPLES[2])],
         ),
         cl.ChatProfile(
             name="Manage",
+            icon="",
             markdown_description="Strategic management consulting.",
             starters=[cl.Starter(label="Strategy Session", message=EXAMPLES[0])],
         ),
@@ -1042,11 +1046,19 @@ async def on_message(message: cl.Message) -> None:
                 if md_path:
                     pdf_path = md_path.with_suffix(".pdf")
                     download_path = pdf_path if pdf_path.exists() else md_path
-                    elements.append(cl.File(
-                        name=f"{source_name} ({download_path.suffix.lstrip('.').upper()})",
-                        path=str(download_path),
-                        display="inline",
-                    ))
+                    if download_path.suffix.lower() == ".pdf":
+                        elements.append(cl.Pdf(
+                            name=f"{source_name} (PDF)",
+                            path=str(download_path),
+                            display="inline",
+                        ))
+                    else:
+                        elements.append(cl.File(
+                            name=f"{source_name} (MD)",
+                            path=str(download_path),
+                            mime="text/markdown",
+                            display="side",
+                        ))
                 seen_sources.add(source_name)
         out.elements = elements
 
