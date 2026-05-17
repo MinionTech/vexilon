@@ -694,6 +694,16 @@ def startup(force_rebuild: bool = False):
     if get_llm_provider() == "huggingface":
         logger.info(f"[startup] HF Routing: {HF_PROVIDER}")
 
+    # Resolve dynamic build SHA (CI environment or local 'dev mode' default)
+    build_sha = os.getenv("BUILD_SHA", "dev mode")
+            
+    try:
+        meta_path = Path(__file__).parent / "public" / "build_metadata.json"
+        meta_path.write_text(json.dumps({"sha": build_sha}), encoding="utf-8")
+        logger.info(f"[startup] Build Integrity: {build_sha}")
+    except Exception as e:
+        logger.warning(f"[startup] Failed to write build_metadata.json: {e}")
+
     _test_registry.load(TESTS_DIR)
     # Ensure cache directory is writable
     import indexing

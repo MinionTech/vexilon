@@ -1,5 +1,11 @@
 ---
 
+**Privacy Policy**: [View Policy](/public/docs/PRIVACY.md)
+**Source Code**: [GitHub Repository](https://github.com/MinionTech/vexilon)
+**Build Integrity**: `{{BUILD_SHA}}`
+
+---
+
 The following reference documents form the primary authority for my analytical responses. PDFs are provided for human review where available; Markdown versions are used as a fallback.
 
 | Document Name | Format | Access |
@@ -62,7 +68,6 @@ The following reference documents form the primary authority for my analytical r
 | Grievance - C - Steward Case | PDF | [Download](/public/docs/labour_law/forms/Grievance_-_C_-_Steward_Case.pdf) |
 | Nexus Test and Off-Duty Conduct | PDF | [Download](/public/docs/labour_law/04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.pdf) |
 | Policy Grievance Form Guide | MD | [Download](/public/docs/labour_law/forms/Policy_Grievance_Form_Guide.md) |
-| Privacy Policy | MD | [View Root Policy](/public/docs/PRIVACY.md) |
 
 ---
 

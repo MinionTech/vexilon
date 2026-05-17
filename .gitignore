@@ -186,3 +186,6 @@ test_output*.txt
 .worktrees
 reports/
 .worktree/
+
+# Dynamic build metadata
+app/public/build_metadata.json

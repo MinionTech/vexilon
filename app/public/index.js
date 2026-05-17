@@ -25,6 +25,14 @@
         chatInput.dataset.listenerAttached = "true";
     }
 
+    let buildSha = "unknown";
+    fetch('/public/build_metadata.json')
+        .then(res => res.json())
+        .then(data => {
+            buildSha = data.sha || "unknown";
+        })
+        .catch(() => {});
+
     /**
      * Rebranding: Hide standard Chainlit artifacts and UI fluff.
      */
@@ -40,6 +48,13 @@
         document.querySelectorAll('h2').forEach(el => {
             if (el.textContent.trim() === 'Readme') {
                 el.textContent = 'Knowledge Base';
+            }
+        });
+
+        // 3. Inject Build SHA dynamically into elements with the placeholder
+        document.querySelectorAll('code, span, p, li').forEach(el => {
+            if (el.textContent.includes('{{BUILD_SHA}}')) {
+                el.innerHTML = el.innerHTML.replace('{{BUILD_SHA}}', buildSha);
             }
         });
     }
