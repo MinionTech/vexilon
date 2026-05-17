@@ -1,28 +1,7 @@
-/* app/public/index_v3.js */
+/* app/public/index_v4.js */
 
 (function() {
-    console.log("Vexilon Forensic UI Initialized (v3)");
-
-    /**
-     * Interaction Logic: Enter-to-Submit
-     * (Mandated by UI Standards Section 2.3)
-     */
-    function setupEnterToSubmit() {
-        const chatInput = document.getElementById('chat-input') || document.querySelector('textarea');
-        if (!chatInput || chatInput.dataset.listenerAttached) return;
-
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const form = chatInput.closest('form');
-                if (form) {
-                    form.requestSubmit();
-                }
-            }
-        });
-        
-        chatInput.dataset.listenerAttached = "true";
-    }
+    console.log("Vexilon Forensic UI Initialized (v4)");
 
     /**
      * Rebranding: Hide standard Chainlit artifacts and UI fluff.
@@ -131,7 +110,6 @@
 
     // Initialize MutationObserver for reactive UI elements
     const observer = new MutationObserver(() => {
-        setupEnterToSubmit();
         sanitizeUI();
         setupSaveLoadButtons();
         setupFooter();
@@ -140,7 +118,6 @@
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Initial run
-    setupEnterToSubmit();
     sanitizeUI();
     setupSaveLoadButtons();
     setupFooter();
