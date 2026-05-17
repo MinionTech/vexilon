@@ -6,50 +6,13 @@
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     function triggerSave() {
-        const textarea = document.querySelector("textarea");
-        const sendBtn =
-            document.querySelector('button[aria-label="Send message"]') ||
-            document.querySelector("button.send-button");
-        if (!textarea || !sendBtn) {
-            console.warn("[vexilon] triggerSave: textarea or sendBtn not found");
-            return;
+        // Use Chainlit's native websocket API — no DOM hacks required.
+        if (typeof window.sendUserMessage === "function") {
+            window.sendUserMessage("__VEXILON_SAVE__");
+            console.log("[vexilon] triggerSave: sent via window.sendUserMessage");
+        } else {
+            console.warn("[vexilon] triggerSave: window.sendUserMessage not available yet");
         }
-
-        // Set value via React-compatible native setter
-        const nativeSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLTextAreaElement.prototype,
-            "value"
-        ).set;
-        nativeSetter.call(textarea, "__VEXILON_SAVE__");
-        // Fire both input and change so React's synthetic event system picks it up
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        textarea.dispatchEvent(new Event("change", { bubbles: true }));
-        textarea.focus();
-        console.log("[vexilon] triggerSave: sentinel set, waiting for send button...");
-
-        // Retry up to 10 times (500 ms total) waiting for React to enable the send button
-        let attempts = 0;
-        const tryClick = () => {
-            attempts++;
-            const btn =
-                document.querySelector('button[aria-label="Send message"]') ||
-                document.querySelector("button.send-button");
-            if (btn && !btn.disabled) {
-                btn.click();
-                console.log("[vexilon] triggerSave: send clicked on attempt", attempts);
-                return;
-            }
-            // Fallback: simulate Enter keypress on the textarea (Chainlit's own submit handler)
-            if (attempts >= 8) {
-                textarea.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true })
-                );
-                console.log("[vexilon] triggerSave: Enter keydown dispatched as fallback");
-                return;
-            }
-            if (attempts < 10) setTimeout(tryClick, 50);
-        };
-        setTimeout(tryClick, 50);
     }
 
     // ── Enter-to-Submit ───────────────────────────────────────────────────────
