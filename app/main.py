@@ -1096,10 +1096,12 @@ async def on_message(message: cl.Message) -> None:
 
     # Clinical session commands interceptor
     if msg_str == "/persist save":
+        await message.remove()
         await trigger_session_save()
         return
         
     if msg_str.startswith("/persist load "):
+        await message.remove()
         file_content = msg_str[len("/persist load "):]
         await trigger_session_load(file_content)
         return
