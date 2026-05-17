@@ -65,8 +65,11 @@
         .catch(err => console.error("Error fetching version:", err));
 
     function setupInputFooter() {
-        const form = document.querySelector('form');
-        if (!form || document.getElementById('vexilon-input-footer')) return;
+        const disclaimer = document.querySelector('div[role="article"]');
+        if (!disclaimer) return;
+
+        const parent = disclaimer.parentNode;
+        if (!parent || document.getElementById('vexilon-input-footer')) return;
 
         const footer = document.createElement('div');
         footer.id = 'vexilon-input-footer';
@@ -82,7 +85,7 @@
             ${versionSegment}
         `;
         
-        form.parentNode.insertBefore(footer, form.nextSibling);
+        parent.insertBefore(footer, disclaimer.nextSibling);
     }
 
     // Run periodically to catch re-renders
