@@ -25,14 +25,6 @@
         chatInput.dataset.listenerAttached = "true";
     }
 
-    let buildSha = "unknown";
-    fetch('/public/build_metadata.json')
-        .then(res => res.json())
-        .then(data => {
-            buildSha = data.sha || "unknown";
-        })
-        .catch(() => {});
-
     /**
      * Rebranding: Hide standard Chainlit artifacts and UI fluff.
      */
@@ -48,13 +40,6 @@
         document.querySelectorAll('h2').forEach(el => {
             if (el.textContent.trim() === 'Readme') {
                 el.textContent = 'Knowledge Base';
-            }
-        });
-
-        // 3. Inject Build SHA dynamically into elements with the placeholder
-        document.querySelectorAll('code, span, p, li').forEach(el => {
-            if (el.textContent.includes('{{BUILD_SHA}}')) {
-                el.innerHTML = el.innerHTML.replace('{{BUILD_SHA}}', buildSha);
             }
         });
     }
@@ -132,18 +117,14 @@
      * Injects a clean, centered footer below the chat input box.
      */
     function setupFooter() {
-        if (document.getElementById('forensic-footer')) {
-            const shaSpan = document.getElementById('forensic-footer-sha');
-            if (shaSpan && shaSpan.textContent !== buildSha) {
-                shaSpan.textContent = buildSha;
-            }
-            return;
-        }
+        if (document.getElementById('forensic-footer')) return;
 
-        // Find the input container. Chainlit has a footer element wrapping the input area.
-        const parentFooter = document.querySelector('div[role="presentation"] footer') || 
-                             document.querySelector('footer');
-        if (!parentFooter) return;
+        // Find the input container by locating the composer textarea.
+        const textarea = document.querySelector('textarea');
+        if (!textarea) return;
+
+        const composer = textarea.closest('form') || textarea.parentElement;
+        if (!composer) return;
 
         const footer = document.createElement('div');
         footer.id = 'forensic-footer';
@@ -151,11 +132,9 @@
             <a href="https://github.com/MinionTech/vexilon" target="_blank">Source Code</a>
             <span class="footer-separator">•</span>
             <a href="/public/docs/PRIVACY.md" target="_blank">Privacy Policy</a>
-            <span class="footer-separator">•</span>
-            <span class="footer-sha">Build Integrity: <span id="forensic-footer-sha">${buildSha}</span></span>
         `;
         
-        parentFooter.appendChild(footer);
+        composer.after(footer);
     }
 
     // Initialize MutationObserver for reactive UI elements
