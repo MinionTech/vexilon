@@ -29,7 +29,7 @@ FROM base AS model_fetcher
 COPY app/pyproject.toml .
 RUN pip install --no-cache-dir uv==$(grep -oP 'uv==\K[\d.]+' pyproject.toml)
 
-RUN uv pip install --system sentence-transformers
+RUN uv pip install --system --extra-index-url https://download.pytorch.org/whl/cpu torch sentence-transformers
 RUN --mount=type=cache,target=/root/.cache/hf_v4 \
     python -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('BAAI/bge-small-en-v1.5', cache_folder='/root/.cache/hf_v4'); model.save('/model')" && \
     ls -l /model/modules.json
