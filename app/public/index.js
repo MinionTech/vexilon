@@ -36,9 +36,11 @@
         document.querySelectorAll('div[role="article"]').forEach(el => {
             if (el.textContent.trim().includes('LLMs can make mistakes') && !el.dataset.footerInjected) {
                 el.innerHTML = `
-                    <a href="https://github.com/MinionTech/vexilon" class="input-footer-link" target="_blank">Source Code</a>
-                    <span class="input-footer-separator">•</span>
-                    <a href="/public/docs/PRIVACY.md" class="input-footer-link" target="_blank">Privacy Policy</a>
+                    <div class="input-footer-container">
+                        <a href="https://github.com/MinionTech/vexilon" class="input-footer-link" target="_blank">Source Code</a>
+                        <span class="input-footer-separator">•</span>
+                        <a href="/public/docs/PRIVACY.md" class="input-footer-link" target="_blank">Privacy Policy</a>
+                    </div>
                 `;
                 el.dataset.footerInjected = "true";
             }

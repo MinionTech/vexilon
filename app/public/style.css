@@ -122,6 +122,15 @@ body {
 }
 
 /* 5. Custom Input-Anchored Footer Links */
+.input-footer-container {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 0 !important;
+}
+
 .input-footer-link {
     color: #6b7280 !important; /* Elegant muted grey */
     text-decoration: none !important;
