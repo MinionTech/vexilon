@@ -873,8 +873,6 @@ def get_welcome_actions():
         cl.Action(name="starter_query", value="query1", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
         cl.Action(name="starter_query", value="query2", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
         cl.Action(name="starter_query", value="query3", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
-        cl.Action(name="save_conversation", value="save", payload={}, label="[ Save Session ]"),
-        cl.Action(name="load_conversation", value="load", payload={}, label="[ Load Session ]"),
     ]
 
 
