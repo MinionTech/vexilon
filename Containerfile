@@ -112,8 +112,8 @@ COPY app/tests/ ./tests/
 # CHAINLIT_FILES_DIR points at /tmp (set in runner stage ENV) so we don't
 # need to create /app/.files here. Keep /app/reports and /app/.pytest_cache
 # writable for tests; /hf_cache for HF model cache.
-RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache && \
-    chown -R 1000:1000 /app/reports /app/.pytest_cache /hf_cache
+RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache /app/.files && \
+    chown -R 1000:1000 /app/reports /app/.pytest_cache /hf_cache /app/.files
 
 # ─── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM base AS runner
