@@ -55,13 +55,12 @@
             }
         });
     }
-
     // Run periodically to catch re-renders
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
         replaceBuildSha();
-    }, 500);
+    }, 100);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();

@@ -281,7 +281,7 @@ message_count: {len(history)}
     return md
 
 
-def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
+def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[str]]:
     """Deserialize conversation from markdown file (JSON fallback for compatibility).
     
     Extracts JSON metadata from either:
@@ -292,11 +292,13 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
         content: Markdown file contents or raw JSON string
     
     Returns:
-        Tuple of (messages, persona, saved_at timestamp)
+        Tuple of (messages, persona, saved_at timestamp, warnings list)
     
     Raises:
         ValueError: If format is invalid or missing required fields
     """
+    warnings = []
+    
     # Try to extract JSON from markdown <details> section
     json_matches = re.findall(r'```json\s*\n(.*?)\n\s*```', content, re.DOTALL)
     if json_matches:
@@ -320,11 +322,57 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
     if not isinstance(messages, list):
         raise ValueError("Messages must be a list")
     
-    for msg in messages:
-        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
-            raise ValueError("Each message must be a dictionary with 'role' and 'content' keys")
+    # Enforce standard safe string types for persona and saved_at
+    persona = str(persona)[:50]
+    saved_at = str(saved_at)[:50]
     
-    return messages, persona, saved_at
+    # Limit number of messages to prevent memory exhaustion DoS
+    if len(messages) > 100:
+        messages = messages[:100]
+        warnings.append("Conversation exceeded the limit of 100 turns. Truncated excess historical messages.")
+    
+    sanitized_messages = []
+    truncated_count = 0
+    script_stripped = False
+    
+    for i, msg in enumerate(messages):
+        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
+            raise ValueError(f"Message turn {i+1} is malformed: must contain 'role' and 'content' keys.")
+        
+        role = str(msg["role"]).strip()
+        if role not in ("user", "assistant"):
+            raise ValueError(f"Message turn {i+1} has invalid role: must be 'user' or 'assistant'.")
+            
+        orig_content = str(msg["content"])
+        
+        # Enforce max length constraint strictly
+        if len(orig_content) > MAX_INPUT_LENGTH:
+            content_str = orig_content[:MAX_INPUT_LENGTH]
+            truncated_count += 1
+        else:
+            content_str = orig_content
+            
+        # Secure HTML/script sanitization pass
+        clean_content = re.sub(r'(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', content_str)
+        clean_content = re.sub(r'(?i)\bon\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)', '', clean_content)
+        clean_content = re.sub(r'(?i)<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>', '', clean_content)
+        clean_content = re.sub(r'(?i)(href|src)\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?', r'\1="#"', clean_content)
+
+        if clean_content != content_str:
+            script_stripped = True
+            
+        sanitized_messages.append({
+            "role": role,
+            "content": clean_content
+        })
+        
+    if truncated_count > 0:
+        warnings.append(f"Safely truncated {truncated_count} messages exceeding the length limit of {MAX_INPUT_LENGTH} characters.")
+        
+    if script_stripped:
+        warnings.append("Security sanitization: Removed potential script injections from conversation history.")
+        
+    return sanitized_messages, persona, saved_at, warnings
 
 # ─── RAG Pipeline Constants ─────────────────────────────────────────────────
 _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
@@ -822,9 +870,11 @@ WELCOME_MSG = """# BCGEU Navigator"""
 
 def get_welcome_actions():
     return [
-        cl.Action(name="starter_query", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
-        cl.Action(name="starter_query", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
-        cl.Action(name="starter_query", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
+        cl.Action(name="starter_query", value="query1", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
+        cl.Action(name="starter_query", value="query2", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
+        cl.Action(name="starter_query", value="query3", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
+        cl.Action(name="save_conversation", value="save", payload={}, label="[ Save Session ]"),
+        cl.Action(name="load_conversation", value="load", payload={}, label="[ Load Session ]"),
     ]
 
 
@@ -921,13 +971,8 @@ async def on_action(action: cl.Action):
     # Remove the buttons to keep it clean
     await action.remove()
 
-@cl.action_callback("save_conversation")
-async def on_save_conversation(action: cl.Action):
-    """Save conversation history to downloadable markdown file (PIPA-compliant).
-    
-    File is human-readable markdown with JSON metadata embedded. Saved to
-    ephemeral /tmp and deleted after Chainlit serves the download.
-    """
+async def trigger_session_save():
+    """Save conversation history to downloadable markdown file (PIPA-compliant)."""
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         await cl.Message(content=rate_msg, author="System").send()
@@ -962,7 +1007,7 @@ async def on_save_conversation(action: cl.Action):
         msg = cl.Message(
             content=f"Conversation saved as markdown. Click below to download.",
             author="System",
-            elements=[cl.File(name=filename, path=str(file_path), display="inline")]
+            elements=[cl.File(name=filename, path=str(file_path), display="inline", mime="text/markdown")]
         )
         await msg.send()
         
@@ -978,32 +1023,34 @@ async def on_save_conversation(action: cl.Action):
                 logger.warning(f"[save] Failed to clean up tempfile: {cleanup_err}")
 
 
-@cl.action_callback("load_conversation")
-async def on_load_conversation(action: cl.Action):
-    """Load conversation from uploaded markdown or JSON file.
-    
-    NOTE: payload.files[0] is the file content string (read by FileReader in browser),
-    not a server-side path. Browser handles the upload stream; no server tempfile.
-    """
+@cl.action_callback("save_conversation")
+async def on_save_conversation(action: cl.Action):
+    """Callback for native Chainlit Action button."""
+    await trigger_session_save()
+
+
+async def trigger_session_load(file_content: str):
+    """Load conversation from uploaded markdown or JSON file."""
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         await cl.Message(content=rate_msg, author="System").send()
         return
-
-    files = action.payload.get("files", [])
-    if not files:
-        await cl.Message(content="No file selected.", author="System").send()
-        return
-    
-    # Content was read by FileReader in browser as text
-    file_content = files[0]
+        
     try:
-        messages, saved_persona, saved_at = deserialize_conversation(file_content)
+        messages, saved_persona, saved_at, warnings = deserialize_conversation(file_content)
         
         # Append to current history
         current_history: list[dict] = cl.user_session.get("history") or []
         current_history.extend(messages)
         cl.user_session.set("history", current_history)
+        
+        # If there are warnings, display them clearly to the user
+        if warnings:
+            warnings_text = "\n".join(f"- {w}" for w in warnings)
+            await cl.Message(
+                content=f"⚠️ **Upload Notice**\n\n{warnings_text}",
+                author="System",
+            ).send()
         
         # Display notification with restore marker
         msg = cl.Message(
@@ -1032,9 +1079,61 @@ async def on_load_conversation(action: cl.Action):
         logger.error(f"[load] Failed to load conversation: {e}")
         await cl.Message(content=f"Error loading conversation: {e}", author="System").send()
 
+
+async def _ask_for_session_file() -> None:
+    """Background coroutine: prompts for a session file using AskFileMessage.
+
+    Runs detached from the action callback so the UI is never locked.
+    contextvars are copied by asyncio.create_task(), preserving the
+    Chainlit session context for send() calls.
+    """
+    try:
+        res = await cl.AskFileMessage(
+            content="Select your `.md` session backup file to restore this conversation.",
+            accept=["text/markdown", "text/plain"],
+            max_size_mb=2,
+            timeout=120,
+        ).send()
+
+        if res:
+            file = res[0]
+            with open(file.path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+            await trigger_session_load(file_content)
+    except Exception as e:
+        logger.error(f"[load] AskFileMessage background task failed: {e}")
+        await cl.Message(content="Failed to load session file.", author="System").send()
+
+
+@cl.action_callback("load_conversation")
+async def on_load_conversation(action: cl.Action):
+    """Callback for native Chainlit Action button.
+
+    Returns immediately to prevent UI lock; file prompt runs in background.
+    """
+    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
+    if not allowed:
+        await cl.Message(content=rate_msg, author="System").send()
+        return
+
+    asyncio.create_task(_ask_for_session_file())
+
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
     await _ensure_startup()
+
+    # Intercept session file uploads natively
+    if message.elements:
+        for element in message.elements:
+            if element.mime in ["text/markdown", "text/plain", "application/json", "application/octet-stream"] or element.name.lower().endswith((".md", ".json")):
+                try:
+                    with open(element.path, 'r', encoding='utf-8') as f:
+                        file_content = f.read()
+                    await trigger_session_load(file_content)
+                except Exception as e:
+                    logger.error(f"[load] Failed to read uploaded session file: {e}")
+                    await cl.Message(content="Failed to read the uploaded session file.", author="System").send()
+                return
 
     msg_str = (message.content or "").strip()
     if not msg_str:
