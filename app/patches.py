@@ -107,4 +107,7 @@ def apply_patches():
     try:
         chainlit.config.FILES_DIRECTORY.mkdir(exist_ok=True, parents=True)
     except Exception as e:
-        logger.warning(f"Could not create FILES_DIRECTORY at {chainlit.config.FILES_DIRECTORY}: {e}")
+        raise RuntimeError(
+            f"FATAL: Could not create Chainlit FILES_DIRECTORY at "
+            f"{chainlit.config.FILES_DIRECTORY}: {e}. Verification failed."
+        ) from e

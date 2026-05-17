@@ -45,7 +45,7 @@
                 cachedVersionInfo = `${data.version}${shaShort ? ` (${shaShort})` : ""}`;
             }
             // Trigger immediately if container is already in the DOM
-            const container = document.querySelector('.input-footer-container');
+            const container = document.getElementById('vexilon-input-footer');
             if (container && !document.getElementById('input-footer-ver-node')) {
                 const verSpan = document.createElement('span');
                 verSpan.id = 'input-footer-ver-node';
@@ -65,23 +65,24 @@
         .catch(err => console.error("Error fetching version:", err));
 
     function setupInputFooter() {
-        document.querySelectorAll('div[role="article"]').forEach(el => {
-            if (el.textContent.trim().includes('LLMs can make mistakes') && !el.dataset.footerInjected) {
-                const versionSegment = cachedVersionInfo 
-                    ? `<span class="input-footer-separator">•</span><a href="https://github.com/MinionTech/vexilon/pkgs/container/vexilon%2Fagnav" class="input-footer-link input-footer-version" target="_blank">${cachedVersionInfo}</a>` 
-                    : "";
-                
-                el.innerHTML = `
-                    <div class="input-footer-container">
-                        <a href="https://github.com/MinionTech/vexilon" class="input-footer-link" target="_blank">Source Code</a>
-                        <span class="input-footer-separator">•</span>
-                        <a href="/public/docs/PRIVACY.md" class="input-footer-link" target="_blank">Privacy Policy</a>
-                        ${versionSegment}
-                    </div>
-                `;
-                el.dataset.footerInjected = "true";
-            }
-        });
+        const form = document.querySelector('form');
+        if (!form || document.getElementById('vexilon-input-footer')) return;
+
+        const footer = document.createElement('div');
+        footer.id = 'vexilon-input-footer';
+        
+        const versionSegment = cachedVersionInfo 
+            ? `<span class="input-footer-separator">•</span><a href="https://github.com/MinionTech/vexilon/pkgs/container/vexilon%2Fagnav" class="input-footer-link input-footer-version" target="_blank">${cachedVersionInfo}</a>` 
+            : "";
+        
+        footer.innerHTML = `
+            <a href="https://github.com/MinionTech/vexilon" class="input-footer-link" target="_blank">Source Code</a>
+            <span class="input-footer-separator">•</span>
+            <a href="/public/docs/PRIVACY.md" class="input-footer-link" target="_blank">Privacy Policy</a>
+            ${versionSegment}
+        `;
+        
+        form.parentNode.insertBefore(footer, form.nextSibling);
     }
 
     // Run periodically to catch re-renders

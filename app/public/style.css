@@ -121,24 +121,21 @@ body {
     background-color: #f1f3f4 !important;
 }
 
-/* Tighter, compact spacing for the disclaimer wrapper parent */
+/* Hide the native React-managed disclaimer entirely to prevent conflicts & flickering */
 div[role="article"] {
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    min-height: unset !important;
+    display: none !important;
 }
 
 /* 5. Custom Input-Anchored Footer Links */
-.input-footer-container {
+#vexilon-input-footer {
     display: flex !important;
     flex-direction: row !important;
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
     gap: 0 !important;
-    margin: 0 !important;
+    margin-top: 6px !important;
+    margin-bottom: 2px !important;
     padding: 0 !important;
 }
 
