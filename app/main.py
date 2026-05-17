@@ -1212,6 +1212,7 @@ async def on_message(message: cl.Message) -> None:
         cl.Action(
             name="save_conversation",
             value="save",
+            payload={},
             label="💾 Save Session"
         )
     ]
