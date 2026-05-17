@@ -1,4 +1,4 @@
-/* app/public/style.css */
+/* app/public/style_v2.css */
 
 /* ── KB Sidebar ─────────────────────────────────────────────────────────── */
 #kb-sidebar {
@@ -83,8 +83,6 @@ body {
     content: "Knowledge Base";
     font-size: 0.875rem;
 }
-
-
 
 /* 4. Header Standardization */
 .header {

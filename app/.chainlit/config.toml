@@ -124,8 +124,8 @@ cot = "full"
 
 # Specify a CSS file that can be used to customize the user interface.
 # The CSS file can be served from the public directory or via an external link.
-custom_css = "public/style.css"
-custom_js = "public/index.js"
+custom_css = "public/style_v2.css"
+custom_js = "public/index_v2.js"
 
 # The style of alert boxes. Can be "classic" or "modern".
 alert_style = "modern"

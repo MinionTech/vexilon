@@ -1,7 +1,7 @@
-/* app/public/index.js */
+/* app/public/index_v2.js */
 
 (function() {
-    console.log("Vexilon Forensic UI Initialized");
+    console.log("Vexilon Forensic UI Initialized (v2)");
 
     /**
      * Interaction Logic: Enter-to-Submit
