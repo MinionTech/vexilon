@@ -1,0 +1,122 @@
+/* app/public/style.css */
+
+/* ── KB Sidebar ─────────────────────────────────────────────────────────── */
+#kb-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100vh;
+    background: #ffffff;
+    border-left: 1px solid #e0e0e0;
+    overflow-y: auto;
+    z-index: 50;
+    padding: 16px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+#kb-sidebar h1, #kb-sidebar h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#kb-sidebar table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+#kb-sidebar th {
+    text-align: left;
+    font-weight: 600;
+    color: #666;
+    padding: 4px 4px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#kb-sidebar td {
+    padding: 3px 4px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+}
+
+#kb-sidebar a {
+    color: #2c3e50;
+    text-decoration: underline;
+}
+
+/* Push main content left to make room */
+#app-wrapper, .cl-app, main {
+    margin-right: 280px !important;
+}
+
+/* 1. Forensic Typography & Base */
+:root {
+    --primary-main: #2c3e50; /* Deep Slate for Forensic Look */
+    --background-default: #f8f9fa;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-default);
+}
+
+/* 2. Suppressed Elements (Per UI Standards) */
+#share-button,
+#undo-button,
+#retry-button,
+#clear-button,
+#new-chat-button {
+    display: none !important;
+}
+
+/* 3. Rename "Readme" → "Knowledge Base" without JS flicker */
+#readme-button {
+    font-size: 0;
+}
+#readme-button::after {
+    content: "Knowledge Base";
+    font-size: 0.875rem;
+}
+
+
+
+/* 4. Header Standardization */
+.header {
+    border-bottom: 1px solid #e0e0e0 !important;
+    background-color: #ffffff !important;
+    padding: 0 16px !important;
+    height: 50px !important;
+    box-shadow: none !important;
+}
+
+.header .title {
+    font-weight: 600 !important;
+    color: var(--primary-main) !important;
+    font-size: 1rem !important;
+}
+
+/* 4. Chat Customization */
+.message-list {
+    background-color: var(--background-default) !important;
+}
+
+.message {
+    border-radius: 4px !important;
+    margin-bottom: 12px !important;
+    border: 1px solid transparent !important;
+}
+
+.message-assistant {
+    background-color: #ffffff !important;
+    border-color: #e0e0e0 !important;
+}
+
+.message-user {
+    background-color: #f1f3f4 !important;
+}
