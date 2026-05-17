@@ -123,11 +123,12 @@ ENV PATH="/app/.venv/bin:$PATH" \
     CHAINLIT_FILES_DIR=/tmp/chainlit_files
 
 # Copy everything from functional_builder (includes venv, source code, index, config)
-COPY --from=functional_builder /app /app
+# Ensure the entire /app directory is owned by user 1000 to prevent permission errors on runtime workspaces like .chainlit
+COPY --chown=1000:1000 --from=functional_builder /app /app
 COPY --from=model_fetcher /model /model
 
 # Writable dirs: /tmp is world-writable already (sticky bit), Chainlit will
-# create /tmp/chainlit_files at startup. Only chown what HF Spaces requires.
+# create /tmp/chainlit_files at startup. Ensure necessary directories exist.
 RUN mkdir -p /app/.pdf_cache /app/reports /hf_cache && \
     chown -R 1000:1000 /app/.pdf_cache /app/reports /hf_cache
 
