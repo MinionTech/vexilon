@@ -356,7 +356,8 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[s
         clean_content = re.sub(r'(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', content_str)
         clean_content = re.sub(r'(?i)\bon\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)', '', clean_content)
         clean_content = re.sub(r'(?i)<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>', '', clean_content)
-        
+        clean_content = re.sub(r'(?i)(href|src)\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?', r'\1="#"', clean_content)
+
         if clean_content != content_str:
             script_stripped = True
             
