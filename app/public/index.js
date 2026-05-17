@@ -32,53 +32,26 @@
         });
     }
 
-    let cachedVersionInfo = null;
+    let buildSha = "unknown";
 
     // Fetch version info dynamically from endpoint
     fetch('/api/version')
         .then(res => res.json())
         .then(data => {
             if (data.version === "Dev mode") {
-                cachedVersionInfo = "Dev mode";
+                buildSha = "Dev mode";
             } else {
                 const shaShort = data.sha ? data.sha.substring(0, 7) : "";
-                cachedVersionInfo = `${data.version}${shaShort ? ` (${shaShort})` : ""}`;
+                buildSha = `${data.version}${shaShort ? ` (${shaShort})` : ""}`;
             }
-            // Trigger immediately if container is already in the DOM
-            const container = document.getElementById('vexilon-input-footer');
-            if (container && !document.getElementById('input-footer-ver-node')) {
-                const verSpan = document.createElement('span');
-                verSpan.id = 'input-footer-ver-node';
-                verSpan.className = 'input-footer-separator';
-                verSpan.textContent = '•';
-                
-                const valSpan = document.createElement('a');
-                valSpan.href = 'https://github.com/MinionTech/vexilon/pkgs/container/vexilon%2Fagnav';
-                valSpan.target = '_blank';
-                valSpan.className = 'input-footer-link input-footer-version';
-                valSpan.textContent = cachedVersionInfo;
-                
-                container.appendChild(verSpan);
-                container.appendChild(valSpan);
-            }
+            replaceBuildSha();
         })
         .catch(err => console.error("Error fetching version:", err));
 
-    function setupInputFooter() {
-        document.querySelectorAll('div[role="article"]').forEach(el => {
-            if (el.textContent.trim().includes('LLMs can make mistakes') && !el.dataset.footerInjected) {
-                const versionSegment = cachedVersionInfo 
-                    ? `<span class="input-footer-separator">•</span><a href="https://github.com/MinionTech/vexilon/pkgs/container/vexilon%2Fagnav" class="input-footer-link input-footer-version" target="_blank">${cachedVersionInfo}</a>` 
-                    : "";
-                el.innerHTML = `
-                    <div id="vexilon-input-footer">
-                        <a href="https://github.com/MinionTech/vexilon" class="input-footer-link" target="_blank">Source Code</a>
-                        <span class="input-footer-separator">•</span>
-                        <a href="/public/docs/PRIVACY.md" class="input-footer-link" target="_blank">Privacy Policy</a>
-                        ${versionSegment}
-                    </div>
-                `;
-                el.dataset.footerInjected = "true";
+    function replaceBuildSha() {
+        document.querySelectorAll('code, span, p, li, a').forEach(el => {
+            if (el.textContent.includes('{{BUILD_SHA}}')) {
+                el.innerHTML = el.innerHTML.replace('{{BUILD_SHA}}', buildSha);
             }
         });
     }
@@ -87,10 +60,10 @@
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
-        setupInputFooter();
+        replaceBuildSha();
     }, 500);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
-    setupInputFooter();
+    replaceBuildSha();
 })();
