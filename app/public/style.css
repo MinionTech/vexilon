@@ -160,3 +160,14 @@ body {
 .dark .input-footer-separator {
     color: #4b5563 !important;
 }
+
+.input-footer-version {
+    color: #9ca3af !important; /* Muted grey matching separator */
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    user-select: none !important;
+}
+
+.dark .input-footer-version {
+    color: #4b5563 !important;
+}
