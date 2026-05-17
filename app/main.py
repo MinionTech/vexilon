@@ -281,7 +281,7 @@ message_count: {len(history)}
     return md
 
 
-def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
+def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[str]]:
     """Deserialize conversation from markdown file (JSON fallback for compatibility).
     
     Extracts JSON metadata from either:
@@ -292,11 +292,13 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
         content: Markdown file contents or raw JSON string
     
     Returns:
-        Tuple of (messages, persona, saved_at timestamp)
+        Tuple of (messages, persona, saved_at timestamp, warnings list)
     
     Raises:
         ValueError: If format is invalid or missing required fields
     """
+    warnings = []
+    
     # Try to extract JSON from markdown <details> section
     json_matches = re.findall(r'```json\s*\n(.*?)\n\s*```', content, re.DOTALL)
     if json_matches:
@@ -320,11 +322,56 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str]:
     if not isinstance(messages, list):
         raise ValueError("Messages must be a list")
     
-    for msg in messages:
-        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
-            raise ValueError("Each message must be a dictionary with 'role' and 'content' keys")
+    # Enforce standard safe string types for persona and saved_at
+    persona = str(persona)[:50]
+    saved_at = str(saved_at)[:50]
     
-    return messages, persona, saved_at
+    # Limit number of messages to prevent memory exhaustion DoS
+    if len(messages) > 100:
+        messages = messages[:100]
+        warnings.append("Conversation exceeded the limit of 100 turns. Truncated excess historical messages.")
+    
+    sanitized_messages = []
+    truncated_count = 0
+    script_stripped = False
+    
+    for i, msg in enumerate(messages):
+        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
+            raise ValueError(f"Message turn {i+1} is malformed: must contain 'role' and 'content' keys.")
+        
+        role = str(msg["role"]).strip()
+        if role not in ("user", "assistant"):
+            raise ValueError(f"Message turn {i+1} has invalid role: must be 'user' or 'assistant'.")
+            
+        orig_content = str(msg["content"])
+        
+        # Enforce max length constraint strictly
+        if len(orig_content) > MAX_INPUT_LENGTH:
+            content_str = orig_content[:MAX_INPUT_LENGTH]
+            truncated_count += 1
+        else:
+            content_str = orig_content
+            
+        # Secure HTML/script sanitization pass
+        clean_content = re.sub(r'(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', content_str)
+        clean_content = re.sub(r'(?i)\bon\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)', '', clean_content)
+        clean_content = re.sub(r'(?i)<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>', '', clean_content)
+        
+        if clean_content != content_str:
+            script_stripped = True
+            
+        sanitized_messages.append({
+            "role": role,
+            "content": clean_content
+        })
+        
+    if truncated_count > 0:
+        warnings.append(f"Safely truncated {truncated_count} messages exceeding the length limit of {MAX_INPUT_LENGTH} characters.")
+        
+    if script_stripped:
+        warnings.append("Security sanitization: Removed potential script injections from conversation history.")
+        
+    return sanitized_messages, persona, saved_at, warnings
 
 # ─── RAG Pipeline Constants ─────────────────────────────────────────────────
 _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
@@ -998,12 +1045,20 @@ async def on_load_conversation(action: cl.Action):
     # Content was read by FileReader in browser as text
     file_content = files[0]
     try:
-        messages, saved_persona, saved_at = deserialize_conversation(file_content)
+        messages, saved_persona, saved_at, warnings = deserialize_conversation(file_content)
         
         # Append to current history
         current_history: list[dict] = cl.user_session.get("history") or []
         current_history.extend(messages)
         cl.user_session.set("history", current_history)
+        
+        # If there are warnings, display them clearly to the user
+        if warnings:
+            warnings_text = "\n".join(f"- {w}" for w in warnings)
+            await cl.Message(
+                content=f"⚠️ **Upload Notice**\n\n{warnings_text}",
+                author="System",
+            ).send()
         
         # Display notification with restore marker
         msg = cl.Message(

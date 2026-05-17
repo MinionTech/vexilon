@@ -55,15 +55,97 @@
             }
         });
     }
+    /**
+     * Interaction Logic: Session Save/Load Click Handlers
+     */
+    function setupSessionClickHandlers() {
+        if (document.datasetSessionHandlersAttached) return;
+        
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('a');
+            if (!target) return;
+
+            const href = target.getAttribute('href');
+            if (href === '#save') {
+                e.preventDefault();
+                if (!window.chainlit) {
+                    alert("System error: Chainlit interface not initialized. Please wait a moment and try again.");
+                    return;
+                }
+                console.log("[session] Triggering save_conversation...");
+                window.chainlit.callAction({ id: 'save_conversation', payload: {} });
+            } else if (href === '#load') {
+                e.preventDefault();
+                if (!window.chainlit) {
+                    alert("System error: Chainlit interface not initialized. Please wait a moment and try again.");
+                    return;
+                }
+                console.log("[session] Prompting for file upload...");
+                triggerFilePicker();
+            }
+        });
+        
+        document.datasetSessionHandlersAttached = "true";
+    }
+
+    function triggerFilePicker() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.md,.MD,.mD,.Md';
+        
+        input.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            // Strict case-insensitive extension check
+            const suffixMatch = file.name.match(/\.[^.]+$/);
+            const suffix = suffixMatch ? suffixMatch[0].toLowerCase() : "";
+            if (suffix !== ".md") {
+                alert(`Upload failed: The file "${file.name}" is not a markdown file. Only markdown (.md) session files are accepted.`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.addEventListener('load', (event) => {
+                const content = event.target?.result;
+                if (typeof content !== 'string') {
+                    alert("Upload failed: Unable to read file content as a string.");
+                    return;
+                }
+
+                // Client-side pre-flight validation
+                if (!content.includes('Technical Metadata (JSON)') && !content.includes('```json')) {
+                    alert("Upload failed: The selected file does not contain valid technical session metadata.");
+                    return;
+                }
+
+                console.log(`[session] File parsed successfully, sending to backend: ${file.name}`);
+                window.chainlit?.callAction({
+                    id: 'load_conversation',
+                    payload: { files: [content] }
+                });
+            });
+
+            reader.addEventListener('error', () => {
+                alert("Upload failed: A disk error occurred while reading the selected file.");
+            });
+
+            reader.readAsText(file);
+        });
+
+        input.click();
+    }
 
     // Run periodically to catch re-renders
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
         replaceBuildSha();
+        setupSessionClickHandlers();
     }, 500);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
     replaceBuildSha();
+    setupSessionClickHandlers();
 })();

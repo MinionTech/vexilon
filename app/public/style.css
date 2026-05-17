@@ -123,3 +123,17 @@ body {
 
 /* 5. Custom Input-Anchored Footer Links */
 
+/* Restored/loaded messages styling (read-only) */
+.message[data-restored="true"],
+.message.restored {
+    background-color: #f7f9fa !important;
+    border-left: 4px solid #bdc3c7 !important;
+    border-color: #e2e8f0 !important;
+    opacity: 0.85;
+}
+
+.message.restored .message-content,
+.message[data-restored="true"] .message-content {
+    color: #4a5568 !important;
+    font-style: italic !important;
+}
