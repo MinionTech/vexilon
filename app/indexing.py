@@ -23,7 +23,7 @@ CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
 MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
 _GITHUB_RAW_BASE = os.getenv("AGNAV_RAW_URL_BASE", "https://raw.githubusercontent.com/MinionTech/vexilon/main")
 INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
-SOURCE_MANIFEST_PATH = LABOUR_LAW_DIR / "manifest.json"
+
 
 class FileIntegrityError(Exception):
     """Raised when source file parsing fails and strict mode is active."""

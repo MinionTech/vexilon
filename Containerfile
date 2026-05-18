@@ -105,7 +105,9 @@ COPY app/data/labour_law/ ./public/docs/labour_law/
 COPY app/main.py ./
 COPY app/indexing.py ./
 COPY app/patches.py ./
+COPY app/conftest.py ./
 COPY app/prompts/ ./prompts/
+COPY app/scripts/ ./scripts/
 COPY app/tests/ ./tests/
 
 # Prepare directories for testing and Chainlit runtime, ensure permissions.
