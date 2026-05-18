@@ -75,7 +75,7 @@ def _get_rag_source_files() -> list[Path]:
     if not LABOUR_LAW_DIR.exists():
         return []
     
-    tests_dir = LABOUR_LAW_DIR / "tests"
+    fixtures_dir = LABOUR_LAW_DIR / "test_fixtures"
     files = []
     # Targeted glob patterns for better performance
     for pattern in ["*.md", "*.pdf"]:
@@ -84,7 +84,7 @@ def _get_rag_source_files() -> list[Path]:
             # CRITICAL: Skip any paths that may exist in sibling worktrees if context is shared
             if (not p.name.startswith(".") 
                 and ".workspaces" not in p.parts
-                and not p.is_relative_to(tests_dir) 
+                and not p.is_relative_to(fixtures_dir) 
                 and not p.name.endswith(".integrity.md")):
                 files.append(p)
                 

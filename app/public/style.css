@@ -1,59 +1,6 @@
 /* app/public/style.css */
 
-/* ── KB Sidebar ─────────────────────────────────────────────────────────── */
-#kb-sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 280px;
-    height: 100vh;
-    background: #ffffff;
-    border-left: 1px solid #e0e0e0;
-    overflow-y: auto;
-    z-index: 50;
-    padding: 16px;
-    font-size: 0.82rem;
-    line-height: 1.5;
-}
 
-#kb-sidebar h1, #kb-sidebar h2 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0 0 8px 0;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-#kb-sidebar table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.78rem;
-}
-
-#kb-sidebar th {
-    text-align: left;
-    font-weight: 600;
-    color: #666;
-    padding: 4px 4px;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-#kb-sidebar td {
-    padding: 3px 4px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: top;
-}
-
-#kb-sidebar a {
-    color: #2c3e50;
-    text-decoration: underline;
-}
-
-/* Push main content left to make room */
-#app-wrapper, .cl-app, main {
-    margin-right: 280px !important;
-}
 
 /* 1. Forensic Typography & Base */
 :root {

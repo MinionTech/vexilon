@@ -49,6 +49,7 @@ x-dev-volumes: &dev-volumes
   - ./app/indexing.py:/app/indexing.py:ro
   - ./app/.chainlit:/app/.chainlit:ro
   - ./app/chainlit.md:/app/chainlit.md:ro
+  - ./app/chainlit_en-US.md:/app/chainlit_en-US.md:ro
   - ./app/public:/app/public:ro,z
   - ./app/prompts:/app/prompts:ro
   - ./PRIVACY.md:/app/public/docs/PRIVACY.md:ro
@@ -80,7 +81,7 @@ services:
       - "7860:7860"
     healthcheck: *app-healthcheck
     command: >
-      sh -c "cd /app && uv run watchfiles --filter python 'uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless' ."
+      sh -c "cd /app && uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless --watch"
 
   dev-test:
     <<: *dev-service

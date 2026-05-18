@@ -37,12 +37,17 @@
     fetch("/api/version")
         .then((res) => res.json())
         .then((data) => {
-            if (data.version === "Dev mode") {
-                buildSha = "Dev mode";
-            } else {
-                const shaShort = data.sha ? data.sha.substring(0, 7) : "";
-                buildSha = `${data.version}${shaShort ? ` (${shaShort})` : ""}`;
+            const isDevSha = data.sha && data.sha.toLowerCase() === "dev mode";
+            const shaShort = (!isDevSha && data.sha) ? data.sha.substring(0, 7) : "";
+            
+            let shaSuffix = "";
+            if (isDevSha) {
+                shaSuffix = "";
+            } else if (shaShort) {
+                shaSuffix = " (" + shaShort + ")";
             }
+            
+            buildSha = (data.version || "unknown") + shaSuffix;
             replaceBuildSha();
         })
         .catch((err) => console.error("Error fetching version:", err));
@@ -55,14 +60,44 @@
         });
     }
 
+    function manageWelcomeTitle() {
+        const chatArea = document.querySelector(".flex-grow.overflow-y-auto");
+        if (!chatArea) return;
+
+        const messages = document.querySelectorAll(".message");
+        const existingTitle = document.getElementById("custom-welcome-title");
+
+        if (messages.length === 0) {
+            if (!existingTitle) {
+                const titleEl = document.createElement("h1");
+                titleEl.id = "custom-welcome-title";
+                titleEl.style.textAlign = "center";
+                titleEl.style.fontSize = "2.25rem";
+                titleEl.style.fontWeight = "700";
+                titleEl.style.marginTop = "1rem"; // Default is 4rem, reduced for aesthetic reasons
+                titleEl.style.marginBottom = "1rem"; // Default is 2rem, reduced for aesthetic reasons
+                titleEl.style.color = "inherit";
+                titleEl.style.opacity = "0.9";
+                titleEl.textContent = "BCGEU Navigator";
+                chatArea.prepend(titleEl);
+            }
+        } else {
+            if (existingTitle) {
+                existingTitle.remove();
+            }
+        }
+    }
+
     // Poll for React-rendered elements that appear/disappear on navigation.
     setInterval(() => {
         setupEnterToSubmit();
         hideReadmeDrawerTitle();
         replaceBuildSha();
+        manageWelcomeTitle();
     }, 500);
 
     setupEnterToSubmit();
     hideReadmeDrawerTitle();
     replaceBuildSha();
+    manageWelcomeTitle();
 })();

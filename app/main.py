@@ -195,7 +195,7 @@ class TestRegistry:
             return [test for test in self.tests if any(k in q_lower for k in test.keywords)]
 
 _test_registry = TestRegistry()
-TESTS_DIR = LABOUR_LAW_DIR / "tests"
+TESTS_DIR = LABOUR_LAW_DIR / "test_fixtures"
 
 # ─── Rate Limiter ───────────────────────────────────────────────────────────
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "999999" if IS_DEV else "10"))
@@ -240,7 +240,7 @@ def serialize_conversation(history: list[dict], persona: str) -> str:
     
     Args:
         history: List of message dicts with 'role' and 'content' keys
-        persona: Current persona (Lookup/Grieve/Audit/Manage)
+        persona: Current persona (Lookup/Grieve/Manage)
     
     Returns:
         Markdown string with YAML front matter and conversation turns
@@ -407,8 +407,9 @@ def get_persona_prompt(persona_key: str) -> str:
     elif persona_key == "Grieve":
         rules = UNION_MANDATORY_RULES
         persona = (
-            "You are an expert in workplace grievances. Analyze the provided context and history to suggest a strategy.\n"
-            "Focus on identifying relevant articles and supporting the member's case. Maintain a professional, supportive, and analytical tone."
+            "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
+            "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
+            "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
         )
     elif persona_key == "Train":
         rules = UNION_MANDATORY_RULES
@@ -416,9 +417,6 @@ def get_persona_prompt(persona_key: str) -> str:
             "You are an expert in labor relations training. Explain the concepts in the context using a helpful, educational tone.\n"
             "Focus on empowering the user with knowledge and clear explanations."
         )
-    elif persona_key == "Audit":
-        rules = UNION_MANDATORY_RULES
-        persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases using the provided context."
     else:
         rules = UNION_MANDATORY_RULES
         persona = (
@@ -748,11 +746,11 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
-    """Scan LABOUR_LAW_DIR for PDF and MD files. Excludes tests/."""
+    """Scan LABOUR_LAW_DIR for PDF and MD files. Excludes test_fixtures/."""
     if not LABOUR_LAW_DIR.exists(): return []
-    tests_dir = LABOUR_LAW_DIR / "tests"
+    fixtures_dir = LABOUR_LAW_DIR / "test_fixtures"
     files = [p for p in LABOUR_LAW_DIR.rglob("*") if p.suffix.lower() in (".pdf", ".md")
-             and not p.is_relative_to(tests_dir)
+             and not p.is_relative_to(fixtures_dir)
              and not p.name.endswith(".integrity.md")]
     return sorted(list(set(files)), key=lambda p: str(p))
 
@@ -817,22 +815,7 @@ async def _ensure_startup() -> None:
         if _startup_done:
             return
         
-        msg = None
-        try:
-            # Attempt to show progress if we're in a chat session
-            msg = cl.Message(content="Initializing Knowledge Base... This may take a moment if indexing is required.")
-            await msg.send()
-        except Exception:
-            pass
-
         await asyncio.to_thread(startup)
-        
-        if msg:
-            try:
-                msg.content = "Knowledge Base initialized."
-                await msg.update()
-            except Exception:
-                pass
         
         _startup_done = True
 
@@ -858,53 +841,45 @@ async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
 
 
-PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
+PERSONAS = ["Lookup", "Grieve", "Manage"]
 DEFAULT_PERSONA = "Lookup"
 VEXILON_SAVE_SENTINEL = "__VEXILON_SAVE__"
 
 EXAMPLES = [
     "What are the Article 14 (Discipline) requirements for just cause?",
-    "I need to file a grievance for a member. What steps should I take?",
     "What are my rights as a steward during an investigation meeting?",
+    "What is the nexus test for establishing a link in off-duty conduct cases?",
+    "Show me the Harassment Threshold test.",
+    "I need to file a grievance for a member. What steps should I take?",
 ]
-
-WELCOME_MSG = """# BCGEU Navigator"""
-
-def get_welcome_actions():
-    return [
-        cl.Action(name="starter_query", value="query1", payload={"value": "What are the Article 14 (Discipline) requirements for just cause?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
-        cl.Action(name="starter_query", value="query2", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
-        cl.Action(name="starter_query", value="query3", payload={"value": "What are my rights as a steward during an investigation meeting?"}, label="What are my specific rights as a steward during an investigation?"),
-    ]
-
-
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
+    all_starters = [
+        cl.Starter(label="Discipline Just Cause", message=EXAMPLES[0]),
+        cl.Starter(label="Steward Rights", message=EXAMPLES[1]),
+        cl.Starter(label="Nexus Off-Duty Test", message=EXAMPLES[2]),
+        cl.Starter(label="Harassment Threshold", message=EXAMPLES[3]),
+        cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
+    ]
     return [
         cl.ChatProfile(
             name="Lookup",
             icon="",
             default=True,
             markdown_description="Forensic lookup of labor law excerpts.",
-            starters=[cl.Starter(label="Discipline Analysis", message=EXAMPLES[0])],
+            starters=all_starters,
         ),
         cl.ChatProfile(
             name="Grieve",
             icon="",
-            markdown_description="Strategic guidance for grievance filing.",
-            starters=[cl.Starter(label="Grievance Builder", message=EXAMPLES[1])],
-        ),
-        cl.ChatProfile(
-            name="Audit",
-            icon="",
-            markdown_description="Forensic auditing of compliance risks.",
-            starters=[cl.Starter(label="Audit Analysis", message=EXAMPLES[2])],
+            markdown_description="Strategic guidance and forensic auditing for grievance filing.",
+            starters=all_starters,
         ),
         cl.ChatProfile(
             name="Manage",
             icon="",
             markdown_description="Strategic management consulting.",
-            starters=[cl.Starter(label="Strategy Session", message=EXAMPLES[0])],
+            starters=all_starters,
         ),
     ]
 
@@ -920,7 +895,7 @@ async def on_chat_start():
             cl.input_widget.Select(
                 id="Persona",
                 label="Navigator Persona",
-                values=["Lookup", "Grieve", "Audit", "Manage"],
+                values=["Lookup", "Grieve", "Manage"],
                 initial="Lookup",
             ),
         ]
@@ -930,12 +905,7 @@ async def on_chat_start():
     cl.user_session.set("history", [])
     cl.user_session.set("persona", "Lookup")
 
-    # ── Welcome Header ────────────────────────────────────────────────────
-    await cl.Message(
-        content=WELCOME_MSG, 
-        author="System", 
-        actions=get_welcome_actions()
-    ).send()
+
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()

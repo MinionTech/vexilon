@@ -42,7 +42,7 @@ async def test_full_rag_flow_integration(monkeypatch, mock_llm_client, tmp_path)
     
     import shutil
     shutil.copy(source_md, test_data_dir / source_md.name)
-    shutil.copytree(app_root / "data/labour_law/tests", test_data_dir / "tests", dirs_exist_ok=True)
+    shutil.copytree(app_root / "data/labour_law/test_fixtures", test_data_dir / "test_fixtures", dirs_exist_ok=True)
 
     # Mock the LLM client globally for the app
     monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)

@@ -1,6 +1,6 @@
-# Agreement Navigator (AgNav) Privacy Policy: PIPA Compliance Framework
+# Privacy Policy: PIPA Compliance Framework
 
-Agreement Navigator is built with a "Privacy-by-Design" architecture, specifically aligned with the British Columbia **Personal Information Protection Act (PIPA)**. As a tool designed for union stewards, we recognize the high sensitivity of labour relations data and the legal requirements for protecting personal information.
+This app is built with a "Privacy-by-Design" architecture, specifically aligned with the British Columbia [**Personal Information Protection Act (PIPA)**](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03063_01). As a tool designed for union stewards, we recognize the high sensitivity of labour relations data and the legal requirements for protecting personal information.
 
 ## The 10 PIPA Principles in AgNav
 
