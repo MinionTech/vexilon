@@ -1,5 +1,3 @@
-# BCGEU Navigator
-
 ---
 
 **Privacy Policy**: [View Policy](/public/docs/PRIVACY.md) | **Source Code**: [GitHub Repository](https://github.com/MinionTech/vexilon)
