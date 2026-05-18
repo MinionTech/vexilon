@@ -196,6 +196,7 @@ class TestRegistry:
 
 _test_registry = TestRegistry()
 TESTS_DIR = DATA_DIR / "test_fixtures"
+PUBLIC_DOCS_DIR = Path(__file__).parent / "public" / "docs"
 
 # ─── Rate Limiter ───────────────────────────────────────────────────────────
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "999999" if IS_DEV else "10"))
@@ -1080,7 +1081,7 @@ async def on_load_conversation(action: cl.Action):
 def resolve_pdf_path(md_path: Path) -> Path:
     """Resolve the matching PDF file path for a given Markdown source path."""
     if md_path.suffix.lower() == ".pdf":
-        return md_path if md_path.exists() else md_path
+        return md_path
 
     # 1. Try same directory PDF
     pdf_same_dir = md_path.with_suffix(".pdf")
@@ -1088,15 +1089,13 @@ def resolve_pdf_path(md_path: Path) -> Path:
         return pdf_same_dir
 
     # 2. Try public docs directory
-    public_docs_dir = Path(__file__).parent / "public" / "docs"
-    
-    exact_pdf = public_docs_dir / f"{md_path.stem}.pdf"
+    exact_pdf = PUBLIC_DOCS_DIR / f"{md_path.stem}.pdf"
     if exact_pdf.exists():
         return exact_pdf
 
     if "_-_" in md_path.stem:
         base_stem = md_path.stem.split("_-_")[0]
-        prefix_pdf = public_docs_dir / f"{base_stem}.pdf"
+        prefix_pdf = PUBLIC_DOCS_DIR / f"{base_stem}.pdf"
         if prefix_pdf.exists():
             return prefix_pdf
 

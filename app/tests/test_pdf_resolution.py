@@ -36,10 +36,9 @@ def test_resolve_pdf_path_public_docs_exact(tmp_path, monkeypatch):
     md_file = tmp_path / "BCGEU_19th_Main_Agreement.md"
     md_file.touch()
     
-    # Mock the __file__ location to locate public docs in tmp_path
-    monkeypatch.setattr(app, "__file__", str(tmp_path / "main.py"))
     public_docs_dir = tmp_path / "public" / "docs"
     public_docs_dir.mkdir(parents=True)
+    monkeypatch.setattr(app, "PUBLIC_DOCS_DIR", public_docs_dir)
     
     pdf_file = public_docs_dir / "BCGEU_19th_Main_Agreement.pdf"
     pdf_file.touch()
@@ -52,10 +51,9 @@ def test_resolve_pdf_path_public_docs_prefix(tmp_path, monkeypatch):
     md_file = tmp_path / "BC_OHS_Regulation_-_Part_01.md"
     md_file.touch()
     
-    # Mock the __file__ location to locate public docs in tmp_path
-    monkeypatch.setattr(app, "__file__", str(tmp_path / "main.py"))
     public_docs_dir = tmp_path / "public" / "docs"
     public_docs_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(app, "PUBLIC_DOCS_DIR", public_docs_dir)
     
     pdf_file = public_docs_dir / "BC_OHS_Regulation.pdf"
     pdf_file.touch()
@@ -68,10 +66,9 @@ def test_resolve_pdf_path_fallback_to_md(tmp_path, monkeypatch):
     md_file = tmp_path / "Only_Markdown_Exists.md"
     md_file.touch()
     
-    # Mock the __file__ location to locate public docs in tmp_path
-    monkeypatch.setattr(app, "__file__", str(tmp_path / "main.py"))
     public_docs_dir = tmp_path / "public" / "docs"
     public_docs_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(app, "PUBLIC_DOCS_DIR", public_docs_dir)
     
     resolved = app.resolve_pdf_path(md_file)
     assert resolved == md_file
