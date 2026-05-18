@@ -7,13 +7,13 @@
 
 The following reference documents form the authority for my analytical responses.
 
-### Tier 1 — Supreme Authority (Collective Agreement)
+### Primary Authority
 
 | Document Name | Format |
 | :--- | :--- |
 | BCGEU 19th Main Agreement | [PDF](/public/docs/BCGEU_19th_Main_Agreement.pdf) |
 
-### Tier 2 — Supporting Bedrock (Primary Legislation & Regulations)
+### Legislation & Regulations
 
 | Document Name | Format |
 | :--- | :--- |
@@ -23,7 +23,7 @@ The following reference documents form the authority for my analytical responses
 | BC Employment Standards Act | [MD](/public/docs/labour_law/02_statutory/BC_Employment_Standards_Act.md) |
 | BC Human Rights Code | [MD](/public/docs/labour_law/02_statutory/BC_Human_Rights_Code.md) |
 
-### Tier 3 — Supplementary Context (Secondary Policy & Jurisprudence)
+### Policy & Jurisprudence
 
 | Document Name | Format |
 | :--- | :--- |
@@ -32,9 +32,7 @@ The following reference documents form the authority for my analytical responses
 | BC Social Media Guidance for Public Service Employees | [PDF](/public/docs/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf) |
 | BCGEU Steward Resources | [PDF](/public/docs/BCGEU_Steward_Resources.pdf) |
 
----
-
-## Forms
+### Forms
 
 | Document Name | Format |
 | :--- | :--- |
