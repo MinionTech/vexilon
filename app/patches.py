@@ -101,13 +101,27 @@ def apply_patches():
     _AnyioCancelScope.__enter__ = _patched_cancel_scope_enter
     _AnyioCancelScope.__exit__ = _patched_cancel_scope_exit
 
-    # 6. Force Chainlit to use a writable directory for temporary files
+    # 6. Force Chainlit to use a writable directory for temporary files.
+    # We use '/tmp/chainlit_files' or the path specified by the CHAINLIT_FILES_DIR
+    # environment variable. This is always world-writable in standard containers
+    # and avoids modifying internal production directory permissions.
+    import os
     import chainlit.config
-    chainlit.config.FILES_DIRECTORY = Path(".pdf_cache/.files").absolute()
+    files_dir_env = os.getenv("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")
+    new_files_dir = Path(files_dir_env).absolute()
+    chainlit.config.FILES_DIRECTORY = new_files_dir
+
     try:
-        chainlit.config.FILES_DIRECTORY.mkdir(exist_ok=True, parents=True)
+        import chainlit.server
+        chainlit.server.FILES_DIRECTORY = new_files_dir
+    except ImportError:
+        pass
+
+    try:
+        new_files_dir.mkdir(exist_ok=True, parents=True)
     except Exception as e:
         raise RuntimeError(
             f"FATAL: Could not create Chainlit FILES_DIRECTORY at "
-            f"{chainlit.config.FILES_DIRECTORY}: {e}. Verification failed."
+            f"{new_files_dir}: {e}. Verification failed."
         ) from e
+
