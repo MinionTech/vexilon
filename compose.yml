@@ -53,7 +53,7 @@ x-dev-volumes: &dev-volumes
   - ./app/public:/app/public:ro,z
   - ./app/prompts:/app/prompts:ro
   - ./PRIVACY.md:/app/public/docs/PRIVACY.md:ro
-  - ./app/data/forms:/app/public/docs/forms:ro
+  - ./app/data:/app/public/docs:ro
   - ./reports:/app/reports:z
   - ./.pytest_cache:/app/.pytest_cache:z
 

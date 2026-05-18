@@ -60,7 +60,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
 COPY app/ ./
-COPY app/data/forms/ ./public/docs/forms/
+COPY app/data/ ./public/docs/
 COPY PRIVACY.md ./public/docs/
 
 # Prepare directories for testing and ensure permissions
@@ -99,7 +99,7 @@ COPY PRIVACY.md ./public/docs/
 COPY app/.chainlit/ ./.chainlit/
 COPY app/public/ ./public/
 COPY app/chainlit.md app/chainlit_en-US.md ./
-COPY app/data/forms/ ./public/docs/forms/
+COPY app/data/ ./public/docs/
 
 # Then source code (code changes often; trigger only code rebuilds)
 COPY app/main.py ./

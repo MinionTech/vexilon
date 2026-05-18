@@ -73,7 +73,7 @@ AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
 IS_DEV = AGNAV_VERSION == "Dev mode"
 AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_DATA_URL = os.getenv(
-    "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/data"
+    "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/app/data"
 )
 
 # Models & Providers
