@@ -868,16 +868,25 @@ EXAMPLES = [
     "Does my employer have a social media policy?",
     "I need to file a grievance for a member. What steps should I take?",
 ]
-WELCOME_MSG = """# BCGEU Navigator"""
+WELCOME_MSG = """# BCGEU Navigator
+
+### Suggested Inquiries:
+* **Q1**: What are the Article 14 (Discipline) requirements for just cause?
+* **Q2**: What are my rights as a steward during an investigation meeting?
+* **Q3**: What is the nexus test for establishing a link in off-duty conduct cases?
+* **Q4**: Show me the Harassment Threshold test.
+* **Q5**: Does my employer have a social media policy?
+* **Q6**: I need to file a grievance for a member. What steps should I take?
+"""
 
 def get_welcome_actions():
     return [
-        cl.Action(name="starter_query", value="query1", payload={"value": "What are the just cause requirements for discipline?"}, label="How do I evaluate a disciplinary action for 'Just Cause'?"),
-        cl.Action(name="starter_query", value="query2", payload={"value": "I need to file a grievance for a member. What steps should I take?"}, label="What are the mandatory steps for filing a formal grievance?"),
-        cl.Action(name="starter_query", value="query3", payload={"value": "What rights do stewards have in investigation meetings?"}, label="What are my specific rights as a steward during an investigation?"),
-        cl.Action(name="starter_query", value="query4", payload={"value": "What is the nexus test for establishing a link in off-duty conduct cases?"}, label="What is the nexus test for off-duty conduct?"),
-        cl.Action(name="starter_query", value="query5", payload={"value": "Show me the Harassment Threshold test."}, label="Show me the Harassment Threshold test?"),
-        cl.Action(name="starter_query", value="query6", payload={"value": "Does my employer have a social media policy?"}, label="Does my employer have a social media policy?"),
+        cl.Action(name="starter_query", value="query1", payload={"value": EXAMPLES[0]}, label="Q1"),
+        cl.Action(name="starter_query", value="query2", payload={"value": EXAMPLES[1]}, label="Q2"),
+        cl.Action(name="starter_query", value="query3", payload={"value": EXAMPLES[2]}, label="Q3"),
+        cl.Action(name="starter_query", value="query4", payload={"value": EXAMPLES[3]}, label="Q4"),
+        cl.Action(name="starter_query", value="query5", payload={"value": EXAMPLES[4]}, label="Q5"),
+        cl.Action(name="starter_query", value="query6", payload={"value": EXAMPLES[5]}, label="Q6"),
     ]
 
 
