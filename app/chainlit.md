@@ -23,7 +23,7 @@ This tool is custom-built to uphold the BC *Personal Information Protection Act*
 | BC OHS Regulation | [PDF](/public/docs/BC_OHS_Regulation.pdf) |
 | BC Workers Compensation Act | [PDF](/public/docs/BC_Workers_Compensation_Act.pdf) |
 | BC Employment Standards Act | [PDF](/public/docs/BC_Employment_Standards_Act.pdf) |
-| BC Human Rights Code | [MD](/public/docs/labour_law/02_statutory/BC_Human_Rights_Code.md) |
+| BC Human Rights Code | [PDF](/public/docs/BC_Human_Rights_Code.pdf) |
 
 ### Policy & Jurisprudence
 
