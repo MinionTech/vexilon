@@ -859,7 +859,6 @@ async def chat_profiles(user: cl.User):
         cl.Starter(label="Steward Rights", message=EXAMPLES[1]),
         cl.Starter(label="Nexus Off-Duty Test", message=EXAMPLES[2]),
         cl.Starter(label="Harassment Threshold", message=EXAMPLES[3]),
-        cl.Starter(label="Social Media Policy", message=EXAMPLES[4]),
         cl.Starter(label="Grievance Builder", message=EXAMPLES[5]),
     ]
     return [
