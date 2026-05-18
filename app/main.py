@@ -240,7 +240,7 @@ def serialize_conversation(history: list[dict], persona: str) -> str:
     
     Args:
         history: List of message dicts with 'role' and 'content' keys
-        persona: Current persona (Lookup/Grieve/Audit/Manage)
+        persona: Current persona (Lookup/Grieve/Manage)
     
     Returns:
         Markdown string with YAML front matter and conversation turns
@@ -407,8 +407,9 @@ def get_persona_prompt(persona_key: str) -> str:
     elif persona_key == "Grieve":
         rules = UNION_MANDATORY_RULES
         persona = (
-            "You are an expert in workplace grievances. Analyze the provided context and history to suggest a strategy.\n"
-            "Focus on identifying relevant articles and supporting the member's case. Maintain a professional, supportive, and analytical tone."
+            "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
+            "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
+            "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
         )
     elif persona_key == "Train":
         rules = UNION_MANDATORY_RULES
@@ -416,9 +417,6 @@ def get_persona_prompt(persona_key: str) -> str:
             "You are an expert in labor relations training. Explain the concepts in the context using a helpful, educational tone.\n"
             "Focus on empowering the user with knowledge and clear explanations."
         )
-    elif persona_key == "Audit":
-        rules = UNION_MANDATORY_RULES
-        persona = "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases using the provided context."
     else:
         rules = UNION_MANDATORY_RULES
         persona = (
@@ -858,7 +856,7 @@ async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
 
 
-PERSONAS = ["Lookup", "Grieve", "Audit", "Manage"]
+PERSONAS = ["Lookup", "Grieve", "Manage"]
 DEFAULT_PERSONA = "Lookup"
 VEXILON_SAVE_SENTINEL = "__VEXILON_SAVE__"
 
@@ -891,14 +889,11 @@ async def chat_profiles(user: cl.User):
         cl.ChatProfile(
             name="Grieve",
             icon="",
-            markdown_description="Strategic guidance for grievance filing.",
-            starters=[cl.Starter(label="Grievance Builder", message=EXAMPLES[1])],
-        ),
-        cl.ChatProfile(
-            name="Audit",
-            icon="",
-            markdown_description="Forensic auditing of compliance risks.",
-            starters=[cl.Starter(label="Audit Analysis", message=EXAMPLES[2])],
+            markdown_description="Strategic guidance and forensic auditing for grievance filing.",
+            starters=[
+                cl.Starter(label="Grievance Builder", message=EXAMPLES[1]),
+                cl.Starter(label="Steward Rights", message=EXAMPLES[2])
+            ],
         ),
         cl.ChatProfile(
             name="Manage",
@@ -920,7 +915,7 @@ async def on_chat_start():
             cl.input_widget.Select(
                 id="Persona",
                 label="Navigator Persona",
-                values=["Lookup", "Grieve", "Audit", "Manage"],
+                values=["Lookup", "Grieve", "Manage"],
                 initial="Lookup",
             ),
         ]

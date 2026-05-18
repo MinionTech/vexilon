@@ -46,5 +46,5 @@ async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
     assert [p.name for p in profiles] == app.PERSONAS
     for p in profiles:
         assert isinstance(p, cl.ChatProfile)
-        assert p.starters is not None and len(p.starters) == 1
+        assert p.starters is not None and len(p.starters) >= 1
     assert sum(1 for p in profiles if p.default) == 1
