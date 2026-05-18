@@ -1,22 +1,14 @@
 {
-  "generated_at": "2026-05-18T00:02:32.117498+00:00",
+  "generated_at": "2026-05-18T06:07:13.813134+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
       "hash": "fa58d818e31e1541aacaab1bd164f6e53e4b938d95923106bf2ff4bb4ca12648",
       "size_bytes": 597844
     },
-    "01_primary/BCGEU_19th_Main_Agreement.pdf": {
-      "hash": "539aaf69982512e8cc7331b632ac691df1925b59027f06f482a91668488c2ef2",
-      "size_bytes": 1883466
-    },
     "01_primary/BC_Labour_Relations_Code.md": {
       "hash": "dfd271ae4a4566c908e846525be987938dbedb816455f030b793f2e87c8de13f",
       "size_bytes": 170143
-    },
-    "01_primary/BC_Labour_Relations_Code.pdf": {
-      "hash": "b486c60160ab9eaa7b8b4d75d67e49f2482d127ff24dca9a925da0dc4eb37ebc",
-      "size_bytes": 20525888
     },
     "02_statutory/BC_Employment_Standards_Act.md": {
       "hash": "ae43f3f5c9b1ec40ab4fdf752d91be6c921b4fdb2c86d513b5b61baf9d59c09c",
@@ -206,33 +198,17 @@
       "hash": "73f1e7ca9982dcab4fbb5dbb58917c6e500afb1486732166d36bbd7840d2e295",
       "size_bytes": 84819
     },
-    "03_resources/BCGEU_Steward_Resources.pdf": {
-      "hash": "749556ef8a40fe4a3d85b2b7a3e75e8580879ecbddbe633a3cca02412b62355c",
-      "size_bytes": 7458493
-    },
     "03_resources/BC_Social_Media_Guidance_for_Public_Service_Employees.md": {
       "hash": "f27116574c4e6eb56804176666af965b8ffe1b9e1641bce126bd543d5122fbfb",
       "size_bytes": 49392
-    },
-    "03_resources/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf": {
-      "hash": "c3c449ca43d478a78c5fe9129b23e51e55c9cc48999c68e7f64c069c2115df9e",
-      "size_bytes": 259141
     },
     "03_resources/Gov_BC_Standards_of_Conduct.md": {
       "hash": "decf3e1688a4409e9b6c5792dbcda485776eeb3b78c120ab86b74e31a354fec1",
       "size_bytes": 29886
     },
-    "03_resources/Gov_BC_Standards_of_Conduct.pdf": {
-      "hash": "4dd04a0d1f1022e031b98919fa9b1f9bc3ff6017dc705947a78d2b026ddd9ecb",
-      "size_bytes": 142108
-    },
     "04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.md": {
       "hash": "046df1349b82779be1aff9c91ac72931754069813d56efa39ca28f1ae69b6565",
       "size_bytes": 2672
-    },
-    "04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.pdf": {
-      "hash": "5440afde97167a3555e7ce2c5f0bfc4be624cb4e58cacf90ea8dcd764a9673ec",
-      "size_bytes": 22482
     },
     "forms/BCGEU_Grievance_Form_Guide.md": {
       "hash": "a22c2f219a48346e9fe30f83cc857a6c9444455b592a798139130ee8784d059b",

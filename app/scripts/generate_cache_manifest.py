@@ -34,14 +34,14 @@ def generate_manifest(
     }
     
     # Find all source files (PDF and MD)
-    tests_dir = data_dir / "tests"
+    fixtures_dir = data_dir / "test_fixtures"
     source_files = []
     for pattern in ["*.md", "*.pdf"]:
         for file_path in data_dir.rglob(pattern):
             # Skip hidden, tests, and integrity files
             if (not file_path.name.startswith(".") 
                 and ".workspaces" not in file_path.parts
-                and not file_path.is_relative_to(tests_dir)
+                and not file_path.is_relative_to(fixtures_dir)
                 and not file_path.name.endswith(".integrity.md")):
                 source_files.append(file_path)
     
@@ -76,13 +76,13 @@ def validate_cache(
         manifest = json.load(f)
     
     # Collect current source files
-    tests_dir = data_dir / "tests"
+    fixtures_dir = data_dir / "test_fixtures"
     current_files = {}
     for pattern in ["*.md", "*.pdf"]:
         for file_path in data_dir.rglob(pattern):
             if (not file_path.name.startswith(".") 
                 and ".workspaces" not in file_path.parts
-                and not file_path.is_relative_to(tests_dir)
+                and not file_path.is_relative_to(fixtures_dir)
                 and not file_path.name.endswith(".integrity.md")):
                 relative_path = file_path.relative_to(data_dir)
                 current_files[str(relative_path)] = hash_file(file_path)
