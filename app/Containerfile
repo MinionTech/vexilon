@@ -102,9 +102,4 @@ COPY --from=model_fetcher /model /model
 RUN mkdir -p /hf_cache && chown -R app:app /hf_cache
 USER 1000
 
-ARG VERSION
-ARG REPO_URL
-ENV AGNAV_VERSION=$VERSION \
-    AGNAV_REPO_URL=$REPO_URL
-
 CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 chainlit run main.py --host 0.0.0.0 --port 7860 --headless"]

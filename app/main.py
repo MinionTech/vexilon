@@ -71,7 +71,7 @@ INTEGRITY_WARNING: str | None = None
 _background_tasks: set[asyncio.Task] = set()
 
 AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
-IS_DEV = "dev" in AGNAV_VERSION.lower()
+IS_DEV = not os.getenv("SPACE_ID")
 AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_DATA_URL = os.getenv(
     "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/app/data"

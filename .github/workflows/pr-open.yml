@@ -276,9 +276,6 @@ jobs:
           package: agnav
           build_context: app
           build_file: app/Containerfile
-          build_args: |
-            VERSION=sha-${{ github.event.pull_request.head.sha }}
-            REPO_URL=https://github.com/${{ github.repository }}
 
   trivy:
     name: Trivy Security Scan

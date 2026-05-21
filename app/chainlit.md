@@ -33,7 +33,3 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 * [Grievance - C - Steward Case](/public/docs/forms/Grievance_-_C_-_Steward_Case.pdf)
 * [BCGEU Grievance Form Guide](/public/docs/forms/BCGEU_Grievance_Form_Guide.md)
 * [Policy Grievance Form Guide](/public/docs/forms/Policy_Grievance_Form_Guide.md)
-
----
-
-`{{BUILD_SHA}}`
