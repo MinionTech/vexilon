@@ -9,6 +9,7 @@ usage() {
     echo ""
     echo "Commands:"
     echo "  dev       Boot the local development environment (Ollama + Chainlit app)"
+    echo "  staging   Boot the local cloud-parity staging environment (Hugging Face)"
     echo "  down      Tear down all active containers and prune volumes"
     echo "  build     Rebuild all Docker/Podman container images"
     echo "  test      Run local unit and streaming tests via pytest"
@@ -39,6 +40,10 @@ case "$CMD" in
     dev)
         echo "Starting development environment using $COMPOSE..."
         $COMPOSE -f app/compose.yml up --build dev "$@"
+        ;;
+    staging)
+        echo "Starting staging environment using $COMPOSE..."
+        $COMPOSE -f app/compose.yml up --build staging "$@"
         ;;
     down)
         echo "Tearing down dev environment..."
