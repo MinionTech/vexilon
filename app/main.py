@@ -970,6 +970,12 @@ async def on_chat_start():
     available_choices = get_available_model_choices()
     default_model = get_default_model_setting()
     default_display = available_choices.get(default_model, list(available_choices.values())[0])
+    
+    model_values = list(available_choices.values())
+    try:
+        default_index = model_values.index(default_display)
+    except ValueError:
+        default_index = 0
 
     await cl.ChatSettings(
         [
@@ -977,13 +983,13 @@ async def on_chat_start():
                 id="Persona",
                 label="Navigator Persona",
                 values=["Lookup", "Grieve", "Manage"],
-                initial="Lookup",
+                initial_index=0,
             ),
             cl.input_widget.Select(
                 id="Model",
                 label="Model Selection",
-                values=list(available_choices.values()),
-                initial=default_display,
+                values=model_values,
+                initial_index=default_index,
             ),
         ]
     ).send()
