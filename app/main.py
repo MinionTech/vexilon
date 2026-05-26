@@ -100,6 +100,8 @@ MODEL_CHOICES = {
     "huggingface:mistralai/Mistral-7B-Instruct-v0.2": "Hugging Face (Mistral 7B)",
 }
 
+MODEL_DISPLAY_TO_ID = {v: k for k, v in MODEL_CHOICES.items()}
+
 def get_available_model_choices() -> dict[str, str]:
     if IS_DEV:
         return MODEL_CHOICES
@@ -910,7 +912,10 @@ if os.getenv("AGNAV_PASSWORD"):
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
-    cl.user_session.set("selected_model", settings["Model"])
+    display_name = settings["Model"]
+    model_id = MODEL_DISPLAY_TO_ID.get(display_name)
+    if model_id:
+        cl.user_session.set("selected_model", model_id)
 
 
 PERSONAS = ["Lookup", "Grieve", "Manage"]
@@ -964,6 +969,7 @@ async def on_chat_start():
     # ── Chat Settings (Gear Icon) ─────────────────────────────────────────
     available_choices = get_available_model_choices()
     default_model = get_default_model_setting()
+    default_display = available_choices.get(default_model, list(available_choices.values())[0])
 
     await cl.ChatSettings(
         [
@@ -976,8 +982,8 @@ async def on_chat_start():
             cl.input_widget.Select(
                 id="Model",
                 label="Model Selection",
-                values=available_choices,
-                initial=default_model,
+                values=list(available_choices.values()),
+                initial=default_display,
             ),
         ]
     ).send()
