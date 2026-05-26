@@ -82,7 +82,7 @@ def test_hf_cache_security_lock():
 
 def test_compose_llm_provider_valid():
     """Ensures compose.yml uses only officially supported LLM providers."""
-    compose_path = REPO_ROOT / "app" / "compose.yml"
+    compose_path = REPO_ROOT / "compose.yml"
     if not compose_path.exists():
         return
         

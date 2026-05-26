@@ -47,28 +47,25 @@ Docker deployments.
 - **Podman Compose** (or Docker Compose)
 - **Python 3.12+** (for local script execution)
 
-### Task Runner (Recommended)
+### Container Orchestration
 
-Agreement Navigator includes an executable `./run` bash task runner that automatically detects if `podman compose` or `docker compose` is installed. 
+Agreement Navigator is fully configured for container execution. You can spin up development, testing, and staging environments directly from the repository root using native Compose commands.
 
-Exposed commands (run from the repository root):
-- **Boot Local Development**: `./run dev`
-- **Graceful Tear Down**: `./run down`
-- **Run Local Pytest Suite**: `./run test`
-- **Run Full Containerized Test Suite**: `./run test-all`
-- **Build Docker Images**: `./run build`
+Exposed services (run from the repository root):
+- **Boot Local Development**: `docker compose up dev`
+- **Graceful Tear Down**: `docker compose down -v`
+- **Run Full Containerized Test Suite**: `docker compose up test-everything`
+- **Build Container Images**: `docker compose build`
 
 ---
 
-### Manual Execution (Without Make)
-
-If you do not have `make` installed, you can specify the compose file manually:
+### Running the Application Natively
 
 **1. Local Development (Zero-Config)**
 This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app with hot-reload. No API keys or tokens are required.
 
 ```bash
-podman compose -f app/compose.yml up --build dev
+docker compose up --build dev
 ```
 
 > [!NOTE]
@@ -80,7 +77,7 @@ Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requir
 ```bash
 # Add your HF_TOKEN to .env or export it
 export HF_TOKEN=your_token_here
-podman compose -f app/compose.yml up --build staging
+docker compose up --build staging
 ```
 
 > [!TIP]
@@ -185,19 +182,16 @@ Agreement Navigator features a strict **Quality Gate** deployment pattern—all 
 uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
-podman compose -f app/compose.yml up --build test-unit
+docker compose up --build test-unit
 
 # Run model integration tests (FAISS + Embedding Model)
-podman compose -f app/compose.yml up --build test-integration-model
+docker compose up --build test-integration-model
 
 # Run app integration tests (Functional RAG flow)
-podman compose -f app/compose.yml up --build test-integration-app
-
-# Run full e2e suite (Live UI + Live LLM)
-podman compose -f app/compose.yml up --build test-e2e
+docker compose up --build test-integration-app
 
 # Verify everything at once (The "Grand Slam") and launch the dev app if successful
-podman compose -f app/compose.yml up --build test-everything && podman compose -f app/compose.yml up dev
+docker compose up --build test-everything && docker compose up dev
 ```
 
 ---
