@@ -38,9 +38,10 @@ services:
         condition: service_completed_successfully
     volumes:
       - .:/app:z
+      - /app/.pdf_cache
     environment:
       <<: *app-env
-      AGNAV_LLM_PROVIDER: ollama
+      AGNAV_LLM_PROVIDER: ${AGNAV_LLM_PROVIDER:-ollama}
       WATCHFILES_FORCE_POLLING: "true"
       PORT: "7860"
     mem_limit: 2g
