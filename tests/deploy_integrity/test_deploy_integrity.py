@@ -88,9 +88,9 @@ def test_compose_llm_provider_valid():
         
     content = compose_path.read_text()
     
-    # Extract all lines setting AGNAV_LLM_PROVIDER
+    # Extract all lines setting AGNAV_LLM_PROVIDER at the start of a line
     # e.g., AGNAV_LLM_PROVIDER: ollama
-    providers = re.findall(r"AGNAV_LLM_PROVIDER:\s*([a-zA-Z0-9_-]+)", content)
+    providers = re.findall(r"^\s*AGNAV_LLM_PROVIDER:\s*([a-zA-Z0-9_-]+)", content, re.MULTILINE)
     
     supported_providers = {"ollama", "huggingface", "mock"}
     for p in providers:
@@ -153,9 +153,9 @@ def test_no_qwen_2_5_fallback_downgrade():
     assert "Qwen/Qwen2.5" not in content, \
         "Code Quality regression: Swapping default fallback models to Qwen 2.5 is prohibited. Keep flagship Qwen3."
     
-    # Verify the fallback model returned in _get_default_model is exactly Qwen3.5-35B-A3B
-    assert re.search(r'return\s+["\']Qwen/Qwen3\.5-35B-A3B["\']', content), \
-        "Code Quality regression: fallback model return value in main.py must be the flagship Qwen/Qwen3.5-35B-A3B model."
+    # Verify the fallback model returned in _get_default_model is exactly Qwen3.6-35B-A3B
+    assert re.search(r'return\s+["\']Qwen/Qwen3\.6-35B-A3B["\']', content), \
+        "Code Quality regression: fallback model return value in main.py must be the flagship Qwen/Qwen3.6-35B-A3B model."
 
 
 def test_python_version_integrity():
