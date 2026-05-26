@@ -98,7 +98,6 @@ def _get_default_model():
     return "Qwen/Qwen3.6-35B-A3B"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
-HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai").strip()
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
 REVIEWER_MODEL = os.getenv("AGNAV_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
 CONDENSE_MODEL = os.getenv("AGNAV_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
@@ -484,8 +483,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     client = get_llm_client()
     full_messages = _build_messages(messages, system)
     
-    # Use the 'model:provider' syntax for the most robust routing on the HF Router
-    actual_model = f"{model}:{HF_PROVIDER}" if (get_llm_provider() == "huggingface" and HF_PROVIDER) else model
+    actual_model = model
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
 
     t0 = time.perf_counter()
@@ -501,8 +499,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
     client = get_llm_client()
     full_messages = _build_messages(messages, system)
     
-    # Use the 'model:provider' syntax for the most robust routing on the HF Router
-    actual_model = f"{model}:{HF_PROVIDER}" if (get_llm_provider() == "huggingface" and HF_PROVIDER) else model
+    actual_model = model
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "stream": True, "timeout": 300.0}
 
     t0 = time.perf_counter()
@@ -525,8 +522,12 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
             logger.info(f"[llm-call] First stream chunk received in {elapsed:.2f} seconds")
             first_chunk = False
             
-        if chunk.choices and chunk.choices[0].delta.content:
-            buffer += chunk.choices[0].delta.content
+        if chunk.choices:
+            delta = chunk.choices[0].delta
+            content = getattr(delta, "content", None) or ""
+            reasoning = getattr(delta, "reasoning", None) or ""
+            if content:
+                buffer += content
             
             while buffer:
                 if not in_think_block:
@@ -757,7 +758,7 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
         
         async for text in unified_chat_stream(
             model=REVIEWER_MODEL,
-            max_tokens=1024,
+            max_tokens=REVIEWER_MAX_TOKENS,
             system=system,
             messages=messages
         ):
@@ -789,8 +790,7 @@ def startup(force_rebuild: bool = False):
     logger.info(f"[startup] AgNav {AGNAV_VERSION} starting...")
     logger.info(f"[startup] Provider: {provider}")
     logger.info(f"[startup] Default Model: {DEFAULT_MODEL_LLM}")
-    if get_llm_provider() == "huggingface":
-        logger.info(f"[startup] HF Routing: {HF_PROVIDER}")
+
 
     logger.info(f"[startup] Build Integrity: {AGNAV_VERSION}")
 
