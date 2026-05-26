@@ -93,8 +93,6 @@ def get_llm_provider() -> str:
 MODEL_CHOICES = {
     f"ollama:{CURRENT_MODEL_ID}": f"Ollama (Local {CURRENT_MODEL_ID})",
     "ollama:tinyllama": "Ollama (Local tinyllama)",
-    "ollama:llama3": "Ollama (Local llama3)",
-    "ollama:phi3": "Ollama (Local phi3)",
     "huggingface:Qwen/Qwen3.6-35B-A3B": "Hugging Face (Qwen 35B)",
     "huggingface:meta-llama/Meta-Llama-3-8B-Instruct": "Hugging Face (Llama 3 8B)",
     "huggingface:mistralai/Mistral-7B-Instruct-v0.2": "Hugging Face (Mistral 7B)",
