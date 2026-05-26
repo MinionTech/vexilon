@@ -57,6 +57,35 @@ services:
     command: >
       sh -c "cd /app && uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless --watch"
 
+  # Staging / Cloud Parity test container running locally (Hugging Face)
+  staging:
+    container_name: vexilon-staging
+    <<: *service-defaults
+    user: "${UID:-1000}:${GID:-1000}"
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app:z
+      - /app/.pdf_cache
+    environment:
+      <<: *app-env
+      AGNAV_LLM_PROVIDER: huggingface
+      WATCHFILES_FORCE_POLLING: "true"
+      PORT: "7861"
+    mem_limit: 2g
+    memswap_limit: 2g
+    ports:
+      - "7861:7861"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7861/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    command: >
+      sh -c "cd /app && uv run chainlit run main.py --host 0.0.0.0 --port 7861 --headless --watch"
+
   # ── Tests
   # Pure logic tests with fully mocked external dependencies.
   # Fast, zero RAM footprint, runs on every commit.
