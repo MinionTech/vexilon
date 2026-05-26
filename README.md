@@ -52,10 +52,10 @@ Docker deployments.
 Agreement Navigator is fully configured for container execution. You can spin up development, testing, and staging environments directly from the repository root using native Compose commands.
 
 Exposed services (run from the repository root):
-- **Boot Local Development**: `docker compose up dev`
-- **Graceful Tear Down**: `docker compose down -v`
-- **Run Full Containerized Test Suite**: `docker compose up test-everything`
-- **Build Container Images**: `docker compose build`
+- **Boot Local Development**: `podman compose up dev`
+- **Graceful Tear Down**: `podman compose down -v`
+- **Run Full Containerized Test Suite**: `podman compose up test-everything`
+- **Build Container Images**: `podman compose build`
 
 ---
 
@@ -65,7 +65,7 @@ Exposed services (run from the repository root):
 This is the default mode. It starts a local **Ollama** instance, pulls the required model weights, and launches the app with hot-reload. No API keys or tokens are required.
 
 ```bash
-docker compose up --build dev
+podman compose up --build dev
 ```
 
 > [!NOTE]
@@ -77,7 +77,7 @@ Uses the **Hugging Face Inference API** for high-speed "Flash" responses. Requir
 ```bash
 # Add your HF_TOKEN to .env or export it
 export HF_TOKEN=your_token_here
-docker compose up --build staging
+podman compose up --build staging
 ```
 
 > [!TIP]
@@ -182,16 +182,16 @@ Agreement Navigator features a strict **Quality Gate** deployment pattern—all 
 uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
-docker compose up --build test-unit
+podman compose up --build test-unit
 
 # Run model integration tests (FAISS + Embedding Model)
-docker compose up --build test-integration-model
+podman compose up --build test-integration-model
 
 # Run app integration tests (Functional RAG flow)
-docker compose up --build test-integration-app
+podman compose up --build test-integration-app
 
 # Verify everything at once (The "Grand Slam") and launch the dev app if successful
-docker compose up --build test-everything && docker compose up dev
+podman compose up --build test-everything && podman compose up dev
 ```
 
 ---
