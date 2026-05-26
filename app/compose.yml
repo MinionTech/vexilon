@@ -38,6 +38,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - .:/app:z
+      - /app/.pdf_cache
     environment:
       <<: *app-env
       AGNAV_LLM_PROVIDER: ollama
