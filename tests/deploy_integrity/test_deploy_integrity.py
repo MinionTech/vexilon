@@ -82,15 +82,15 @@ def test_hf_cache_security_lock():
 
 def test_compose_llm_provider_valid():
     """Ensures compose.yml uses only officially supported LLM providers."""
-    compose_path = REPO_ROOT / "app" / "compose.yml"
+    compose_path = REPO_ROOT / "compose.yml"
     if not compose_path.exists():
         return
         
     content = compose_path.read_text()
     
     # Extract all lines setting AGNAV_LLM_PROVIDER at the start of a line
-    # e.g., AGNAV_LLM_PROVIDER: ollama
-    providers = re.findall(r"^\s*AGNAV_LLM_PROVIDER:\s*([a-zA-Z0-9_-]+)", content, re.MULTILINE)
+    # Supporting standard variables and interpolations with default values, e.g., ${AGNAV_LLM_PROVIDER:-ollama}
+    providers = re.findall(r"^\s*AGNAV_LLM_PROVIDER:\s*(?:\${[A-Z0-9_]+:-)?([a-zA-Z0-9_-]+)}?", content, re.MULTILINE)
     
     supported_providers = {"ollama", "huggingface", "mock"}
     for p in providers:

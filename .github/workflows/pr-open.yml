@@ -52,7 +52,7 @@ jobs:
       - name: Warm Cache (All Test Targets)
         uses: docker/bake-action@v7
         with:
-          source: app
+          source: .
           files: compose.yml
           targets: dev
           set: |
@@ -89,7 +89,9 @@ jobs:
           uv sync --frozen
 
       - name: Run Deployment Integrity Checks
-        run: ./run integrity
+        run: |
+          cd app
+          uv run pytest ../tests/deploy_integrity/ -v
 
       - name: Run Local Unit & Streaming Tests
         env:
@@ -126,7 +128,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           load: true
-          source: app
+          source: .
           files: compose.yml
           targets: dev
           set: |
@@ -134,7 +136,7 @@ jobs:
             *.cache-from=type=registry,ref=ghcr.io/miniontech/vexilon/agnav:buildcache
 
       - name: Validate Cache Manifest
-        run: docker compose -f app/compose.yml up test-cache
+        run: docker compose up test-cache
 
   test-integration-model:
     name: Integration Tests (Model)
@@ -160,7 +162,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           load: true
-          source: app
+          source: .
           files: compose.yml
           targets: dev
           set: |
@@ -168,15 +170,15 @@ jobs:
             *.cache-from=type=registry,ref=ghcr.io/miniontech/vexilon/agnav:buildcache
 
       - name: Run Integration Tests
-        run: docker compose -f app/compose.yml up test-integration-model
+        run: docker compose up test-integration-model
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose -f app/compose.yml logs
+        run: docker compose logs
 
       - name: Cleanup
         if: always()
-        run: docker compose -f app/compose.yml down -v || true
+        run: docker compose down -v || true
 
   test-integration-app:
     name: Integration Tests (App)
@@ -196,7 +198,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           load: true
-          source: app
+          source: .
           files: compose.yml
           targets: dev
           set: |
@@ -204,15 +206,15 @@ jobs:
             *.cache-from=type=registry,ref=ghcr.io/miniontech/vexilon/agnav:buildcache
 
       - name: Run Integration Tests (App)
-        run: docker compose -f app/compose.yml up test-integration-app
+        run: docker compose up test-integration-app
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose -f app/compose.yml logs
+        run: docker compose logs
 
       - name: Cleanup
         if: always()
-        run: docker compose -f app/compose.yml down -v || true
+        run: docker compose down -v || true
 
   test-e2e:
     name: End-to-End Tests
@@ -238,7 +240,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           load: true
-          source: app
+          source: .
           files: compose.yml
           targets: dev
           set: |
@@ -246,15 +248,15 @@ jobs:
             *.cache-from=type=registry,ref=ghcr.io/miniontech/vexilon/agnav:buildcache
 
       - name: Run E2E Tests
-        run: docker compose -f app/compose.yml up test-everything
+        run: docker compose up test-everything
 
       - name: Dump Logs on Failure
         if: failure()
-        run: docker compose -f app/compose.yml logs
+        run: docker compose logs
 
       - name: Cleanup
         if: always()
-        run: docker compose -f app/compose.yml down -v || true
+        run: docker compose down -v || true
 
   build:
     name: Build & Push to GHCR
