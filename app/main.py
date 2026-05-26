@@ -89,6 +89,29 @@ def get_llm_provider() -> str:
         return "ollama"  # We're coding locally!
     return "huggingface" # We're in the clouds!
 
+# Curated List of Supported Models
+MODEL_CHOICES = {
+    f"ollama:{CURRENT_MODEL_ID}": f"Ollama (Local {CURRENT_MODEL_ID})",
+    "ollama:tinyllama": "Ollama (Local tinyllama)",
+    "ollama:llama3": "Ollama (Local llama3)",
+    "ollama:phi3": "Ollama (Local phi3)",
+    "huggingface:Qwen/Qwen3.6-35B-A3B": "Hugging Face (Qwen 35B)",
+    "huggingface:meta-llama/Meta-Llama-3-8B-Instruct": "Hugging Face (Llama 3 8B)",
+    "huggingface:mistralai/Mistral-7B-Instruct-v0.2": "Hugging Face (Mistral 7B)",
+}
+
+def get_available_model_choices() -> dict[str, str]:
+    if IS_DEV:
+        return MODEL_CHOICES
+    # Only return Hugging Face models in production
+    return {k: v for k, v in MODEL_CHOICES.items() if k.startswith("huggingface:")}
+
+def get_default_model_setting() -> str:
+    provider = get_llm_provider()
+    if provider == "ollama":
+        return f"ollama:{CURRENT_MODEL_ID}"
+    return "huggingface:Qwen/Qwen3.6-35B-A3B"
+
 def _get_default_model():
     provider = get_llm_provider()
     # Default to Hugging Face or Ollama
@@ -444,29 +467,57 @@ Respond in this format:
 If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
 If there are disputed claims, list them with explanations."""
 
-_llm_client = None
-def get_llm_client():
-    global _llm_client
-    if _llm_client is None:
-        provider = get_llm_provider()
-        if provider == "huggingface":
-            # Use the OpenAI-compatible router endpoint for reliable routing
-            _llm_client = AsyncOpenAI(
+_huggingface_client = None
+_ollama_client = None
+
+def get_llm_client(provider: str = None) -> AsyncOpenAI:
+    global _huggingface_client, _ollama_client
+    
+    if provider is None:
+        session_model = None
+        if has_chainlit_context():
+            session_model = cl.user_session.get("selected_model")
+        
+        if session_model and ":" in session_model:
+            provider = session_model.split(":", 1)[0]
+        else:
+            provider = get_llm_provider()
+    
+    if provider == "huggingface":
+        if _huggingface_client is None:
+            token = os.environ.get("HF_TOKEN")
+            if not token:
+                raise ValueError("Missing HF_TOKEN environment variable for Hugging Face provider.")
+            _huggingface_client = AsyncOpenAI(
                 base_url="https://router.huggingface.co/v1",
-                api_key=os.environ.get("HF_TOKEN"),
-                timeout=60.0 # PR Feedback: Added explicit timeout
+                api_key=token,
+                timeout=60.0
             )
-        elif provider == "ollama":
+        return _huggingface_client
+    elif provider == "ollama":
+        if _ollama_client is None:
             ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
             if "://" not in ollama_host:
                 ollama_host = f"http://{ollama_host}"
-            _llm_client = AsyncOpenAI(
+            _ollama_client = AsyncOpenAI(
                 base_url=f"{ollama_host.rstrip('/')}/v1",
                 api_key="ollama"
             )
-        else:
-            raise ValueError(f"Unsupported LLM provider: {provider}")
-    return _llm_client
+        return _ollama_client
+    else:
+        raise ValueError(f"Unsupported LLM provider: {provider}")
+
+def resolve_model_and_provider(fallback_model: str) -> tuple[str, str]:
+    session_model = None
+    if has_chainlit_context():
+        session_model = cl.user_session.get("selected_model")
+    
+    model_str = session_model or fallback_model
+    if ":" in model_str:
+        provider, model_id = model_str.split(":", 1)
+        return provider, model_id
+    
+    return get_llm_provider(), model_str
 
 def _build_messages(messages: list, system: str | list = None) -> list:
     full_messages = []
@@ -480,14 +531,14 @@ def _build_messages(messages: list, system: str | list = None) -> list:
     return full_messages
 
 async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
+    provider, actual_model = resolve_model_and_provider(model)
     client = get_llm_client()
     full_messages = _build_messages(messages, system)
     
-    actual_model = model
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
 
     t0 = time.perf_counter()
-    logger.info(f"[llm-call] Creating completion for actual_model='{actual_model}'...")
+    logger.info(f"[llm-call] Creating completion for actual_model='{actual_model}' on provider='{provider}'...")
     try:
         resp = await client.chat.completions.create(**kwargs)
     finally:
@@ -496,14 +547,14 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     return resp.choices[0].message.content
 
 async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
+    provider, actual_model = resolve_model_and_provider(model)
     client = get_llm_client()
     full_messages = _build_messages(messages, system)
     
-    actual_model = model
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "stream": True, "timeout": 300.0}
 
     t0 = time.perf_counter()
-    logger.info(f"[llm-call] Opening stream for actual_model='{actual_model}'...")
+    logger.info(f"[llm-call] Opening stream for actual_model='{actual_model}' on provider='{provider}'...")
     try:
         stream = await client.chat.completions.create(**kwargs)
     finally:
@@ -859,6 +910,7 @@ if os.getenv("AGNAV_PASSWORD"):
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
+    cl.user_session.set("selected_model", settings["Model"])
 
 
 PERSONAS = ["Lookup", "Grieve", "Manage"]
@@ -910,6 +962,9 @@ async def on_chat_start():
     
 
     # ── Chat Settings (Gear Icon) ─────────────────────────────────────────
+    available_choices = get_available_model_choices()
+    default_model = get_default_model_setting()
+
     await cl.ChatSettings(
         [
             cl.input_widget.Select(
@@ -918,12 +973,19 @@ async def on_chat_start():
                 values=["Lookup", "Grieve", "Manage"],
                 initial="Lookup",
             ),
+            cl.input_widget.Select(
+                id="Model",
+                label="Model Selection",
+                values=available_choices,
+                initial=default_model,
+            ),
         ]
     ).send()
     
     # Initialize session state
     cl.user_session.set("history", [])
     cl.user_session.set("persona", "Lookup")
+    cl.user_session.set("selected_model", default_model)
 
 
 
