@@ -95,7 +95,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return "Qwen/Qwen3-32B"
+    return "Qwen/Qwen3.5-35B-A3B"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai").strip()
