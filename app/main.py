@@ -90,11 +90,14 @@ def get_llm_provider() -> str:
     return "huggingface" # We're in the clouds!
 
 # Curated List of Supported Models
+HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai").strip()
+
 MODEL_CHOICES = {
     f"ollama:{CURRENT_MODEL_ID}": f"Ollama (Local {CURRENT_MODEL_ID})",
     "ollama:tinyllama": "Ollama (Local tinyllama)",
-    "huggingface:Qwen/Qwen2.5-72B-Instruct": "Hugging Face (Qwen 72B)",
-    "huggingface:Qwen/Qwen2.5-7B-Instruct": "Hugging Face (Qwen 7B)",
+    "huggingface:Qwen/Qwen3.6-35B-A3B": "Hugging Face (Qwen 35B)",
+    "huggingface:meta-llama/Meta-Llama-3-8B-Instruct": "Hugging Face (Llama 3 8B)",
+    "huggingface:mistralai/Mistral-7B-Instruct-v0.2": "Hugging Face (Mistral 7B)",
 }
 
 MODEL_DISPLAY_TO_ID = {v: k for k, v in MODEL_CHOICES.items()}
@@ -109,7 +112,7 @@ def get_default_model_setting() -> str:
     provider = get_llm_provider()
     if provider == "ollama":
         return f"ollama:{CURRENT_MODEL_ID}"
-    return "huggingface:Qwen/Qwen2.5-72B-Instruct"
+    return "huggingface:Qwen/Qwen3.6-35B-A3B"
 
 def _get_default_model():
     provider = get_llm_provider()
@@ -117,7 +120,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return "Qwen/Qwen2.5-72B-Instruct"
+    return "Qwen/Qwen3.6-35B-A3B"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -514,9 +517,14 @@ def resolve_model_and_provider(fallback_model: str) -> tuple[str, str]:
     model_str = session_model or fallback_model
     if ":" in model_str:
         provider, model_id = model_str.split(":", 1)
-        return provider, model_id
-    
-    return get_llm_provider(), model_str
+    else:
+        provider = get_llm_provider()
+        model_id = model_str
+        
+    if provider == "huggingface" and HF_PROVIDER and ":" not in model_id:
+        model_id = f"{model_id}:{HF_PROVIDER}"
+        
+    return provider, model_id
 
 def _build_messages(messages: list, system: str | list = None) -> list:
     full_messages = []
