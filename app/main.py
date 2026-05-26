@@ -92,22 +92,6 @@ def get_llm_provider() -> str:
 # Curated List of Supported Models
 HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai").strip()
 
-MODEL_CHOICES = {
-    f"ollama:{CURRENT_MODEL_ID}": f"Ollama (Local {CURRENT_MODEL_ID})",
-    "ollama:tinyllama": "Ollama (Local tinyllama)",
-    "huggingface:Qwen/Qwen3.6-35B-A3B": "Hugging Face (Qwen 35B)",
-    "huggingface:meta-llama/Meta-Llama-3-8B-Instruct": "Hugging Face (Llama 3 8B)",
-    "huggingface:mistralai/Mistral-7B-Instruct-v0.2": "Hugging Face (Mistral 7B)",
-}
-
-MODEL_DISPLAY_TO_ID = {v: k for k, v in MODEL_CHOICES.items()}
-
-def get_available_model_choices() -> dict[str, str]:
-    if IS_DEV:
-        return MODEL_CHOICES
-    # Only return Hugging Face models in production
-    return {k: v for k, v in MODEL_CHOICES.items() if k.startswith("huggingface:")}
-
 def get_default_model_setting() -> str:
     provider = get_llm_provider()
     if provider == "ollama":
@@ -917,11 +901,6 @@ if os.getenv("AGNAV_PASSWORD"):
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
-    if "Model" in settings:
-        display_name = settings["Model"]
-        model_id = MODEL_DISPLAY_TO_ID.get(display_name)
-        if model_id:
-            cl.user_session.set("selected_model", model_id)
 
 
 PERSONAS = ["Lookup", "Grieve", "Manage"]
@@ -973,36 +952,16 @@ async def on_chat_start():
     
 
     # ── Chat Settings (Gear Icon) ─────────────────────────────────────────
-    settings_widgets = [
-        cl.input_widget.Select(
-            id="Persona",
-            label="Navigator Persona",
-            values=["Lookup", "Grieve", "Manage"],
-            initial_index=0,
-        )
-    ]
-    
-    if IS_DEV:
-        available_choices = get_available_model_choices()
-        default_model = get_default_model_setting()
-        default_display = available_choices.get(default_model, list(available_choices.values())[0])
-        
-        model_values = list(available_choices.values())
-        try:
-            default_index = model_values.index(default_display)
-        except ValueError:
-            default_index = 0
-            
-        settings_widgets.append(
+    await cl.ChatSettings(
+        [
             cl.input_widget.Select(
-                id="Model",
-                label="Model Selection",
-                values=model_values,
-                initial_index=default_index,
-            )
-        )
-        
-    await cl.ChatSettings(settings_widgets).send()
+                id="Persona",
+                label="Navigator Persona",
+                values=["Lookup", "Grieve", "Manage"],
+                initial_index=0,
+            ),
+        ]
+    ).send()
     
     # Initialize session state
     cl.user_session.set("history", [])
