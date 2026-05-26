@@ -89,8 +89,8 @@ def test_compose_llm_provider_valid():
     content = compose_path.read_text()
     
     # Extract all lines setting AGNAV_LLM_PROVIDER at the start of a line
-    # e.g., AGNAV_LLM_PROVIDER: ollama
-    providers = re.findall(r"^\s*AGNAV_LLM_PROVIDER:\s*([a-zA-Z0-9_-]+)", content, re.MULTILINE)
+    # Supporting standard variables and interpolations with default values, e.g., ${AGNAV_LLM_PROVIDER:-ollama}
+    providers = re.findall(r"^\s*AGNAV_LLM_PROVIDER:\s*(?:\${[A-Z0-9_]+:-)?([a-zA-Z0-9_-]+)}?", content, re.MULTILINE)
     
     supported_providers = {"ollama", "huggingface", "mock"}
     for p in providers:

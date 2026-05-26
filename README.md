@@ -53,8 +53,8 @@ Agreement Navigator is fully configured for container execution. You can spin up
 
 Exposed services (run from the repository root):
 - **Boot Local Development**: `podman compose up dev`
-- **Graceful Tear Down**: `podman compose down -v`
-- **Run Full Containerized Test Suite**: `podman compose up test-everything`
+- **Graceful Tear Down**: `podman compose down`
+- **Run Full Containerized Test Suite**: `podman compose up --exit-code-from test-everything test-everything`
 - **Build Container Images**: `podman compose build`
 
 ---
@@ -182,16 +182,16 @@ Agreement Navigator features a strict **Quality Gate** deployment pattern—all 
 uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
-podman compose up --build test-unit
+podman compose up --build --exit-code-from test-unit test-unit
 
 # Run model integration tests (FAISS + Embedding Model)
-podman compose up --build test-integration-model
+podman compose up --build --exit-code-from test-integration-model test-integration-model
 
 # Run app integration tests (Functional RAG flow)
-podman compose up --build test-integration-app
+podman compose up --build --exit-code-from test-integration-app test-integration-app
 
 # Verify everything at once (The "Grand Slam") and launch the dev app if successful
-podman compose up --build test-everything && podman compose up dev
+podman compose up --build --exit-code-from test-everything test-everything && podman compose up dev
 ```
 
 ---
