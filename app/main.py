@@ -93,9 +93,8 @@ def get_llm_provider() -> str:
 MODEL_CHOICES = {
     f"ollama:{CURRENT_MODEL_ID}": f"Ollama (Local {CURRENT_MODEL_ID})",
     "ollama:tinyllama": "Ollama (Local tinyllama)",
-    "huggingface:Qwen/Qwen3.6-35B-A3B": "Hugging Face (Qwen 35B)",
-    "huggingface:meta-llama/Meta-Llama-3-8B-Instruct": "Hugging Face (Llama 3 8B)",
-    "huggingface:mistralai/Mistral-7B-Instruct-v0.2": "Hugging Face (Mistral 7B)",
+    "huggingface:Qwen/Qwen2.5-72B-Instruct": "Hugging Face (Qwen 72B)",
+    "huggingface:Qwen/Qwen2.5-7B-Instruct": "Hugging Face (Qwen 7B)",
 }
 
 MODEL_DISPLAY_TO_ID = {v: k for k, v in MODEL_CHOICES.items()}
@@ -110,7 +109,7 @@ def get_default_model_setting() -> str:
     provider = get_llm_provider()
     if provider == "ollama":
         return f"ollama:{CURRENT_MODEL_ID}"
-    return "huggingface:Qwen/Qwen3.6-35B-A3B"
+    return "huggingface:Qwen/Qwen2.5-72B-Instruct"
 
 def _get_default_model():
     provider = get_llm_provider()
@@ -118,7 +117,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return "Qwen/Qwen3.6-35B-A3B"
+    return "Qwen/Qwen2.5-72B-Instruct"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
