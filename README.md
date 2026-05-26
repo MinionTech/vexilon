@@ -33,8 +33,8 @@ Add or replace Markdown files in `app/data/` using the naming convention:
 
 ## Deployment Status
 
-Agreement Navigator is deployed as a Docker container. We maintain two environments for
-Docker deployments.
+Agreement Navigator is deployed as a container. We maintain two environments for
+deployments.
 
 - **TEST**: https://bcgeu-navigator-test.hf.space
 
