@@ -321,8 +321,8 @@ jobs:
     if: always()
     runs-on: ubuntu-slim
     steps:
-      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'canceled')
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: |
-          echo "At least one required job has failed or was canceled."
+          echo "At least one required job has failed or was cancelled."
           exit 1
       - run: echo "All critical checks passed or were intentionally skipped."
