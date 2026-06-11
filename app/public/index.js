@@ -50,6 +50,17 @@
         });
     }
 
+    // ── Brand Configuration ────────────────────────────────────────────────────
+
+    let welcomeTitle = "BCGEU Navigator";
+
+    fetch("/api/brand")
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.welcome_title) welcomeTitle = data.welcome_title;
+        })
+        .catch((err) => console.error("Error fetching brand:", err));
+
     function manageWelcomeTitle() {
         const chatArea = document.querySelector(".flex-grow.overflow-y-auto");
         if (!chatArea) return;
@@ -68,7 +79,7 @@
                 titleEl.style.marginBottom = "1rem"; // Default is 2rem, reduced for aesthetic reasons
                 titleEl.style.color = "inherit";
                 titleEl.style.opacity = "0.9";
-                titleEl.textContent = "BCGEU Navigator";
+                titleEl.textContent = welcomeTitle;
                 chatArea.prepend(titleEl);
             }
         } else {

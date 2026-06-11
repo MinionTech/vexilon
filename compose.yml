@@ -8,6 +8,9 @@ x-app-env: &app-env
   OLLAMA_HOST: ollama:11434
   OLLAMA_MODEL_ID: tinyllama
   CHAINLIT_FILES_DIR: /tmp/chainlit_files
+  AGNAV_APP_NAME: ${AGNAV_APP_NAME:-BCGEU Navigator}
+  AGNAV_APP_DESCRIPTION: ${AGNAV_APP_DESCRIPTION:-BCGEU Agreement Navigator}
+  AGNAV_WELCOME_TITLE: ${AGNAV_WELCOME_TITLE:-BCGEU Navigator}
 
 x-test-env: &test-env
   <<: *app-env
