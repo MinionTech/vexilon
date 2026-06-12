@@ -166,7 +166,7 @@ the HF Space.
 **Required GitHub secret:**
 
 | Secret | Value |
-|---|---|---|
+|---|---|
 | `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
 
 ---

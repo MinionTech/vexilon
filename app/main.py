@@ -4,6 +4,8 @@ CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
 # CHAINLIT_FILES_DIR is set in Containerfile ENV (must be set before
 # chainlit imports). Defensive fallback for non-container dev:
 os.environ.setdefault("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")
+os.environ.setdefault("AGNAV_APP_NAME", "BCGEU Navigator")
+os.environ.setdefault("AGNAV_APP_DESCRIPTION", "BCGEU Agreement Navigator")
 Path(os.environ["CHAINLIT_FILES_DIR"]).mkdir(parents=True, exist_ok=True)
 
 # Force online mode for the API but keep local models offline for speed

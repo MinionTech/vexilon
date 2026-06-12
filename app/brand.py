@@ -1,8 +1,8 @@
 import os
 
-AGNAV_APP_NAME = os.getenv("AGNAV_APP_NAME", "BCGEU Navigator")
-AGNAV_APP_DESCRIPTION = os.getenv("AGNAV_APP_DESCRIPTION", "BCGEU Agreement Navigator")
-AGNAV_WELCOME_TITLE = os.getenv("AGNAV_WELCOME_TITLE", "BCGEU Navigator")
+AGNAV_APP_NAME = os.getenv("AGNAV_APP_NAME") or "BCGEU Navigator"
+AGNAV_APP_DESCRIPTION = os.getenv("AGNAV_APP_DESCRIPTION") or "BCGEU Agreement Navigator"
+AGNAV_WELCOME_TITLE = os.getenv("AGNAV_WELCOME_TITLE") or "BCGEU Navigator"
 
 
 def get_brand() -> dict[str, str]:

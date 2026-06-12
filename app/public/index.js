@@ -81,6 +81,8 @@
                 titleEl.style.opacity = "0.9";
                 titleEl.textContent = welcomeTitle;
                 chatArea.prepend(titleEl);
+            } else if (existingTitle.textContent.trim() !== welcomeTitle.trim()) {
+                existingTitle.textContent = welcomeTitle;
             }
         } else {
             if (existingTitle) {
