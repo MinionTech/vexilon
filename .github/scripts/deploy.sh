@@ -128,9 +128,14 @@ git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 git remote remove hf 2>/dev/null || true
 git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
 
+# Helper to retry a command once after a 2-second sleep if it fails
+retry() {
+    "$@" || (echo "[warning] Command '$1' failed. Retrying in 2s..." && sleep 2 && "$@")
+}
+
 # Push using an authenticated URL to avoid modifying local git config
 # We use 'api' as the username for Hugging Face HTTPS auth
-git push "https://api:${HF_TOKEN}@huggingface.co/spaces/${SPACE_NAME}" hf-snapshot:main --force --no-verify
+retry git push "https://api:${HF_TOKEN}@huggingface.co/spaces/${SPACE_NAME}" hf-snapshot:main --force --no-verify
 
 echo "Deployment to ${SPACE_NAME} complete!"
 
