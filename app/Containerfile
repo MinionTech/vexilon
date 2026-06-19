@@ -77,6 +77,7 @@ COPY chainlit.md chainlit_en-US.md ./
 COPY data/ ./public/docs/
 COPY main.py ./
 COPY patches.py ./
+COPY brand.py ./
 COPY conftest.py ./
 COPY prompts/ ./prompts/
 COPY scripts/ ./scripts/

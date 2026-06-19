@@ -95,7 +95,7 @@ reaction_on_message_received = false
 
 [UI]
 # Name of the assistant.
-name = "BCGEU Navigator"
+name = "${AGNAV_APP_NAME}"
 
 # default_theme = "dark"
 
@@ -117,7 +117,7 @@ layout = "wide"
 confirm_new_chat = true
 
 # Description of the assistant. This is used for HTML tags.
-description = "BCGEU Agreement Navigator"
+description = "${AGNAV_APP_DESCRIPTION}"
 
 # Chain of Thought (CoT) display mode. Can be "hidden", "tool_call" or "full".
 cot = "full"

@@ -104,6 +104,9 @@ Agreement Navigator includes an automated "Adversarial Reviewer" that double-che
 | `AGNAV_PASSWORD` | *(None)* | Basic Auth password (enables auth if set) |
 | `AGNAV_LLM_PROVIDER` | `huggingface` | `huggingface` or `ollama` |
 | `AGNAV_DEFAULT_MODEL` | `Qwen/Qwen3.6-35B-A3B` | Primary LLM for responses |
+| `AGNAV_APP_NAME` | `BCGEU Navigator` | Application name (UI header, system prompt header) |
+| `AGNAV_APP_DESCRIPTION` | `BCGEU Agreement Navigator` | Application description (UI subtitle) |
+| `AGNAV_WELCOME_TITLE` | `BCGEU Navigator` | Welcome screen title (primary visual branding) |
 | `HF_TOKEN` | *(Required for HF)* | Hugging Face API token |
 | `PORT` | `7860` | Application port |
 | `SIMILARITY_TOP_K` | `40` | Number of chunks retrieved |

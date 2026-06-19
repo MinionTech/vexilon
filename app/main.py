@@ -4,6 +4,8 @@ CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
 # CHAINLIT_FILES_DIR is set in Containerfile ENV (must be set before
 # chainlit imports). Defensive fallback for non-container dev:
 os.environ.setdefault("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")
+os.environ.setdefault("AGNAV_APP_NAME", "BCGEU Navigator")
+os.environ.setdefault("AGNAV_APP_DESCRIPTION", "BCGEU Agreement Navigator")
 Path(os.environ["CHAINLIT_FILES_DIR"]).mkdir(parents=True, exist_ok=True)
 
 # Force online mode for the API but keep local models offline for speed
@@ -36,6 +38,7 @@ import sniffio
 from patches import apply_patches
 apply_patches()
 # ─── Agnav Imports ────────────────────────────────────────────────────────
+from brand import AGNAV_APP_NAME
 from indexing import (
     _get_source_name,
     _get_rag_source_files,
@@ -630,8 +633,8 @@ async def verify_response(assistant_response: str, context: str) -> str:
 
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
-    header = f"--- BCGEU NAVIGATOR SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
-    content = "You are BCGEU Navigator, a professional assistant for BCGEU union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\nKnowledge Base:\n{manifest}\n\n{verify_message}"
+    header = f"--- {AGNAV_APP_NAME.upper()} SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
+    content = f"You are {AGNAV_APP_NAME}, a professional assistant for union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\nKnowledge Base:\n{{manifest}}\n\n{{verify_message}}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
@@ -1307,11 +1310,22 @@ def get_version():
         "version": AGNAV_VERSION
     }
 
-# Prepend the API route to bypass Chainlit's catch-all wildcard router
+def get_brand_config():
+    from brand import get_brand as _get_brand
+    return _get_brand()
+
+# Prepend the API routes to bypass Chainlit's catch-all wildcard router
+brand_route = APIRoute(
+    "/api/brand",
+    endpoint=get_brand_config,
+    methods=["GET"],
+    include_in_schema=False
+)
+cl_app.router.routes.insert(0, brand_route)
 version_route = APIRoute(
     "/api/version",
     endpoint=get_version,
     methods=["GET"],
     include_in_schema=False
 )
-cl_app.router.routes.insert(0, version_route)
+cl_app.router.routes.insert(1, version_route)

@@ -189,3 +189,6 @@ reports/
 
 # Dynamic build metadata
 app/public/build_metadata.json
+
+# AI Coding Agent
+.kilo/

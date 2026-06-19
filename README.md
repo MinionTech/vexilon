@@ -171,6 +171,25 @@ the HF Space.
 
 ---
 
+## White-Label Customization
+
+Fork users can customize the application branding by setting environment variables in a `.env` file:
+
+```bash
+# .env
+AGNAV_APP_NAME=My Custom Assistant
+AGNAV_APP_DESCRIPTION=Custom Description Here
+AGNAV_WELCOME_TITLE=My Custom Title
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `AGNAV_APP_NAME` | `BCGEU Navigator` | Application name (UI header, system prompt header) |
+| `AGNAV_APP_DESCRIPTION` | `BCGEU Agreement Navigator` | Application description (UI subtitle) |
+| `AGNAV_WELCOME_TITLE` | `BCGEU Navigator` | Welcome screen title (primary visual branding) |
+
+---
+
 ## Running Tests
 
 Agreement Navigator features a strict **Quality Gate** deployment pattern—all automated unit and integration tests must pass to verify the application's integrity before local or staging environments boot.
