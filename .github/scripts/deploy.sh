@@ -128,9 +128,23 @@ git commit -m "promote: $IMAGE_REF from $ORIGINAL_REF"
 git remote remove hf 2>/dev/null || true
 git remote add hf "https://huggingface.co/spaces/${SPACE_NAME}"
 
-# Helper to retry a command once after a 2-second sleep if it fails
+# Helper to retry a command up to 3 times with a 10-second sleep
 retry() {
-    "$@" || (echo "[warning] Command '$1' failed. Retrying in 2s..." && sleep 2 && "$@")
+    local max=3
+    local delay=10
+    local attempt=1
+    while true; do
+        if "$@"; then
+            return 0
+        fi
+        if (( attempt >= max )); then
+            echo "[error] Command '$1' failed after $max attempts."
+            return 1
+        fi
+        echo "[warning] Command '$1' failed. Retrying in ${delay}s (Attempt $((attempt+1))/$max)..."
+        sleep "$delay"
+        ((attempt++))
+    done
 }
 
 # Push using an authenticated URL to avoid modifying local git config
