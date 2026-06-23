@@ -45,7 +45,7 @@ jobs:
           MAX_ATTEMPTS=3
           for i in $(seq 1 $MAX_ATTEMPTS); do
             echo "::group::Attempt $i of $MAX_ATTEMPTS"
-            if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "${{ steps.resolve.outputs.image }}"; then
+            if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "${{ inputs.image_tag || steps.resolve.outputs.image }}"; then
               echo "✅ Deployment succeeded on attempt $i!"
               echo "::endgroup::"
               exit 0
