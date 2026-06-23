@@ -41,7 +41,23 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
-        run: ./.github/scripts/deploy.sh "bcgeu/navigator-test" "${{ steps.resolve.outputs.image }}"
+        run: |
+          MAX_ATTEMPTS=3
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "::group::Attempt $i of $MAX_ATTEMPTS"
+            if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "${{ steps.resolve.outputs.image }}"; then
+              echo "✅ Deployment succeeded on attempt $i!"
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            if [ $i -lt $MAX_ATTEMPTS ]; then
+              echo "⚠️ Attempt $i failed. Retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
+          echo "❌ Deployment failed after $MAX_ATTEMPTS attempts."
+          exit 1
 
       - name: Notify Owners on Failure
         if: failure()
