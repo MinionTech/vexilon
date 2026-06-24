@@ -1322,7 +1322,7 @@ async def get_health():
     try:
         client = get_llm_client()
         # Fast lightweight check to ensure credentials and network are valid
-        await client.models.list()
+        await client.models.list(timeout=10.0)
         return {"status": "ok", "llm": "connected"}
     except Exception as e:
         logger.error(f"[health] LLM connection failed: {e}")
