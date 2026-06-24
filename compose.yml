@@ -45,6 +45,7 @@ services:
     environment:
       <<: *app-env
       AGNAV_LLM_PROVIDER: ${AGNAV_LLM_PROVIDER:-ollama}
+      AGNAV_DEV_MODE: "true"
       WATCHFILES_FORCE_POLLING: "true"
       PORT: "7860"
     mem_limit: 2g
