@@ -634,7 +634,7 @@ async def verify_response(assistant_response: str, context: str) -> str:
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
     header = f"--- {AGNAV_APP_NAME.upper()} SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
-    content = f"You are {AGNAV_APP_NAME}, a professional assistant for union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Document Name, Page X] format provided in the context.\n\nKnowledge Base:\n{{manifest}}\n\n{{verify_message}}"
+    content = f"You are {AGNAV_APP_NAME}, a professional assistant for union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Document Name, Header/Article] format provided in the context.\n\nKnowledge Base:\n{{manifest}}\n\n{{verify_message}}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
