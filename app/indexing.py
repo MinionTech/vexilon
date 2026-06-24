@@ -482,7 +482,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
             "chunk_size": CHUNK_SIZE,
             "chunk_overlap": CHUNK_OVERLAP,
             "embed_model": EMBED_MODEL,
-            "tiering_version": "v1",
+            "tiering_version": "v2",
         },
         "files": {}
     }
