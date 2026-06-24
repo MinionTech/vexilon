@@ -87,7 +87,7 @@ def get_llm_provider() -> str:
     if val:
         return val.lower().strip()
 
-    # 2. Smart Detection based on version
+    # 2. Explicit dev mode flag (defaults to PROD)
     if IS_DEV:
         return "ollama"  # We're coding locally!
     return "huggingface" # We're in the clouds!
@@ -1323,7 +1323,7 @@ async def get_health():
         return {"status": "ok", "llm": "connected"}
     except Exception as e:
         logger.error(f"[health] LLM connection failed: {e}")
-        raise HTTPException(status_code=503, detail=f"LLM connection failed: {e}")
+        raise HTTPException(status_code=503, detail="LLM connection failed")
 
 # Prepend the API routes to bypass Chainlit's catch-all wildcard router
 brand_route = APIRoute(
