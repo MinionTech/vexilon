@@ -73,10 +73,8 @@ def test_hf_cache_security_lock():
     containerfile_path = REPO_ROOT / "app" / "Containerfile"
     content = containerfile_path.read_text()
     
-    # Ensure there is NO --chown=1001:1001 on the hf_cache line
-    # Broken version: COPY --from=builder --chown=1001:1001 /app/hf_cache /app/hf_cache
-    # Safe version: COPY --from=builder /app/hf_cache /app/hf_cache
-    assert "--chown=1001:1001 /app/hf_cache" not in content, \
+    # Ensure there is NO chown assigning hf_cache to the app user
+    assert not re.search(r"chown\s+.*?\b(?:app|1000)\b.*?/hf_cache", content), \
         "Security Breach: hf_cache MUST NOT be owned by the app user. Revert the chown to root."
 
 

@@ -90,7 +90,7 @@ SPACE_URL="https://$(echo "$SPACE_ID" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
 
 # Since the server may take a few seconds to fully initialize even after the Space
 # status reports 'running', we run the probe with a brief retry loop.
-MAX_RETRIES=6
+MAX_RETRIES=12
 RETRY_INTERVAL=10
 CURL_EXIT=0
 

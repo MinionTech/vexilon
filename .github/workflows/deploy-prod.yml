@@ -17,7 +17,7 @@ jobs:
       issues: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -36,7 +36,22 @@ jobs:
           TEST: "true"
         run: |
           TAG=$(echo '${{ steps.resolve.outputs.images }}' | jq -r '.agnav')
-          ./.github/scripts/deploy.sh "bcgeu/navigator" "$TAG"
+          MAX_ATTEMPTS=3
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "::group::Attempt $i of $MAX_ATTEMPTS"
+            if ./.github/scripts/deploy.sh "bcgeu/navigator" "$TAG"; then
+              echo "✅ Deployment succeeded on attempt $i!"
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            if [ $i -lt $MAX_ATTEMPTS ]; then
+              echo "⚠️ Attempt $i failed. Retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
+          echo "❌ Deployment failed after $MAX_ATTEMPTS attempts."
+          exit 1
 
       - name: Notify Owners on Failure
         if: failure()

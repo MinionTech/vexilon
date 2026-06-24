@@ -85,7 +85,7 @@ COPY tests/ ./tests/
 
 # Prepare directories for local testing and Chainlit runtime with non-root ownership
 RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache /app/.files /app/.pdf_cache && \
-    chown -R 1000:1000 /app/reports /app/.pytest_cache /hf_cache /app/.files /app/.pdf_cache /app/.chainlit
+    chown -R 1000:1000 /app/reports /app/.pytest_cache /app/.files /app/.pdf_cache /app/.chainlit
 
 # ─── Stage 3: Minimal, Hardened Production Runner ─────────────────────────────
 # The clean, locked-down image compiled for production deployments.
@@ -100,7 +100,7 @@ COPY --chown=app:app --from=builder /venv /venv
 COPY --chown=app:app --from=builder /app /app
 COPY --from=model_fetcher /model /model
 
-RUN mkdir -p /hf_cache && chown -R app:app /hf_cache
+RUN mkdir -p /hf_cache
 USER 1000
 
 CMD ["sh", "-c", "TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=0 chainlit run main.py --host 0.0.0.0 --port 7860 --headless"]
