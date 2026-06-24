@@ -224,22 +224,12 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         if stripped.startswith("#"):
             current_header = stripped.lstrip("#").strip().upper()
         
-        page_num = 1
-        if pdf_pages and stripped:
-            if len(stripped) > 20:
-                found = False
-                for p_idx in range(current_pdf_page, min(current_pdf_page + 5, len(pdf_pages))):
-                    if stripped in pdf_pages[p_idx]:
-                        current_pdf_page = p_idx
-                        page_num = current_pdf_page + 1
-                        found = True
-                        break
-                if not found:
-                    page_num = current_pdf_page + 1
-            else:
-                page_num = current_pdf_page + 1
-        else:
-            page_num = current_pdf_page + 1 if pdf_pages else 1
+        if pdf_pages and stripped and len(stripped) > 20:
+            for p_idx in range(current_pdf_page, min(current_pdf_page + 5, len(pdf_pages))):
+                if stripped in pdf_pages[p_idx]:
+                    current_pdf_page = p_idx
+                    break
+        page_num = current_pdf_page + 1 if pdf_pages else 1
 
         # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
         # This replaces the legacy try-except/char-length fallback blocks.
