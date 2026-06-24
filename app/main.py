@@ -1304,6 +1304,7 @@ async def on_message(message: cl.Message) -> None:
 # ─── Custom FastAPI Routes ───────────────────────────────────────────────────
 from chainlit.server import app as cl_app
 from fastapi.routing import APIRoute
+from fastapi import HTTPException
 
 def get_version():
     return {
@@ -1314,6 +1315,16 @@ def get_brand_config():
     from brand import get_brand as _get_brand
     return _get_brand()
 
+async def get_health():
+    try:
+        client = get_llm_client()
+        # Fast lightweight check to ensure credentials and network are valid
+        await client.models.list()
+        return {"status": "ok", "llm": "connected"}
+    except Exception as e:
+        logger.error(f"[health] LLM connection failed: {e}")
+        raise HTTPException(status_code=503, detail=f"LLM connection failed: {e}")
+
 # Prepend the API routes to bypass Chainlit's catch-all wildcard router
 brand_route = APIRoute(
     "/api/brand",
@@ -1322,6 +1333,7 @@ brand_route = APIRoute(
     include_in_schema=False
 )
 cl_app.router.routes.insert(0, brand_route)
+
 version_route = APIRoute(
     "/api/version",
     endpoint=get_version,
@@ -1329,3 +1341,11 @@ version_route = APIRoute(
     include_in_schema=False
 )
 cl_app.router.routes.insert(1, version_route)
+
+health_route = APIRoute(
+    "/api/health",
+    endpoint=get_health,
+    methods=["GET"],
+    include_in_schema=False
+)
+cl_app.router.routes.insert(2, health_route)
