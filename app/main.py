@@ -38,7 +38,10 @@ import sniffio
 from patches import apply_patches
 apply_patches()
 # ─── Agnav Imports ────────────────────────────────────────────────────────
-from brand import AGNAV_APP_NAME
+from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION
+from chainlit.config import config as _cl_config
+_cl_config.ui.name = AGNAV_APP_NAME
+_cl_config.ui.description = AGNAV_APP_DESCRIPTION
 from indexing import (
     _get_source_name,
     _get_rag_source_files,
