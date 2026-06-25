@@ -90,7 +90,7 @@ def get_llm_provider() -> str:
     if val:
         return val.lower().strip()
 
-    # 2. Smart Detection based on version
+    # 2. Explicit dev mode flag (defaults to PROD)
     if IS_DEV:
         return "ollama"  # We're coding locally!
     return "huggingface" # We're in the clouds!
