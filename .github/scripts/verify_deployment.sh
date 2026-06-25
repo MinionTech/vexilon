@@ -95,11 +95,11 @@ RETRY_INTERVAL=10
 CURL_EXIT=0
 
 for i in $(seq 1 $MAX_RETRIES); do
-  echo "[verify] Querying /api/version (Attempt $i/$MAX_RETRIES)..."
+  echo "[verify] Querying /api/health (Attempt $i/$MAX_RETRIES)..."
   CURL_EXIT=0
-  VERSION_JSON=$(curl -s -f "$SPACE_URL/api/version") || CURL_EXIT=$?
+  HEALTH_JSON=$(curl -s --fail-with-body "$SPACE_URL/api/health") || CURL_EXIT=$?
   
-  if [ $CURL_EXIT -eq 0 ] && [ -n "$VERSION_JSON" ]; then
+  if [ $CURL_EXIT -eq 0 ] && [ -n "$HEALTH_JSON" ]; then
     break
   fi
   
@@ -107,20 +107,12 @@ for i in $(seq 1 $MAX_RETRIES); do
   sleep $RETRY_INTERVAL
 done
 
-if [ $CURL_EXIT -ne 0 ] || [ -z "$VERSION_JSON" ]; then
-  echo "❌ Error: Functional smoke test failed. Could not query /api/version after $MAX_RETRIES attempts. curl returned: $CURL_EXIT. Response: $VERSION_JSON"
+if [ $CURL_EXIT -ne 0 ] || [ -z "$HEALTH_JSON" ]; then
+  echo "❌ Error: Functional smoke test failed. Could not query /api/health after $MAX_RETRIES attempts. curl returned: $CURL_EXIT. Response: $HEALTH_JSON"
   exit 1
 fi
 
-# Extract version from response JSON
-APP_VERSION=$(echo "$VERSION_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin).get('version', ''))" 2>/dev/null || echo "")
-
-if [ -z "$APP_VERSION" ]; then
-  echo "❌ Error: Functional smoke test failed. API returned invalid JSON or version is missing: $VERSION_JSON"
-  exit 1
-fi
-
-echo "[verify] App version detected: $APP_VERSION"
+echo "[verify] Health check returned: $HEALTH_JSON"
 echo "✅ Success: Functional smoke test passed! AgNav is fully operational at $SPACE_URL"
 exit 0
 

@@ -150,6 +150,23 @@ def chunk_text(full_text: str, token_data: list[tuple[int, int, int, str]], sour
         start += step
     return chunks
 
+def _resolve_pdf_path(md_path: Path) -> Path:
+    if md_path.suffix.lower() == ".pdf":
+        return md_path
+    pdf_same_dir = md_path.with_suffix(".pdf")
+    if pdf_same_dir.exists():
+        return pdf_same_dir
+    public_docs = _PKG_ROOT / "public" / "docs"
+    exact_pdf = public_docs / f"{md_path.stem}.pdf"
+    if exact_pdf.exists():
+        return exact_pdf
+    if "_-_" in md_path.stem:
+        base_stem = md_path.stem.split("_-_")[0]
+        prefix_pdf = public_docs / f"{base_stem}.pdf"
+        if prefix_pdf.exists():
+            return prefix_pdf
+    return md_path
+
 def load_md_chunks(md_path: Path) -> list[dict]:
     content = md_path.read_text(encoding="utf-8").strip()
     if not content:
@@ -160,6 +177,18 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     token_metadata = []
     current_header = ""
     lines = content.split("\n")
+    
+    pdf_path = _resolve_pdf_path(md_path)
+    pdf_pages = []
+    if pdf_path.exists() and pdf_path.suffix.lower() == ".pdf":
+        try:
+            with fitz.open(str(pdf_path)) as doc:
+                for page in doc:
+                    pdf_pages.append(page.get_text().replace('\n', ' '))
+        except Exception as e:
+            logger.warning(f"Could not read PDF for {md_path.name}: {e}")
+            pass
+            
     
     sections = []
     current_lines = []
@@ -188,12 +217,30 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     
     current_header = ""
     char_offset = 0
+    current_pdf_page = 0
+    
     for line in filtered_lines:
         stripped = line.strip()
         if stripped.startswith("#"):
             current_header = stripped.lstrip("#").strip().upper()
         
         page_num = 1
+        if pdf_pages and stripped:
+            if len(stripped) > 20:
+                found = False
+                for p_idx in range(current_pdf_page, min(current_pdf_page + 5, len(pdf_pages))):
+                    if stripped in pdf_pages[p_idx]:
+                        current_pdf_page = p_idx
+                        page_num = current_pdf_page + 1
+                        found = True
+                        break
+                if not found:
+                    page_num = current_pdf_page + 1
+            else:
+                page_num = current_pdf_page + 1
+        else:
+            page_num = current_pdf_page + 1 if pdf_pages else 1
+
         # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
         # This replaces the legacy try-except/char-length fallback blocks.
         encoding = tokenizer(
@@ -435,7 +482,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
             "chunk_size": CHUNK_SIZE,
             "chunk_overlap": CHUNK_OVERLAP,
             "embed_model": EMBED_MODEL,
-            "tiering_version": "v1",
+            "tiering_version": "v2",
         },
         "files": {}
     }

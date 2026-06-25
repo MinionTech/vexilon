@@ -77,7 +77,7 @@ INTEGRITY_WARNING: str | None = None
 _background_tasks: set[asyncio.Task] = set()
 
 AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
-IS_DEV = not os.getenv("SPACE_ID")
+IS_DEV = not (os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID"))
 AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexilon")
 GITHUB_DATA_URL = os.getenv(
     "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/app/data"
@@ -637,7 +637,7 @@ async def verify_response(assistant_response: str, context: str) -> str:
 def get_system_prompt(developer_mode: bool = False) -> str:
     now = datetime.datetime.now().strftime("%Y-%m-%d")
     header = f"--- {AGNAV_APP_NAME.upper()} SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
-    content = f"You are {AGNAV_APP_NAME}, a professional assistant for union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Source, Page] format provided in the context.\n\nKnowledge Base:\n{{manifest}}\n\n{{verify_message}}"
+    content = f"You are {AGNAV_APP_NAME}, a professional assistant for union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Document Name, Page X] format provided in the context.\n\nKnowledge Base:\n{{manifest}}\n\n{{verify_message}}"
     return f"{header}{content}"
 
 async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
@@ -1307,6 +1307,7 @@ async def on_message(message: cl.Message) -> None:
 # ─── Custom FastAPI Routes ───────────────────────────────────────────────────
 from chainlit.server import app as cl_app
 from fastapi.routing import APIRoute
+from fastapi import HTTPException
 
 def get_version():
     return {
@@ -1317,6 +1318,16 @@ def get_brand_config():
     from brand import get_brand as _get_brand
     return _get_brand()
 
+async def get_health():
+    try:
+        client = get_llm_client()
+        # Fast lightweight check to ensure credentials and network are valid
+        await client.models.list(timeout=10.0)
+        return {"status": "ok", "llm": "connected"}
+    except Exception as e:
+        logger.error(f"[health] LLM connection failed: {e}")
+        raise HTTPException(status_code=503, detail="LLM connection failed")
+
 # Prepend the API routes to bypass Chainlit's catch-all wildcard router
 brand_route = APIRoute(
     "/api/brand",
@@ -1325,6 +1336,7 @@ brand_route = APIRoute(
     include_in_schema=False
 )
 cl_app.router.routes.insert(0, brand_route)
+
 version_route = APIRoute(
     "/api/version",
     endpoint=get_version,
@@ -1332,3 +1344,11 @@ version_route = APIRoute(
     include_in_schema=False
 )
 cl_app.router.routes.insert(1, version_route)
+
+health_route = APIRoute(
+    "/api/health",
+    endpoint=get_health,
+    methods=["GET"],
+    include_in_schema=False
+)
+cl_app.router.routes.insert(2, health_route)

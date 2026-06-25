@@ -86,18 +86,17 @@ def apply_patches():
             task_state = _task_states[self._host_task]
             self._parent_scope = task_state.cancel_scope
             task_state.cancel_scope = self
+            self._active = True
             return self
         return _orig_cancel_scope_enter(self)
     def _patched_cancel_scope_exit(self, exc_type, exc_val, tb):
-        try:
-            return _orig_cancel_scope_exit(self, exc_type, exc_val, tb)
-        except RuntimeError as e:
-            if "is not active" in str(e) and self._host_task == "dummy_task":
-                from anyio._backends._asyncio import _task_states
-                task_state = _task_states[self._host_task]
-                task_state.cancel_scope = self._parent_scope
-                return None
-            raise
+        if self._host_task == "dummy_task":
+            self._active = False
+            from anyio._backends._asyncio import _task_states
+            task_state = _task_states[self._host_task]
+            task_state.cancel_scope = self._parent_scope
+            return False
+        return _orig_cancel_scope_exit(self, exc_type, exc_val, tb)
     _AnyioCancelScope.__enter__ = _patched_cancel_scope_enter
     _AnyioCancelScope.__exit__ = _patched_cancel_scope_exit
 
