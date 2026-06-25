@@ -97,7 +97,7 @@ CURL_EXIT=0
 for i in $(seq 1 $MAX_RETRIES); do
   echo "[verify] Querying /api/health (Attempt $i/$MAX_RETRIES)..."
   CURL_EXIT=0
-  HEALTH_JSON=$(curl -s -f "$SPACE_URL/api/health") || CURL_EXIT=$?
+  HEALTH_JSON=$(curl -s --fail-with-body "$SPACE_URL/api/health") || CURL_EXIT=$?
   
   if [ $CURL_EXIT -eq 0 ] && [ -n "$HEALTH_JSON" ]; then
     break
