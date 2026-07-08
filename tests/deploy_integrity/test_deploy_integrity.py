@@ -142,7 +142,7 @@ def test_manifest_source_files_exist():
             f"Missing indexed resource: Source file '{relative_path_str}' is listed in manifest.json, but '{target_file}' does not exist on disk."
 
 
-def test_no_qwen_fallback_downgrade():
+def test_default_model_is_gemma_4():
     """Ensures that the LLM configuration remains strictly aligned to Gemma 4 models."""
     app_path = REPO_ROOT / "app" / "main.py"
     content = app_path.read_text()
