@@ -142,18 +142,18 @@ def test_manifest_source_files_exist():
             f"Missing indexed resource: Source file '{relative_path_str}' is listed in manifest.json, but '{target_file}' does not exist on disk."
 
 
-def test_no_qwen_2_5_fallback_downgrade():
-    """Ensures that the LLM configuration remains strictly aligned to Qwen3 flagship models."""
+def test_no_qwen_fallback_downgrade():
+    """Ensures that the LLM configuration remains strictly aligned to Gemma 4 models."""
     app_path = REPO_ROOT / "app" / "main.py"
     content = app_path.read_text()
     
-    # Assert that no default returns or fallbacks mention Qwen/Qwen2.5 or Qwen2.5
-    assert "Qwen/Qwen2.5" not in content, \
-        "Code Quality regression: Swapping default fallback models to Qwen 2.5 is prohibited. Keep flagship Qwen3."
+    # Assert that no default returns or fallbacks mention Qwen/Qwen3.6
+    assert "Qwen/Qwen3.6" not in content, \
+        "Code Quality regression: Swapping default fallback models back to Qwen 3.6 is prohibited. Keep flagship Gemma 4."
     
-    # Verify the fallback model returned in _get_default_model is exactly Qwen3.6-35B-A3B
-    assert re.search(r'return\s+["\']Qwen/Qwen3\.6-35B-A3B["\']', content), \
-        "Code Quality regression: fallback model return value in main.py must be the flagship Qwen/Qwen3.6-35B-A3B model."
+    # Verify the fallback model returned in _get_default_model is exactly google/gemma-4-31b-it
+    assert re.search(r'return\s+["\']google/gemma-4-31b-it["\']', content), \
+        "Code Quality regression: fallback model return value in main.py must be the flagship google/gemma-4-31b-it model."
 
 
 def test_python_version_integrity():

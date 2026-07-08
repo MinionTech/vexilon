@@ -96,13 +96,13 @@ def get_llm_provider() -> str:
     return "huggingface" # We're in the clouds!
 
 # Curated List of Supported Models
-HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai").strip()
+HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "fastest").strip()
 
 def get_default_model_setting() -> str:
     provider = get_llm_provider()
     if provider == "ollama":
         return f"ollama:{CURRENT_MODEL_ID}"
-    return "huggingface:Qwen/Qwen3.6-35B-A3B"
+    return "huggingface:google/gemma-4-31b-it"
 
 def _get_default_model():
     provider = get_llm_provider()
@@ -110,7 +110,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return "Qwen/Qwen3.6-35B-A3B"
+    return "google/gemma-4-31b-it"
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
