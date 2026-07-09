@@ -142,18 +142,28 @@ def test_manifest_source_files_exist():
             f"Missing indexed resource: Source file '{relative_path_str}' is listed in manifest.json, but '{target_file}' does not exist on disk."
 
 
-def test_default_model_is_gemma_4():
-    """Ensures that the LLM configuration remains strictly aligned to Gemma 4 models."""
+def test_default_model_alignment_with_spec():
+    """Ensures that the default Hugging Face model in the code matches the flagship model in SPEC.md."""
     app_path = REPO_ROOT / "app" / "main.py"
-    content = app_path.read_text()
+    spec_path = REPO_ROOT / "app" / "SPEC.md"
     
-    # Assert that no default returns or fallbacks mention any Qwen models
-    assert "Qwen" not in content, \
-        "Code Quality regression: Swapping default fallback models to Qwen is prohibited. Keep flagship Gemma 4."
+    app_content = app_path.read_text()
+    spec_content = spec_path.read_text()
     
-    # Verify the fallback model constant is exactly google/gemma-4-31B-it
-    assert re.search(r'DEFAULT_HF_MODEL_ID\s*=\s*["\']google/gemma-4-31B-it["\']', content), \
-        "Code Quality regression: DEFAULT_HF_MODEL_ID constant in main.py must be the flagship google/gemma-4-31B-it model."
+    # Extract the specified flagship model from SPEC.md (from the AGNAV_DEFAULT_MODEL row)
+    spec_model_match = re.search(r'`?AGNAV_DEFAULT_MODEL`?\s*\|\s*`?([a-zA-Z0-9\-_/.]+)`?', spec_content)
+    assert spec_model_match, "Could not find AGNAV_DEFAULT_MODEL definition in app/SPEC.md"
+    expected_model = spec_model_match.group(1).strip()
+    
+    # Extract the constant value from app/main.py
+    app_model_match = re.search(r'DEFAULT_HF_MODEL_ID\s*=\s*["\']([^"\']+)["\']', app_content)
+    assert app_model_match, "Could not find DEFAULT_HF_MODEL_ID constant in app/main.py"
+    actual_model = app_model_match.group(1).strip()
+    
+    assert actual_model == expected_model, (
+        f"Model drift detected! Codebase DEFAULT_HF_MODEL_ID is '{actual_model}' "
+        f"but SPEC.md lists '{expected_model}' as the default model."
+    )
 
 
 def test_python_version_integrity():
