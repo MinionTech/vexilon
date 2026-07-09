@@ -8,6 +8,11 @@ os.environ.setdefault("AGNAV_APP_NAME", "BCGEU Navigator")
 os.environ.setdefault("AGNAV_APP_DESCRIPTION", "BCGEU Agreement Navigator")
 Path(os.environ["CHAINLIT_FILES_DIR"]).mkdir(parents=True, exist_ok=True)
 
+# If running on Hugging Face Spaces, configure SameSite=None for Chainlit cookies
+# to prevent the browser from blocking sessions in the third-party iframe context.
+if os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID"):
+    os.environ["CHAINLIT_COOKIE_SAMESITE"] = "none"
+
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
