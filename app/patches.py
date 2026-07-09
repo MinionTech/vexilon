@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import anyio
 import anyio.to_thread
 import anyio._backends._asyncio as _anyio_asyncio_backend
+from anyio._backends._asyncio import AsyncIOTaskInfo
 import sniffio
 from pathlib import Path
 
@@ -123,4 +125,53 @@ def apply_patches():
             f"FATAL: Could not create Chainlit FILES_DIRECTORY at "
             f"{new_files_dir}: {e}. Verification failed."
         ) from e
+
+    # 7. Patch AsyncIOBackend.get_current_task to handle None task under Python 3.14
+    try:
+        class MockCoro:
+            def send(self, value):
+                pass
+            def throw(self, typ, val=None, tb=None):
+                pass
+            def close(self):
+                pass
+            def __iter__(self):
+                return self
+            def __next__(self):
+                raise StopIteration
+
+        class MockTask:
+            def get_coro(self):
+                return MockCoro()
+            def get_name(self):
+                return "mock_task"
+            def get_stack(self, *args, **kwargs):
+                return []
+                
+        _orig_get_current_task = _anyio_asyncio_backend.AsyncIOBackend.get_current_task
+        
+        @classmethod
+        def _patched_get_current_task(cls):
+            import asyncio
+            try:
+                task = asyncio.current_task()
+            except RuntimeError:
+                return _orig_get_current_task()
+            if task is None:
+                logger.debug("[patches] get_current_task fallback triggered: task is None")
+                return AsyncIOTaskInfo(MockTask())
+            return _orig_get_current_task()
+            
+        _anyio_asyncio_backend.AsyncIOBackend.get_current_task = _patched_get_current_task
+        logger.info("[patches] Successfully patched AsyncIOBackend.get_current_task for Python 3.14 compatibility.")
+    except Exception as e:
+        logger.warning(f"[patches] Failed to patch anyio.get_current_task: {e}", exc_info=True)
+
+    # 8. Disable nest_asyncio.apply to prevent task tracking corruption under Python 3.14
+    try:
+        import nest_asyncio
+        nest_asyncio.apply = lambda *args, **kwargs: None
+        logger.info("[patches] Successfully disabled nest_asyncio.apply to prevent task corruption.")
+    except ImportError:
+        pass
 
