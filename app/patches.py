@@ -158,6 +158,7 @@ def apply_patches():
             except RuntimeError:
                 task = None
             if task is None:
+                logger.debug("[patches] get_current_task fallback triggered: task is None")
                 return AsyncIOTaskInfo(MockTask())
             return _orig_get_current_task()
             
@@ -165,4 +166,12 @@ def apply_patches():
         logger.info("[patches] Successfully patched AsyncIOBackend.get_current_task for Python 3.14 compatibility.")
     except Exception as e:
         logger.warning(f"[patches] Failed to patch anyio.get_current_task: {e}", exc_info=True)
+
+    # 8. Disable nest_asyncio.apply to prevent task tracking corruption under Python 3.14
+    try:
+        import nest_asyncio
+        nest_asyncio.apply = lambda *args, **kwargs: None
+        logger.info("[patches] Successfully disabled nest_asyncio.apply to prevent task corruption.")
+    except ImportError:
+        pass
 

@@ -27,6 +27,9 @@ import json
 import contextlib
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
+from patches import apply_patches
+apply_patches()
+
 import asyncio
 import datetime
 import tempfile
@@ -43,8 +46,6 @@ import anyio.to_thread
 import anyio._backends._asyncio as _anyio_asyncio_backend
 import sniffio
 
-from patches import apply_patches
-apply_patches()
 # ─── Agnav Imports ────────────────────────────────────────────────────────
 from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION
 from chainlit.config import config as _cl_config
