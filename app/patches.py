@@ -150,12 +150,16 @@ def apply_patches():
                 
         _orig_get_current_task = _anyio_asyncio_backend.AsyncIOBackend.get_current_task
         
-        def _patched_get_current_task(self):
+        @classmethod
+        def _patched_get_current_task(cls):
             import asyncio
-            task = asyncio.current_task()
+            try:
+                task = asyncio.current_task()
+            except RuntimeError:
+                task = None
             if task is None:
                 return AsyncIOTaskInfo(MockTask())
-            return _orig_get_current_task(self)
+            return _orig_get_current_task()
             
         _anyio_asyncio_backend.AsyncIOBackend.get_current_task = _patched_get_current_task
         logger.info("[patches] Successfully patched AsyncIOBackend.get_current_task for Python 3.14 compatibility.")
