@@ -128,9 +128,21 @@ def apply_patches():
 
     # 7. Patch AsyncIOBackend.get_current_task to handle None task under Python 3.14
     try:
+        class MockCoro:
+            def send(self, value):
+                pass
+            def throw(self, typ, val=None, tb=None):
+                pass
+            def close(self):
+                pass
+            def __iter__(self):
+                return self
+            def __next__(self):
+                raise StopIteration
+
         class MockTask:
             def get_coro(self):
-                return None
+                return MockCoro()
             def get_name(self):
                 return "mock_task"
             def get_stack(self, *args, **kwargs):
