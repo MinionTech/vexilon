@@ -164,5 +164,5 @@ def apply_patches():
         _anyio_asyncio_backend.AsyncIOBackend.get_current_task = _patched_get_current_task
         logger.info("[patches] Successfully patched AsyncIOBackend.get_current_task for Python 3.14 compatibility.")
     except Exception as e:
-        logger.warning(f"[patches] Failed to patch anyio.get_current_task: {e}")
+        logger.warning(f"[patches] Failed to patch anyio.get_current_task: {e}", exc_info=True)
 
