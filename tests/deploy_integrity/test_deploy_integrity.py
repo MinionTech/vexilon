@@ -147,9 +147,9 @@ def test_default_model_is_gemma_4():
     app_path = REPO_ROOT / "app" / "main.py"
     content = app_path.read_text()
     
-    # Assert that no default returns or fallbacks mention Qwen/Qwen3.6
-    assert "Qwen/Qwen3.6" not in content, \
-        "Code Quality regression: Swapping default fallback models back to Qwen 3.6 is prohibited. Keep flagship Gemma 4."
+    # Assert that no default returns or fallbacks mention any Qwen models
+    assert "Qwen" not in content, \
+        "Code Quality regression: Swapping default fallback models to Qwen is prohibited. Keep flagship Gemma 4."
     
     # Verify the fallback model returned in _get_default_model is exactly google/gemma-4-31b-it
     assert re.search(r'return\s+["\']google/gemma-4-31b-it["\']', content), \
