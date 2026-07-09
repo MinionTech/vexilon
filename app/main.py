@@ -68,6 +68,7 @@ from indexing import (
 OLLAMA_MODEL_ID = "tinyllama"
 # Allow environment override for CI (e.g. tinyllama for smoke tests)
 CURRENT_MODEL_ID = os.getenv("OLLAMA_MODEL_ID", OLLAMA_MODEL_ID)
+DEFAULT_HF_MODEL_ID = "google/gemma-4-31B-it"
 
 # Configure structured logging
 logging.basicConfig(
@@ -107,7 +108,7 @@ def get_default_model_setting() -> str:
     provider = get_llm_provider()
     if provider == "ollama":
         return f"ollama:{CURRENT_MODEL_ID}"
-    return "huggingface:google/gemma-4-31B-it"
+    return f"huggingface:{DEFAULT_HF_MODEL_ID}"
 
 def _get_default_model():
     provider = get_llm_provider()
@@ -115,7 +116,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return "google/gemma-4-31B-it"
+    return DEFAULT_HF_MODEL_ID
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
