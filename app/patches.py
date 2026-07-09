@@ -156,7 +156,7 @@ def apply_patches():
             try:
                 task = asyncio.current_task()
             except RuntimeError:
-                task = None
+                return _orig_get_current_task()
             if task is None:
                 logger.debug("[patches] get_current_task fallback triggered: task is None")
                 return AsyncIOTaskInfo(MockTask())
