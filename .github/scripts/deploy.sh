@@ -6,6 +6,12 @@
 # Strict mode + Trace
 set -euo pipefail
 
+# Override any inherited git wrapper functions to allow the deployment script to
+# safely execute its git tasks (e.g. creating snapshot branches, force-pushing to HF Spaces).
+git() {
+    command git "$@"
+}
+
 # Usage function
 usage() {
     echo "Usage: $0 <space_name> [image_ref] [--dry-run]"

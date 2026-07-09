@@ -8,6 +8,14 @@ os.environ.setdefault("AGNAV_APP_NAME", "BCGEU Navigator")
 os.environ.setdefault("AGNAV_APP_DESCRIPTION", "BCGEU Agreement Navigator")
 Path(os.environ["CHAINLIT_FILES_DIR"]).mkdir(parents=True, exist_ok=True)
 
+# If running on Hugging Face Spaces, configure SameSite=None and public URL for Chainlit cookies
+# to prevent the browser from blocking sessions in the third-party iframe context.
+if os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID"):
+    os.environ["CHAINLIT_COOKIE_SAMESITE"] = "none"
+    space_host = os.getenv("SPACE_HOST")
+    if space_host:
+        os.environ["CHAINLIT_URL"] = f"https://{space_host}"
+
 # Force online mode for the API but keep local models offline for speed
 os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -63,6 +71,7 @@ from indexing import (
 OLLAMA_MODEL_ID = "tinyllama"
 # Allow environment override for CI (e.g. tinyllama for smoke tests)
 CURRENT_MODEL_ID = os.getenv("OLLAMA_MODEL_ID", OLLAMA_MODEL_ID)
+DEFAULT_HF_MODEL_ID = "google/gemma-4-31B-it"
 
 # Configure structured logging
 logging.basicConfig(
@@ -96,13 +105,13 @@ def get_llm_provider() -> str:
     return "huggingface" # We're in the clouds!
 
 # Curated List of Supported Models
-HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "featherless-ai").strip()
+HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "fastest").strip()
 
 def get_default_model_setting() -> str:
     provider = get_llm_provider()
     if provider == "ollama":
         return f"ollama:{CURRENT_MODEL_ID}"
-    return "huggingface:Qwen/Qwen3.6-35B-A3B"
+    return f"huggingface:{DEFAULT_HF_MODEL_ID}"
 
 def _get_default_model():
     provider = get_llm_provider()
@@ -110,7 +119,7 @@ def _get_default_model():
     if provider == "ollama":
         val = os.getenv("OLLAMA_MODEL")
         return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return "Qwen/Qwen3.6-35B-A3B"
+    return DEFAULT_HF_MODEL_ID
 
 DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
 CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
@@ -1308,6 +1317,22 @@ async def on_message(message: cl.Message) -> None:
 from chainlit.server import app as cl_app
 from fastapi.routing import APIRoute
 from fastapi import HTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class PartitionedCookieMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        cookie_headers = response.headers.getlist("set-cookie")
+        if cookie_headers:
+            del response.headers["set-cookie"]
+            for header in cookie_headers:
+                # Append Partitioned for SameSite=None cookies to comply with CHIPS
+                if "samesite=none" in header.lower() and "partitioned" not in header.lower():
+                    header += "; Partitioned"
+                response.headers.append("set-cookie", header)
+        return response
+
+cl_app.add_middleware(PartitionedCookieMiddleware)
 
 def get_version():
     return {

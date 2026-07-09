@@ -142,18 +142,28 @@ def test_manifest_source_files_exist():
             f"Missing indexed resource: Source file '{relative_path_str}' is listed in manifest.json, but '{target_file}' does not exist on disk."
 
 
-def test_no_qwen_2_5_fallback_downgrade():
-    """Ensures that the LLM configuration remains strictly aligned to Qwen3 flagship models."""
+def test_default_model_alignment_with_spec():
+    """Ensures that the default Hugging Face model in the code matches the flagship model in SPEC.md."""
     app_path = REPO_ROOT / "app" / "main.py"
-    content = app_path.read_text()
+    spec_path = REPO_ROOT / "app" / "SPEC.md"
     
-    # Assert that no default returns or fallbacks mention Qwen/Qwen2.5 or Qwen2.5
-    assert "Qwen/Qwen2.5" not in content, \
-        "Code Quality regression: Swapping default fallback models to Qwen 2.5 is prohibited. Keep flagship Qwen3."
+    app_content = app_path.read_text()
+    spec_content = spec_path.read_text()
     
-    # Verify the fallback model returned in _get_default_model is exactly Qwen3.6-35B-A3B
-    assert re.search(r'return\s+["\']Qwen/Qwen3\.6-35B-A3B["\']', content), \
-        "Code Quality regression: fallback model return value in main.py must be the flagship Qwen/Qwen3.6-35B-A3B model."
+    # Extract the specified flagship model from SPEC.md (from the AGNAV_DEFAULT_MODEL row)
+    spec_model_match = re.search(r'`?AGNAV_DEFAULT_MODEL`?\s*\|\s*`?([a-zA-Z0-9\-_/.]+)`?', spec_content)
+    assert spec_model_match, "Could not find AGNAV_DEFAULT_MODEL definition in app/SPEC.md"
+    expected_model = spec_model_match.group(1).strip()
+    
+    # Extract the constant value from app/main.py
+    app_model_match = re.search(r'DEFAULT_HF_MODEL_ID\s*=\s*["\']([^"\']+)["\']', app_content)
+    assert app_model_match, "Could not find DEFAULT_HF_MODEL_ID constant in app/main.py"
+    actual_model = app_model_match.group(1).strip()
+    
+    assert actual_model == expected_model, (
+        f"Model drift detected! Codebase DEFAULT_HF_MODEL_ID is '{actual_model}' "
+        f"but SPEC.md lists '{expected_model}' as the default model."
+    )
 
 
 def test_python_version_integrity():
