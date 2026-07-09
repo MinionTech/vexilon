@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import anyio
 import anyio.to_thread
 import anyio._backends._asyncio as _anyio_asyncio_backend
+from anyio._backends._asyncio import AsyncIOTaskInfo
 import sniffio
 from pathlib import Path
 
@@ -126,9 +128,6 @@ def apply_patches():
 
     # 7. Patch anyio._backends._asyncio.get_current_task to handle None task under Python 3.14
     try:
-        import anyio._backends._asyncio
-        from anyio._backends._asyncio import AsyncIOTaskInfo
-        
         class MockTask:
             def get_coro(self):
                 return None
@@ -137,7 +136,7 @@ def apply_patches():
             def get_stack(self, *args, **kwargs):
                 return []
                 
-        _orig_get_current_task = anyio._backends._asyncio.get_current_task
+        _orig_get_current_task = _anyio_asyncio_backend.get_current_task
         
         def _patched_get_current_task():
             import asyncio
@@ -146,7 +145,7 @@ def apply_patches():
                 return AsyncIOTaskInfo(MockTask())
             return _orig_get_current_task()
             
-        anyio._backends._asyncio.get_current_task = _patched_get_current_task
+        _anyio_asyncio_backend.get_current_task = _patched_get_current_task
         logger.info("[patches] Successfully patched anyio.get_current_task for Python 3.14 compatibility.")
     except Exception as e:
         logger.warning(f"[patches] Failed to patch anyio.get_current_task: {e}")
