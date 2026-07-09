@@ -126,7 +126,7 @@ def apply_patches():
             f"{new_files_dir}: {e}. Verification failed."
         ) from e
 
-    # 7. Patch anyio._backends._asyncio.get_current_task to handle None task under Python 3.14
+    # 7. Patch AsyncIOBackend.get_current_task to handle None task under Python 3.14
     try:
         class MockTask:
             def get_coro(self):
@@ -136,17 +136,17 @@ def apply_patches():
             def get_stack(self, *args, **kwargs):
                 return []
                 
-        _orig_get_current_task = _anyio_asyncio_backend.get_current_task
+        _orig_get_current_task = _anyio_asyncio_backend.AsyncIOBackend.get_current_task
         
-        def _patched_get_current_task():
+        def _patched_get_current_task(self):
             import asyncio
             task = asyncio.current_task()
             if task is None:
                 return AsyncIOTaskInfo(MockTask())
-            return _orig_get_current_task()
+            return _orig_get_current_task(self)
             
-        _anyio_asyncio_backend.get_current_task = _patched_get_current_task
-        logger.info("[patches] Successfully patched anyio.get_current_task for Python 3.14 compatibility.")
+        _anyio_asyncio_backend.AsyncIOBackend.get_current_task = _patched_get_current_task
+        logger.info("[patches] Successfully patched AsyncIOBackend.get_current_task for Python 3.14 compatibility.")
     except Exception as e:
         logger.warning(f"[patches] Failed to patch anyio.get_current_task: {e}")
 
