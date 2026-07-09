@@ -151,9 +151,9 @@ def test_default_model_is_gemma_4():
     assert "Qwen" not in content, \
         "Code Quality regression: Swapping default fallback models to Qwen is prohibited. Keep flagship Gemma 4."
     
-    # Verify the fallback model returned in _get_default_model is exactly google/gemma-4-31b-it
-    assert re.search(r'return\s+["\']google/gemma-4-31b-it["\']', content), \
-        "Code Quality regression: fallback model return value in main.py must be the flagship google/gemma-4-31b-it model."
+    # Verify the fallback model returned in _get_default_model is exactly google/gemma-4-31B-it
+    assert re.search(r'return\s+["\']google/gemma-4-31B-it["\']', content), \
+        "Code Quality regression: fallback model return value in main.py must be the flagship google/gemma-4-31B-it model."
 
 
 def test_python_version_integrity():
