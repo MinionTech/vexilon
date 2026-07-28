@@ -29,12 +29,9 @@ reports
 
 # CI/CD
 .github
-.agent
 .agents
 .worktree
 .worktrees
-.openspec.yaml
-openspec/
 
 # Documentation
 README.md
