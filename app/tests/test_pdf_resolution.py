@@ -61,6 +61,22 @@ def test_resolve_pdf_path_public_docs_prefix(tmp_path, monkeypatch):
     resolved = app.resolve_pdf_path(md_file)
     assert resolved == pdf_file
 
+def test_resolve_pdf_path_public_docs_prefix_subdirectory(tmp_path, monkeypatch):
+    """If a multi-part file exists, it should match the prefix PDF located in a nested subdirectory of public/docs."""
+    md_file = tmp_path / "BC_OHS_Regulation_-_Part_01.md"
+    md_file.touch()
+
+    public_docs_dir = tmp_path / "public" / "docs"
+    forms_dir = public_docs_dir / "forms"
+    forms_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(app, "PUBLIC_DOCS_DIR", public_docs_dir)
+
+    pdf_file = forms_dir / "BC_OHS_Regulation.pdf"
+    pdf_file.touch()
+
+    resolved = app.resolve_pdf_path(md_file)
+    assert resolved == pdf_file
+
 def test_resolve_pdf_path_public_docs_subdirectory(tmp_path, monkeypatch):
     """If the PDF exists in a subdirectory of public/docs (e.g. forms/), return it."""
     md_file = tmp_path / "BCGEU_Grievance_Form_Guide.md"
