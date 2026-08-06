@@ -140,4 +140,47 @@ async def test_rag_stream_api_error_yields_error_message(monkeypatch):
         output.append(chunk)
     assert len(output) == 1
     assert "⚠️" in output[0]
-    assert "API error" in output[0]
+
+async def test_rag_review_stream_rate_limit_error(monkeypatch):
+    """When an upstream RateLimitError occurs, yield user-friendly 429 message."""
+    async def _mock_context(*args, **kwargs):
+        return ["query"], "context", []
+
+    monkeypatch.setattr(app, "get_rag_context", _mock_context)
+
+    async def _raising_stream(**kwargs):
+        raise openai.RateLimitError(
+            message="queue_exceeded",
+            response=MagicMock(status_code=429),
+            body={"type": "too_many_requests_error"},
+        )
+        yield  # Make it an async generator
+
+    monkeypatch.setattr(app, "unified_chat_stream", _raising_stream)
+
+    output = []
+    async for chunk in app.rag_review_stream("Any question", []):
+        output.append(chunk)
+    assert len(output) == 1
+    assert "⏳" in output[0]
+    assert "experiencing high traffic" in output[0]
+
+async def test_rag_review_stream_generic_error_sanitized(monkeypatch):
+    """Generic errors in rag_review_stream must yield sanitized error messages."""
+    async def _mock_context(*args, **kwargs):
+        return ["query"], "context", []
+
+    monkeypatch.setattr(app, "get_rag_context", _mock_context)
+
+    async def _raising_stream(**kwargs):
+        raise RuntimeError("Internal secret details")
+        yield  # Make it an async generator
+
+    monkeypatch.setattr(app, "unified_chat_stream", _raising_stream)
+
+    output = []
+    async for chunk in app.rag_review_stream("Any question", []):
+        output.append(chunk)
+    assert len(output) == 1
+    assert "⚠️" in output[0]
+    assert "Internal secret details" not in output[0]

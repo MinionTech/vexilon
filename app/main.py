@@ -821,9 +821,16 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             messages=messages
         ):
             yield text
+    except openai.RateLimitError as exc:
+        logger.error(f"[rag] Upstream rate limit error: {exc}", exc_info=True)
+        yield "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
     except Exception as exc:
         logger.error(f"[rag] Pipeline error: {exc}", exc_info=True)
-        yield f"⚠️ API error: {exc}"
+        err_str = str(exc).lower()
+        if "429" in err_str or "rate_limit" in err_str or "queue_exceeded" in err_str or "over capacity" in err_str:
+            yield "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
+        else:
+            yield "⚠️ An unexpected error occurred while processing your request. Please try again."
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
@@ -1222,11 +1229,13 @@ async def on_message(message: cl.Message) -> None:
     # Rate limit (per session)
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
+        await cl.Message(content=rate_msg or "⚠️ Rate limit exceeded. Please wait before sending another message.").send()
         return
 
     # Prompt-injection / length sanitisation
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
+        await cl.Message(content="⚠️ Your request contained invalid input or exceeded maximum length.").send()
         return
 
     # Order of precedence: session['persona'] (settings) -> session['chat_profile'] (profiles) -> DEFAULT_PERSONA
