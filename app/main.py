@@ -785,6 +785,21 @@ async def get_rag_context(message: str, history: list[dict]) -> tuple[list[str],
     return queries, "\n\n".join(context_parts), unique_snippets
 
 
+HIGH_TRAFFIC_MESSAGE = "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
+GENERIC_ERROR_MESSAGE = "⚠️ An unexpected error occurred while processing your request. Please try again."
+
+def format_rag_error_message(exc: Exception) -> str:
+    """Map exceptions to user-facing error messages, hiding internal error details."""
+    if isinstance(exc, openai.RateLimitError):
+        return HIGH_TRAFFIC_MESSAGE
+
+    err_str = str(exc).lower()
+    if any(k in err_str for k in ("429", "rate_limit", "rate-limit", "queue_exceeded", "queue-exceeded", "over capacity", "over_capacity")):
+        return HIGH_TRAFFIC_MESSAGE
+
+    return GENERIC_ERROR_MESSAGE
+
+
 async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str | None = None, queries: list[str] | None = None) -> AsyncIterator[str]:
     try:
         if not context or not queries:
@@ -793,8 +808,6 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             queries = queries or q_new
 
         # 2. Forensic Analysis & Logic Injection
-        # Removed unused variable (was identical to base_persona)
-        
         base_persona = get_persona_prompt(persona_mode)
         audit_rules = ""
         if persona_mode in ("Grieve", "Manage"):
@@ -821,16 +834,9 @@ async def rag_review_stream(message: str, history: list[dict], persona_mode: str
             messages=messages
         ):
             yield text
-    except openai.RateLimitError as exc:
-        logger.error(f"[rag] Upstream rate limit error: {exc}", exc_info=True)
-        yield "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
     except Exception as exc:
         logger.error(f"[rag] Pipeline error: {exc}", exc_info=True)
-        err_str = str(exc).lower()
-        if "429" in err_str or "rate_limit" in err_str or "queue_exceeded" in err_str or "over capacity" in err_str:
-            yield "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
-        else:
-            yield "⚠️ An unexpected error occurred while processing your request. Please try again."
+        yield format_rag_error_message(exc)
 
 # ─── UI Utility Functions ───────────────────────────────────────────────────
 def _get_download_source_files() -> list[Path]:
