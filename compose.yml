@@ -162,7 +162,7 @@ services:
   ollama:
     container_name: vexilon-ollama
     image: ollama/ollama:0.32.5
-    ports: ["11434:11434"]
+    ports: ["${OLLAMA_PORT:-11434}:11434"]
     environment:
       OLLAMA_FLASH_ATTENTION: 1
       OLLAMA_HOST: 0.0.0.0
