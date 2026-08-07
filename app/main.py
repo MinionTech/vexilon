@@ -1299,55 +1299,26 @@ async def on_message(message: cl.Message) -> None:
     try:
         queries, context, snippets = await get_rag_context(sanitized, history)
         
-        # Attach sources as inline file chips (PDF preferred, MD fallback)
-        # TODO: clickable links blocked by Chainlit only linkifying http/https — see issue #501
-        elements = []
+        # Build clean reference document links for retrieved sources (eliminating bottom cl.File chips)
+        ref_links = []
         seen_sources = set()
         for s in snippets:
-            source_name = s.get("source", "Unknown")
-            if source_name not in seen_sources:
+            source_name = s.get("source", "")
+            if source_name and source_name not in seen_sources and source_name != "Unknown":
                 md_path = _source_path_map.get(source_name)
                 if md_path:
                     download_path = resolve_pdf_path(md_path)
-                    elements.append(cl.File(
-                        name=f"{source_name} ({download_path.suffix.lstrip('.').upper()})",
-                        path=str(download_path),
-                        mime="application/pdf" if download_path.suffix.lower() == ".pdf" else "text/markdown",
-                        display="inline",
-                    ))
+                    if download_path.exists():
+                        try:
+                            rel_path = download_path.relative_to(PUBLIC_DOCS_DIR)
+                            rel_url = f"/public/docs/{rel_path}"
+                        except ValueError:
+                            rel_url = f"/public/docs/{download_path.name}"
+                        clean_title = source_name.replace("_", " ")
+                        ref_links.append(f"- [{clean_title}]({rel_url})")
                 seen_sources.add(source_name)
 
-        # Auto-attach grievance form PDFs if user query involves filing a grievance or asking for forms (disabled in Manage mode)
-        ALLOWED_FORM_PDFS = (
-            "Grievance_-_0_-_Instructions.pdf",
-            "Grievance_-_A_-_Grievor_Case.pdf",
-            "Grievance_-_B_-_Notify_Designates.pdf",
-            "Grievance_-_C_-_Steward_Case.pdf",
-        )
-        CHIP_DISPLAY_NAMES = {
-            "Grievance_-_0_-_Instructions.pdf": "Instructions (PDF)",
-            "Grievance_-_A_-_Grievor_Case.pdf": "Form A - Grievor (PDF)",
-            "Grievance_-_B_-_Notify_Designates.pdf": "Form B - Designate (PDF)",
-            "Grievance_-_C_-_Steward_Case.pdf": "Form C - Steward (PDF)",
-        }
-        if persona != "Manage":
-            query_lower = sanitized.lower()
-            if any(kw in query_lower for kw in ("grievance form", "grievance forms", "form a", "form b", "form c", "file a grievance", "grieve", "grievance")):
-                forms_dir = PUBLIC_DOCS_DIR / "forms"
-                if forms_dir.exists():
-                    for form_filename in ALLOWED_FORM_PDFS:
-                        pdf_form = forms_dir / form_filename
-                        if pdf_form.exists() and pdf_form.name not in seen_sources:
-                            display_name = CHIP_DISPLAY_NAMES.get(form_filename, f"{pdf_form.stem.replace('_', ' ')} (PDF)")
-                            elements.append(cl.File(
-                                name=display_name,
-                                path=str(pdf_form),
-                                mime="application/pdf",
-                                display="inline",
-                            ))
-                            seen_sources.add(pdf_form.name)
-
-        out.elements = elements
+        out.elements = []
 
         first_token_received = False
         async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
@@ -1360,6 +1331,12 @@ async def on_message(message: cl.Message) -> None:
             
             accumulated += chunk
             await out.stream_token(chunk)
+
+        # Stream Reference Documents section if retrieved sources are present
+        if ref_links:
+            ref_section = "\n\n### 📄 Reference Documents\n" + "\n".join(ref_links)
+            accumulated += ref_section
+            await out.stream_token(ref_section)
     except Exception as exc:  # defensive — rag_review_stream already catches
         logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
         accumulated = f"⚠️ API error: {exc}"
