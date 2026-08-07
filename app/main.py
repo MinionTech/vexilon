@@ -408,11 +408,16 @@ _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
 UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
 1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
+   EXCEPTION: When asked for grievance forms, filing a grievance, or grievance documentation, you MUST provide the official form download links listed in Rule 5 below.
 2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
    EXAMPLE: > "verbatim text" [Document Name, Page X]
 3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
 4. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
-5. GRIEVANCE FILING: Facilitate the filing process by identifying potential contract violations.
+5. GRIEVANCE FILING & FORMS: Facilitate the filing process by identifying potential contract violations. When asked about grievance forms or filing a grievance, inform the user that official forms are available and provide these exact links:
+   - [Grievance - 0 - Instructions](https://raw.githubusercontent.com/MinionTech/vexilon/main/app/public/docs/forms/Grievance_-_0_-_Instructions.pdf)
+   - [Grievance - A - Grievor Case](https://raw.githubusercontent.com/MinionTech/vexilon/main/app/public/docs/forms/Grievance_-_A_-_Grievor_Case.pdf)
+   - [Grievance - B - Notify Designates](https://raw.githubusercontent.com/MinionTech/vexilon/main/app/public/docs/forms/Grievance_-_B_-_Notify_Designates.pdf)
+   - [Grievance - C - Steward Case](https://raw.githubusercontent.com/MinionTech/vexilon/main/app/public/docs/forms/Grievance_-_C_-_Steward_Case.pdf)
 """
 
 MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
@@ -446,8 +451,8 @@ def get_persona_prompt(persona_key: str) -> str:
     else:
         rules = UNION_MANDATORY_RULES
         persona = (
-            "You are a forensic labor law expert. Your goal is to provide precise, fact-based answers using ONLY the provided context.\n"
-            "If the information is not in the context, state that you don't know."
+            "You are a forensic labor law expert. Your goal is to provide precise, fact-based answers using the provided context.\n"
+            "If asked for grievance forms or how to file a grievance, assist the user by providing the official form links listed in the rules."
         )
     
     return f"{rules}\n\nROLE: {persona}"
@@ -1284,6 +1289,22 @@ async def on_message(message: cl.Message) -> None:
                         display="inline",
                     ))
                 seen_sources.add(source_name)
+
+        # Auto-attach grievance form PDFs if user query involves filing a grievance or asking for forms
+        query_lower = sanitized.lower()
+        if any(kw in query_lower for kw in ("grievance form", "grievance forms", "form a", "form b", "form c", "file a grievance", "grieve", "grievance")):
+            forms_dir = PUBLIC_DOCS_DIR / "forms"
+            if forms_dir.exists():
+                for pdf_form in sorted(forms_dir.glob("*.pdf")):
+                    if pdf_form.name not in seen_sources:
+                        elements.append(cl.File(
+                            name=f"{pdf_form.stem.replace('_', ' ')} (PDF)",
+                            path=str(pdf_form),
+                            mime="application/pdf",
+                            display="inline",
+                        ))
+                        seen_sources.add(pdf_form.name)
+
         out.elements = elements
 
         first_token_received = False
