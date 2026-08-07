@@ -15,6 +15,9 @@ permissions: {}
 jobs:
   analysis:
     name: Analysis
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/reusable-analysis.yml
 
   deploy-test:
@@ -45,11 +48,12 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
+          IMAGE_TAG: ${{ inputs.image_tag || steps.resolve.outputs.image }}
         run: |
           MAX_ATTEMPTS=3
           for i in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "::group::Attempt $i of $MAX_ATTEMPTS"
-            if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "${{ inputs.image_tag || steps.resolve.outputs.image }}"; then
+            if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "$IMAGE_TAG"; then
               echo "✅ Deployment succeeded on attempt $i!"
               echo "::endgroup::"
               exit 0

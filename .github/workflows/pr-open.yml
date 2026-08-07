@@ -285,6 +285,9 @@ jobs:
 
   analysis:
     name: Analysis
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/reusable-analysis.yml
 
   # ==========================================================================
