@@ -651,15 +651,26 @@ async def verify_response(assistant_response: str, context: str) -> str:
         if not raw_verification:
             return "ALL_CLAIMS_VERIFIED"
         
-        # Filter out false-alarm DISPUTED lines regarding static form links
+        # Filter out false-alarm DISPUTED lines regarding explicit static form URLs or downloads
         lines = [line.strip() for line in raw_verification.split("\n") if line.strip()]
         filtered_lines = []
         for line in lines:
-            if "DISPUTED:" in line and any(kw in line.lower() for kw in ("/public/docs/forms", "official form", "grievance form", "grievance document", "provided links")):
+            line_lower = line.lower()
+            if "disputed:" in line_lower and any(kw in line_lower for kw in ("/public/docs/forms/", "form download link")):
                 continue
             filtered_lines.append(line)
 
-        if not filtered_lines or all("VERIFIED:" in l or l == "ALL_CLAIMS_VERIFIED" for l in filtered_lines):
+        def _normalize_line(line: str) -> str:
+            cleaned = line.strip()
+            if cleaned.startswith(("- ", "* ")):
+                cleaned = cleaned[2:].strip()
+            return cleaned
+
+        normalized_lines = [_normalize_line(line) for line in filtered_lines]
+        if not normalized_lines or all(
+            verification_line.startswith("VERIFIED:") or verification_line == "ALL_CLAIMS_VERIFIED"
+            for verification_line in normalized_lines
+        ):
             return "ALL_CLAIMS_VERIFIED"
         return "\n".join(filtered_lines)
     except Exception as exc:
