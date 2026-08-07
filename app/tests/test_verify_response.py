@@ -77,6 +77,24 @@ async def test_verify_response_handles_api_error(monkeypatch):
 
     assert "Verification unavailable" in result
 
+async def test_verify_response_filters_static_form_disputed_lines(monkeypatch):
+    """verify_response should filter out false-alarm DISPUTED lines for static form links."""
+    mock_client = MagicMock()
+
+    disputed_text = (
+        "DISPUTED: To file a grievance, official forms are available at the provided links — "
+        "the provided source text makes no mention of official forms or provide links to /public/docs/forms/..."
+    )
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content=disputed_text))]
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+
+    result = await app.verify_response("Response with form links", "Context without form text")
+
+    assert result == "ALL_CLAIMS_VERIFIED"
+
 async def test_rag_stream_yields_context(monkeypatch):
     """rag_stream should yield context alongside text chunks."""
     fake_chunks = [
