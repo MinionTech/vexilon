@@ -1184,11 +1184,20 @@ def resolve_pdf_path(md_path: Path) -> Path:
     if exact_pdf.exists():
         return exact_pdf
 
+    # 3. Try subdirectories in public docs (e.g. forms/)
+    for found_pdf in PUBLIC_DOCS_DIR.rglob(f"{md_path.stem}.pdf"):
+        if found_pdf.is_file():
+            return found_pdf
+
     if "_-_" in md_path.stem:
         base_stem = md_path.stem.split("_-_")[0]
         prefix_pdf = PUBLIC_DOCS_DIR / f"{base_stem}.pdf"
         if prefix_pdf.exists():
             return prefix_pdf
+
+        for found_pdf in PUBLIC_DOCS_DIR.rglob(f"{base_stem}.pdf"):
+            if found_pdf.is_file():
+                return found_pdf
 
     return md_path
 
