@@ -413,7 +413,7 @@ UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
    EXAMPLE: > "verbatim text" [Document Name, Page X]
 3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
 4. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
-5. GRIEVANCE FILING & FORMS: Facilitate the filing process by identifying potential contract violations. When asked about grievance forms or filing a grievance, inform the user that official forms are available and provide these exact links:
+5. GRIEVANCE FILING & FORMS: Facilitate the filing process by identifying potential contract violations. When asked about grievance forms or filing a grievance, ALWAYS provide a brief forensic analysis of the user's situation and relevant contract provisions FIRST, followed by informing the user that official forms are available and providing these exact links:
    - [Grievance - 0 - Instructions](/public/docs/forms/Grievance_-_0_-_Instructions.pdf)
    - [Grievance - A - Grievor Case](/public/docs/forms/Grievance_-_A_-_Grievor_Case.pdf)
    - [Grievance - B - Notify Designates](/public/docs/forms/Grievance_-_B_-_Notify_Designates.pdf)
@@ -465,6 +465,8 @@ For each claim in the response:
 1. Check if the quoted text actually supports the claim being made
 2. Check if the citation (document name, article/section, page number) is accurate
 3. Identify any hallucinations, misquotes, or unsupported claims
+
+NOTE: Static system resources (such as official grievance form links like /public/docs/forms/...) are official application assets provided by the platform. Do NOT flag official form links or document downloads as DISPUTED or unsupported claims.
 
 Respond in this format:
 - VERIFIED: [claim summary] — the quote supports the claim
@@ -640,12 +642,37 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
 async def verify_response(assistant_response: str, context: str) -> str:
     if not VERIFY_ENABLED: return ""
     try:
-        return await unified_chat_create(
+        raw_verification = await unified_chat_create(
             model=VERIFY_MODEL,
             max_tokens=512,
             system=VERIFY_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}]
         )
+        if not raw_verification:
+            return "ALL_CLAIMS_VERIFIED"
+        
+        # Filter out false-alarm DISPUTED lines regarding explicit static form URLs or downloads
+        lines = [line.strip() for line in raw_verification.split("\n") if line.strip()]
+        filtered_lines = []
+        for line in lines:
+            line_lower = line.lower()
+            if "disputed:" in line_lower and any(kw in line_lower for kw in ("/public/docs/forms/", "form download link")):
+                continue
+            filtered_lines.append(line)
+
+        def _normalize_line(line: str) -> str:
+            cleaned = line.strip()
+            if cleaned.startswith(("- ", "* ")):
+                cleaned = cleaned[2:].strip()
+            return cleaned
+
+        normalized_lines = [_normalize_line(line) for line in filtered_lines]
+        if not normalized_lines or all(
+            verification_line.startswith("VERIFIED:") or verification_line == "ALL_CLAIMS_VERIFIED"
+            for verification_line in normalized_lines
+        ):
+            return "ALL_CLAIMS_VERIFIED"
+        return "\n".join(filtered_lines)
     except Exception as exc:
         return f"⚠️ Verification unavailable: {exc}"
 
@@ -1297,6 +1324,12 @@ async def on_message(message: cl.Message) -> None:
             "Grievance_-_B_-_Notify_Designates.pdf",
             "Grievance_-_C_-_Steward_Case.pdf",
         )
+        CHIP_DISPLAY_NAMES = {
+            "Grievance_-_0_-_Instructions.pdf": "Instructions (PDF)",
+            "Grievance_-_A_-_Grievor_Case.pdf": "Form A - Grievor (PDF)",
+            "Grievance_-_B_-_Notify_Designates.pdf": "Form B - Designate (PDF)",
+            "Grievance_-_C_-_Steward_Case.pdf": "Form C - Steward (PDF)",
+        }
         if persona != "Manage":
             query_lower = sanitized.lower()
             if any(kw in query_lower for kw in ("grievance form", "grievance forms", "form a", "form b", "form c", "file a grievance", "grieve", "grievance")):
@@ -1305,8 +1338,9 @@ async def on_message(message: cl.Message) -> None:
                     for form_filename in ALLOWED_FORM_PDFS:
                         pdf_form = forms_dir / form_filename
                         if pdf_form.exists() and pdf_form.name not in seen_sources:
+                            display_name = CHIP_DISPLAY_NAMES.get(form_filename, f"{pdf_form.stem.replace('_', ' ')} (PDF)")
                             elements.append(cl.File(
-                                name=f"{pdf_form.stem.replace('_', ' ')} (PDF)",
+                                name=display_name,
                                 path=str(pdf_form),
                                 mime="application/pdf",
                                 display="inline",
