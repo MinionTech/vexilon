@@ -37,7 +37,7 @@ jobs:
         run: |
           TAG=$(echo '${{ steps.resolve.outputs.images }}' | jq -r '.agnav')
           MAX_ATTEMPTS=3
-          for i in $(seq 1 $MAX_ATTEMPTS); do
+          for i in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "::group::Attempt $i of $MAX_ATTEMPTS"
             if ./.github/scripts/deploy.sh "bcgeu/navigator" "$TAG"; then
               echo "✅ Deployment succeeded on attempt $i!"
@@ -45,7 +45,7 @@ jobs:
               exit 0
             fi
             echo "::endgroup::"
-            if [ $i -lt $MAX_ATTEMPTS ]; then
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
               echo "⚠️ Attempt $i failed. Retrying in 15 seconds..."
               sleep 15
             fi

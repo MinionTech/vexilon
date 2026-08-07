@@ -1,0 +1,13 @@
+name: Scheduled
+
+on:
+  schedule:
+    - cron: "0 11 * * 0" # 3 AM PST = 12 PM UTC, Sundays
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  analysis:
+    name: Analysis
+    uses: ./.github/workflows/reusable-analysis.yml

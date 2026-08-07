@@ -13,6 +13,10 @@ on:
 permissions: {}
 
 jobs:
+  analysis:
+    name: Analysis
+    uses: ./.github/workflows/reusable-analysis.yml
+
   deploy-test:
     runs-on: ubuntu-latest
     environment: test
@@ -43,7 +47,7 @@ jobs:
           TEST: "true"
         run: |
           MAX_ATTEMPTS=3
-          for i in $(seq 1 $MAX_ATTEMPTS); do
+          for i in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "::group::Attempt $i of $MAX_ATTEMPTS"
             if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "${{ inputs.image_tag || steps.resolve.outputs.image }}"; then
               echo "✅ Deployment succeeded on attempt $i!"
@@ -51,7 +55,7 @@ jobs:
               exit 0
             fi
             echo "::endgroup::"
-            if [ $i -lt $MAX_ATTEMPTS ]; then
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
               echo "⚠️ Attempt $i failed. Retrying in 15 seconds..."
               sleep 15
             fi

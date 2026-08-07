@@ -1,24 +1,13 @@
-name: Analysis
+name: Reusable Analysis
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened]
-  schedule:
-    - cron: "0 11 * * 0" # 3 AM PST / 12 PM UTC, Sundays
-  workflow_dispatch:
-
-concurrency:
-  group: analysis-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 permissions: {}
 
 jobs:
   trivy:
     name: Trivy Security Scan
-    if: (! github.event.pull_request.draft)
     permissions:
       contents: read
       security-events: write
@@ -41,7 +30,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .trivycache
-          key: ${{ runner.os }}-trivy-${{ hashFiles('.github/workflows/analysis.yml') }}
+          key: ${{ runner.os }}-trivy-${{ hashFiles('.github/workflows/reusable-analysis.yml') }}
           restore-keys: |
             ${{ runner.os }}-trivy-
 
@@ -53,7 +42,6 @@ jobs:
           scan-type: "fs"
           scanners: "secret,misconfig"
           severity: "CRITICAL,HIGH"
-          trivyignores: ".github/.trivyignore"
           cache-dir: .trivycache
           skip-dirs: "**/node_modules,**/coverage,**/dist,.git"
           exit-code: "1"
@@ -68,7 +56,6 @@ jobs:
           scan-type: "fs"
           scanners: "vuln"
           severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
-          trivyignores: ".github/.trivyignore"
           cache-dir: .trivycache
           skip-dirs: "**/node_modules,**/coverage,**/dist,.git"
           exit-code: "0"
@@ -85,10 +72,10 @@ jobs:
   # If you add a new job to this workflow, you MUST add its ID to the 'needs'
   # array below, otherwise its failure or cancellation will not block the PR!
   # ==========================================================================
-  results:
+  analysis-results:
     name: Analysis Results
     needs: [trivy]
-    if: always() && (! github.event.pull_request.draft)
+    if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
