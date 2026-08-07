@@ -1,0 +1,107 @@
+name: Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: "0 11 * * 0" # 3 AM PST / 12 PM UTC, Sundays
+  workflow_dispatch:
+
+concurrency:
+  group: analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  trivy:
+    name: Trivy Security Scan
+    if: (! github.event.pull_request.draft)
+    permissions:
+      contents: read
+      security-events: write
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: diff
+        uses: bcgov/actions/diff-triggers@main
+        with:
+          triggers: |
+            app/**
+            compose*.yml
+            Containerfile*
+            .github/**
+
+      - name: Cache Trivy DB
+        if: steps.diff.outputs.triggered == 'true'
+        uses: actions/cache@v6
+        with:
+          path: .trivycache
+          key: ${{ runner.os }}-trivy-${{ hashFiles('.github/workflows/analysis.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-
+
+      - name: Scan for secrets and misconfigurations
+        if: steps.diff.outputs.triggered == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          ignore-unfixed: true
+          scan-type: "fs"
+          scanners: "secret,misconfig"
+          severity: "CRITICAL,HIGH"
+          trivyignores: ".github/.trivyignore"
+          cache-dir: .trivycache
+          skip-dirs: "**/node_modules,**/coverage,**/dist,.git"
+          exit-code: "1"
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        if: steps.diff.outputs.triggered == 'true' && (success() || failure())
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          format: "sarif"
+          output: "trivy-results.sarif"
+          ignore-unfixed: true
+          scan-type: "fs"
+          scanners: "vuln"
+          severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
+          trivyignores: ".github/.trivyignore"
+          cache-dir: .trivycache
+          skip-dirs: "**/node_modules,**/coverage,**/dist,.git"
+          exit-code: "0"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: steps.diff.outputs.triggered == 'true' && (success() || failure())
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          category: "trivy"
+          sarif_file: "trivy-results.sarif"
+
+  # ==========================================================================
+  # WARNING: This job acts as the required merge gate for this workflow.
+  # If you add a new job to this workflow, you MUST add its ID to the 'needs'
+  # array below, otherwise its failure or cancellation will not block the PR!
+  # ==========================================================================
+  results:
+    name: Analysis Results
+    needs: [trivy]
+    if: always() && (! github.event.pull_request.draft)
+    runs-on: ubuntu-slim
+    timeout-minutes: 1
+    steps:
+      - name: Log Job Results Context
+        run: |
+          echo "=== Upstream Job Statuses ==="
+          echo '${{ toJson(needs) }}'
+
+      - name: Evaluate Overall Status
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "❌ Critical Check Failure: At least one required job has failed or was cancelled."
+          exit 1
+
+      - name: Success Message
+        run: echo "✅ All critical checks passed or were intentionally skipped!"
