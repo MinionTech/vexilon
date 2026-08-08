@@ -1,0 +1,16 @@
+name: Scheduled
+
+on:
+  schedule:
+    - cron: "0 11 * * 0" # 11:00 UTC on Sundays
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  analysis:
+    name: Analysis
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/reusable-analysis.yml

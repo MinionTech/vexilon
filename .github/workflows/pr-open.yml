@@ -283,41 +283,12 @@ jobs:
           build_context: app
           build_file: app/Containerfile
 
-  trivy:
-    name: Trivy Security Scan
-    needs: [test-unit, prepare-tests]
-    continue-on-error: true
-    runs-on: ubuntu-slim
+  analysis:
+    name: Analysis
     permissions:
       contents: read
       security-events: write
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Cache Trivy DB
-        uses: actions/cache@v6
-        with:
-          path: .trivycache
-          key: ${{ runner.os }}-trivy-v0.36.0-cache-v1
-          restore-keys: |
-            ${{ runner.os }}-trivy-
-
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          format: "sarif"
-          output: "trivy-results.sarif"
-          ignore-unfixed: true
-          scan-type: "fs"
-          scanners: "vuln,secret,misconfig"
-          severity: "CRITICAL,HIGH"
-          cache-dir: .trivycache
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: "trivy-results.sarif"
+    uses: ./.github/workflows/reusable-analysis.yml
 
   # ==========================================================================
   # WARNING: This job acts as the required merge gate for this workflow.
@@ -326,7 +297,7 @@ jobs:
   # ==========================================================================
   results:
     name: Results
-    needs: [build, test-integration-model, test-integration-app, test-e2e, validate-cache, trivy]
+    needs: [analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1
