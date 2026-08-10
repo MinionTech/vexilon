@@ -45,7 +45,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 ### 9. Individual Access
 *   **Immediate Access**: Users see all data processed (their query) and the resulting output immediately.
 *   **No "Records"**: Because we do not retain data, there are no persistent records for a user to request or correct.
-*   **User Control of Pseudonymous ID**: Clearing browser storage (cache/site data) deletes the client ID and severs any correlation between past and future sessions — a new random ID is generated on next use.
+*   **User Control of Pseudonymous ID**: The client ID is stored in the browser's local storage for this site, not its HTTP cache — clearing the browser's *cache* alone will not remove it. To reset it, use your browser's "Clear site data" / "Cookies and other site data" option for this site (a plain "clear cache" action is not sufficient). Doing so deletes the client ID and severs any correlation between past and future sessions; a new random ID is generated on next use.
 
 ### 10. Challenging Compliance
 *   **Reporting**: Users can report privacy concerns or potential vulnerabilities through GitHub Issues or by contacting the project maintainer.
