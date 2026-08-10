@@ -33,6 +33,7 @@ apply_patches()
 import asyncio
 import datetime
 import tempfile
+import uuid
 from collections.abc import AsyncIterator
 from pathlib import Path
 from threading import Lock
@@ -1036,13 +1037,48 @@ async def on_chat_start():
 
 
 # ── Message handler ────────────────────────────────────────────────────────
-def _client_id() -> str:
-    """Best-effort client identifier for rate limiting.
+def _parse_client_uuid(candidate) -> str | None:
+    """Validate a client-supplied UUID string, or None if invalid.
 
-    Chainlit doesn't expose request headers on cl.Message directly; fall back
-    to the session id, which keeps per-user limits sensible without leaking
-    real client IPs.
+    Only accepts well-formed UUID v4 strings so an untrusted window_message
+    payload can't inject arbitrary/oversized content into session state or
+    logs (same defensive posture as sanitize_input()).
     """
+    if not isinstance(candidate, str):
+        return None
+    try:
+        parsed = uuid.UUID(candidate)
+    except (ValueError, AttributeError, TypeError):
+        return None
+    if parsed.version != 4:
+        return None
+    return str(parsed)
+
+
+@cl.on_window_message
+async def on_window_message(data):
+    """Receive the pseudonymous client UUID posted by public/index.js.
+
+    Random, client-generated, browser-local identifier — not derived from
+    IP/device/any real identifying information. See PRIVACY.md.
+    """
+    if not isinstance(data, dict) or data.get("type") != "vexilon_client_id":
+        return
+    client_uuid = _parse_client_uuid(data.get("clientId"))
+    if client_uuid:
+        cl.user_session.set("client_uuid", client_uuid)
+
+
+def _client_id() -> str:
+    """Pseudonymous client identifier for rate limiting and log correlation.
+
+    Prefers the persistent, client-generated UUID captured by
+    on_window_message (survives page reloads); falls back to Chainlit's
+    ephemeral session id for the brief window before the client posts it.
+    """
+    persistent = cl.user_session.get("client_uuid")
+    if persistent:
+        return persistent
     sid = getattr(cl.user_session, "id", None) or cl.user_session.get("id")
     return str(sid) if sid else "default"
 

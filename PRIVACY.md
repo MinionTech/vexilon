@@ -12,6 +12,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 ### 2. Identifying Purposes
 *   **Purpose**: This application processes user queries for the sole purpose of providing context-aware answers in real-time. 
 *   **Tracking**: We only track non-sensitive metadata (query counts and token consumption) for system health and API billing.
+*   **Pseudonymous Client ID**: The browser generates a random UUID (via `crypto.randomUUID()`), stored only in that browser's local storage, to distinguish discrete sessions for rate-limiting integrity and log correlation. It is generated entirely client-side from randomness — never derived from IP address, device fingerprint, or any other real-world identifying information — and is not linked to a user's identity. This satisfies PIPA's allowance for identifying *discrete* users without identifying *who* they are.
 *   **No Secondary Use**: Data is never used for marketing, profiling, or tracking individual users.
 
 ### 3. Consent
@@ -20,7 +21,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 
 ### 4. Limiting Collection
 *   **Minimal Metrics**: Our collection is strictly limited to non-sensitive performance metrics: **query count** and **token consumption**.
-*   **Content-Blind**: The application does not collect user IP addresses (except for active session rate-limiting in memory), device fingerprints, or location data.
+*   **Content-Blind**: The application does not collect user IP addresses (except for active session rate-limiting in memory), device fingerprints, or location data. The pseudonymous client ID described above does not change this — it is randomly generated, not collected from the user or their device.
 *   **No PII**: We do not require registration or any Personally Identifiable Information (PII) to function.
 
 ### 5. Limiting Use, Disclosure, and Retention
@@ -44,6 +45,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 ### 9. Individual Access
 *   **Immediate Access**: Users see all data processed (their query) and the resulting output immediately.
 *   **No "Records"**: Because we do not retain data, there are no persistent records for a user to request or correct.
+*   **User Control of Pseudonymous ID**: Clearing browser storage (cache/site data) deletes the client ID and severs any correlation between past and future sessions — a new random ID is generated on next use.
 
 ### 10. Challenging Compliance
 *   **Reporting**: Users can report privacy concerns or potential vulnerabilities through GitHub Issues or by contacting the project maintainer.
