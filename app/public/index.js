@@ -103,4 +103,29 @@
     hideReadmeDrawerTitle();
     replaceBuildSha();
     manageWelcomeTitle();
+
+    // ── Pseudonymous client ID ──────────────────────────────────────────────
+    // Random, client-generated UUID persisted in localStorage. Not derived
+    // from IP/device/any real identifying data — see PRIVACY.md. Used only
+    // to distinguish discrete sessions for rate-limiting and log correlation.
+    function getOrCreateClientId() {
+        let id = localStorage.getItem("vexilon_client_id");
+        if (!id) {
+            id = crypto.randomUUID();
+            localStorage.setItem("vexilon_client_id", id);
+        }
+        return id;
+    }
+
+    const clientId = getOrCreateClientId();
+
+    function postClientId() {
+        window.postMessage({ type: "vexilon_client_id", clientId }, window.location.origin);
+    }
+
+    // Retry briefly in case Chainlit's window-message listener hasn't
+    // mounted yet on first paint.
+    postClientId();
+    setTimeout(postClientId, 300);
+    setTimeout(postClientId, 1000);
 })();
