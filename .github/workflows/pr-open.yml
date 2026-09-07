@@ -274,6 +274,7 @@ jobs:
       packages: write
     outputs:
       triggered: ${{ steps.builder.outputs.triggered }}
+      digest: ${{ steps.builder.outputs.digest }}
     steps:
       - name: Build and Push
         id: builder
@@ -282,6 +283,57 @@ jobs:
           package: agnav
           build_context: app
           build_file: app/Containerfile
+
+  deploy-test:
+    name: Deploy to HF TEST
+    needs: [build, test-integration-model, test-integration-app, test-e2e, validate-cache]
+    runs-on: ubuntu-latest
+    environment: test
+    concurrency:
+      group: huggingface-test-space
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Promote and Verify to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TEST: "true"
+          IMAGE_TAG: ${{ needs.build.outputs.digest || github.event.number }}
+        run: |
+          MAX_ATTEMPTS=3
+          for i in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "::group::Attempt $i of $MAX_ATTEMPTS"
+            if ./.github/scripts/deploy.sh "bcgeu/navigator-test" "$IMAGE_TAG"; then
+              echo "✅ Deployment succeeded on attempt $i!"
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
+              echo "⚠️ Attempt $i failed. Retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
+          echo "❌ Deployment failed after $MAX_ATTEMPTS attempts."
+          exit 1
+
+      - name: Notify Owners on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@v0.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "TEST Deployment Failure: Vexilon"
+          labels: "failure,deployment,test"
 
   analysis:
     name: Analysis
@@ -297,7 +349,7 @@ jobs:
   # ==========================================================================
   results:
     name: Results
-    needs: [analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache]
+    needs: [analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache, deploy-test]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1

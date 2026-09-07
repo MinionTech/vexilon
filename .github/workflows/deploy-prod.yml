@@ -1,8 +1,14 @@
 name: Deploy PROD
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy, e.g. sha-abc123def...'
+        required: false
 
 permissions: {}
 
@@ -10,6 +16,10 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     environment: prod
+    concurrency:
+      group: huggingface-prod-space
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
       packages: read
@@ -23,10 +33,11 @@ jobs:
 
       - name: Resolve image
         id: resolve
+        if: ${{ !inputs.image_tag }}
         uses: bcgov/actions/image-tracker@main
         with:
           package: agnav
-          github_token: ${{ github.token }}
+          token: ${{ github.token }}
           revision: ${{ github.sha }}
           max_depth: 20
 
@@ -34,12 +45,22 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
+          IMAGE_TAG: ${{ inputs.image_tag || '' }}
         run: |
-          TAG=$(echo '${{ steps.resolve.outputs.images }}' | jq -r '.agnav')
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG=$(echo '${{ steps.resolve.outputs.images }}' | jq -r '.agnav // empty')
+          fi
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="${{ steps.resolve.outputs.image }}"
+          fi
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "❌ Failed to resolve image tag."
+            exit 1
+          fi
           MAX_ATTEMPTS=3
           for i in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "::group::Attempt $i of $MAX_ATTEMPTS"
-            if ./.github/scripts/deploy.sh "bcgeu/navigator" "$TAG"; then
+            if ./.github/scripts/deploy.sh "bcgeu/navigator" "$IMAGE_TAG"; then
               echo "✅ Deployment succeeded on attempt $i!"
               echo "::endgroup::"
               exit 0
