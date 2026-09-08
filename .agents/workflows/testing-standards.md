@@ -36,7 +36,7 @@ This document defines the testing protocols for Vexilon. **All agents must verif
 
 ### Mandatory Coverage
 - **Core Logic**: `app/main.py` and `app/indexing.py` must maintain >80% coverage.
-- **Report**: Coverage reports are automatically uploaded as artifacts in `pr-open.yml`.
+- **Report**: Coverage reports are automatically uploaded as artifacts in `pr.yml`.
 
 ### Deployment Integrity
 - **Script**: `app/tests/test_deploy_integrity.py`
