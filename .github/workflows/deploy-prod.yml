@@ -45,16 +45,10 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
-          IMAGE_TAG: ${{ inputs.image_tag || '' }}
+          IMAGE_TAG: ${{ inputs.image_tag || steps.resolve.outputs.image }}
         run: |
           if [ -z "$IMAGE_TAG" ]; then
-            IMAGE_TAG=$(echo '${{ steps.resolve.outputs.images }}' | jq -r '.agnav // empty')
-          fi
-          if [ -z "$IMAGE_TAG" ]; then
-            IMAGE_TAG="${{ steps.resolve.outputs.image }}"
-          fi
-          if [ -z "$IMAGE_TAG" ]; then
-            echo "❌ Failed to resolve image tag."
+            echo "❌ Failed to resolve image tag." >&2
             exit 1
           fi
           MAX_ATTEMPTS=3

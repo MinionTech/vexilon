@@ -308,7 +308,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
-          IMAGE_TAG: ${{ needs.build.outputs.digest || github.event.number }}
+          IMAGE_TAG: ${{ needs.build.outputs.digest }}
         run: |
           MAX_ATTEMPTS=3
           for i in $(seq 1 "$MAX_ATTEMPTS"); do

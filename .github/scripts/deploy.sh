@@ -1,7 +1,7 @@
 #!/bin/bash
-# Usage: ./.github/scripts/deploy.sh <space_name> [image_ref] [--dry-run]
+# Usage: ./.github/scripts/deploy.sh <space_name> <image_ref> [--dry-run]
 # <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')
-# [image_ref]: Tag or digest of the image to deploy (falls back to short SHA if omitted)
+# <image_ref>: Tag or digest of the image to deploy
 #
 # Strict mode + Trace
 set -euo pipefail
@@ -14,9 +14,9 @@ git() {
 
 # Usage function
 usage() {
-    echo "Usage: $0 <space_name> [image_ref] [--dry-run]"
+    echo "Usage: $0 <space_name> <image_ref> [--dry-run]"
     echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')"
-    echo "  [image_ref]: Tag or digest of the image to deploy"
+    echo "  <image_ref>: Tag or digest of the image to deploy"
     echo "  --dry-run: Show what would be done without performing it"
     exit 1
 }
@@ -55,10 +55,10 @@ if [ -z "$SPACE_NAME" ]; then
     usage
 fi
 
-# Fallback to current short SHA if no image ref provided
+# Validate required arguments
 if [ -z "$IMAGE_REF" ]; then
-    IMAGE_REF=$(git rev-parse --short HEAD)
-    echo "[info] No image reference provided. Falling back to current SHA: $IMAGE_REF"
+    echo "Error: image_ref (e.g. 'sha-abc1234' or 'sha256:...') must be provided." >&2
+    usage
 fi
 
 if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
