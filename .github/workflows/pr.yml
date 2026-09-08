@@ -287,6 +287,7 @@ jobs:
   deploy-test:
     name: Deploy to HF PR Space
     needs: [build, test-integration-model, test-integration-app, test-e2e, validate-cache]
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: test
     concurrency:
