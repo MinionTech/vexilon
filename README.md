@@ -157,11 +157,11 @@ so the Space starts instantly.
 
 ### Automated deploy (GitHub Actions)
 
-The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
+The deployment process ([`.github/workflows/merge.yml`](.github/workflows/merge.yml)) pushes a stub `Dockerfile` to
 the HF Space.
 
-- **TEST:** Every push to `main` triggers [`.github/workflows/merge.yml`](.github/workflows/merge.yml), deploying to the `bcgeu/navigator-test` Space.
-- **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `bcgeu/navigator` Space.
+- **TEST:** Every push to `main` deploys to the `bcgeu/navigator-test` Space and verifies `/api/health`.
+- **PROD:** Upon successful verification on TEST, the exact verified image is automatically promoted to the `bcgeu/navigator` Space.
 
 **Required GitHub secret:**
 

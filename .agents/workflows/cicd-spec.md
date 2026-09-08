@@ -9,8 +9,7 @@ This document describes the deployment pipeline architecture. **Read this entire
 ## Architecture Overview
 
 ```
-PR opened → pr.yml (test + build image) → push to main → merge.yml (push to HF test Space)
-                                        → release published → deploy-prod.yml (push to HF prod Space)
+PR opened → pr.yml (test + build image) → push to main → merge.yml (deploy to HF test Space → verify → promote to HF prod Space)
 ```
 
 ## Critical Constraints
@@ -54,8 +53,7 @@ The `COPY --from=builder /app/hf_cache /app/hf_cache` line in the Containerfile 
 | File | Purpose |
 |------|---------|
 | `.github/workflows/pr.yml` | Tests + builds Docker image on PR |
-| `.github/workflows/merge.yml` | Deploys to test HF Space on push to main |
-| `.github/workflows/deploy-prod.yml` | Deploys to prod HF Space on release |
+| `.github/workflows/merge.yml` | Parallel security scan, deploys to test HF Space on push to main, verifies, and promotes to prod |
 | `.github/scripts/deploy.sh` | Pushes stub Dockerfile + README to HF Space. Usage: `<space_name> <image_ref> [--dry-run]` |
 | `Containerfile` | Multi-stage Docker build |
 | `tests/deploy_integrity/test_deploy_integrity.py` | Automated checks for the constraints above |
