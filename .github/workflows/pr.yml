@@ -293,7 +293,7 @@ jobs:
     concurrency:
       group: huggingface-pr-space
       cancel-in-progress: false
-      queue: max
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: read
@@ -350,7 +350,7 @@ jobs:
   # ==========================================================================
   results:
     name: Results
-    needs: [analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache, deploy-test]
+    needs: [check, prepare-tests, test-unit, analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache, deploy-test]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1

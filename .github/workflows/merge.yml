@@ -10,17 +10,25 @@ on:
         description: 'Image tag to deploy, e.g. sha-abc123def...'
         required: false
 
-concurrency:
-  group: huggingface-prod-space
-  cancel-in-progress: false
-  queue: max
-
 permissions: {}
 
 jobs:
+  analysis:
+    name: Analysis
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/reusable-analysis.yml
+
   deploy-prod:
+    name: Deploy to HF PROD
+    needs: [analysis]
     runs-on: ubuntu-latest
     environment: prod
+    concurrency:
+      group: huggingface-prod-space
+      cancel-in-progress: false
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: read
