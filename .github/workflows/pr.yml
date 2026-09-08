@@ -292,7 +292,7 @@ jobs:
     environment: test
     concurrency:
       group: huggingface-pr-space
-      cancel-in-progress: false
+      cancel-in-progress: true
     timeout-minutes: 15
     permissions:
       contents: read
