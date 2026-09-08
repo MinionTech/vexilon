@@ -10,16 +10,17 @@ on:
         description: 'Image tag to deploy, e.g. sha-abc123def...'
         required: false
 
+concurrency:
+  group: huggingface-prod-space
+  cancel-in-progress: false
+  queue: max
+
 permissions: {}
 
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     environment: prod
-    concurrency:
-      group: huggingface-prod-space
-      cancel-in-progress: false
-      queue: max
     permissions:
       contents: read
       packages: read
@@ -37,7 +38,6 @@ jobs:
         uses: bcgov/actions/image-tracker@main
         with:
           package: agnav
-          token: ${{ github.token }}
           revision: ${{ github.sha }}
           max_depth: 20
 

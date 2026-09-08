@@ -285,12 +285,12 @@ jobs:
           build_file: app/Containerfile
 
   deploy-test:
-    name: Deploy to HF TEST
+    name: Deploy to HF PR Space
     needs: [build, test-integration-model, test-integration-app, test-e2e, validate-cache]
     runs-on: ubuntu-latest
     environment: test
     concurrency:
-      group: huggingface-test-space
+      group: huggingface-pr-space
       cancel-in-progress: false
       queue: max
     permissions:
