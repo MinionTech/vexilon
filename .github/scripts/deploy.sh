@@ -162,8 +162,9 @@ if [ "${TEST:-}" == "true" ]; then
     echo "[info] TEST=true detected. Triggering automatic verification..."
     # Locate the verification script relative to this script
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VERIFY_TIMEOUT="${VERIFY_TIMEOUT:-300}"
     if [ -f "$SCRIPT_DIR/verify_deployment.sh" ]; then
-        bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_NAME" 600
+        bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_NAME" "$VERIFY_TIMEOUT"
     else
         echo "Error: Verification script not found at $SCRIPT_DIR/verify_deployment.sh"
         exit 1

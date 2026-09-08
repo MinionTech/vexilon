@@ -27,7 +27,7 @@ jobs:
     concurrency:
       group: huggingface-test-space
       cancel-in-progress: false
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: read
@@ -54,6 +54,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
+          VERIFY_TIMEOUT: "300"
           IMAGE_TAG: ${{ inputs.image_tag || steps.resolve.outputs.image }}
         run: |
           if [ -z "$IMAGE_TAG" ]; then
@@ -93,7 +94,7 @@ jobs:
     concurrency:
       group: huggingface-prod-space
       cancel-in-progress: false
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: read
@@ -109,6 +110,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
+          VERIFY_TIMEOUT: "300"
           IMAGE_TAG: ${{ needs.deploy-test.outputs.image }}
         run: |
           if [ -z "$IMAGE_TAG" ]; then

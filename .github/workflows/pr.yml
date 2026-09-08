@@ -2,7 +2,7 @@ name: PR
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: pr-${{ github.event.number }}
@@ -46,8 +46,10 @@ jobs:
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Lint Workflow Files
-        uses: docker://rhysd/actionlint:latest
+        uses: docker://rhysd/actionlint:1.7.12
 
   prepare-tests:
     name: Prepare Test Cache
@@ -284,9 +286,6 @@ jobs:
       contents: read
       id-token: write
       packages: write
-    outputs:
-      triggered: ${{ steps.builder.outputs.triggered }}
-      digest: ${{ steps.builder.outputs.digest }}
     steps:
       - name: Build and Push
         id: builder
