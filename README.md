@@ -160,7 +160,7 @@ so the Space starts instantly.
 The deployment process (`.github/workflows/deploy-*.yml`) pushes a stub `Dockerfile` to
 the HF Space.
 
-- **TEST:** Every push to `main` triggers [`.github/workflows/deploy-test.yml`](.github/workflows/deploy-test.yml), deploying to the `bcgeu/navigator-test` Space.
+- **TEST:** Every push to `main` triggers [`.github/workflows/merge.yml`](.github/workflows/merge.yml), deploying to the `bcgeu/navigator-test` Space.
 - **PROD:** Every published GitHub release triggers [`.github/workflows/deploy-prod.yml`](.github/workflows/deploy-prod.yml), deploying to the `bcgeu/navigator` Space.
 
 **Required GitHub secret:**

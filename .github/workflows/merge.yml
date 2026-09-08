@@ -1,14 +1,14 @@
-name: Deploy TEST
+name: Merge
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       image_tag:
         description: 'Image tag to deploy, e.g. sha-abc123def...'
         required: false
-  push:
-    branches:
-      - main
 
 permissions: {}
 
@@ -21,8 +21,14 @@ jobs:
     uses: ./.github/workflows/reusable-analysis.yml
 
   deploy-test:
+    name: Deploy to HF TEST
+    needs: [analysis]
     runs-on: ubuntu-latest
     environment: test
+    concurrency:
+      group: huggingface-test-space
+      cancel-in-progress: false
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: read
@@ -40,8 +46,7 @@ jobs:
         uses: bcgov/actions/image-tracker@main
         with:
           package: agnav
-          github_token: ${{ github.token }}
-          revision: ${{ github.event.pull_request.head.sha || github.sha }}
+          revision: ${{ github.sha }}
           max_depth: 20
 
       - name: Promote and Verify to Hugging Face
@@ -50,6 +55,10 @@ jobs:
           TEST: "true"
           IMAGE_TAG: ${{ inputs.image_tag || steps.resolve.outputs.image }}
         run: |
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "❌ Failed to resolve image tag." >&2
+            exit 1
+          fi
           MAX_ATTEMPTS=3
           for i in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "::group::Attempt $i of $MAX_ATTEMPTS"

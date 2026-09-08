@@ -9,8 +9,8 @@ This document describes the deployment pipeline architecture. **Read this entire
 ## Architecture Overview
 
 ```
-PR opened → pr-open.yml (test + build image) → merge to main → deploy-test.yml (push to HF test Space)
-                                                             → release published → deploy-prod.yml (push to HF prod Space)
+PR opened → pr.yml (test + build image) → push to main → merge.yml (push to HF test Space)
+                                        → release published → deploy-prod.yml (push to HF prod Space)
 ```
 
 ## Critical Constraints
@@ -32,7 +32,7 @@ Images are tagged with `sha-<PR head commit SHA>` during CI. The deploy workflow
 ### Deploy workflows need git history for walk-back
 Both deploy workflows walk back through recent commits to find a valid image. `actions/checkout` defaults to `fetch-depth: 1` (shallow). The checkout step MUST specify `fetch-depth: 20` so the walk-back has commits to search.
 
-### paths-ignore in pr-open.yml is intentional
+### paths-ignore in pr.yml is intentional
 Documentation-only PRs (`.md`, `LICENSE`, etc.) skip CI builds. This means some merge commits on main will NOT have a corresponding image in GHCR. The deploy workflows handle this via the walk-back fallback.
 
 ### HuggingFace Docker Space metadata (README.md)
@@ -53,9 +53,9 @@ The `COPY --from=builder /app/hf_cache /app/hf_cache` line in the Containerfile 
 
 | File | Purpose |
 |------|---------|
-| `.github/workflows/pr-open.yml` | Tests + builds Docker image on PR |
-| `.github/workflows/deploy-test.yml` | Deploys to test HF Space on push to main |
+| `.github/workflows/pr.yml` | Tests + builds Docker image on PR |
+| `.github/workflows/merge.yml` | Deploys to test HF Space on push to main |
 | `.github/workflows/deploy-prod.yml` | Deploys to prod HF Space on release |
-| `.github/scripts/deploy.sh` | Pushes stub Dockerfile + README to HF Space. Usage: `<space_name> [image_ref] [--dry-run]` |
+| `.github/scripts/deploy.sh` | Pushes stub Dockerfile + README to HF Space. Usage: `<space_name> <image_ref> [--dry-run]` |
 | `Containerfile` | Multi-stage Docker build |
-| `tests/test_deploy_integrity.py` | Automated checks for the constraints above |
+| `tests/deploy_integrity/test_deploy_integrity.py` | Automated checks for the constraints above |
