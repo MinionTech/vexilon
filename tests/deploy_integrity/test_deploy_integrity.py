@@ -7,6 +7,7 @@ optimizations (app.py) are correctly synchronized.
 """
 import os
 import re
+import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
@@ -189,3 +190,56 @@ def test_python_version_integrity():
                 major, minor = map(int, ver.split(".")[:2])
                 assert (major > 3) or (major == 3 and minor >= 14), \
                     f"CI Workflow '{f.name}' specifies python-version '{ver}'. Downgrading below Python 3.14 is prohibited."
+
+
+def test_deploy_sh_strict_arguments():
+    """Ensures deploy.sh fails fast when mandatory arguments are missing."""
+    deploy_script = REPO_ROOT / ".github" / "scripts" / "deploy.sh"
+    assert deploy_script.exists(), "deploy.sh not found"
+
+    # 1. No arguments must fail
+    res = subprocess.run([str(deploy_script)], capture_output=True, text=True)
+    assert res.returncode != 0
+    assert "Usage:" in res.stdout or "Usage:" in res.stderr
+
+    # 2. Only space_name provided must fail
+    res = subprocess.run([str(deploy_script), "bcgeu/navigator-test"], capture_output=True, text=True)
+    assert res.returncode != 0
+    assert "image_ref" in res.stderr.lower() or "image_ref" in res.stdout.lower()
+
+
+def test_deploy_sh_dry_run_formatting():
+    """Ensures deploy.sh dry-run constructs proper OCI image reference and Dockerfile."""
+    deploy_script = REPO_ROOT / ".github" / "scripts" / "deploy.sh"
+
+    # Tag format
+    res = subprocess.run(
+        [str(deploy_script), "bcgeu/navigator-test", "sha-abc1234", "--dry-run"],
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert "--- DRY RUN COMPLETE ---" in res.stdout
+    assert "FROM ghcr.io/miniontech/vexilon/agnav:sha-abc1234" in res.stdout
+
+    # Digest format (sha256:...)
+    digest = "sha256:45b169527f87a329d479bcda8c0b29686004fa854c87ec6056535f2a72fa8b3a"
+    res = subprocess.run(
+        [str(deploy_script), "bcgeu/navigator-test", digest, "--dry-run"],
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert "--- DRY RUN COMPLETE ---" in res.stdout
+    assert f"FROM ghcr.io/miniontech/vexilon/agnav@{digest}" in res.stdout
+
+
+def test_verify_deployment_sh_requires_space_id():
+    """Ensures verify_deployment.sh fails fast when SPACE_ID is missing."""
+    verify_script = REPO_ROOT / ".github" / "scripts" / "verify_deployment.sh"
+    assert verify_script.exists(), "verify_deployment.sh not found"
+
+    res = subprocess.run([str(verify_script)], capture_output=True, text=True)
+    assert res.returncode != 0
+    assert "SPACE_ID argument missing" in res.stdout or "SPACE_ID argument missing" in res.stderr
+

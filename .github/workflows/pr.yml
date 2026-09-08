@@ -37,6 +37,18 @@ jobs:
             tests/**
             compose.yml
 
+  actionlint:
+    name: Lint Workflows
+    if: (! github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+      - name: Lint Workflow Files
+        uses: docker://rhysd/actionlint:latest
+
   prepare-tests:
     name: Prepare Test Cache
     needs: check
@@ -298,7 +310,7 @@ jobs:
   # ==========================================================================
   results:
     name: Results
-    needs: [check, prepare-tests, test-unit, analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache]
+    needs: [check, actionlint, prepare-tests, test-unit, analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1

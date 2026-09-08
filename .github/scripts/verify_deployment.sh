@@ -6,7 +6,7 @@
 set -eo pipefail
 
 SPACE_ID=$1
-TIMEOUT_SECONDS=${2:-900} # Default 15 minutes because building can be slow
+TIMEOUT_SECONDS=${2:-600} # Default 10 minutes to maintain headroom under CI timeout
 INTERVAL=30
 
 if [ -z "$SPACE_ID" ]; then
@@ -20,7 +20,7 @@ echo "[verify] Timeout: $TIMEOUT_SECONDS seconds"
 START_TIME=$(date +%s)
 END_TIME=$((START_TIME + TIMEOUT_SECONDS))
 
-while [ $(date +%s) -lt $END_TIME ]; do
+while [ "$(date +%s)" -lt "$END_TIME" ]; do
   # Use Bash array for safer argument handling
   CURL_ARGS=( -s -L )
   if [ -n "${HF_TOKEN:-}" ]; then

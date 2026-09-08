@@ -66,8 +66,28 @@ if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
     exit 1
 fi
 
+# Construct full OCI reference
+if [[ "$IMAGE_REF" == *"@"* ]] || [[ "$IMAGE_REF" == *"ghcr.io"* ]]; then
+    FULL_IMAGE_REF="$IMAGE_REF"
+else
+    [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
+    _REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
+    FULL_IMAGE_REF="ghcr.io/${_REPO_REF,,}/agnav${separator}${IMAGE_REF}"
+fi
+
+if [ "$DRY_RUN" == "true" ]; then
+    echo "--- DRY RUN MODE ---"
+    echo "Target: $SPACE_NAME"
+    echo "Image:  $IMAGE_REF"
+    echo "Dockerfile content:"
+    echo "FROM ${FULL_IMAGE_REF}"
+    echo "LABEL rebuild_timestamp=$(date +%s)"
+    echo "--- DRY RUN COMPLETE ---"
+    exit 0
+fi
+
 # Ensure working directory is clean before proceeding locally
-if [ -z "${GITHUB_ACTIONS:-}" ] && [ "$DRY_RUN" == "false" ] && ! git diff --quiet; then
+if [ -z "${GITHUB_ACTIONS:-}" ] && ! git diff --quiet; then
     echo "Error: Working directory must be clean before deploying locally."
     exit 1
 fi
@@ -91,32 +111,10 @@ git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 git reset # Clears the index
 
-# Create the Stub Dockerfile
-# If IMAGE_REF is already a full OCI reference (contains @ or registry path), use it as is.
-# Otherwise, construct the full reference using the repository path.
-if [[ "$IMAGE_REF" == *"@"* ]] || [[ "$IMAGE_REF" == *"ghcr.io"* ]]; then
-    FULL_IMAGE_REF="$IMAGE_REF"
-else
-    # Fallback path for legacy/local usage
-    [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
-    _REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
-    FULL_IMAGE_REF="ghcr.io/${_REPO_REF,,}/agnav${separator}${IMAGE_REF}"
-fi
-
 cat <<EOF > Dockerfile
 FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
 EOF
-
-if [ "$DRY_RUN" == "true" ]; then
-    echo "--- DRY RUN MODE ---"
-    echo "Target: $SPACE_NAME"
-    echo "Image:  $IMAGE_REF"
-    echo "Dockerfile content:"
-    cat Dockerfile
-    echo "--- DRY RUN COMPLETE ---"
-    exit 0
-fi
 
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
     git config user.email "github-actions@github.com"
@@ -165,7 +163,7 @@ if [ "${TEST:-}" == "true" ]; then
     # Locate the verification script relative to this script
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [ -f "$SCRIPT_DIR/verify_deployment.sh" ]; then
-        bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_NAME"
+        bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_NAME" 600
     else
         echo "Error: Verification script not found at $SCRIPT_DIR/verify_deployment.sh"
         exit 1
