@@ -1,7 +1,7 @@
 #!/bin/bash
-# Usage: ./.github/scripts/deploy.sh <space_name> [image_ref] [--dry-run]
+# Usage: ./.github/scripts/deploy.sh <space_name> <image_ref> [--dry-run]
 # <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')
-# [image_ref]: Tag or digest of the image to deploy (falls back to short SHA if omitted)
+# <image_ref>: Tag or digest of the image to deploy
 #
 # Strict mode + Trace
 set -euo pipefail
@@ -14,9 +14,9 @@ git() {
 
 # Usage function
 usage() {
-    echo "Usage: $0 <space_name> [image_ref] [--dry-run]"
+    echo "Usage: $0 <space_name> <image_ref> [--dry-run]"
     echo "  <space_name>: Full name of the Hugging Face Space (e.g. 'DerekRoberts/vexilon')"
-    echo "  [image_ref]: Tag or digest of the image to deploy"
+    echo "  <image_ref>: Tag or digest of the image to deploy"
     echo "  --dry-run: Show what would be done without performing it"
     exit 1
 }
@@ -55,10 +55,10 @@ if [ -z "$SPACE_NAME" ]; then
     usage
 fi
 
-# Fallback to current short SHA if no image ref provided
+# Validate required arguments
 if [ -z "$IMAGE_REF" ]; then
-    IMAGE_REF=$(git rev-parse --short HEAD)
-    echo "[info] No image reference provided. Falling back to current SHA: $IMAGE_REF"
+    echo "Error: image_ref (e.g. 'sha-abc1234' or 'sha256:...') must be provided." >&2
+    usage
 fi
 
 if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
@@ -66,8 +66,28 @@ if [ -z "${HF_TOKEN:-}" ] && [ "$DRY_RUN" == "false" ]; then
     exit 1
 fi
 
+# Construct full OCI reference
+if [[ "$IMAGE_REF" == *"@"* ]] || [[ "$IMAGE_REF" == *"ghcr.io"* ]]; then
+    FULL_IMAGE_REF="$IMAGE_REF"
+else
+    [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
+    _REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
+    FULL_IMAGE_REF="ghcr.io/${_REPO_REF,,}/agnav${separator}${IMAGE_REF}"
+fi
+
+if [ "$DRY_RUN" == "true" ]; then
+    echo "--- DRY RUN MODE ---"
+    echo "Target: $SPACE_NAME"
+    echo "Image:  $IMAGE_REF"
+    echo "Dockerfile content:"
+    echo "FROM ${FULL_IMAGE_REF}"
+    echo "LABEL rebuild_timestamp=$(date +%s)"
+    echo "--- DRY RUN COMPLETE ---"
+    exit 0
+fi
+
 # Ensure working directory is clean before proceeding locally
-if [ -z "${GITHUB_ACTIONS:-}" ] && [ "$DRY_RUN" == "false" ] && ! git diff --quiet; then
+if [ -z "${GITHUB_ACTIONS:-}" ] && ! git diff --quiet; then
     echo "Error: Working directory must be clean before deploying locally."
     exit 1
 fi
@@ -91,32 +111,10 @@ git branch -D hf-snapshot 2>/dev/null || true
 git checkout --orphan hf-snapshot
 git reset # Clears the index
 
-# Create the Stub Dockerfile
-# If IMAGE_REF is already a full OCI reference (contains @ or registry path), use it as is.
-# Otherwise, construct the full reference using the repository path.
-if [[ "$IMAGE_REF" == *"@"* ]] || [[ "$IMAGE_REF" == *"ghcr.io"* ]]; then
-    FULL_IMAGE_REF="$IMAGE_REF"
-else
-    # Fallback path for legacy/local usage
-    [[ "$IMAGE_REF" == sha256:* ]] && separator='@' || separator=':'
-    _REPO_REF="${GITHUB_REPOSITORY:-miniontech/vexilon}"
-    FULL_IMAGE_REF="ghcr.io/${_REPO_REF,,}/agnav${separator}${IMAGE_REF}"
-fi
-
 cat <<EOF > Dockerfile
 FROM ${FULL_IMAGE_REF}
 LABEL rebuild_timestamp=$(date +%s)
 EOF
-
-if [ "$DRY_RUN" == "true" ]; then
-    echo "--- DRY RUN MODE ---"
-    echo "Target: $SPACE_NAME"
-    echo "Image:  $IMAGE_REF"
-    echo "Dockerfile content:"
-    cat Dockerfile
-    echo "--- DRY RUN COMPLETE ---"
-    exit 0
-fi
 
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
     git config user.email "github-actions@github.com"
@@ -164,8 +162,9 @@ if [ "${TEST:-}" == "true" ]; then
     echo "[info] TEST=true detected. Triggering automatic verification..."
     # Locate the verification script relative to this script
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VERIFY_TIMEOUT="${VERIFY_TIMEOUT:-300}"
     if [ -f "$SCRIPT_DIR/verify_deployment.sh" ]; then
-        bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_NAME"
+        bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_NAME" "$VERIFY_TIMEOUT"
     else
         echo "Error: Verification script not found at $SCRIPT_DIR/verify_deployment.sh"
         exit 1
