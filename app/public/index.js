@@ -13,9 +13,7 @@
         chatInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                const sendBtn =
-                    document.querySelector('button[aria-label="Send message"]') ||
-                    document.querySelector("button.send-button");
+                const sendBtn = document.querySelector("#chat-submit");
                 if (sendBtn && !sendBtn.disabled) sendBtn.click();
             }
         });
