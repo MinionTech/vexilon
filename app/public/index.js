@@ -12,9 +12,12 @@
         if (!chatInput || chatInput.dataset.listenerAttached) return;
         chatInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
+                // #chat-submit is Chainlit's current submit button id
                 const sendBtn = document.querySelector("#chat-submit");
-                if (sendBtn && !sendBtn.disabled) sendBtn.click();
+                if (sendBtn && !sendBtn.disabled) {
+                    e.preventDefault();
+                    sendBtn.click();
+                }
             }
         });
         chatInput.dataset.listenerAttached = "true";
