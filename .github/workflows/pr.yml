@@ -266,7 +266,7 @@ jobs:
             *.cache-from=type=registry,ref=ghcr.io/miniontech/vexilon/agnav:buildcache
 
       - name: Run UI E2E Tests
-        run: docker compose up test-ui-e2e
+        run: docker compose up --abort-on-container-exit --exit-code-from test-ui-e2e test-ui-e2e
 
       - name: Dump Logs on Failure
         if: failure()

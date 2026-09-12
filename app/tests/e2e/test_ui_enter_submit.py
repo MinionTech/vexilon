@@ -1,12 +1,12 @@
 """
-tests/test_ui_enter_submit.py — E2E: Enter-to-submit keyboard shortcut
+tests/e2e/test_ui_enter_submit.py — E2E: Enter-to-submit keyboard shortcut
 
 Verifies that the Enter-to-submit handler works correctly:
 - Enter (without Shift) submits the message
 - Shift+Enter creates a newline without submitting
 """
 
-import re
+import os
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -14,7 +14,7 @@ from playwright.sync_api import Page, expect
 @pytest.fixture(scope="module")
 def app_url():
     """Base URL for the running Chainlit app."""
-    return "http://localhost:7860"
+    return os.getenv("APP_URL", "http://localhost:7860")
 
 
 def test_enter_submits_message(page: Page, app_url: str):
@@ -78,9 +78,7 @@ def test_shift_enter_creates_newline(page: Page, app_url: str):
     textarea_value = textarea.input_value()
     assert "Line 1" in textarea_value, "First line should be present"
     assert "Line 2" in textarea_value, "Second line should be present"
-    # Check for newline (either \n or multiple lines)
-    assert "\n" in textarea_value or len(textarea_value.split("\n")) > 1, \
-        "Textarea should contain a newline"
+    assert "\n" in textarea_value, "Textarea should contain a newline"
 
 
 def test_enter_respects_disabled_button(page: Page, app_url: str):
@@ -91,27 +89,28 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
     page.wait_for_selector("textarea", timeout=10000)
     
     textarea = page.locator("textarea")
-    submit_button = page.locator("#chat-submit")
     
     # Type a message
     textarea.fill("Test message")
     
-    # If the button is disabled, Enter should not submit
-    # This test is conditional based on the initial state
-    if submit_button.is_disabled():
-        messages_before = page.locator(".message, [class*='message']").count()
-        
-        # Try to submit with Enter
-        textarea.press("Enter")
-        
-        # Wait a moment
-        page.wait_for_timeout(500)
-        
-        # Verify no message was submitted
-        messages_after = page.locator(".message, [class*='message']").count()
-        assert messages_after == messages_before, \
-            "Enter should not submit when button is disabled"
-        
-        # Message should still be in textarea
-        assert textarea.input_value() == "Test message", \
-            "Text should remain when submission is blocked"
+    # Force-disable the submit button to make this test deterministic
+    page.evaluate("document.querySelector('#chat-submit').disabled = true")
+    
+    messages_before = page.locator(".message, [class*='message']").count()
+    
+    # Press Enter with the button disabled
+    # Because the handler only preventDefault()s when button is enabled and not disabled,
+    # disabled Enter should preserve native textarea behavior (newline)
+    textarea.press("Enter")
+    
+    # Wait a moment
+    page.wait_for_timeout(500)
+    
+    # Verify no message was submitted
+    messages_after = page.locator(".message, [class*='message']").count()
+    assert messages_after == messages_before, \
+        "Enter should not submit when button is disabled"
+    
+    # With the button disabled, Enter should have created a newline (native behavior)
+    assert textarea.input_value() == "Test message\n", \
+        "Enter with disabled button should create newline, not submit"
