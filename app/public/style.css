@@ -22,7 +22,7 @@ body {
     display: none !important;
 }
 
-/* 3. Rename "Readme" → "Knowledge Base" without JS flicker */
+/* 3. Rename "Readme" → "Knowledge Base" visually (aria-label set in index.js) */
 #readme-button {
     font-size: 0;
 }

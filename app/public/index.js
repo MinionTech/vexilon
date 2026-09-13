@@ -32,6 +32,17 @@
         chatInput.dataset.listenerAttached = "true";
     }
 
+    // ── Knowledge Base button a11y (WCAG 2.5.3 Label in Name) ────────────────
+    // CSS in style.css relabels the visible text; aria-label keeps the
+    // accessible name in sync for screen readers and voice control.
+
+    function labelKnowledgeBaseButton() {
+        const btn = document.querySelector("#readme-button");
+        if (!btn || btn.dataset.knowledgeBaseLabeled) return;
+        btn.setAttribute("aria-label", "Knowledge Base");
+        btn.dataset.knowledgeBaseLabeled = "true";
+    }
+
     // ── Hide Readme drawer title ──────────────────────────────────────────────
 
     function hideReadmeDrawerTitle() {
@@ -104,12 +115,14 @@
     // Poll for React-rendered elements that appear/disappear on navigation.
     setInterval(() => {
         setupEnterToSubmit();
+        labelKnowledgeBaseButton();
         hideReadmeDrawerTitle();
         replaceBuildSha();
         manageWelcomeTitle();
     }, 500);
 
     setupEnterToSubmit();
+    labelKnowledgeBaseButton();
     hideReadmeDrawerTitle();
     replaceBuildSha();
     manageWelcomeTitle();
