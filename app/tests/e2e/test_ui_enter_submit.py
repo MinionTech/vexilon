@@ -152,6 +152,12 @@ def test_enter_with_empty_textarea(page: Page, app_url: str):
     
     textarea = page.locator("textarea")
     
+    # Wait for the custom event handler to attach (runs via setInterval every 500ms)
+    page.wait_for_function(
+        "document.querySelector('textarea')?.dataset?.listenerAttached === 'true'",
+        timeout=3000
+    )
+    
     # Verify textarea starts empty and button is disabled
     initial_state = page.evaluate("""() => {
         const textarea = document.querySelector("textarea");
