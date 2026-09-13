@@ -25,31 +25,80 @@ def test_enter_submits_message(page: Page, app_url: str):
     page.wait_for_selector("textarea", timeout=15000)
     page.wait_for_selector("#chat-submit", timeout=5000)
     
+    # Debug: Check if index.js loaded and handler attached
+    debug_info = page.evaluate("""() => {
+        const textarea = document.querySelector("textarea");
+        const submitBtn = document.querySelector("#chat-submit");
+        return {
+            textareaExists: !!textarea,
+            submitBtnExists: !!submitBtn,
+            submitBtnDisabled: submitBtn ? submitBtn.disabled : null,
+            listenerAttached: textarea ? textarea.dataset.listenerAttached : null,
+            textareaValue: textarea ? textarea.value : null
+        };
+    }""")
+    print(f"DEBUG before submit: {debug_info}")
+    
     # Type a test message
     test_message = "Test message from Enter key"
     textarea = page.locator("textarea")
     textarea.fill(test_message)
     
+    # Verify message was filled
+    filled_value = textarea.input_value()
+    print(f"DEBUG filled textarea value: {repr(filled_value)}")
+    assert filled_value == test_message, f"Failed to fill textarea. Got: {repr(filled_value)}"
+    
+    # Debug: Check state before Enter
+    pre_enter_state = page.evaluate("""() => {
+        const textarea = document.querySelector("textarea");
+        const submitBtn = document.querySelector("#chat-submit");
+        return {
+            textareaValue: textarea.value,
+            submitBtnDisabled: submitBtn.disabled,
+            listenerAttached: textarea.dataset.listenerAttached
+        };
+    }""")
+    print(f"DEBUG pre-enter state: {pre_enter_state}")
+    
     # Press Enter (without Shift) to submit
     textarea.press("Enter")
     
-    # Wait for the message to appear - Chainlit uses specific markup
-    # Wait for either the user message element or the textarea to clear
+    # Wait a moment for the handler to process
+    page.wait_for_timeout(500)
+    
+    # Debug: Check state after Enter
+    post_enter_state = page.evaluate("""() => {
+        const textarea = document.querySelector("textarea");
+        return {
+            textareaValue: textarea.value,
+            textareaLength: textarea.value.length
+        };
+    }""")
+    print(f"DEBUG post-enter state: {post_enter_state}")
+    
+    # Wait for the textarea to clear (Chainlit clears it after submission)
+    # Or for the message to appear in the chat
     try:
-        # Try waiting for the message text to appear anywhere on the page
-        page.wait_for_selector(f"text={test_message}", timeout=15000)
+        # Wait for textarea to clear (primary signal)
+        page.wait_for_function(
+            "document.querySelector('textarea').value === ''",
+            timeout=15000
+        )
     except:
-        # If that fails, check if textarea was cleared (another success signal)
-        page.wait_for_timeout(2000)
-        if textarea.input_value() == "":
-            # Textarea cleared, message was likely sent
-            pass
-        else:
-            raise AssertionError(f"Message '{test_message}' did not appear and textarea was not cleared")
+        # If textarea didn't clear, check if message appeared
+        try:
+            page.wait_for_selector(f"text={test_message}", timeout=2000)
+        except:
+            final_value = textarea.input_value()
+            raise AssertionError(
+                f"Enter handler did not submit message. "
+                f"Textarea value after Enter: {repr(final_value)}"
+            )
     
     # Verify the textarea was cleared after submission (Chainlit behavior)
-    page.wait_for_timeout(1000)
-    assert textarea.input_value() == "", "Textarea should be cleared after submission"
+    final_textarea_value = textarea.input_value()
+    assert final_textarea_value == "", f"Textarea should be cleared after submission. Got: {repr(final_textarea_value)}"
 
 
 def test_shift_enter_creates_newline(page: Page, app_url: str):
@@ -99,11 +148,30 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
     # Type a message
     textarea.fill("Test message")
     
+    # Verify message was filled
+    filled_value = textarea.input_value()
+    print(f"DEBUG filled value before disable: {repr(filled_value)}")
+    assert filled_value == "Test message", f"Failed to fill textarea. Got: {repr(filled_value)}"
+    
     # Force-disable the submit button to make this test deterministic
     page.evaluate("document.querySelector('#chat-submit').disabled = true")
     
     # Wait a bit to ensure the state is set
     page.wait_for_timeout(300)
+    
+    # Debug: Check state before Enter
+    pre_enter_state = page.evaluate("""() => {
+        const textarea = document.querySelector("textarea");
+        const submitBtn = document.querySelector("#chat-submit");
+        return {
+            textareaValue: textarea.value,
+            submitBtnDisabled: submitBtn.disabled,
+            listenerAttached: textarea.dataset.listenerAttached
+        };
+    }""")
+    print(f"DEBUG pre-enter (disabled) state: {pre_enter_state}")
+    assert pre_enter_state["submitBtnDisabled"] == True, "Button should be disabled"
+    assert pre_enter_state["textareaValue"] == "Test message", "Textarea should still have text"
     
     # Press Enter with the button disabled
     # Because the handler only preventDefault()s when button is enabled and not disabled,
@@ -112,6 +180,15 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
     
     # Wait for any potential submission to occur
     page.wait_for_timeout(1000)
+    
+    # Debug: Check state after Enter
+    post_enter_state = page.evaluate("""() => {
+        const textarea = document.querySelector("textarea");
+        return {
+            textareaValue: textarea.value
+        };
+    }""")
+    print(f"DEBUG post-enter (disabled) state: {post_enter_state}")
     
     # With the button disabled, Enter should have created a newline (native behavior)
     # The handler checks if button is disabled and only prevents default if enabled
