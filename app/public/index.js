@@ -73,14 +73,22 @@
     }
 
     // ── Knowledge Base drawer a11y (WCAG 1.4.3 color-contrast) ───────────────
-    // Tag the Readme dialog so custom CSS can scope link-color overrides (#642).
+    // Tag the Readme full-screen dialog so custom CSS can scope link-color overrides (#642).
+    // Chainlit's Readme uses a full-screen DialogContent (max-w-screen); other modals do not.
 
     function labelKnowledgeBaseDrawer() {
-        const dialog = document.querySelector('[role="dialog"]');
-        if (!dialog || dialog.dataset.knowledgeBaseDrawer) return;
-        if (!dialog.querySelector("a.text-primary")) return;
-        dialog.setAttribute("data-knowledge-base-drawer", "true");
-        dialog.dataset.knowledgeBaseDrawer = "true";
+        const drawer = document.querySelector('[role="dialog"].max-w-screen');
+        if (!drawer || drawer.hasAttribute("data-knowledge-base-drawer")) return;
+        drawer.setAttribute("data-knowledge-base-drawer", "true");
+    }
+
+    function setupKnowledgeBaseDrawerLabel() {
+        const btn = document.querySelector("#readme-button");
+        if (!btn || btn.dataset.drawerLabelAttached) return;
+        btn.addEventListener("click", () => {
+            setTimeout(labelKnowledgeBaseDrawer, 0);
+        });
+        btn.dataset.drawerLabelAttached = "true";
     }
 
     // ── Build SHA ─────────────────────────────────────────────────────────────
@@ -151,6 +159,7 @@
         labelChatControls();
         hideReadmeDrawerTitle();
         labelKnowledgeBaseDrawer();
+        setupKnowledgeBaseDrawerLabel();
         replaceBuildSha();
         manageWelcomeTitle();
     }, 500);
@@ -159,6 +168,7 @@
     labelKnowledgeBaseButton();
     labelChatControls();
     hideReadmeDrawerTitle();
+    setupKnowledgeBaseDrawerLabel();
     labelKnowledgeBaseDrawer();
     replaceBuildSha();
     manageWelcomeTitle();
