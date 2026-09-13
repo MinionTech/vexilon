@@ -12,11 +12,14 @@
         if (!chatInput || chatInput.dataset.listenerAttached) return;
         chatInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
+                // Always preventDefault to stop Chainlit's handler from submitting
+                // when button is disabled (Chainlit doesn't check disabled state)
                 e.preventDefault();
-                const sendBtn =
-                    document.querySelector('button[aria-label="Send message"]') ||
-                    document.querySelector("button.send-button");
-                if (sendBtn && !sendBtn.disabled) sendBtn.click();
+                // #chat-submit is Chainlit's current submit button id
+                const sendBtn = document.querySelector("#chat-submit");
+                if (sendBtn && !sendBtn.disabled) {
+                    sendBtn.click();
+                }
             }
         });
         chatInput.dataset.listenerAttached = "true";

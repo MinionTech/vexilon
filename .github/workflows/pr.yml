@@ -234,6 +234,48 @@ jobs:
         if: always()
         run: docker compose down -v || true
 
+  test-ui-e2e:
+    name: UI E2E Tests (Playwright)
+    needs: [test-unit, prepare-tests]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Cache Ollama Models
+        uses: actions/cache@v6
+        with:
+          path: ./.ollama_data
+          key: ollama-models-${{ env.OLLAMA_MODEL_ID }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and Cache (UI E2E)
+        uses: docker/bake-action@v7
+        with:
+          load: true
+          source: .
+          files: compose.yml
+          targets: dev
+          set: |
+            *.cache-from=type=gha
+            *.cache-from=type=registry,ref=ghcr.io/miniontech/vexilon/agnav:buildcache
+
+      - name: Run UI E2E Tests
+        run: docker compose up --abort-on-container-exit --exit-code-from test-ui-e2e test-ui-e2e
+
+      - name: Dump Logs on Failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v || true
+
   test-e2e:
     name: End-to-End Tests
     needs: [test-unit, prepare-tests]
@@ -309,7 +351,7 @@ jobs:
   # ==========================================================================
   results:
     name: Results
-    needs: [check, actionlint, prepare-tests, test-unit, analysis, build, test-integration-model, test-integration-app, test-e2e, validate-cache]
+    needs: [check, actionlint, prepare-tests, test-unit, analysis, build, test-integration-model, test-integration-app, test-ui-e2e, test-e2e, validate-cache]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1
