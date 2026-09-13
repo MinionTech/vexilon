@@ -43,7 +43,6 @@ services:
       - ./app:/app:z
       - /app/.pdf_cache
       - /app/.files
-      - /app/.chainlit
     environment:
       <<: *app-env
       AGNAV_LLM_PROVIDER: ${AGNAV_LLM_PROVIDER:-ollama}
@@ -75,7 +74,6 @@ services:
       - ./app:/app:z
       - /app/.pdf_cache
       - /app/.files
-      - /app/.chainlit
     environment:
       <<: *app-env
       AGNAV_LLM_PROVIDER: huggingface

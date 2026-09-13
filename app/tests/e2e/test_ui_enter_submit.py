@@ -19,10 +19,10 @@ def app_url():
 
 def test_enter_submits_message(page: Page, app_url: str):
     """Pressing Enter (without Shift) in the chat input submits the message."""
-    page.goto(app_url)
+    page.goto(app_url, wait_until="domcontentloaded")
     
     # Wait for the chat interface to load
-    page.wait_for_selector("textarea", timeout=10000)
+    page.wait_for_selector("textarea", timeout=15000)
     
     # Type a test message
     test_message = "Test message from Enter key"
@@ -49,10 +49,10 @@ def test_enter_submits_message(page: Page, app_url: str):
 
 def test_shift_enter_creates_newline(page: Page, app_url: str):
     """Pressing Shift+Enter in the chat input creates a newline without submitting."""
-    page.goto(app_url)
+    page.goto(app_url, wait_until="domcontentloaded")
     
     # Wait for the chat interface to load
-    page.wait_for_selector("textarea", timeout=10000)
+    page.wait_for_selector("textarea", timeout=15000)
     
     # Type first line
     textarea = page.locator("textarea")
@@ -83,10 +83,10 @@ def test_shift_enter_creates_newline(page: Page, app_url: str):
 
 def test_enter_respects_disabled_button(page: Page, app_url: str):
     """Enter keypress does not submit when the submit button is disabled."""
-    page.goto(app_url)
+    page.goto(app_url, wait_until="domcontentloaded")
     
     # Wait for the chat interface to load
-    page.wait_for_selector("textarea", timeout=10000)
+    page.wait_for_selector("textarea", timeout=15000)
     
     textarea = page.locator("textarea")
     
