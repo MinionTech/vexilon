@@ -12,14 +12,21 @@
         if (!chatInput || chatInput.dataset.listenerAttached) return;
         chatInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-                // Always preventDefault to stop Chainlit's handler from submitting
-                // when button is disabled (Chainlit doesn't check disabled state)
-                e.preventDefault();
                 // #chat-submit is Chainlit's current submit button id
                 const sendBtn = document.querySelector("#chat-submit");
-                if (sendBtn && !sendBtn.disabled) {
-                    sendBtn.click();
+                
+                if (sendBtn) {
+                    // Button exists: preventDefault to block Chainlit's handler
+                    // (Chainlit doesn't check disabled state, would submit anyway)
+                    e.preventDefault();
+                    
+                    // Only click if enabled
+                    if (!sendBtn.disabled) {
+                        sendBtn.click();
+                    }
                 }
+                // If no button found: don't preventDefault, allow default behavior
+                // This prevents silent keystroke swallowing if selector breaks
             }
         });
         chatInput.dataset.listenerAttached = "true";
