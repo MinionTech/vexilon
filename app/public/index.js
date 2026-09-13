@@ -59,9 +59,8 @@
     function labelChatControls() {
         for (const [id, label] of Object.entries(CHAT_CONTROL_LABELS)) {
             const el = document.getElementById(id);
-            if (!el || el.dataset.chatControlLabeled) continue;
+            if (!el || el.getAttribute("aria-label") === label) continue;
             el.setAttribute("aria-label", label);
-            el.dataset.chatControlLabeled = "true";
         }
     }
 
