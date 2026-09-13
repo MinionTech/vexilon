@@ -21,7 +21,7 @@
                     sendBtn.click();
                 }
             }
-        });
+        }, { capture: true }); // Use capture phase to run before React's handlers
         chatInput.dataset.listenerAttached = "true";
     }
 
