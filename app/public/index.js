@@ -79,6 +79,7 @@
     function labelKnowledgeBaseDrawer() {
         const drawer = document.querySelector('[role="dialog"].max-w-screen');
         if (!drawer || drawer.hasAttribute("data-knowledge-base-drawer")) return;
+        if (!drawer.querySelector("a.text-primary")) return;
         drawer.setAttribute("data-knowledge-base-drawer", "true");
     }
 
