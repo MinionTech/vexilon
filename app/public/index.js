@@ -73,14 +73,14 @@
     }
 
     // ── Knowledge Base drawer a11y (WCAG 1.4.3 color-contrast) ───────────────
-    // Tag the Readme full-screen dialog so custom CSS can scope link-color overrides (#642).
-    // Chainlit's Readme uses a full-screen DialogContent (max-w-screen); other modals do not.
+    // Tag the Readme dialog by content so custom CSS can scope link-color overrides (#642).
 
     function labelKnowledgeBaseDrawer() {
-        const drawer = document.querySelector('[role="dialog"].max-w-screen');
-        if (!drawer || drawer.hasAttribute("data-knowledge-base-drawer")) return;
-        if (!drawer.querySelector("a.text-primary")) return;
-        drawer.setAttribute("data-knowledge-base-drawer", "true");
+        document.querySelectorAll('[role="dialog"]').forEach((dialog) => {
+            if (!dialog.hasAttribute("data-knowledge-base-drawer") && dialog.querySelector("a.text-primary")) {
+                dialog.setAttribute("data-knowledge-base-drawer", "true");
+            }
+        });
     }
 
     function setupKnowledgeBaseDrawerLabel() {
