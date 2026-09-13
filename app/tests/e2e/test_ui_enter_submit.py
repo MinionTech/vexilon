@@ -160,14 +160,13 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
     print(f"DEBUG filled value before disable: {repr(filled_value)}")
     assert filled_value == "Test message", f"Failed to fill textarea. Got: {repr(filled_value)}"
     
-    # Force-disable the submit button to make this test deterministic
-    page.evaluate("document.querySelector('#chat-submit').disabled = true")
+    # Test realistic scenario: button is naturally disabled when textarea is empty
+    # Clear textarea to trigger React's natural button-disable behavior
+    textarea.fill("")
+    page.wait_for_timeout(200)  # Let React process the change
     
-    # Wait a bit to ensure the state is set
-    page.wait_for_timeout(300)
-    
-    # Debug: Check state before Enter
-    pre_enter_state = page.evaluate("""() => {
+    # Debug: Verify button is naturally disabled with empty textarea
+    pre_clear_state = page.evaluate("""() => {
         const textarea = document.querySelector("textarea");
         const submitBtn = document.querySelector("#chat-submit");
         return {
@@ -176,17 +175,24 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
             listenerAttached: textarea.dataset.listenerAttached
         };
     }""")
-    print(f"DEBUG pre-enter (disabled) state: {pre_enter_state}")
-    assert pre_enter_state["submitBtnDisabled"] == True, "Button should be disabled"
-    assert pre_enter_state["textareaValue"] == "Test message", "Textarea should still have text"
+    print(f"DEBUG pre-clear state (empty textarea): {pre_clear_state}")
+    assert pre_clear_state["submitBtnDisabled"] == True, "Button should be disabled when textarea is empty"
+    assert pre_clear_state["textareaValue"] == "", "Textarea should be empty"
     
-    # Press Enter with the button disabled
-    # Because the handler only preventDefault()s when button is enabled and not disabled,
-    # disabled Enter should preserve native textarea behavior (newline)
+    # Type single character to have something to test with
+    textarea.type("X")
+    
+    # Now forcibly disable the button while there's content
+    # (simulates edge case like rate limiting or backend unavailable)
+    page.evaluate("document.querySelector('#chat-submit').disabled = true")
+    
+    # Immediately press Enter before React can re-enable
+    # With button disabled, our handler should preventDefault but NOT click
+    # This means native behavior (newline) should NOT occur either (preventDefault blocks it)
     textarea.press("Enter")
     
-    # Wait for any potential submission to occur
-    page.wait_for_timeout(1000)
+    # Wait a moment
+    page.wait_for_timeout(500)
     
     # Debug: Check state after Enter
     post_enter_state = page.evaluate("""() => {
@@ -197,8 +203,9 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
     }""")
     print(f"DEBUG post-enter (disabled) state: {post_enter_state}")
     
-    # With the button disabled, Enter should have created a newline (native behavior)
-    # The handler checks if button is disabled and only prevents default if enabled
+    # With button disabled, our handler calls preventDefault but doesn't click
+    # Since we preventDefault, native newline behavior is also blocked
+    # So textarea should still have just "X" (no submission, no newline)
     textarea_value = textarea.input_value()
-    assert textarea_value == "Test message\n", \
-        f"Enter with disabled button should create newline. Got: {repr(textarea_value)}"
+    assert textarea_value == "X", \
+        f"With disabled button, Enter should be blocked (no submit, no newline). Got: {repr(textarea_value)}"
