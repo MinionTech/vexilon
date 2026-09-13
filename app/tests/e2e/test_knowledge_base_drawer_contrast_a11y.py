@@ -35,28 +35,41 @@ def _contrast_ratio_js() -> str:
             const darker = Math.min(l1, l2);
             return (lighter + 0.05) / (darker + 0.05);
         }
-        function parseRgb(rgb) {
-            const m = rgb.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
-            return m ? [+m[1], +m[2], +m[3]] : null;
+        function parseRgba(rgb) {
+            const m = rgb.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)(?:,\\s*([\\d.]+))?\\)/);
+            if (!m) return null;
+            return {
+                r: +m[1],
+                g: +m[2],
+                b: +m[3],
+                a: m[4] !== undefined ? parseFloat(m[4]) : 1,
+            };
+        }
+        function opaqueBackground(el) {
+            let node = el;
+            while (node) {
+                const rgba = parseRgba(getComputedStyle(node).backgroundColor);
+                if (rgba && rgba.a > 0) {
+                    return [rgba.r, rgba.g, rgba.b];
+                }
+                node = node.parentElement;
+            }
+            return null;
         }
 
-        const link = document.querySelector('[role="dialog"] a.text-primary');
+        const dialog = document.querySelector(
+            '[role="dialog"][data-knowledge-base-drawer]'
+        );
+        if (!dialog) return { error: "Knowledge Base drawer not found" };
+
+        const link = dialog.querySelector("a.text-primary");
         if (!link) return { error: "no drawer link found" };
 
-        const fg = parseRgb(getComputedStyle(link).color);
-        if (!fg) return { error: "could not parse link color" };
+        const fgRgba = parseRgba(getComputedStyle(link).color);
+        if (!fgRgba) return { error: "could not parse link color" };
+        const fg = [fgRgba.r, fgRgba.g, fgRgba.b];
 
-        let el = link;
-        let bg = null;
-        while (el) {
-            const parsed = parseRgb(getComputedStyle(el).backgroundColor);
-            if (parsed && parsed[0] + parsed[1] + parsed[2] < 700) {
-                bg = parsed;
-                break;
-            }
-            el = el.parentElement;
-        }
-        if (!bg) bg = [33, 33, 33];
+        const bg = opaqueBackground(link.parentElement) || [33, 33, 33];
 
         return {
             ratio: contrast(fg, bg),
@@ -78,7 +91,7 @@ def test_knowledge_base_drawer_link_contrast_dark_theme(page: Page, app_url: str
     readme_button.wait_for(timeout=15000)
     readme_button.click()
 
-    dialog = page.locator('[role="dialog"]')
+    dialog = page.locator('[role="dialog"][data-knowledge-base-drawer]')
     dialog.wait_for(timeout=5000)
     dialog.locator("a.text-primary").first.wait_for(timeout=5000)
 

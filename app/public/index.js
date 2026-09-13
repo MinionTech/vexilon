@@ -72,6 +72,17 @@
         });
     }
 
+    // ── Knowledge Base drawer a11y (WCAG 1.4.3 color-contrast) ───────────────
+    // Tag the Readme dialog so custom CSS can scope link-color overrides (#642).
+
+    function labelKnowledgeBaseDrawer() {
+        const dialog = document.querySelector('[role="dialog"]');
+        if (!dialog || dialog.dataset.knowledgeBaseDrawer) return;
+        if (!dialog.querySelector("a.text-primary")) return;
+        dialog.setAttribute("data-knowledge-base-drawer", "true");
+        dialog.dataset.knowledgeBaseDrawer = "true";
+    }
+
     // ── Build SHA ─────────────────────────────────────────────────────────────
 
     let buildSha = "dev";
@@ -139,6 +150,7 @@
         labelKnowledgeBaseButton();
         labelChatControls();
         hideReadmeDrawerTitle();
+        labelKnowledgeBaseDrawer();
         replaceBuildSha();
         manageWelcomeTitle();
     }, 500);
@@ -147,6 +159,7 @@
     labelKnowledgeBaseButton();
     labelChatControls();
     hideReadmeDrawerTitle();
+    labelKnowledgeBaseDrawer();
     replaceBuildSha();
     manageWelcomeTitle();
 

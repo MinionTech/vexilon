@@ -87,6 +87,6 @@ body {
 
 /* 6. Knowledge Base drawer: WCAG AA link contrast in dark theme (fixes #642) */
 /* Chainlit default dark --primary (#f5145f) is ~3.94:1 on #212121; lighten for drawer links only. */
-.dark [role="dialog"] a.text-primary {
+.dark [role="dialog"][data-knowledge-base-drawer] a.text-primary {
     color: #ff6b9d !important; /* 6.0:1 on #212121 */
 }
