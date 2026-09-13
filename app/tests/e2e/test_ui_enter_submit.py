@@ -19,11 +19,18 @@ def app_url():
 
 def test_enter_submits_message(page: Page, app_url: str):
     """Pressing Enter (without Shift) in the chat input submits the message."""
+    # Capture console messages to verify index.js loads
+    console_messages = []
+    page.on("console", lambda msg: console_messages.append(f"{msg.type()}: {msg.text()}"))
+    
     page.goto(app_url, wait_until="domcontentloaded")
     
     # Wait for the chat interface to load
     page.wait_for_selector("textarea", timeout=15000)
     page.wait_for_selector("#chat-submit", timeout=5000)
+    
+    # Print captured console messages
+    print(f"DEBUG console messages: {console_messages[:10]}")  # First 10 messages
     
     # Debug: Check if index.js loaded and handler attached
     debug_info = page.evaluate("""() => {
@@ -39,15 +46,15 @@ def test_enter_submits_message(page: Page, app_url: str):
     }""")
     print(f"DEBUG before submit: {debug_info}")
     
-    # Type a test message
+    # Type a test message using pressSequentially to trigger React onChange
     test_message = "Test message from Enter key"
     textarea = page.locator("textarea")
-    textarea.fill(test_message)
+    textarea.press_sequentially(test_message, delay=10)
     
-    # Verify message was filled
+    # Verify message was typed
     filled_value = textarea.input_value()
-    print(f"DEBUG filled textarea value: {repr(filled_value)}")
-    assert filled_value == test_message, f"Failed to fill textarea. Got: {repr(filled_value)}"
+    print(f"DEBUG typed textarea value: {repr(filled_value)}")
+    assert filled_value == test_message, f"Failed to type into textarea. Got: {repr(filled_value)}"
     
     # Debug: Check state before Enter
     pre_enter_state = page.evaluate("""() => {
@@ -108,9 +115,9 @@ def test_shift_enter_creates_newline(page: Page, app_url: str):
     # Wait for the chat interface to load
     page.wait_for_selector("textarea", timeout=15000)
     
-    # Type first line
+    # Type first line using pressSequentially to trigger React onChange
     textarea = page.locator("textarea")
-    textarea.fill("Line 1")
+    textarea.press_sequentially("Line 1", delay=10)
     
     # Count existing messages before Shift+Enter
     messages_before = page.locator(".message, [class*='message']").count()
@@ -145,8 +152,8 @@ def test_enter_respects_disabled_button(page: Page, app_url: str):
     
     textarea = page.locator("textarea")
     
-    # Type a message
-    textarea.fill("Test message")
+    # Type a message using pressSequentially to trigger React onChange
+    textarea.press_sequentially("Test message", delay=10)
     
     # Verify message was filled
     filled_value = textarea.input_value()
