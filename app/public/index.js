@@ -43,6 +43,27 @@
         btn.dataset.knowledgeBaseLabeled = "true";
     }
 
+    // ── Core chat control a11y (WCAG 4.1.2 Name, Role, Value) ───────────────
+    // Chainlit renders icon-only controls with no accessible name; set
+    // aria-label directly so axe button-name passes and screen readers announce
+    // purpose. Re-applied via setInterval when React re-renders the composer.
+
+    const CHAT_CONTROL_LABELS = {
+        "chat-profiles": "Choose persona",
+        "upload-button": "Attach file",
+        "chat-settings-open-modal": "Open chat settings",
+        "chat-submit": "Send message",
+        "stop-button": "Stop generation",
+    };
+
+    function labelChatControls() {
+        for (const [id, label] of Object.entries(CHAT_CONTROL_LABELS)) {
+            const el = document.getElementById(id);
+            if (!el || el.getAttribute("aria-label") === label) continue;
+            el.setAttribute("aria-label", label);
+        }
+    }
+
     // ── Hide Readme drawer title ──────────────────────────────────────────────
 
     function hideReadmeDrawerTitle() {
@@ -116,6 +137,7 @@
     setInterval(() => {
         setupEnterToSubmit();
         labelKnowledgeBaseButton();
+        labelChatControls();
         hideReadmeDrawerTitle();
         replaceBuildSha();
         manageWelcomeTitle();
@@ -123,6 +145,7 @@
 
     setupEnterToSubmit();
     labelKnowledgeBaseButton();
+    labelChatControls();
     hideReadmeDrawerTitle();
     replaceBuildSha();
     manageWelcomeTitle();
