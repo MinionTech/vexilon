@@ -21,7 +21,7 @@ def test_enter_submits_message(page: Page, app_url: str):
     """Pressing Enter (without Shift) in the chat input submits the message."""
     # Capture console messages to verify index.js loads
     console_messages = []
-    page.on("console", lambda msg: console_messages.append(f"{msg.type()}: {msg.text()}"))
+    page.on("console", lambda msg: console_messages.append(f"{msg.type}: {msg.text}"))
     
     page.goto(app_url, wait_until="domcontentloaded")
     
