@@ -2,6 +2,8 @@
 Playwright configuration for e2e tests in Docker environment.
 """
 
+import os
+
 import pytest
 
 
@@ -18,3 +20,9 @@ def browser_type_launch_args(browser_type_launch_args):
             "--disable-software-rasterizer",
         ],
     }
+
+
+@pytest.fixture(scope="module")
+def app_url():
+    """Base URL for the running Chainlit app."""
+    return os.getenv("APP_URL", "http://localhost:7860")

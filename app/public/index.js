@@ -75,9 +75,16 @@
     // ── Knowledge Base drawer a11y (WCAG 1.4.3 color-contrast) ───────────────
     // Tag the Readme dialog by content so custom CSS can scope link-color overrides (#642).
 
+    function isKnowledgeBaseDrawer(dialog) {
+        const heading = dialog.querySelector("h2, h3");
+        if (!heading) return false;
+        const title = heading.textContent.trim();
+        return title === "Knowledge Base" || title === "Readme";
+    }
+
     function labelKnowledgeBaseDrawer() {
         document.querySelectorAll('[role="dialog"]').forEach((dialog) => {
-            if (!dialog.hasAttribute("data-knowledge-base-drawer") && dialog.querySelector("a.text-primary")) {
+            if (!dialog.hasAttribute("data-knowledge-base-drawer") && isKnowledgeBaseDrawer(dialog)) {
                 dialog.setAttribute("data-knowledge-base-drawer", "true");
             }
         });
