@@ -218,3 +218,50 @@ async def test_rag_review_stream_get_rag_context_failure(monkeypatch):
     assert len(output) == 1
     assert "⏳" in output[0]
     assert "experiencing high traffic" in output[0]
+
+async def test_unified_chat_stream_retries_transient_429(monkeypatch):
+    """unified_chat_stream should retry stream connection on transient 429 and stream successfully."""
+    monkeypatch.setattr(app, "LLM_RETRY_BASE_DELAY", 0.0001)
+
+    mock_client = MagicMock()
+    calls = 0
+
+    async def _mock_stream():
+        chunk = MagicMock()
+        chunk.choices = [MagicMock(delta=MagicMock(content="Chunk after retry"))]
+        yield chunk
+
+    async def _flakey_create(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise openai.RateLimitError(
+                message="queue_exceeded",
+                response=MagicMock(status_code=429),
+                body={"code": "queue_exceeded"},
+            )
+        return _mock_stream()
+
+    mock_client.chat.completions.create = AsyncMock(side_effect=_flakey_create)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+
+    chunks = []
+    async for chunk in app.unified_chat_stream("test-model", [{"role": "user", "content": "hi"}]):
+        chunks.append(chunk)
+
+    assert chunks == ["Chunk after retry"]
+    assert calls == 2
+
+def test_compute_retry_delay():
+    """Verify compute_retry_delay honors Retry-After header and bounds."""
+    # Test Retry-After header
+    mock_resp = MagicMock()
+    mock_resp.headers = {"retry-after": "3.5"}
+    mock_exc = MagicMock(response=mock_resp)
+
+    delay = app.compute_retry_delay(attempt=0, exc=mock_exc)
+    assert delay == 3.5
+
+    # Test default exponential delay without Retry-After
+    d0 = app.compute_retry_delay(attempt=0, exc=None)
+    assert 0.0 < d0 <= app.LLM_RETRY_MAX_DELAY
