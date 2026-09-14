@@ -26,6 +26,7 @@ import random
 import time
 import json
 import contextlib
+import email.utils
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
 from patches import apply_patches
@@ -593,10 +594,16 @@ def compute_retry_delay(attempt: int, exc: Exception | None = None) -> float:
                 if retry_after_str:
                     try:
                         retry_after = float(retry_after_str)
-                        if 0 < retry_after <= LLM_RETRY_MAX_DELAY:
-                            return retry_after
                     except (ValueError, TypeError):
-                        pass
+                        try:
+                            date_val = email.utils.parsedate_to_datetime(retry_after_str)
+                            now = datetime.datetime.now(datetime.timezone.utc)
+                            retry_after = (date_val - now).total_seconds()
+                        except Exception:
+                            retry_after = None
+
+                    if retry_after is not None and 0 < retry_after <= LLM_RETRY_MAX_DELAY:
+                        return retry_after
 
     raw_delay = min(LLM_RETRY_BASE_DELAY * (2 ** attempt), LLM_RETRY_MAX_DELAY)
     jitter = random.uniform(0.75, 1.25)
@@ -1469,7 +1476,9 @@ async def on_message(message: cl.Message) -> None:
     await out.update()
 
     # Async Verification pass as per SPEC.md Section 9
-    is_error_response = any(accumulated.lstrip().startswith(prefix) for prefix in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️", "⏳"))
+    is_error_response = accumulated.lstrip().startswith(
+        (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
+    )
     if VERIFY_ENABLED and accumulated and not is_error_response:
         async def verify_and_update():
             try:
