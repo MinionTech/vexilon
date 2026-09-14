@@ -20,7 +20,7 @@ That job is a required gate for the `test-everything` aggregate.
 From the repository root, with Podman or Docker Compose:
 
 ```bash
-podman compose up --abort-on-container-exit --exit-code-from test-ui-e2e test-ui-e2e
+podman compose up --build --abort-on-container-exit --exit-code-from test-ui-e2e test-ui-e2e
 ```
 
 This starts:
@@ -50,15 +50,17 @@ Chat response smokes require a working LLM backend (Ollama or configured provide
 
 ## Isolation from unit/integration tests
 
-| Suite | Path | Compose service |
-|---|---|---|
-| Unit | `app/tests/test_*.py` | `test-unit` |
-| Integration | `app/tests/integration/` | `test-integration-*` |
-| UI E2E | `app/tests/e2e/` | `test-ui-e2e` |
+| Suite | Path | Compose service | Local pytest command |
+|---|---|---|---|
+| Unit | `app/tests/test_*.py` | `test-unit` | `uv run pytest app/tests/test_*.py` |
+| Integration | `app/tests/integration/` | `test-integration-*` | `uv run pytest app/tests/integration/` |
+| UI E2E | `app/tests/e2e/` | `test-ui-e2e` | `uv run pytest app/tests/e2e/` |
 
-E2E tests are **never** collected by unit pytest invocations that target
-`tests/test_*.py` or ignore `tests/integration` only. Each tier uses a separate
-Compose service and explicit pytest path.
+The `test-unit` Compose service runs `pytest tests/test_*.py` only. For local
+unit runs, target `app/tests/test_*.py` explicitly (or add
+`--ignore=app/tests/e2e`) — the recursive `app/tests/` command in README also
+collects `app/tests/e2e/` unless ignored. Each tier uses a separate Compose
+service and explicit pytest path.
 
 ## Coverage map
 

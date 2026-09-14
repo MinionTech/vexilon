@@ -39,6 +39,7 @@ def test_enter_submits_message(page: Page, app_url: str):
 def test_shift_enter_creates_newline(page: Page, app_url: str):
     """Pressing Shift+Enter in the chat input creates a newline without submitting."""
     page.goto(app_url, wait_until="domcontentloaded")
+    wait_for_custom_js(page)
     page.wait_for_selector("textarea", timeout=15000)
 
     textarea = page.locator("textarea")
