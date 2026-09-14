@@ -192,6 +192,7 @@ def test_load_precomputed_index_proactively_deletes_legacy_pkl(tmp_path, monkeyp
     """load_precomputed_index should delete legacy .pkl regardless of other files (security)."""
     import pickle
     import json
+    monkeypatch.setattr(indexing, "CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")

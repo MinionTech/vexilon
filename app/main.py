@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
-CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "./.pdf_cache"))
+_PKG_ROOT = Path(__file__).parent
+CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "/data/cache" if Path("/data/cache").exists() else _PKG_ROOT / "data" / "cache"))
 # CHAINLIT_FILES_DIR is set in Containerfile ENV (must be set before
 # chainlit imports). Defensive fallback for non-container dev:
 os.environ.setdefault("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")
@@ -61,6 +62,8 @@ from indexing import (
     search_index_batch,
     _fetch_pdf_cache_if_missing,
     DATA_DIR,
+    CACHE_DIR,
+    PDF_CACHE_DIR,
     get_embed_model,
     EMBED_DIM,
     chunk_text,
@@ -901,13 +904,13 @@ def startup(force_rebuild: bool = False):
     _test_registry.load(TESTS_DIR)
     # Ensure cache directory is writable
     import indexing
-    indexing.PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    indexing.CACHE_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        test_file = indexing.PDF_CACHE_DIR / "permissions_test"
+        test_file = indexing.CACHE_DIR / "permissions_test"
         test_file.touch()
         test_file.unlink()
     except Exception as e:
-        logger.warning(f"[startup] {indexing.PDF_CACHE_DIR} is not writable: {e}. Indexing may fail.")
+        logger.warning(f"[startup] {indexing.CACHE_DIR} is not writable: {e}. Indexing may fail.")
 
     _fetch_pdf_cache_if_missing()
     _index, _chunks = load_precomputed_index()

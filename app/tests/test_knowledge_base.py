@@ -1,9 +1,10 @@
+import os
 import pytest
 from pathlib import Path
 
 # The repository root (relative to tests/)
 REPO_ROOT = Path(__file__).parent.parent
-DATA_DIR = REPO_ROOT / "data"
+DATA_DIR = Path(os.getenv("AGNAV_DATA_DIR", REPO_ROOT / "data"))
 
 def test_pdf_md_parity():
     """
@@ -15,7 +16,7 @@ def test_pdf_md_parity():
 
     # Skip the internal tests/, cache, and the forms directory (Issue #191)
     # Forms in 'forms/' use Guide.md companions instead of direct .md parity.
-    skip_dirs = {DATA_DIR / "tests", DATA_DIR / ".pdf_cache", DATA_DIR / "forms"}
+    skip_dirs = {DATA_DIR / "tests", DATA_DIR / ".pdf_cache", DATA_DIR / "cache", DATA_DIR / "forms"}
     
     pdfs = [
         p for p in DATA_DIR.rglob("*.pdf") 
@@ -28,7 +29,7 @@ def test_pdf_md_parity():
         # Accept either .md or ' Guide.md' (Issue #192)
         md_guide = pdf.parent / f"{pdf.stem} Guide.md"
         if not md_file.exists() and not md_guide.exists():
-            missing_md.append(f"  - {pdf.relative_to(REPO_ROOT)}")
+            missing_md.append(f"  - {pdf.relative_to(DATA_DIR)}")
             
     if missing_md:
         error_msg = (
