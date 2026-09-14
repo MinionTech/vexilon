@@ -72,6 +72,26 @@
         });
     }
 
+    // ── Knowledge Base drawer a11y (WCAG 1.4.3 color-contrast) ───────────────
+    // Tag the Readme dialog by content so custom CSS can scope link-color overrides (#642).
+
+    function labelKnowledgeBaseDrawer() {
+        document.querySelectorAll('[role="dialog"]').forEach((dialog) => {
+            if (!dialog.hasAttribute("data-knowledge-base-drawer") && dialog.querySelector("a.text-primary")) {
+                dialog.setAttribute("data-knowledge-base-drawer", "true");
+            }
+        });
+    }
+
+    function setupKnowledgeBaseDrawerLabel() {
+        const btn = document.querySelector("#readme-button");
+        if (!btn || btn.dataset.drawerLabelAttached) return;
+        btn.addEventListener("click", () => {
+            setTimeout(labelKnowledgeBaseDrawer, 0);
+        });
+        btn.dataset.drawerLabelAttached = "true";
+    }
+
     // ── Build SHA ─────────────────────────────────────────────────────────────
 
     let buildSha = "dev";
@@ -139,6 +159,8 @@
         labelKnowledgeBaseButton();
         labelChatControls();
         hideReadmeDrawerTitle();
+        labelKnowledgeBaseDrawer();
+        setupKnowledgeBaseDrawerLabel();
         replaceBuildSha();
         manageWelcomeTitle();
     }, 500);
@@ -147,6 +169,8 @@
     labelKnowledgeBaseButton();
     labelChatControls();
     hideReadmeDrawerTitle();
+    setupKnowledgeBaseDrawerLabel();
+    labelKnowledgeBaseDrawer();
     replaceBuildSha();
     manageWelcomeTitle();
 

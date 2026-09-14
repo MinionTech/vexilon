@@ -209,9 +209,15 @@ podman compose up --build --exit-code-from test-integration-model test-integrati
 # Run app integration tests (Functional RAG flow)
 podman compose up --build --exit-code-from test-integration-app test-integration-app
 
+# Run UI end-to-end tests (Playwright + Chromium against app-ci)
+podman compose up --build --abort-on-container-exit --exit-code-from test-ui-e2e test-ui-e2e
+
 # Verify everything at once (The "Grand Slam") and launch the dev app if successful
 podman compose up --build --exit-code-from test-everything test-everything && podman compose up dev
 ```
+
+See [app/docs/E2E_TESTING.md](./app/docs/E2E_TESTING.md) for Playwright suite details,
+CI job ownership (`test-ui-e2e` in `.github/workflows/pr.yml`), and local troubleshooting.
 
 ---
 
