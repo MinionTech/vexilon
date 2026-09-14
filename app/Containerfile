@@ -78,6 +78,7 @@ COPY data/ ./public/docs/
 COPY main.py ./
 COPY patches.py ./
 COPY brand.py ./
+COPY telemetry.py ./
 COPY conftest.py ./
 COPY prompts/ ./prompts/
 COPY scripts/ ./scripts/
