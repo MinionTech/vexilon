@@ -79,7 +79,7 @@ Stable Chainlit element IDs (`#chat-submit`, `#readme-button`, `#stop-button`) a
 custom JS hooks (`textarea.dataset.listenerAttached`, `[data-knowledge-base-drawer]`)
 are preferred over brittle CSS class chains.
 
-Shared helpers live in `tests/e2e/helpers.py`; pytest fixtures (`app_url`, `loaded_page`)
+Shared helpers live in `tests/e2e/helpers.py`; pytest fixtures (`app_url`)
 live in `tests/e2e/conftest.py`.
 
 ## Related issues

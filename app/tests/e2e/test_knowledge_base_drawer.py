@@ -10,6 +10,9 @@ from playwright.sync_api import Page, expect
 
 from helpers import open_knowledge_base_drawer
 
+# chainlit.md renders 17 drawer links with Chainlit's text-primary class (see #642).
+EXPECTED_DRAWER_PRIMARY_LINKS = 17
+
 
 def test_knowledge_base_drawer_opens_with_expected_sections(page: Page, app_url: str):
     """Opening Knowledge Base shows the indexed document sections."""
@@ -34,4 +37,6 @@ def test_knowledge_base_drawer_contains_document_links(page: Page, app_url: str)
     expect(dialog.get_by_role("link", name="BC Labour Relations Code")).to_be_visible()
 
     primary_links = dialog.locator("a.text-primary")
-    assert primary_links.count() >= 10, "Expected multiple indexed document links in drawer"
+    assert primary_links.count() == EXPECTED_DRAWER_PRIMARY_LINKS, (
+        f"Expected {EXPECTED_DRAWER_PRIMARY_LINKS} indexed document links in drawer"
+    )

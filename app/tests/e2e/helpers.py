@@ -40,7 +40,7 @@ def open_knowledge_base_drawer(page: Page) -> Locator:
 
 
 def contrast_ratio_js() -> str:
-    """Return a JS function body that computes WCAG contrast for the first drawer link."""
+    """Return a JS function body that computes the lowest WCAG contrast among drawer links."""
     return """
     () => {
         function luminance(r, g, b) {
@@ -84,19 +84,28 @@ def contrast_ratio_js() -> str:
         );
         if (!dialog) return { error: "Knowledge Base drawer not found" };
 
-        const link = dialog.querySelector("a.text-primary");
-        if (!link) return { error: "no drawer link found" };
+        const links = dialog.querySelectorAll("a.text-primary");
+        if (!links.length) return { error: "no drawer link found" };
 
-        const fgRgba = parseRgba(getComputedStyle(link).color);
-        if (!fgRgba) return { error: "could not parse link color" };
-        const fg = [fgRgba.r, fgRgba.g, fgRgba.b];
+        let worst = null;
+        for (const link of links) {
+            const fgRgba = parseRgba(getComputedStyle(link).color);
+            if (!fgRgba) return { error: "could not parse link color" };
+            const fg = [fgRgba.r, fgRgba.g, fgRgba.b];
+            const bg = opaqueBackground(link);
+            if (!bg) return { error: "could not resolve opaque background for link" };
 
-        const bg = opaqueBackground(link.parentElement) || [33, 33, 33];
+            const ratio = contrast(fg, bg);
+            if (!worst || ratio < worst.ratio) {
+                worst = {
+                    ratio,
+                    fg: getComputedStyle(link).color,
+                    bg: `rgb(${bg.join(",")})`,
+                    text: link.textContent.trim(),
+                };
+            }
+        }
 
-        return {
-            ratio: contrast(fg, bg),
-            fg: getComputedStyle(link).color,
-            bg: `rgb(${bg.join(",")})`,
-        };
+        return worst;
     }
     """
