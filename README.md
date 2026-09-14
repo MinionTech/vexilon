@@ -198,7 +198,7 @@ Agreement Navigator features a strict **Quality Gate** deployment pattern—all 
 
 ```bash
 # Run unit tests only — fast, safe locally
-uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/scripts/smoke_multi.py
+uv run pytest app/tests/ --ignore=app/tests/integration --ignore=app/tests/e2e --ignore=app/scripts/smoke_multi.py
 
 # Run containerized unit tests (Mocked, zero-AI)
 podman compose up --build --exit-code-from test-unit test-unit
