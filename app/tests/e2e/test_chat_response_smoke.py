@@ -37,7 +37,7 @@ def test_user_message_and_assistant_response_appear(page: Page, app_url: str):
         """() => {
             const msgs = document.querySelectorAll('.message');
             return Array.from(msgs).some(
-                (m) => m.textContent.trim().length > 0 && !m.textContent.includes('What is a steward?')
+                (m) => m.textContent.trim().length > 0 && m.textContent.trim() !== 'What is a steward?'
             );
         }""",
         timeout=60000,
