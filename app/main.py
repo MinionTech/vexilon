@@ -599,6 +599,8 @@ def compute_retry_delay(attempt: int, exc: Exception | None = None) -> float:
                     except (ValueError, TypeError):
                         try:
                             date_val = email.utils.parsedate_to_datetime(retry_after_str)
+                            if date_val.tzinfo is None:
+                                date_val = date_val.replace(tzinfo=datetime.timezone.utc)
                             now = datetime.datetime.now(datetime.timezone.utc)
                             retry_after = (date_val - now).total_seconds()
                         except Exception:

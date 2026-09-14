@@ -275,6 +275,16 @@ def test_compute_retry_delay(monkeypatch):
     delay_date = app.compute_retry_delay(attempt=0, exc=mock_exc_date)
     assert delay_date == pytest.approx(5.0, abs=1.5)
 
+    # Test Retry-After header with obsolete asctime-date (naive timezone)
+    future_date_naive = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=6)
+    asctime_str = future_date_naive.strftime("%a %b %d %H:%M:%S %Y")
+    mock_resp_asctime = MagicMock()
+    mock_resp_asctime.headers = {"retry-after": asctime_str}
+    mock_exc_asctime = MagicMock(response=mock_resp_asctime)
+
+    delay_asctime = app.compute_retry_delay(attempt=0, exc=mock_exc_asctime)
+    assert delay_asctime == pytest.approx(6.0, abs=1.5)
+
     # Test default exponential delay without Retry-After
     d0 = app.compute_retry_delay(attempt=0, exc=None)
     assert 0.0 < d0 <= app.LLM_RETRY_MAX_DELAY
