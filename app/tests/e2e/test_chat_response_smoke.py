@@ -31,8 +31,10 @@ def test_user_message_and_assistant_response_appear(page: Page, app_url: str):
 
     page.wait_for_function(
         """() => {
-            const msgs = document.querySelectorAll('.message, [class*="message"]');
-            return Array.from(msgs).some(
+            const bubbles = document.querySelectorAll(
+                '.message, [class*="message"]:not(.message-list):not([class*="actions"])'
+            );
+            return Array.from(bubbles).some(
                 (m) => m.textContent.trim().length > 0 && m.textContent.trim() !== 'What is a steward?'
             );
         }""",
