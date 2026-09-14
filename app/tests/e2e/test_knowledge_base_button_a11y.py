@@ -8,7 +8,7 @@ the button's accessible name (aria-label), not Chainlit's stock "Readme" text.
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.e2e.helpers import wait_for_knowledge_base_button
+from helpers import wait_for_knowledge_base_button
 
 
 def test_knowledge_base_button_accessible_name(page: Page, app_url: str):

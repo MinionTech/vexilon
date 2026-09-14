@@ -9,7 +9,7 @@ Verifies that the Enter-to-submit handler works correctly:
 import pytest
 from playwright.sync_api import Page
 
-from tests.e2e.helpers import wait_for_custom_js
+from helpers import wait_for_custom_js
 
 
 def test_enter_submits_message(page: Page, app_url: str):

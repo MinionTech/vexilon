@@ -8,7 +8,7 @@ via public/index.js so axe button-name passes and screen readers announce purpos
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.e2e.helpers import wait_for_aria_label, wait_for_custom_js
+from helpers import wait_for_aria_label, wait_for_custom_js
 
 WELCOME_SCREEN_CONTROLS = {
     "#chat-profiles": "Choose persona",

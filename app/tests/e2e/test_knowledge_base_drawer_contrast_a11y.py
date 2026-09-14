@@ -8,7 +8,7 @@ meet 4.5:1 against the dark-theme background (fixes #642).
 import pytest
 from playwright.sync_api import Page
 
-from tests.e2e.helpers import (
+from helpers import (
     WCAG_AA_CONTRAST_MIN,
     contrast_ratio_js,
     open_knowledge_base_drawer,

@@ -7,7 +7,7 @@ import os
 import pytest
 from playwright.sync_api import Page
 
-from tests.e2e.helpers import wait_for_custom_js
+from helpers import wait_for_custom_js
 
 
 @pytest.fixture(scope="session")

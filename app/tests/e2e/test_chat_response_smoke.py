@@ -8,7 +8,7 @@ Uses the real Ollama stack in Compose; asserts presence of content, not LLM qual
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.e2e.helpers import wait_for_custom_js
+from helpers import wait_for_custom_js
 
 
 def test_user_message_and_assistant_response_appear(page: Page, app_url: str):

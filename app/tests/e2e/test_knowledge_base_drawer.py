@@ -8,7 +8,7 @@ from chainlit.md without requiring LLM interaction.
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.e2e.helpers import open_knowledge_base_drawer
+from helpers import open_knowledge_base_drawer
 
 
 def test_knowledge_base_drawer_opens_with_expected_sections(page: Page, app_url: str):
