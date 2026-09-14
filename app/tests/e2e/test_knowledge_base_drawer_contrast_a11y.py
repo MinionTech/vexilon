@@ -34,5 +34,5 @@ def test_knowledge_base_drawer_link_contrast_dark_theme(page: Page, app_url: str
     assert "error" not in result, result.get("error")
     assert result["ratio"] >= WCAG_AA_CONTRAST_MIN, (
         f"Contrast ratio {result['ratio']:.2f} < {WCAG_AA_CONTRAST_MIN} "
-        f"(fg={result['fg']}, bg={result['bg']})"
+        f"for link '{result.get('text', '')}' (fg={result['fg']}, bg={result['bg']})"
     )
