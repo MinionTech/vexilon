@@ -571,8 +571,10 @@ def is_transient_llm_error(exc: Exception) -> bool:
             return True
 
     err_str = str(exc).lower()
+    if re.search(r"\b429\b", err_str):
+        return True
+
     transient_indicators = (
-        "429",
         "rate_limit",
         "rate-limit",
         "too_many_requests",
@@ -621,9 +623,13 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
         logger.info(f"[llm-call] Creating completion for actual_model='{actual_model}' on provider='{provider}' (attempt {attempt + 1}/{LLM_MAX_RETRIES + 1})...")
         try:
             resp = await client.chat.completions.create(**kwargs)
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
             content = resp.choices[0].message.content
             return content or ""
         except Exception as exc:
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} call duration: {elapsed:.2f} seconds")
             if attempt < LLM_MAX_RETRIES and is_transient_llm_error(exc):
                 delay = compute_retry_delay(attempt, exc)
                 logger.warning(
@@ -633,9 +639,6 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
                 await asyncio.sleep(delay)
             else:
                 raise
-        finally:
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
 
 async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
     provider, actual_model = resolve_model_and_provider(model)
@@ -650,8 +653,12 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         logger.info(f"[llm-call] Opening stream for actual_model='{actual_model}' on provider='{provider}' (attempt {attempt + 1}/{LLM_MAX_RETRIES + 1})...")
         try:
             stream = await client.chat.completions.create(**kwargs)
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
             break
         except Exception as exc:
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} call duration: {elapsed:.2f} seconds")
             if attempt < LLM_MAX_RETRIES and is_transient_llm_error(exc):
                 delay = compute_retry_delay(attempt, exc)
                 logger.warning(
@@ -661,9 +668,6 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
                 await asyncio.sleep(delay)
             else:
                 raise
-        finally:
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
     # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
     buffer = ""
@@ -1476,8 +1480,8 @@ async def on_message(message: cl.Message) -> None:
     await out.update()
 
     # Async Verification pass as per SPEC.md Section 9
-    is_error_response = accumulated.lstrip().startswith(
-        (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
+    is_error_response = any(
+        err in accumulated for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
     )
     if VERIFY_ENABLED and accumulated and not is_error_response:
         async def verify_and_update():

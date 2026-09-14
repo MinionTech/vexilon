@@ -252,8 +252,10 @@ async def test_unified_chat_stream_retries_transient_429(monkeypatch):
     assert chunks == ["Chunk after retry"]
     assert calls == 2
 
-def test_compute_retry_delay():
+def test_compute_retry_delay(monkeypatch):
     """Verify compute_retry_delay honors Retry-After header and bounds."""
+    monkeypatch.setattr(app, "LLM_RETRY_MAX_DELAY", 10.0)
+
     # Test Retry-After header with seconds
     mock_resp = MagicMock()
     mock_resp.headers = {"retry-after": "3.5"}

@@ -242,6 +242,12 @@ def test_is_transient_llm_error():
     runtime_queue_err = RuntimeError("Upstream returned 429 queue_exceeded")
     assert app.is_transient_llm_error(runtime_queue_err) is True
 
+    word_boundary_429 = RuntimeError("HTTP 429 Too Many Requests")
+    assert app.is_transient_llm_error(word_boundary_429) is True
+
+    context_len_err = RuntimeError("maximum context length is 1429999 tokens")
+    assert app.is_transient_llm_error(context_len_err) is False
+
     unrelated_err = ValueError("Invalid argument")
     assert app.is_transient_llm_error(unrelated_err) is False
 
@@ -322,3 +328,41 @@ async def test_on_message_runs_verification_on_normal_response(monkeypatch):
     await asyncio.sleep(0.01)
 
     mock_verify.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_on_message_skips_verification_on_midstream_error(monkeypatch):
+    """on_message must not schedule verification when an error occurs mid-stream after partial output."""
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", MagicMock(is_allowed=MagicMock(return_value=(True, ""))))
+    monkeypatch.setattr(app, "sanitize_input", lambda s: (s, False))
+    monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=(["query"], "ctx", [])))
+
+    async def mock_midstream_error(*args, **kwargs):
+        yield "Article 1.2 provides "
+        yield app.HIGH_TRAFFIC_MESSAGE
+
+    monkeypatch.setattr(app, "rag_review_stream", mock_midstream_error)
+    session_store = {}
+    monkeypatch.setattr("chainlit.user_session.set", lambda k, v: session_store.__setitem__(k, v))
+    monkeypatch.setattr("chainlit.user_session.get", lambda k, default=None: session_store.get(k, default))
+    monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
+    monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+
+    mock_msg_instance = MagicMock()
+    mock_msg_instance.send = AsyncMock()
+    mock_msg_instance.stream_token = AsyncMock()
+    mock_msg_instance.update = AsyncMock()
+    mock_msg_instance.actions = []
+    mock_msg_instance.content = ""
+    monkeypatch.setattr("chainlit.Message", MagicMock(return_value=mock_msg_instance))
+
+    mock_verify = AsyncMock(return_value="ALL_CLAIMS_VERIFIED")
+    monkeypatch.setattr(app, "verify_response", mock_verify)
+
+    msg = MagicMock()
+    msg.content = "What is the policy?"
+    msg.elements = []
+    await app.on_message(msg)
+
+    await asyncio.sleep(0.01)
+    mock_verify.assert_not_called()
