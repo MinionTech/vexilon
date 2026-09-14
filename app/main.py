@@ -22,9 +22,11 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import sys
 import re
+import random
 import time
 import json
 import contextlib
+import email.utils
 # Agreement Navigator - UI Version: 2026-05-10
 import logging
 from patches import apply_patches
@@ -545,6 +547,72 @@ def _build_messages(messages: list, system: str | list = None) -> list:
     full_messages.extend(messages)
     return full_messages
 
+# ─── Transient LLM Error & Retry Policy ─────────────────────────────────────
+LLM_MAX_RETRIES = int(os.getenv("AGNAV_LLM_MAX_RETRIES", "3"))
+LLM_RETRY_BASE_DELAY = float(os.getenv("AGNAV_LLM_RETRY_BASE_DELAY", "0.5"))
+LLM_RETRY_MAX_DELAY = float(os.getenv("AGNAV_LLM_RETRY_MAX_DELAY", "8.0"))
+
+def is_transient_llm_error(exc: Exception) -> bool:
+    """Determine whether an exception from an LLM call is a transient rate-limit or queue issue."""
+    if isinstance(exc, openai.RateLimitError):
+        return True
+
+    status_code = getattr(exc, "status_code", None)
+    if status_code == 429:
+        return True
+
+    response = getattr(exc, "response", None)
+    if response is not None and getattr(response, "status_code", None) == 429:
+        return True
+
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        if body.get("code") == "queue_exceeded" or body.get("type") == "too_many_requests_error":
+            return True
+
+    err_str = str(exc).lower()
+    if re.search(r"\b429\b", err_str):
+        return True
+
+    transient_indicators = (
+        "rate_limit",
+        "rate-limit",
+        "too_many_requests",
+        "queue_exceeded",
+        "queue-exceeded",
+        "over capacity",
+        "over_capacity",
+    )
+    return any(k in err_str for k in transient_indicators)
+
+def compute_retry_delay(attempt: int, exc: Exception | None = None) -> float:
+    """Calculate exponential backoff with jitter, respecting Retry-After header if present."""
+    if exc is not None:
+        response = getattr(exc, "response", None)
+        if response is not None:
+            headers = getattr(response, "headers", None)
+            if headers:
+                retry_after_str = headers.get("retry-after") or headers.get("Retry-After")
+                if retry_after_str:
+                    try:
+                        retry_after = float(retry_after_str)
+                    except (ValueError, TypeError):
+                        try:
+                            date_val = email.utils.parsedate_to_datetime(retry_after_str)
+                            if date_val.tzinfo is None:
+                                date_val = date_val.replace(tzinfo=datetime.timezone.utc)
+                            now = datetime.datetime.now(datetime.timezone.utc)
+                            retry_after = (date_val - now).total_seconds()
+                        except Exception:
+                            retry_after = None
+
+                    if retry_after is not None and 0 < retry_after <= LLM_RETRY_MAX_DELAY:
+                        return retry_after
+
+    raw_delay = min(LLM_RETRY_BASE_DELAY * (2 ** attempt), LLM_RETRY_MAX_DELAY)
+    jitter = random.uniform(0.75, 1.25)
+    return min(raw_delay * jitter, LLM_RETRY_MAX_DELAY)
+
 async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
     provider, actual_model = resolve_model_and_provider(model)
     client = get_llm_client()
@@ -552,14 +620,27 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
     
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
 
-    t0 = time.perf_counter()
-    logger.info(f"[llm-call] Creating completion for actual_model='{actual_model}' on provider='{provider}'...")
-    try:
-        resp = await client.chat.completions.create(**kwargs)
-    finally:
-        elapsed = time.perf_counter() - t0
-        logger.info(f"[llm-call] Completion creation elapsed: {elapsed:.2f} seconds")
-    return resp.choices[0].message.content
+    for attempt in range(LLM_MAX_RETRIES + 1):
+        t0 = time.perf_counter()
+        logger.info(f"[llm-call] Creating completion for actual_model='{actual_model}' on provider='{provider}' (attempt {attempt + 1}/{LLM_MAX_RETRIES + 1})...")
+        try:
+            resp = await client.chat.completions.create(**kwargs)
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
+            content = resp.choices[0].message.content
+            return content or ""
+        except Exception as exc:
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} call duration: {elapsed:.2f} seconds")
+            if attempt < LLM_MAX_RETRIES and is_transient_llm_error(exc):
+                delay = compute_retry_delay(attempt, exc)
+                logger.warning(
+                    f"[llm-retry] Transient error in unified_chat_create ({exc}). "
+                    f"Retrying in {delay:.2f}s (attempt {attempt + 1}/{LLM_MAX_RETRIES})..."
+                )
+                await asyncio.sleep(delay)
+            else:
+                raise
 
 async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
     provider, actual_model = resolve_model_and_provider(model)
@@ -568,13 +649,27 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
     
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "stream": True, "timeout": 300.0}
 
-    t0 = time.perf_counter()
-    logger.info(f"[llm-call] Opening stream for actual_model='{actual_model}' on provider='{provider}'...")
-    try:
-        stream = await client.chat.completions.create(**kwargs)
-    finally:
-        elapsed = time.perf_counter() - t0
-        logger.info(f"[llm-call] Stream connection elapsed: {elapsed:.2f} seconds")
+    stream = None
+    for attempt in range(LLM_MAX_RETRIES + 1):
+        t0 = time.perf_counter()
+        logger.info(f"[llm-call] Opening stream for actual_model='{actual_model}' on provider='{provider}' (attempt {attempt + 1}/{LLM_MAX_RETRIES + 1})...")
+        try:
+            stream = await client.chat.completions.create(**kwargs)
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
+            break
+        except Exception as exc:
+            elapsed = time.perf_counter() - t0
+            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} call duration: {elapsed:.2f} seconds")
+            if attempt < LLM_MAX_RETRIES and is_transient_llm_error(exc):
+                delay = compute_retry_delay(attempt, exc)
+                logger.warning(
+                    f"[llm-retry] Transient error in unified_chat_stream ({exc}). "
+                    f"Retrying in {delay:.2f}s (attempt {attempt + 1}/{LLM_MAX_RETRIES})..."
+                )
+                await asyncio.sleep(delay)
+            else:
+                raise
     # Stateful buffer for filtering <think> blocks (handles split-token tags)
     in_think_block = False
     buffer = ""
@@ -675,6 +770,8 @@ async def verify_response(assistant_response: str, context: str) -> str:
             return "ALL_CLAIMS_VERIFIED"
         return "\n".join(filtered_lines)
     except Exception as exc:
+        if is_transient_llm_error(exc):
+            return "⚠️ Verification unavailable due to high traffic."
         return f"⚠️ Verification unavailable: {exc}"
 
 def get_system_prompt(developer_mode: bool = False) -> str:
@@ -823,11 +920,7 @@ GENERIC_ERROR_MESSAGE = "⚠️ An unexpected error occurred while processing yo
 
 def format_rag_error_message(exc: Exception) -> str:
     """Map exceptions to user-facing error messages, hiding internal error details."""
-    if isinstance(exc, openai.RateLimitError):
-        return HIGH_TRAFFIC_MESSAGE
-
-    err_str = str(exc).lower()
-    if any(k in err_str for k in ("429", "rate_limit", "rate-limit", "queue_exceeded", "queue-exceeded", "over capacity", "over_capacity")):
+    if is_transient_llm_error(exc):
         return HIGH_TRAFFIC_MESSAGE
 
     return GENERIC_ERROR_MESSAGE
@@ -1389,7 +1482,10 @@ async def on_message(message: cl.Message) -> None:
     await out.update()
 
     # Async Verification pass as per SPEC.md Section 9
-    if VERIFY_ENABLED:
+    is_error_response = any(
+        err in accumulated for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
+    )
+    if VERIFY_ENABLED and accumulated and not is_error_response:
         async def verify_and_update():
             try:
                 report = await verify_response(accumulated, context)

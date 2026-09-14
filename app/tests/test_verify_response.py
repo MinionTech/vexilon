@@ -4,6 +4,7 @@ tests/test_verify_response.py — Unit tests for verification bot
 Tests verify the verify_response() function behavior.
 """
 
+import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 import openai
 import pytest
@@ -150,3 +151,218 @@ async def test_rag_stream_yields_context(monkeypatch):
     assert len(yielded_contexts) == 1
     assert "Article 1 content" in yielded_contexts[0]
     assert "Page: 5" in yielded_contexts[0]
+
+async def test_unified_chat_create_retries_transient_429(monkeypatch):
+    """unified_chat_create should retry on transient 429 errors and succeed on subsequent attempt."""
+    monkeypatch.setattr(app, "LLM_RETRY_BASE_DELAY", 0.0001)
+
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content="Retried success"))]
+
+    calls = 0
+
+    async def _flakey_create(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise openai.RateLimitError(
+                message="queue_exceeded",
+                response=MagicMock(status_code=429),
+                body={"type": "too_many_requests_error", "code": "queue_exceeded"},
+            )
+        return mock_completion
+
+    mock_client.chat.completions.create = AsyncMock(side_effect=_flakey_create)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+
+    result = await app.unified_chat_create("test-model", [{"role": "user", "content": "hi"}])
+    assert result == "Retried success"
+    assert calls == 2
+
+async def test_unified_chat_create_exhausts_retries_on_persistent_429(monkeypatch):
+    """unified_chat_create should raise RateLimitError after exhausting all retries."""
+    monkeypatch.setattr(app, "LLM_RETRY_BASE_DELAY", 0.0001)
+
+    mock_client = MagicMock()
+
+    async def _failing_create(*args, **kwargs):
+        raise openai.RateLimitError(
+            message="queue_exceeded",
+            response=MagicMock(status_code=429),
+            body={"type": "too_many_requests_error", "code": "queue_exceeded"},
+        )
+
+    mock_client.chat.completions.create = AsyncMock(side_effect=_failing_create)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+
+    with pytest.raises(openai.RateLimitError):
+        await app.unified_chat_create("test-model", [{"role": "user", "content": "hi"}])
+
+    # Initial try + 3 retries = 4 attempts total
+    assert mock_client.chat.completions.create.call_count == app.LLM_MAX_RETRIES + 1
+
+async def test_verify_response_transient_429_sanitized_message(monkeypatch):
+    """verify_response returns a clean high-traffic notice instead of raw dict on 429."""
+    monkeypatch.setattr(app, "LLM_RETRY_BASE_DELAY", 0.0001)
+
+    mock_client = MagicMock()
+
+    async def _failing_create(*args, **kwargs):
+        raise openai.RateLimitError(
+            message="Error code: 429 - {'message': 'We are experiencing high traffic', 'code': 'queue_exceeded'}",
+            response=MagicMock(status_code=429),
+            body={"code": "queue_exceeded"},
+        )
+
+    mock_client.chat.completions.create = AsyncMock(side_effect=_failing_create)
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_client)
+
+    result = await app.verify_response("Response", "Context")
+    assert result == "⚠️ Verification unavailable due to high traffic."
+    assert "queue_exceeded" not in result
+    assert "Error code: 429" not in result
+
+def test_is_transient_llm_error():
+    """Verify various 429 and queue_exceeded representations are recognized as transient."""
+    rate_limit_err = openai.RateLimitError(
+        message="rate limit",
+        response=MagicMock(status_code=429),
+        body=None,
+    )
+    assert app.is_transient_llm_error(rate_limit_err) is True
+
+    status_err_429 = openai.APIStatusError(
+        message="Too many requests",
+        response=MagicMock(status_code=429),
+        body={"type": "too_many_requests_error", "code": "queue_exceeded"},
+    )
+    assert app.is_transient_llm_error(status_err_429) is True
+
+    runtime_queue_err = RuntimeError("Upstream returned 429 queue_exceeded")
+    assert app.is_transient_llm_error(runtime_queue_err) is True
+
+    word_boundary_429 = RuntimeError("HTTP 429 Too Many Requests")
+    assert app.is_transient_llm_error(word_boundary_429) is True
+
+    context_len_err = RuntimeError("maximum context length is 1429999 tokens")
+    assert app.is_transient_llm_error(context_len_err) is False
+
+    unrelated_err = ValueError("Invalid argument")
+    assert app.is_transient_llm_error(unrelated_err) is False
+
+@pytest.mark.asyncio
+async def test_on_message_skips_verification_on_error_message(monkeypatch):
+    """on_message must not schedule verification when the assistant response is a high-traffic or error message."""
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", MagicMock(is_allowed=MagicMock(return_value=(True, ""))))
+    monkeypatch.setattr(app, "sanitize_input", lambda s: (s, False))
+    monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=(["query"], "ctx", [])))
+
+    async def mock_error_stream(*args, **kwargs):
+        yield app.HIGH_TRAFFIC_MESSAGE
+
+    monkeypatch.setattr(app, "rag_review_stream", mock_error_stream)
+    session_store = {}
+    monkeypatch.setattr("chainlit.user_session.set", lambda k, v: session_store.__setitem__(k, v))
+    monkeypatch.setattr("chainlit.user_session.get", lambda k, default=None: session_store.get(k, default))
+    monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
+    monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+
+    mock_msg_instance = MagicMock()
+    mock_msg_instance.send = AsyncMock()
+    mock_msg_instance.stream_token = AsyncMock()
+    mock_msg_instance.update = AsyncMock()
+    mock_msg_instance.actions = []
+    mock_msg_instance.content = ""
+    monkeypatch.setattr("chainlit.Message", MagicMock(return_value=mock_msg_instance))
+
+    mock_verify = AsyncMock(return_value="ALL_CLAIMS_VERIFIED")
+    monkeypatch.setattr(app, "verify_response", mock_verify)
+
+    msg = MagicMock()
+    msg.content = "What is the policy?"
+    msg.elements = []
+    await app.on_message(msg)
+
+    # Allow any background tasks to run if they were scheduled
+    await asyncio.sleep(0.01)
+
+    mock_verify.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_on_message_runs_verification_on_normal_response(monkeypatch):
+    """on_message should schedule verification when assistant response is valid substantive text."""
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", MagicMock(is_allowed=MagicMock(return_value=(True, ""))))
+    monkeypatch.setattr(app, "sanitize_input", lambda s: (s, False))
+    monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=(["query"], "ctx", [])))
+
+    async def mock_valid_stream(*args, **kwargs):
+        yield "According to Article 1.2, stewards have rights."
+
+    monkeypatch.setattr(app, "rag_review_stream", mock_valid_stream)
+    session_store = {}
+    monkeypatch.setattr("chainlit.user_session.set", lambda k, v: session_store.__setitem__(k, v))
+    monkeypatch.setattr("chainlit.user_session.get", lambda k, default=None: session_store.get(k, default))
+    monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
+    monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+
+    mock_msg_instance = MagicMock()
+    mock_msg_instance.send = AsyncMock()
+    mock_msg_instance.stream_token = AsyncMock()
+    mock_msg_instance.update = AsyncMock()
+    mock_msg_instance.actions = []
+    mock_msg_instance.content = ""
+    monkeypatch.setattr("chainlit.Message", MagicMock(return_value=mock_msg_instance))
+
+    mock_verify = AsyncMock(return_value="ALL_CLAIMS_VERIFIED")
+    monkeypatch.setattr(app, "verify_response", mock_verify)
+
+    msg = MagicMock()
+    msg.content = "What is the policy?"
+    msg.elements = []
+    await app.on_message(msg)
+
+    # Allow scheduled verification background task to run
+    await asyncio.sleep(0.01)
+
+    mock_verify.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_on_message_skips_verification_on_midstream_error(monkeypatch):
+    """on_message must not schedule verification when an error occurs mid-stream after partial output."""
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", MagicMock(is_allowed=MagicMock(return_value=(True, ""))))
+    monkeypatch.setattr(app, "sanitize_input", lambda s: (s, False))
+    monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=(["query"], "ctx", [])))
+
+    async def mock_midstream_error(*args, **kwargs):
+        yield "Article 1.2 provides "
+        yield app.HIGH_TRAFFIC_MESSAGE
+
+    monkeypatch.setattr(app, "rag_review_stream", mock_midstream_error)
+    session_store = {}
+    monkeypatch.setattr("chainlit.user_session.set", lambda k, v: session_store.__setitem__(k, v))
+    monkeypatch.setattr("chainlit.user_session.get", lambda k, default=None: session_store.get(k, default))
+    monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
+    monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+
+    mock_msg_instance = MagicMock()
+    mock_msg_instance.send = AsyncMock()
+    mock_msg_instance.stream_token = AsyncMock()
+    mock_msg_instance.update = AsyncMock()
+    mock_msg_instance.actions = []
+    mock_msg_instance.content = ""
+    monkeypatch.setattr("chainlit.Message", MagicMock(return_value=mock_msg_instance))
+
+    mock_verify = AsyncMock(return_value="ALL_CLAIMS_VERIFIED")
+    monkeypatch.setattr(app, "verify_response", mock_verify)
+
+    msg = MagicMock()
+    msg.content = "What is the policy?"
+    msg.elements = []
+    await app.on_message(msg)
+
+    await asyncio.sleep(0.01)
+    mock_verify.assert_not_called()
