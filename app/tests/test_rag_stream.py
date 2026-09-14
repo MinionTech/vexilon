@@ -266,14 +266,14 @@ def test_compute_retry_delay(monkeypatch):
 
     # Test Retry-After header with HTTP-date in the near future
     import datetime
-    future_date = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=4)
+    future_date = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=5)
     http_date_str = future_date.strftime("%a, %d %b %Y %H:%M:%S GMT")
     mock_resp_date = MagicMock()
     mock_resp_date.headers = {"retry-after": http_date_str}
     mock_exc_date = MagicMock(response=mock_resp_date)
 
     delay_date = app.compute_retry_delay(attempt=0, exc=mock_exc_date)
-    assert 0 < delay_date <= app.LLM_RETRY_MAX_DELAY
+    assert delay_date == pytest.approx(5.0, abs=1.5)
 
     # Test default exponential delay without Retry-After
     d0 = app.compute_retry_delay(attempt=0, exc=None)
