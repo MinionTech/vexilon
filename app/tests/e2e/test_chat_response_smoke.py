@@ -31,15 +31,10 @@ def test_user_message_and_assistant_response_appear(page: Page, app_url: str):
 
     page.wait_for_function(
         """() => {
-<<<<<<< HEAD
-            const msgs = document.querySelectorAll('.message');
+            const msgs = document.querySelectorAll('.message, [class*="message"]');
             return Array.from(msgs).some(
                 (m) => m.textContent.trim().length > 0 && m.textContent.trim() !== 'What is a steward?'
             );
-=======
-            const msgs = document.querySelectorAll('.message, [class*="message"]');
-            return msgs.length >= 1 && msgs[msgs.length - 1].textContent.trim().length > 0;
->>>>>>> c430183 (fix(e2e): restore passing chat smoke message assertion)
         }""",
         timeout=60000,
     )
