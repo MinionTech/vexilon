@@ -13,7 +13,7 @@ import argparse
 import subprocess
 from pathlib import Path
 
-DATA_DIR = Path("data")
+DATA_DIR = Path(os.getenv("AGNAV_DATA_DIR", "data"))
 
 def main():
     parser = argparse.ArgumentParser(description="Batch convert PDFs to forensic Markdown.")
@@ -55,7 +55,7 @@ def main():
 
     else:
         # Default behavior: Scan for all missing MD files
-        skip_dirs = {DATA_DIR / "tests", DATA_DIR / ".pdf_cache"}
+        skip_dirs = {DATA_DIR / "tests", DATA_DIR / ".pdf_cache", DATA_DIR / "cache"}
         pdfs = [
             p for p in DATA_DIR.rglob("*.pdf") 
             if not any(p.is_relative_to(s) for s in skip_dirs)

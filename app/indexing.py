@@ -17,13 +17,36 @@ if TYPE_CHECKING:
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 _PKG_ROOT = Path(__file__).parent
-PDF_CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", _PKG_ROOT / ".pdf_cache"))
-DATA_DIR = Path(os.getenv("AGNAV_DATA_DIR", _PKG_ROOT / "data"))
-INDEX_PATH = PDF_CACHE_DIR / "index.faiss"
-CHUNKS_PATH = PDF_CACHE_DIR / "chunks.json"
-MANIFEST_PATH = PDF_CACHE_DIR / "manifest.json"
+
+def _resolve_data_dir() -> Path:
+    if "AGNAV_DATA_DIR" in os.environ:
+        return Path(os.environ["AGNAV_DATA_DIR"])
+    container_sources = Path("/data/sources")
+    if container_sources.exists():
+        return container_sources
+    pkg_sources = _PKG_ROOT / "data" / "sources"
+    if pkg_sources.exists():
+        return pkg_sources
+    return _PKG_ROOT / "data"
+
+def _resolve_cache_dir() -> Path:
+    if "AGNAV_CACHE_DIR" in os.environ:
+        return Path(os.environ["AGNAV_CACHE_DIR"])
+    container_cache = Path("/data/cache")
+    if container_cache.exists():
+        return container_cache
+    if Path("/data").exists() and os.access("/data", os.W_OK):
+        return container_cache
+    return _PKG_ROOT / "data" / "cache"
+
+DATA_DIR = _resolve_data_dir()
+CACHE_DIR = _resolve_cache_dir()
+PDF_CACHE_DIR = CACHE_DIR  # Backward-compatibility alias
+INDEX_PATH = CACHE_DIR / "index.faiss"
+CHUNKS_PATH = CACHE_DIR / "chunks.json"
+MANIFEST_PATH = CACHE_DIR / "manifest.json"
 _GITHUB_RAW_BASE = os.getenv("AGNAV_RAW_URL_BASE", "https://raw.githubusercontent.com/MinionTech/vexilon/main")
-INTEGRITY_PATH = PDF_CACHE_DIR / "integrity.json"
+INTEGRITY_PATH = CACHE_DIR / "integrity.json"
 
 
 class FileIntegrityError(Exception):
@@ -84,12 +107,18 @@ def _get_rag_source_files() -> list[Path]:
     # Targeted glob patterns for better performance
     for pattern in ["*.md", "*.pdf"]:
         for p in DATA_DIR.rglob(pattern):
-            # Skip hidden files, tests, and integrity files
+            try:
+                rel = p.relative_to(DATA_DIR)
+            except ValueError:
+                rel = p
+            # Skip hidden files, tests, integrity files, and cache directories
             # CRITICAL: Skip any paths that may exist in sibling worktrees if context is shared
             if (not p.name.startswith(".") 
                 and ".workspaces" not in p.parts
                 and not p.is_relative_to(fixtures_dir) 
-                and not p.name.endswith(".integrity.md")):
+                and not p.name.endswith(".integrity.md")
+                and "cache" not in rel.parts
+                and ".pdf_cache" not in rel.parts):
                 files.append(p)
                 
     return sorted(files, key=lambda p: str(p))
@@ -460,7 +489,8 @@ def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
 
 def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
     import faiss
-    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     faiss.write_index(index, str(INDEX_PATH))
     with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False)
@@ -506,7 +536,8 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
             pass
 
     logger.info(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
-    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     chunks = []
     failed_files = []
     for f in all_files:
@@ -550,7 +581,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
     # Security: proactively delete legacy .pkl file (RCE risk).
-    legacy_pkl = PDF_CACHE_DIR / "chunks.pkl"
+    legacy_pkl = CACHE_DIR / "chunks.pkl"
     if legacy_pkl.exists():
         legacy_pkl.unlink(missing_ok=True)
         logger.warning("[startup] Deleted legacy chunks.pkl (security).")
@@ -577,19 +608,29 @@ def get_integrity_report() -> dict:
 def _fetch_pdf_cache_if_missing() -> None:
     import urllib.request
     import urllib.error
-    PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     if INDEX_PATH.exists() and CHUNKS_PATH.exists():
         return
     base = _GITHUB_RAW_BASE
     urls = {}
     if not INDEX_PATH.exists():
-        urls[INDEX_PATH] = f"{base}/.pdf_cache/index.faiss"
+        urls[INDEX_PATH] = f"{base}/data/cache/index.faiss"
     if not CHUNKS_PATH.exists():
-        urls[CHUNKS_PATH] = f"{base}/.pdf_cache/chunks.json"
+        urls[CHUNKS_PATH] = f"{base}/data/cache/chunks.json"
     for dest_path, url in urls.items():
         logger.info(f"[fetch] Downloading {dest_path.name} from {url}...")
         try:
             urllib.request.urlretrieve(url, dest_path)
             logger.info(f"[fetch] Saved {dest_path}")
         except (urllib.error.URLError, OSError) as e:
+            # Fallback attempt from legacy path if remote repo still uses .pdf_cache
+            if "/data/cache/" in url:
+                legacy_url = url.replace("/data/cache/", "/.pdf_cache/")
+                try:
+                    urllib.request.urlretrieve(legacy_url, dest_path)
+                    logger.info(f"[fetch] Saved {dest_path} from legacy URL")
+                    continue
+                except Exception:
+                    pass
             logger.warning(f"[fetch] Warning: could not fetch {dest_path.name}: {e}. Will build index from source.")

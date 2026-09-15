@@ -19,12 +19,13 @@ import indexing
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _patch_paths(monkeypatch, tmp_path: Path) -> dict:
-    """Redirect pdf_cache paths into tmp_path and return them."""
+    """Redirect cache paths into tmp_path and return them."""
     index_path = tmp_path / "index.faiss"
     chunks_path = tmp_path / "chunks.json"
 
     monkeypatch.setattr(indexing, "INDEX_PATH", index_path)
     monkeypatch.setattr(indexing, "CHUNKS_PATH", chunks_path)
+    monkeypatch.setattr(indexing, "CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
     return {"index": index_path, "chunks": chunks_path}
 
@@ -101,9 +102,10 @@ def test_urls_point_to_github_raw(monkeypatch, tmp_path):
 # ── Cache dir creation ────────────────────────────────────────────────────────
 
 def test_creates_cache_dir_when_missing(monkeypatch, tmp_path):
-    """If PDF_CACHE_DIR does not exist, it must be created before downloading."""
+    """If CACHE_DIR does not exist, it must be created before downloading."""
     # Point cache dir to a subdirectory that doesn't exist yet
     missing_dir = tmp_path / "new_cache_dir"
+    monkeypatch.setattr(indexing, "CACHE_DIR", missing_dir)
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", missing_dir)
     monkeypatch.setattr(indexing, "INDEX_PATH", missing_dir / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", missing_dir / "chunks.json")
@@ -116,4 +118,4 @@ def test_creates_cache_dir_when_missing(monkeypatch, tmp_path):
     with patch("urllib.request.urlretrieve", side_effect=_fake_retrieve):
         indexing._fetch_pdf_cache_if_missing()
 
-    assert missing_dir.exists(), "PDF_CACHE_DIR must be created if it doesn't exist"
+    assert missing_dir.exists(), "CACHE_DIR must be created if it doesn't exist"

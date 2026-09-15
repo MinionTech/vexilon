@@ -6,6 +6,7 @@ This tracks hashes of source files to validate cache freshness.
 Issue #239: FAISS Cache Persistence & Binary Bloat
 """
 
+import os
 import json
 import hashlib
 from pathlib import Path
@@ -22,11 +23,25 @@ def hash_file(filepath: Path) -> str:
 
 
 _PKG_ROOT = Path(__file__).parent.parent
+
+def _get_default_data_dir() -> Path:
+    if "AGNAV_DATA_DIR" in os.environ:
+        return Path(os.environ["AGNAV_DATA_DIR"])
+    container_sources = Path("/data/sources")
+    if container_sources.exists():
+        return container_sources
+    return _PKG_ROOT / "data"
+
 def generate_manifest(
-    data_dir: Path = _PKG_ROOT / "data",
-    output_path: Path = _PKG_ROOT / "data/manifest.json"
+    data_dir: Path | None = None,
+    output_path: Path | None = None
 ) -> dict:
     """Generate manifest of all source files in data directory."""
+    if data_dir is None:
+        data_dir = _get_default_data_dir()
+    if output_path is None:
+        output_path = data_dir / "manifest.json"
+
     manifest = {
         "generated_at": datetime.now(UTC).isoformat(),
         "version": "1.0",
@@ -38,11 +53,17 @@ def generate_manifest(
     source_files = []
     for pattern in ["*.md", "*.pdf"]:
         for file_path in data_dir.rglob(pattern):
-            # Skip hidden, tests, and integrity files
+            try:
+                rel = file_path.relative_to(data_dir)
+            except ValueError:
+                rel = file_path
+            # Skip hidden, tests, cache, and integrity files
             if (not file_path.name.startswith(".") 
                 and ".workspaces" not in file_path.parts
                 and not file_path.is_relative_to(fixtures_dir)
-                and not file_path.name.endswith(".integrity.md")):
+                and not file_path.name.endswith(".integrity.md")
+                and "cache" not in rel.parts
+                and ".pdf_cache" not in rel.parts):
                 source_files.append(file_path)
     
     # Sort for deterministic output
@@ -64,12 +85,17 @@ def generate_manifest(
 
 
 def validate_cache(
-    data_dir: Path = _PKG_ROOT / "data",
-    manifest_path: Path = _PKG_ROOT / "data/manifest.json"
+    data_dir: Path | None = None,
+    manifest_path: Path | None = None
 ) -> bool:
     """Validate that cache matches current source files."""
+    if data_dir is None:
+        data_dir = _get_default_data_dir()
+    if manifest_path is None:
+        manifest_path = data_dir / "manifest.json"
+
     if not manifest_path.exists():
-        print("ERROR: No manifest.json found. Run generate_cache_manifest.py first.")
+        print(f"ERROR: No manifest.json found at {manifest_path}. Run generate_cache_manifest.py first.")
         return False
     
     with open(manifest_path) as f:
@@ -80,12 +106,17 @@ def validate_cache(
     current_files = {}
     for pattern in ["*.md", "*.pdf"]:
         for file_path in data_dir.rglob(pattern):
+            try:
+                rel = file_path.relative_to(data_dir)
+            except ValueError:
+                rel = file_path
             if (not file_path.name.startswith(".") 
                 and ".workspaces" not in file_path.parts
                 and not file_path.is_relative_to(fixtures_dir)
-                and not file_path.name.endswith(".integrity.md")):
-                relative_path = file_path.relative_to(data_dir)
-                current_files[str(relative_path)] = hash_file(file_path)
+                and not file_path.name.endswith(".integrity.md")
+                and "cache" not in rel.parts
+                and ".pdf_cache" not in rel.parts):
+                current_files[str(rel)] = hash_file(file_path)
     
     errors = []
     

@@ -11,6 +11,8 @@ x-app-env: &app-env
   AGNAV_APP_NAME: ${AGNAV_APP_NAME:-BCGEU Navigator}
   AGNAV_APP_DESCRIPTION: ${AGNAV_APP_DESCRIPTION:-BCGEU Agreement Navigator}
   AGNAV_WELCOME_TITLE: ${AGNAV_WELCOME_TITLE:-BCGEU Navigator}
+  AGNAV_DATA_DIR: ${AGNAV_DATA_DIR:-/data/sources}
+  AGNAV_CACHE_DIR: ${AGNAV_CACHE_DIR:-/data/cache}
 
 x-test-env: &test-env
   <<: *app-env
@@ -41,10 +43,11 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./app:/app:z
-      - /app/.pdf_cache
+      - /data/cache
       - /app/.files
     environment:
       <<: *app-env
+      AGNAV_DATA_DIR: ${AGNAV_DATA_DIR:-/app/data}
       AGNAV_LLM_PROVIDER: ${AGNAV_LLM_PROVIDER:-ollama}
       AGNAV_DEV_MODE: "true"
       WATCHFILES_FORCE_POLLING: "true"
@@ -72,10 +75,11 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./app:/app:z
-      - /app/.pdf_cache
+      - /data/cache
       - /app/.files
     environment:
       <<: *app-env
+      AGNAV_DATA_DIR: ${AGNAV_DATA_DIR:-/app/data}
       AGNAV_LLM_PROVIDER: huggingface
       WATCHFILES_FORCE_POLLING: "true"
       PORT: "7861"
