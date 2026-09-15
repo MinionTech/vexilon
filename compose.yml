@@ -47,6 +47,7 @@ services:
       - /app/.files
     environment:
       <<: *app-env
+      AGNAV_DATA_DIR: ${AGNAV_DATA_DIR:-/app/data}
       AGNAV_LLM_PROVIDER: ${AGNAV_LLM_PROVIDER:-ollama}
       AGNAV_DEV_MODE: "true"
       WATCHFILES_FORCE_POLLING: "true"
@@ -78,6 +79,7 @@ services:
       - /app/.files
     environment:
       <<: *app-env
+      AGNAV_DATA_DIR: ${AGNAV_DATA_DIR:-/app/data}
       AGNAV_LLM_PROVIDER: huggingface
       WATCHFILES_FORCE_POLLING: "true"
       PORT: "7861"

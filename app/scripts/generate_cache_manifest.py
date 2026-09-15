@@ -53,13 +53,17 @@ def generate_manifest(
     source_files = []
     for pattern in ["*.md", "*.pdf"]:
         for file_path in data_dir.rglob(pattern):
+            try:
+                rel = file_path.relative_to(data_dir)
+            except ValueError:
+                rel = file_path
             # Skip hidden, tests, cache, and integrity files
             if (not file_path.name.startswith(".") 
                 and ".workspaces" not in file_path.parts
                 and not file_path.is_relative_to(fixtures_dir)
                 and not file_path.name.endswith(".integrity.md")
-                and "cache" not in file_path.parts
-                and ".pdf_cache" not in file_path.parts):
+                and "cache" not in rel.parts
+                and ".pdf_cache" not in rel.parts):
                 source_files.append(file_path)
     
     # Sort for deterministic output
@@ -102,14 +106,17 @@ def validate_cache(
     current_files = {}
     for pattern in ["*.md", "*.pdf"]:
         for file_path in data_dir.rglob(pattern):
+            try:
+                rel = file_path.relative_to(data_dir)
+            except ValueError:
+                rel = file_path
             if (not file_path.name.startswith(".") 
                 and ".workspaces" not in file_path.parts
                 and not file_path.is_relative_to(fixtures_dir)
                 and not file_path.name.endswith(".integrity.md")
-                and "cache" not in file_path.parts
-                and ".pdf_cache" not in file_path.parts):
-                relative_path = file_path.relative_to(data_dir)
-                current_files[str(relative_path)] = hash_file(file_path)
+                and "cache" not in rel.parts
+                and ".pdf_cache" not in rel.parts):
+                current_files[str(rel)] = hash_file(file_path)
     
     errors = []
     

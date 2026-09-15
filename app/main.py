@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-_PKG_ROOT = Path(__file__).parent
-CACHE_DIR = Path(os.getenv("AGNAV_CACHE_DIR", "/data/cache" if Path("/data/cache").exists() else _PKG_ROOT / "data" / "cache"))
 # CHAINLIT_FILES_DIR is set in Containerfile ENV (must be set before
 # chainlit imports). Defensive fallback for non-container dev:
 os.environ.setdefault("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")

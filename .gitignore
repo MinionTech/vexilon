@@ -27,7 +27,6 @@ build/
 # ─── App runtime data (do NOT commit) ────────────────────────────────────────
 # The FAISS binary cache files are built during image build.
 .pdf_cache/
-data/cache/
 **/data/cache/
 *.faiss
 .tmp/

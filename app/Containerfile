@@ -65,7 +65,7 @@ ENV PATH="/venv-dev/bin:$PATH" \
 COPY --from=model_fetcher /model /model
 RUN mkdir -p /data/sources /data/cache
 COPY data/ /data/sources/
-COPY data/ ./data/
+RUN ln -s /data/sources ./data
 COPY indexing.py ./
 COPY scripts/build_index.py ./scripts/
 RUN --mount=type=cache,target=/data/cache_mount \

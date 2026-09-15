@@ -107,14 +107,18 @@ def _get_rag_source_files() -> list[Path]:
     # Targeted glob patterns for better performance
     for pattern in ["*.md", "*.pdf"]:
         for p in DATA_DIR.rglob(pattern):
-            # Skip hidden files, tests, and integrity files
+            try:
+                rel = p.relative_to(DATA_DIR)
+            except ValueError:
+                rel = p
+            # Skip hidden files, tests, integrity files, and cache directories
             # CRITICAL: Skip any paths that may exist in sibling worktrees if context is shared
             if (not p.name.startswith(".") 
                 and ".workspaces" not in p.parts
                 and not p.is_relative_to(fixtures_dir) 
                 and not p.name.endswith(".integrity.md")
-                and "cache" not in p.parts
-                and ".pdf_cache" not in p.parts):
+                and "cache" not in rel.parts
+                and ".pdf_cache" not in rel.parts):
                 files.append(p)
                 
     return sorted(files, key=lambda p: str(p))
@@ -486,8 +490,7 @@ def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
 def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
     import faiss
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    if PDF_CACHE_DIR != CACHE_DIR:
-        PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     faiss.write_index(index, str(INDEX_PATH))
     with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False)
@@ -534,8 +537,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
     logger.info(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    if PDF_CACHE_DIR != CACHE_DIR:
-        PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     chunks = []
     failed_files = []
     for f in all_files:
@@ -579,11 +581,10 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
     # Security: proactively delete legacy .pkl file (RCE risk).
-    for cdir in (CACHE_DIR, PDF_CACHE_DIR):
-        legacy_pkl = cdir / "chunks.pkl"
-        if legacy_pkl.exists():
-            legacy_pkl.unlink(missing_ok=True)
-            logger.warning("[startup] Deleted legacy chunks.pkl (security).")
+    legacy_pkl = CACHE_DIR / "chunks.pkl"
+    if legacy_pkl.exists():
+        legacy_pkl.unlink(missing_ok=True)
+        logger.warning("[startup] Deleted legacy chunks.pkl (security).")
 
     if not INDEX_PATH.exists() or not CHUNKS_PATH.exists():
         return None, None
@@ -608,8 +609,7 @@ def _fetch_pdf_cache_if_missing() -> None:
     import urllib.request
     import urllib.error
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    if PDF_CACHE_DIR != CACHE_DIR:
-        PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     if INDEX_PATH.exists() and CHUNKS_PATH.exists():
         return
     base = _GITHUB_RAW_BASE
