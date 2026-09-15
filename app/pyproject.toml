@@ -21,6 +21,8 @@ dependencies = [
     # ── PDF processing ───────────────────────────────────────────────────────
     "pymupdf>=1.27.2.2",
     "pymupdf4llm>=1.27.2.2",
+    # ── Telemetry / HTTP client ──────────────────────────────────────────────
+    "httpx>=0.27.0",
 ]
 
 [dependency-groups]
@@ -32,7 +34,6 @@ dev = [
     "pytest-mock>=3.14.0",          # Mocking fixtures (mocker)
     "pytest-playwright>=0.9.0",     # Playwright for e2e UI tests
     "watchfiles>=0.21.0",           # Hot-reload engine
-    "httpx>=0.27.0",                # Async HTTP client for smoke tests
 ]
 
 
