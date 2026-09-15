@@ -1,0 +1,23 @@
+{
+  "name": "Agreement Navigator (vexilon)",
+  "user": "ubuntu",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "ollama",
+      "description": "Local Ollama LLM daemon serving the tinyllama dev model on port 11434.",
+      "command": "export OLLAMA_HOST=127.0.0.1:11434; exec ollama serve"
+    },
+    {
+      "name": "agnav-dev",
+      "description": "Chainlit dev server for Agreement Navigator (Ollama provider) on http://localhost:7860.",
+      "command": "export PATH=\"$HOME/.local/bin:$PATH\"; cd app && AGNAV_LLM_PROVIDER=ollama OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MODEL_ID=tinyllama CHAINLIT_FILES_DIR=/tmp/chainlit_files PORT=7860 uv run --no-sync chainlit run main.py --host 0.0.0.0 --port 7860 --headless --watch"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 7860
+    }
+  ]
+}
