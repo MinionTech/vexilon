@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import sys
-from main import startup, rag_stream
+from services.rag import startup, rag_stream
 
 # Configure logging to see what's happening during the smoke test
 logging.basicConfig(level=logging.INFO)

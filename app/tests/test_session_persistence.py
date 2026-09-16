@@ -1,11 +1,11 @@
 import json
 import pytest
 import main as app
-from main import (
+from services.persistence import (
     serialize_conversation,
     deserialize_conversation,
-    MAX_INPUT_LENGTH
 )
+from core.config import MAX_INPUT_LENGTH
 
 def test_session_serialization_roundtrip():
     """Verify standard happy-path roundtrip of conversation serialization."""

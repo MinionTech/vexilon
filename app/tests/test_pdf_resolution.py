@@ -4,7 +4,8 @@ tests/test_pdf_resolution.py — Unit tests for PDF path resolution logic.
 
 from pathlib import Path
 import pytest
-import main as app
+import services.rag as app
+from services.rag import resolve_pdf_path
 
 def test_resolve_pdf_path_already_pdf_exists(tmp_path):
     """If the md_path is already a .pdf and it exists, return it directly."""

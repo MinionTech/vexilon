@@ -1,1075 +1,56 @@
 import os
-from pathlib import Path
-# CHAINLIT_FILES_DIR is set in Containerfile ENV (must be set before
-# chainlit imports). Defensive fallback for non-container dev:
-os.environ.setdefault("CHAINLIT_FILES_DIR", "/tmp/chainlit_files")
-os.environ.setdefault("AGNAV_APP_NAME", "BCGEU Navigator")
-os.environ.setdefault("AGNAV_APP_DESCRIPTION", "BCGEU Agreement Navigator")
-Path(os.environ["CHAINLIT_FILES_DIR"]).mkdir(parents=True, exist_ok=True)
-
-# If running on Hugging Face Spaces, configure SameSite=None and public URL for Chainlit cookies
-# to prevent the browser from blocking sessions in the third-party iframe context.
-if os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID"):
-    os.environ["CHAINLIT_COOKIE_SAMESITE"] = "none"
-    space_host = os.getenv("SPACE_HOST")
-    if space_host:
-        os.environ["CHAINLIT_URL"] = f"https://{space_host}"
-
-# Force online mode for the API but keep local models offline for speed
-os.environ["HF_HUB_OFFLINE"] = "0"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-
-import sys
-import re
-import random
-import time
-import json
-import contextlib
-import email.utils
-# Agreement Navigator - UI Version: 2026-05-10
+import asyncio
 import logging
 from patches import apply_patches
 apply_patches()
 
-import asyncio
-import datetime
-import tempfile
-import uuid
-from collections.abc import AsyncIterator
-from pathlib import Path
-from threading import Lock
-
-import openai
-from openai import AsyncOpenAI
-
-import faiss
 import chainlit as cl
-import anyio.to_thread
-import anyio._backends._asyncio as _anyio_asyncio_backend
-import sniffio
-
-# ─── Agnav Imports ────────────────────────────────────────────────────────
-from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION
 from chainlit.config import config as _cl_config
+from chainlit.server import app as cl_app
+from fastapi.routing import APIRoute
+from fastapi import HTTPException
+
+from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION, get_brand as _get_brand
 _cl_config.ui.name = AGNAV_APP_NAME
 _cl_config.ui.description = AGNAV_APP_DESCRIPTION
-from indexing import (
-    _get_source_name,
-    _get_rag_source_files,
-    build_index_from_sources,
-    get_integrity_report,
-    load_precomputed_index,
-    search_index_batch,
-    _fetch_pdf_cache_if_missing,
-    DATA_DIR,
-    CACHE_DIR,
-    PDF_CACHE_DIR,
-    get_embed_model,
-    EMBED_DIM,
-    chunk_text,
-    CHUNK_SIZE,
-    CHUNK_OVERLAP,
-)
 
-# ─── Global State & Config ──────────────────────────────────────────────────
-# Single Source of Truth for local development models.
-OLLAMA_MODEL_ID = "tinyllama"
-# Allow environment override for CI (e.g. tinyllama for smoke tests)
-CURRENT_MODEL_ID = os.getenv("OLLAMA_MODEL_ID", OLLAMA_MODEL_ID)
-DEFAULT_HF_MODEL_ID = "google/gemma-4-31B-it"
-
-# Configure structured logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+from core.config import *  # noqa: F401, F403
+from core.security import *  # noqa: F401, F403
+from services.persistence import *  # noqa: F401, F403
+from services.registry import *  # noqa: F401, F403
+from services.llm import *  # noqa: F401, F403
+from services.rag import *  # noqa: F401, F403
+from middleware.cookies import PartitionedCookieMiddleware
+from indexing import (  # noqa: F401
+    _get_source_name, _get_rag_source_files, build_index_from_sources,
+    get_integrity_report, load_precomputed_index, search_index_batch,
+    _fetch_pdf_cache_if_missing, DATA_DIR, CACHE_DIR, PDF_CACHE_DIR,
+    get_embed_model, EMBED_DIM, chunk_text, CHUNK_SIZE, CHUNK_OVERLAP,
 )
+from services.rag import (  # noqa: F401
+    _index, _chunks, INTEGRITY_WARNING, _source_path_map,
+    _startup_done, _startup_lock, _ensure_startup, _format_history, _get_download_source_files,
+)
+from core.security import _rate_limiter, _parse_client_uuid  # noqa: F401
+from services.registry import _test_registry  # noqa: F401
+from services.llm import _huggingface_client, _ollama_client, _build_messages  # noqa: F401
+from core.config import _get_default_model, _SIMPLE_KEYWORDS, _JOKE_KEYWORDS, _ALL_SIMPLE_KEYWORDS  # noqa: F401
+
 logger = logging.getLogger(__name__)
-_chunks: list[dict] = []
-_index: "faiss.IndexFlatIP | None" = None
-INTEGRITY_WARNING: str | None = None
 _background_tasks: set[asyncio.Task] = set()
 
-AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
-IS_DEV = not (os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID"))
-AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexilon")
-GITHUB_DATA_URL = os.getenv(
-    "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/app/data"
-)
-
-# Models & Providers
-def get_llm_provider() -> str:
-    # 1. Explicit override (keeps the 'prod' profile working)
-    val = os.getenv("AGNAV_LLM_PROVIDER")
-    if val:
-        return val.lower().strip()
-
-    # 2. Explicit dev mode flag (defaults to PROD)
-    if IS_DEV:
-        return "ollama"  # We're coding locally!
-    return "huggingface" # We're in the clouds!
-
-# Curated List of Supported Models
-HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "fastest").strip()
-
-def get_default_model_setting() -> str:
-    provider = get_llm_provider()
-    if provider == "ollama":
-        return f"ollama:{CURRENT_MODEL_ID}"
-    return f"huggingface:{DEFAULT_HF_MODEL_ID}"
-
-def _get_default_model():
-    provider = get_llm_provider()
-    # Default to Hugging Face or Ollama
-    if provider == "ollama":
-        val = os.getenv("OLLAMA_MODEL")
-        return val if (val and val.strip()) else CURRENT_MODEL_ID
-    return DEFAULT_HF_MODEL_ID
-
-DEFAULT_MODEL_LLM = os.getenv("AGNAV_DEFAULT_MODEL", _get_default_model())
-CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
-REVIEWER_MODEL = os.getenv("AGNAV_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
-CONDENSE_MODEL = os.getenv("AGNAV_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
-VERIFY_MODEL = os.getenv("AGNAV_VERIFY_MODEL", DEFAULT_MODEL_LLM)
-
-RAG_MAX_TOKENS = 4096
-REVIEWER_MAX_TOKENS = 4096
-
-MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", 10000))
-LOG_SUSPICIOUS_INPUTS = os.getenv("LOG_SUSPICIOUS_INPUTS", "true").lower() == "true"
-
-PROMPT_INJECTION_PATTERNS = [
-    re.compile(r, re.IGNORECASE)
-    for r in [
-        r"ignore\s+.*instructions",
-        r"forget\s+.*instructions",
-        r"disregard\s+.*rules",
-        r"you\s+are\s+now\s+.+\s+instead",
-        r"new\s+(system\s+|)prompt:",
-        r"#\#\#\s*(system\s+|)instructions",
-        r"\[\[SYSTEM\]\]",
-        r"override\s+.*instructions",
-        r"disable\s+.*safety",
-        r"\bjailbreak\b",
-        r"developer\s+mode",
-        r"sudo\s+mode",
-        r"roleplay\s+as",
-        r"pretend\s+(you\s+are|to\s+be)",
-        r"forget\s+everything\s+above",
-        r"discard\s+.*instructions",
-    ]
-]
-
-def sanitize_input(user_input: str) -> tuple[str, bool]:
-    """Check for prompt injection patterns and length limits."""
-    if not user_input:
-        return user_input, False
-
-    injection_found = False
-    for pattern in PROMPT_INJECTION_PATTERNS:
-        if pattern.search(user_input):
-            injection_found = True
-            if LOG_SUSPICIOUS_INPUTS:
-                logger.warning(f"[security] Prompt injection detected: {pattern.pattern[:100]}...")
-            break
-
-    too_long = len(user_input) > MAX_INPUT_LENGTH
-    if too_long and LOG_SUSPICIOUS_INPUTS:
-        logger.warning(f"[security] Input too long: {len(user_input)}")
-
-    return user_input[:MAX_INPUT_LENGTH], injection_found or too_long
-
-# ─── Test Registry Logic ────────────────────────────────────────────────────
-class TestDoctrine:
-    def __init__(self, name: str, keywords: set[str], content: str, file_path: Path):
-        self.name = name
-        self.keywords = keywords
-        self.content = content
-        self.file_path = file_path
-
-class TestRegistry:
-    def __init__(self):
-        self.tests: list[TestDoctrine] = []
-        self._lock = Lock()
-
-    def load(self, directory: Path) -> None:
-        if not directory.exists(): return
-        with self._lock:
-            self.tests = []
-            for f in directory.glob("*.md"):
-                if f.name == "index.md": continue
-                try:
-                    text = f.read_text(encoding="utf-8")
-                    lines = text.split("\n")
-                    keywords = set()
-                    content_start = 0
-                    for i, line in enumerate(lines):
-                        if line.startswith("**Keywords:**"):
-                            kw_line = line.replace("**Keywords:**", "").strip()
-                            keywords = {k.strip().lower() for k in kw_line.split(",") if k.strip()}
-                            content_start = i + 1
-                            break
-                    self.tests.append(TestDoctrine(
-                        name=f.stem.replace("_", " ").title(),
-                        keywords=keywords,
-                        content="\n".join(lines[content_start:]).strip(),
-                        file_path=f
-                    ))
-                except Exception as e:
-                    logger.error(f"[registry] Failed to load {f.name}: {e}")
-
-    def find_matches(self, query: str) -> list[TestDoctrine]:
-        q_lower = query.lower()
-        with self._lock:
-            return [test for test in self.tests if any(k in q_lower for k in test.keywords)]
-
-_test_registry = TestRegistry()
-TESTS_DIR = DATA_DIR / "test_fixtures"
-PUBLIC_DOCS_DIR = Path(__file__).parent / "public" / "docs"
-
-# ─── Rate Limiter ───────────────────────────────────────────────────────────
-RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "999999" if IS_DEV else "10"))
-RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "999999" if IS_DEV else "100"))
-
-class RateLimiter:
-    def __init__(self, max_per_minute: int = 10, max_per_hour: int = 100):
-        self.minute_limit = max_per_minute
-        self.hour_limit = max_per_hour
-        self.requests: dict[str, list[float]] = {}
-        self._lock = Lock()
-
-    def _clean_old_requests(self, key: str) -> None:
-        now = time.time()
-        hour_ago = now - 3600
-        if key in self.requests:
-            self.requests[key] = [t for t in self.requests[key] if t > hour_ago]
-            if not self.requests[key]: del self.requests[key]
-
-    def is_allowed(self, user_id: str = "default") -> tuple[bool, str]:
-        with self._lock:
-            self._clean_old_requests(user_id)
-            now = time.time()
-            minute_ago = now - 60
-            requests = self.requests.get(user_id, [])
-            recent = [t for t in requests if t > minute_ago]
-            if len(recent) >= self.minute_limit:
-                return False, f"Rate limit exceeded: {self.minute_limit} per minute."
-            if len(requests) >= self.hour_limit:
-                return False, f"Rate limit exceeded: {self.hour_limit} per hour."
-            self.requests.setdefault(user_id, []).append(now)
-            return True, ""
-
-_rate_limiter = RateLimiter(RATE_LIMIT_PER_MINUTE, RATE_LIMIT_PER_HOUR)
-
-# ─── Save/Load Conversation ─────────────────────────────────────────────────
-def serialize_conversation(history: list[dict], persona: str) -> str:
-    """Serialize conversation history to markdown with JSON metadata.
-    
-    PIPA Compliance: Metadata and conversation are end-user readable markdown
-    (not encrypted, but client-side only). No PII logged on server.
-    
-    Args:
-        history: List of message dicts with 'role' and 'content' keys
-        persona: Current persona (Lookup/Grieve/Manage)
-    
-    Returns:
-        Markdown string with YAML front matter and conversation turns
-    """
-    saved_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    
-    # YAML front matter (end-user readable metadata)
-    md = f"""---
-saved_at: {saved_at}
-persona: {persona}
-message_count: {len(history)}
----
-
-# Conversation Export
-
-**Persona:** {persona}  
-**Saved:** {saved_at}  
-**Messages:** {len(history)}
-
----
-
-"""
-    
-    # Convert each turn to readable markdown
-    for i, msg in enumerate(history, 1):
-        role_label = "👤 You" if msg["role"] == "user" else "🤖 Assistant"
-        md += f"## Turn {i}: {role_label}\n\n{msg['content']}\n\n"
-    
-    # Append JSON payload at end in code block for re-import
-    payload = {
-        "saved_at": saved_at,
-        "persona": persona,
-        "messages": history,
-    }
-    md += "---\n\n<details><summary>Technical Metadata (JSON)</summary>\n\n```json\n"
-    md += json.dumps(payload, indent=2)
-    md += "\n```\n\n</details>"
-    
-    return md
-
-
-def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[str]]:
-    """Deserialize conversation from markdown file (JSON fallback for compatibility).
-    
-    Extracts JSON metadata from either:
-    1. The technical JSON section in markdown export
-    2. Raw JSON (for backward compat)
-    
-    Args:
-        content: Markdown file contents or raw JSON string
-    
-    Returns:
-        Tuple of (messages, persona, saved_at timestamp, warnings list)
-    
-    Raises:
-        ValueError: If format is invalid or missing required fields
-    """
-    warnings = []
-    
-    # Try to extract JSON from markdown <details> section
-    json_matches = re.findall(r'```json\s*\n(.*?)\n\s*```', content, re.DOTALL)
-    if json_matches:
-        json_str = json_matches[-1]
-    else:
-        # Fallback: assume raw JSON (for old exports or direct JSON files)
-        json_str = content
-    
-    try:
-        data = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Could not parse conversation data: {e}")
-    
-    if not isinstance(data, dict):
-        raise ValueError("Invalid conversation file format: root must be an object")
-    
-    messages = data.get("messages", [])
-    persona = data.get("persona", "Lookup")
-    saved_at = data.get("saved_at", "Unknown")
-    
-    if not isinstance(messages, list):
-        raise ValueError("Messages must be a list")
-    
-    # Enforce standard safe string types for persona and saved_at
-    persona = str(persona)[:50]
-    saved_at = str(saved_at)[:50]
-    
-    # Limit number of messages to prevent memory exhaustion DoS
-    if len(messages) > 100:
-        messages = messages[:100]
-        warnings.append("Conversation exceeded the limit of 100 turns. Truncated excess historical messages.")
-    
-    sanitized_messages = []
-    truncated_count = 0
-    script_stripped = False
-    
-    for i, msg in enumerate(messages):
-        if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
-            raise ValueError(f"Message turn {i+1} is malformed: must contain 'role' and 'content' keys.")
-        
-        role = str(msg["role"]).strip()
-        if role not in ("user", "assistant"):
-            raise ValueError(f"Message turn {i+1} has invalid role: must be 'user' or 'assistant'.")
-            
-        orig_content = str(msg["content"])
-        
-        # Enforce max length constraint strictly
-        if len(orig_content) > MAX_INPUT_LENGTH:
-            content_str = orig_content[:MAX_INPUT_LENGTH]
-            truncated_count += 1
-        else:
-            content_str = orig_content
-            
-        # Secure HTML/script sanitization pass
-        clean_content = re.sub(r'(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', content_str)
-        clean_content = re.sub(r'(?i)\bon\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)', '', clean_content)
-        clean_content = re.sub(r'(?i)<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>', '', clean_content)
-        clean_content = re.sub(r'(?i)(href|src)\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?', r'\1="#"', clean_content)
-
-        if clean_content != content_str:
-            script_stripped = True
-            
-        sanitized_messages.append({
-            "role": role,
-            "content": clean_content
-        })
-        
-    if truncated_count > 0:
-        warnings.append(f"Safely truncated {truncated_count} messages exceeding the length limit of {MAX_INPUT_LENGTH} characters.")
-        
-    if script_stripped:
-        warnings.append("Security sanitization: Removed potential script injections from conversation history.")
-        
-    return sanitized_messages, persona, saved_at, warnings
-
-# ─── RAG Pipeline Constants ─────────────────────────────────────────────────
-_SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
-_JOKE_KEYWORDS = {"joke", "funny", "nose", "pick", "mad", "angry", "boss", "dumb", "stupid"}
-_ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
-
-UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
-1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-   EXCEPTION: When asked for grievance forms, filing a grievance, or grievance documentation, you MUST provide the official form download links listed in Rule 5 below.
-2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
-   EXAMPLE: > "verbatim text" [Document Name, Page X]
-3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
-4. NO MERIT ASSESSMENT: Do NOT judge the merit or likelihood of success of a grievance.
-5. GRIEVANCE FILING & FORMS: Facilitate the filing process by identifying potential contract violations. When asked about grievance forms or filing a grievance, ALWAYS provide a brief forensic analysis of the user's situation and relevant contract provisions FIRST, followed by informing the user that official forms are available and providing these exact links:
-   - [Grievance - 0 - Instructions](/public/docs/forms/Grievance_-_0_-_Instructions.pdf)
-   - [Grievance - A - Grievor Case](/public/docs/forms/Grievance_-_A_-_Grievor_Case.pdf)
-   - [Grievance - B - Notify Designates](/public/docs/forms/Grievance_-_B_-_Notify_Designates.pdf)
-   - [Grievance - C - Steward Case](/public/docs/forms/Grievance_-_C_-_Steward_Case.pdf)
-"""
-
-MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
-1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
-   EXAMPLE: > "verbatim text" [Document Name, Page X]
-3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
-4. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
-5. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
-6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
-"""
-
-def get_persona_prompt(persona_key: str) -> str:
-    """Return the combined mandatory rules and persona guidelines."""
-    if persona_key == "Manage":
-        rules = MANAGER_MANDATORY_RULES
-        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework. Provide precise, fact-based answers using the provided context."
-    elif persona_key == "Grieve":
-        rules = UNION_MANDATORY_RULES
-        persona = (
-            "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
-            "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
-            "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
-        )
-    elif persona_key == "Train":
-        rules = UNION_MANDATORY_RULES
-        persona = (
-            "You are an expert in labor relations training. Explain the concepts in the context using a helpful, educational tone.\n"
-            "Focus on empowering the user with knowledge and clear explanations."
-        )
-    else:
-        rules = UNION_MANDATORY_RULES
-        persona = (
-            "You are a forensic labor law expert. Your goal is to provide precise, fact-based answers using the provided context.\n"
-            "If asked for grievance forms or how to file a grievance, assist the user by providing the official form links listed in the rules."
-        )
-    
-    return f"{rules}\n\nROLE: {persona}"
-
-# ─── Verification & LLM Helpers ───────────────────────────────────────
-VERIFY_ENABLED = os.getenv("VERIFY_ENABLED", "false" if IS_DEV else "true").lower() == "true"
-VERIFY_SYSTEM_PROMPT = """You are a verification assistant. Your job is to verify that the claims made in an AI response are supported by the provided source citations.
-
-For each claim in the response:
-1. Check if the quoted text actually supports the claim being made
-2. Check if the citation (document name, article/section, page number) is accurate
-3. Identify any hallucinations, misquotes, or unsupported claims
-
-NOTE: Static system resources (such as official grievance form links like /public/docs/forms/...) are official application assets provided by the platform. Do NOT flag official form links or document downloads as DISPUTED or unsupported claims.
-
-Respond in this format:
-- VERIFIED: [claim summary] — the quote supports the claim
-- DISPUTED: [claim summary] — the quote does NOT support the claim
-- UNCERTAIN: [claim summary] — cannot verify due to unclear citation
-
-If all claims are verified, respond with "ALL_CLAIMS_VERIFIED".
-If there are disputed claims, list them with explanations."""
-
-_huggingface_client = None
-_ollama_client = None
-
-def get_llm_client(provider: str = None) -> AsyncOpenAI:
-    global _huggingface_client, _ollama_client
-    
-    if provider is None:
-        session_model = None
-        if has_chainlit_context():
-            session_model = cl.user_session.get("selected_model")
-        
-        if session_model and ":" in session_model:
-            provider = session_model.split(":", 1)[0]
-        else:
-            provider = get_llm_provider()
-    
-    if provider == "huggingface":
-        if _huggingface_client is None:
-            token = os.environ.get("HF_TOKEN")
-            if not token:
-                raise ValueError("Missing HF_TOKEN environment variable for Hugging Face provider.")
-            _huggingface_client = AsyncOpenAI(
-                base_url="https://router.huggingface.co/v1",
-                api_key=token,
-                timeout=60.0
-            )
-        return _huggingface_client
-    elif provider == "ollama":
-        if _ollama_client is None:
-            ollama_host = os.getenv("OLLAMA_HOST", "ollama:11434")
-            if "://" not in ollama_host:
-                ollama_host = f"http://{ollama_host}"
-            _ollama_client = AsyncOpenAI(
-                base_url=f"{ollama_host.rstrip('/')}/v1",
-                api_key="ollama"
-            )
-        return _ollama_client
-    else:
-        raise ValueError(f"Unsupported LLM provider: {provider}")
-
-def resolve_model_and_provider(fallback_model: str) -> tuple[str, str]:
-    session_model = None
-    if has_chainlit_context():
-        session_model = cl.user_session.get("selected_model")
-    
-    model_str = session_model or fallback_model
-    if ":" in model_str:
-        provider, model_id = model_str.split(":", 1)
-    else:
-        provider = get_llm_provider()
-        model_id = model_str
-        
-    if provider == "huggingface" and HF_PROVIDER and ":" not in model_id:
-        model_id = f"{model_id}:{HF_PROVIDER}"
-        
-    return provider, model_id
-
-def _build_messages(messages: list, system: str | list = None) -> list:
-    full_messages = []
-    if system:
-        if isinstance(system, list):
-            system_text = "\n\n".join([b["text"] if isinstance(b, dict) else str(b) for b in system])
-        else:
-            system_text = system
-        full_messages.append({"role": "system", "content": system_text})
-    full_messages.extend(messages)
-    return full_messages
-
-# ─── Transient LLM Error & Retry Policy ─────────────────────────────────────
-LLM_MAX_RETRIES = int(os.getenv("AGNAV_LLM_MAX_RETRIES", "3"))
-LLM_RETRY_BASE_DELAY = float(os.getenv("AGNAV_LLM_RETRY_BASE_DELAY", "0.5"))
-LLM_RETRY_MAX_DELAY = float(os.getenv("AGNAV_LLM_RETRY_MAX_DELAY", "8.0"))
-
-def is_transient_llm_error(exc: Exception) -> bool:
-    """Determine whether an exception from an LLM call is a transient rate-limit or queue issue."""
-    if isinstance(exc, openai.RateLimitError):
-        return True
-
-    status_code = getattr(exc, "status_code", None)
-    if status_code == 429:
-        return True
-
-    response = getattr(exc, "response", None)
-    if response is not None and getattr(response, "status_code", None) == 429:
-        return True
-
-    body = getattr(exc, "body", None)
-    if isinstance(body, dict):
-        if body.get("code") == "queue_exceeded" or body.get("type") == "too_many_requests_error":
-            return True
-
-    err_str = str(exc).lower()
-    if re.search(r"\b429\b", err_str):
-        return True
-
-    transient_indicators = (
-        "rate_limit",
-        "rate-limit",
-        "too_many_requests",
-        "queue_exceeded",
-        "queue-exceeded",
-        "over capacity",
-        "over_capacity",
-    )
-    return any(k in err_str for k in transient_indicators)
-
-def compute_retry_delay(attempt: int, exc: Exception | None = None) -> float:
-    """Calculate exponential backoff with jitter, respecting Retry-After header if present."""
-    if exc is not None:
-        response = getattr(exc, "response", None)
-        if response is not None:
-            headers = getattr(response, "headers", None)
-            if headers:
-                retry_after_str = headers.get("retry-after") or headers.get("Retry-After")
-                if retry_after_str:
-                    try:
-                        retry_after = float(retry_after_str)
-                    except (ValueError, TypeError):
-                        try:
-                            date_val = email.utils.parsedate_to_datetime(retry_after_str)
-                            if date_val.tzinfo is None:
-                                date_val = date_val.replace(tzinfo=datetime.timezone.utc)
-                            now = datetime.datetime.now(datetime.timezone.utc)
-                            retry_after = (date_val - now).total_seconds()
-                        except Exception:
-                            retry_after = None
-
-                    if retry_after is not None and 0 < retry_after <= LLM_RETRY_MAX_DELAY:
-                        return retry_after
-
-    raw_delay = min(LLM_RETRY_BASE_DELAY * (2 ** attempt), LLM_RETRY_MAX_DELAY)
-    jitter = random.uniform(0.75, 1.25)
-    return min(raw_delay * jitter, LLM_RETRY_MAX_DELAY)
-
-async def unified_chat_create(model: str, messages: list, system: str | list = None, max_tokens: int = 1024) -> str:
-    provider, actual_model = resolve_model_and_provider(model)
-    client = get_llm_client()
-    full_messages = _build_messages(messages, system)
-    
-    kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
-
-    for attempt in range(LLM_MAX_RETRIES + 1):
-        t0 = time.perf_counter()
-        logger.info(f"[llm-call] Creating completion for actual_model='{actual_model}' on provider='{provider}' (attempt {attempt + 1}/{LLM_MAX_RETRIES + 1})...")
-        try:
-            resp = await client.chat.completions.create(**kwargs)
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
-            content = resp.choices[0].message.content
-            return content or ""
-        except Exception as exc:
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] Completion creation attempt {attempt + 1} call duration: {elapsed:.2f} seconds")
-            if attempt < LLM_MAX_RETRIES and is_transient_llm_error(exc):
-                delay = compute_retry_delay(attempt, exc)
-                logger.warning(
-                    f"[llm-retry] Transient error in unified_chat_create ({exc}). "
-                    f"Retrying in {delay:.2f}s (attempt {attempt + 1}/{LLM_MAX_RETRIES})..."
-                )
-                await asyncio.sleep(delay)
-            else:
-                raise
-
-async def unified_chat_stream(model: str, messages: list, system: str | list = None, max_tokens: int = 2048) -> AsyncIterator[str]:
-    provider, actual_model = resolve_model_and_provider(model)
-    client = get_llm_client()
-    full_messages = _build_messages(messages, system)
-    
-    kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "stream": True, "timeout": 300.0}
-
-    stream = None
-    for attempt in range(LLM_MAX_RETRIES + 1):
-        t0 = time.perf_counter()
-        logger.info(f"[llm-call] Opening stream for actual_model='{actual_model}' on provider='{provider}' (attempt {attempt + 1}/{LLM_MAX_RETRIES + 1})...")
-        try:
-            stream = await client.chat.completions.create(**kwargs)
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} elapsed: {elapsed:.2f} seconds")
-            break
-        except Exception as exc:
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] Stream connection attempt {attempt + 1} call duration: {elapsed:.2f} seconds")
-            if attempt < LLM_MAX_RETRIES and is_transient_llm_error(exc):
-                delay = compute_retry_delay(attempt, exc)
-                logger.warning(
-                    f"[llm-retry] Transient error in unified_chat_stream ({exc}). "
-                    f"Retrying in {delay:.2f}s (attempt {attempt + 1}/{LLM_MAX_RETRIES})..."
-                )
-                await asyncio.sleep(delay)
-            else:
-                raise
-    # Stateful buffer for filtering <think> blocks (handles split-token tags)
-    in_think_block = False
-    buffer = ""
-    start_tag = "<think>"
-    end_tag = "</think>"
-    
-    first_chunk = True
-    async for chunk in stream:
-        if first_chunk:
-            elapsed = time.perf_counter() - t0
-            logger.info(f"[llm-call] First stream chunk received in {elapsed:.2f} seconds")
-            first_chunk = False
-            
-        if chunk.choices:
-            delta = chunk.choices[0].delta
-            content = getattr(delta, "content", None) or ""
-            reasoning = getattr(delta, "reasoning", None) or ""
-            if content:
-                buffer += content
-            
-            while buffer:
-                if not in_think_block:
-                    # Look for start tag
-                    start_idx = buffer.find(start_tag)
-                    if start_idx != -1:
-                        # Yield everything before the tag
-                        if start_idx > 0:
-                            yield buffer[:start_idx]
-                        in_think_block = True
-                        buffer = buffer[start_idx + len(start_tag):] # Skip start tag
-                    else:
-                        # No complete start tag found. 
-                        # But wait! What if we have a partial tag at the end (e.g. '...<thi')?
-                        partial_idx = buffer.find("<")
-                        if partial_idx != -1 and len(buffer[partial_idx:]) < len(start_tag):
-                            # Yield everything before the partial tag and keep the partial in buffer
-                            if partial_idx > 0:
-                                yield buffer[:partial_idx]
-                            buffer = buffer[partial_idx:]
-                            break
-                        else:
-                            # Safe to yield everything
-                            yield buffer
-                            buffer = ""
-                else:
-                    # In a think block, look for end tag
-                    end_idx = buffer.find(end_tag)
-                    if end_idx != -1:
-                        in_think_block = False
-                        buffer = buffer[end_idx + len(end_tag):] # Skip end tag
-                    else:
-                        # Still thinking, discard buffer (careful not to discard a partial end tag)
-                        partial_end_idx = buffer.find("<")
-                        if partial_end_idx != -1 and len(buffer[partial_end_idx:]) < len(end_tag):
-                            # Keep potential partial end tag
-                            buffer = buffer[partial_end_idx:]
-                            break
-                        else:
-                            buffer = ""
-                            break
-    
-    # Final flush of the buffer if there's remaining content that isn't a think block
-    if buffer and not in_think_block:
-        yield buffer
-
-async def verify_response(assistant_response: str, context: str) -> str:
-    if not VERIFY_ENABLED: return ""
-    try:
-        raw_verification = await unified_chat_create(
-            model=VERIFY_MODEL,
-            max_tokens=512,
-            system=VERIFY_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": f"RESPONSE:\n{assistant_response}\n\nCONTEXT:\n{context}"}]
-        )
-        if not raw_verification:
-            return "ALL_CLAIMS_VERIFIED"
-        
-        # Filter out false-alarm DISPUTED lines regarding explicit static form URLs or downloads
-        lines = [line.strip() for line in raw_verification.split("\n") if line.strip()]
-        filtered_lines = []
-        for line in lines:
-            line_lower = line.lower()
-            if "disputed:" in line_lower and any(kw in line_lower for kw in ("/public/docs/forms/", "form download link")):
-                continue
-            filtered_lines.append(line)
-
-        def _normalize_line(line: str) -> str:
-            cleaned = line.strip()
-            if cleaned.startswith(("- ", "* ")):
-                cleaned = cleaned[2:].strip()
-            return cleaned
-
-        normalized_lines = [_normalize_line(line) for line in filtered_lines]
-        if not normalized_lines or all(
-            verification_line.startswith("VERIFIED:") or verification_line == "ALL_CLAIMS_VERIFIED"
-            for verification_line in normalized_lines
-        ):
-            return "ALL_CLAIMS_VERIFIED"
-        return "\n".join(filtered_lines)
-    except Exception as exc:
-        if is_transient_llm_error(exc):
-            return "⚠️ Verification unavailable due to high traffic."
-        return f"⚠️ Verification unavailable: {exc}"
-
-def get_system_prompt(developer_mode: bool = False) -> str:
-    now = datetime.datetime.now().strftime("%Y-%m-%d")
-    header = f"--- {AGNAV_APP_NAME.upper()} SYSTEM STATE ---\nDATE: {now}\nVERSION: {AGNAV_VERSION}\n----------------------------\n\n"
-    content = f"You are {AGNAV_APP_NAME}, a professional assistant for union stewards. IMPORTANT: DO NOT use <think> tags. Provide your answer directly and professionally. ALWAYS cite your sources using the [Document Name, Header/Article] format provided in the context.\n\nKnowledge Base:\n{{manifest}}\n\n{{verify_message}}"
-    return f"{header}{content}"
-
-async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[str, str]]:
-    """Yields (chunk, context) for tests and legacy callers."""
-    if _index is None:
-        yield "⚠️ Knowledge base not loaded.", ""
-        return
-    try:
-        queries, context, snippets = await get_rag_context(message, history)
-        
-        system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
-
-        # Cap history to last 2 turns, truncated to reduce prompt size on CPU
-        capped = []
-        for h in history[-2:]:
-            c = h["content"] if isinstance(h["content"], str) else str(h["content"])
-            capped.append({"role": h["role"], "content": c[:300] + "..." if len(c) > 300 else c})
-        messages = capped + [{"role": "user", "content": message}]
-        
-        has_yielded_context = False
-        async for chunk in unified_chat_stream(
-            model=CLAUDE_MODEL,
-            max_tokens=RAG_MAX_TOKENS,
-            system=system,
-            messages=messages
-        ):
-            if not has_yielded_context:
-                yield "", context
-                has_yielded_context = True
-            yield chunk, ""
-    except Exception as exc:
-        yield f"⚠️ API error: {exc}", ""
-
-# ─── RAG Pipeline Functions ─────────────────────────────────────────────────
-def has_chainlit_context() -> bool:
-    try:
-        from chainlit.context import get_context
-        return get_context() is not None
-    except Exception:
-        return False
-
-@contextlib.asynccontextmanager
-async def status_step(name: str, remove_on_exit: bool = False):
-    """Safe context manager to show Chainlit steps only when a UI context exists."""
-    if has_chainlit_context():
-        async with cl.Step(name=name) as step:
-            # Register the step to be removed later if there is a registry in user_session
-            steps_list = cl.user_session.get("steps_to_remove")
-            if isinstance(steps_list, list):
-                steps_list.append(step)
-            try:
-                yield step
-            finally:
-                if remove_on_exit:
-                    await step.remove()
-    else:
-        class DummyStep:
-            def __init__(self):
-                self.output = ""
-            async def update(self):
-                pass
-            async def remove(self):
-                pass
-        yield DummyStep()
-
-async def clear_active_status_steps() -> None:
-    """Wipe any registered intermediate UI steps to keep chat history clean and autoscroll smooth."""
-    steps_to_remove = cl.user_session.get("steps_to_remove") or []
-    for s in steps_to_remove:
-        try:
-            await s.remove()
-        except Exception as e:
-            logger.error(f"[chat] Failed to remove step: {e}")
-    cl.user_session.set("steps_to_remove", [])
-
-def _format_history(history: list[dict]) -> str:
-    """Format conversation history list into a standardized string for LLM prompts."""
-    history_text = ""
-    for turn in history[-5:]:
-        role = (turn["role"] if isinstance(turn, dict) else turn.role).capitalize()
-        content = turn["content"] if isinstance(turn, dict) else turn.content
-        if isinstance(content, list):
-            content = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in content])
-        history_text += f"{role}: {content}\n"
-    return history_text
-
-async def condense_query(message: str, history: list[dict]) -> str:
-    """Turn the conversation history and new message into a standalone search query."""
-    if not history: return message
-    
-    history_text = _format_history(history)
-    prompt = f"CONVERSATION HISTORY:\n{history_text}\nUSER MESSAGE: {message}\n\nTask: Condense into a standalone search query."
-    try:
-        resp_text = await unified_chat_create(
-            model=CONDENSE_MODEL,
-            max_tokens=100,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return resp_text.strip().strip('"')
-    except Exception:
-        return message
-
-async def get_rag_context(message: str, history: list[dict]) -> tuple[list[str], str, list[dict]]:
-    # Drop perspectives entirely: only use the user query.
-    # Bypassing condensation in local DEV saves huge latency on local LLM runtimes (e.g. 10-30s on CPU/Ollama).
-    if history and (not IS_DEV or os.getenv("AGNAV_FORCE_CONDENSE") == "true"):
-        async with status_step("context synthesis...") as step:
-            condensed = await condense_query(message, history)
-            step.output = f"Condensed query: \"{condensed}\""
-    else:
-        condensed = message
-        
-    queries = [condensed]
-    
-    async with status_step("retrieval...") as step:
-        # Optimization: Fewer chunks in dev to speed up inference
-        top_k_count = 3 if IS_DEV else 5
-        # Embedding is CPU-heavy; offload to thread to keep the event loop alive
-        all_res = await asyncio.to_thread(search_index_batch, _index, _chunks, queries, [top_k_count] * len(queries))
-        seen = set()
-        context_parts = []
-        unique_snippets = []
-        for res_list in all_res:
-            for c in res_list:
-                if c["text"] not in seen:
-                    seen.add(c["text"])
-                    unique_snippets.append(c)
-                    source = c.get("source", "Unknown")
-                    page = c.get("page", "?")
-                    context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
-        
-        sources_found = set(c.get("source", "Unknown") for c in unique_snippets)
-        step.output = f"Retrieved {len(unique_snippets)} matching excerpts from {len(sources_found)} reference documents."
-        
-    return queries, "\n\n".join(context_parts), unique_snippets
-
-
-HIGH_TRAFFIC_MESSAGE = "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
-GENERIC_ERROR_MESSAGE = "⚠️ An unexpected error occurred while processing your request. Please try again."
-
-def format_rag_error_message(exc: Exception) -> str:
-    """Map exceptions to user-facing error messages, hiding internal error details."""
-    if is_transient_llm_error(exc):
-        return HIGH_TRAFFIC_MESSAGE
-
-    return GENERIC_ERROR_MESSAGE
-
-
-async def rag_review_stream(message: str, history: list[dict], persona_mode: str = "Lookup", context: str | None = None, queries: list[str] | None = None) -> AsyncIterator[str]:
-    try:
-        if not context or not queries:
-            q_new, c_new, s_new = await get_rag_context(message, history)
-            context = context or c_new
-            queries = queries or q_new
-
-        # 2. Forensic Analysis & Logic Injection
-        base_persona = get_persona_prompt(persona_mode)
-        audit_rules = ""
-        if persona_mode in ("Grieve", "Manage"):
-            matched_tests = _test_registry.find_matches(message + " " + queries[0])
-            for test in matched_tests:
-                audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-                audit_rules += f"This case involves potential issues related to {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern (Explain the principle, ask the relevant Question, Apply it to the facts, and Cite the source).\n"
-                audit_rules += f"Criteria:\n{test.content}\n"
-
-        master_rules = get_system_prompt().format(manifest="", verify_message="")
-        system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
-        
-        # Cap history to last 2 turns, truncated to reduce prompt size on CPU
-        capped = []
-        for h in history[-2:]:
-            c = h["content"] if isinstance(h["content"], str) else str(h["content"])
-            capped.append({"role": h["role"], "content": c[:300] + "..." if len(c) > 300 else c})
-        messages = capped + [{"role": "user", "content": message}]
-        
-        async for text in unified_chat_stream(
-            model=REVIEWER_MODEL,
-            max_tokens=REVIEWER_MAX_TOKENS,
-            system=system,
-            messages=messages
-        ):
-            yield text
-    except Exception as exc:
-        logger.error(f"[rag] Pipeline error: {exc}", exc_info=True)
-        yield format_rag_error_message(exc)
-
-# ─── UI Utility Functions ───────────────────────────────────────────────────
-def _get_download_source_files() -> list[Path]:
-    """Scan DATA_DIR for PDF and MD files. Excludes test_fixtures/."""
-    if not DATA_DIR.exists(): return []
-    fixtures_dir = DATA_DIR / "test_fixtures"
-    files = [p for p in DATA_DIR.rglob("*") if p.suffix.lower() in (".pdf", ".md")
-             and not p.is_relative_to(fixtures_dir)
-             and not p.name.endswith(".integrity.md")]
-    return sorted(list(set(files)), key=lambda p: str(p))
-
-
-# ─── App Logic ──────────────────────────────────────────────────────────────
-_source_path_map: dict[str, Path] = {}
-
-def startup(force_rebuild: bool = False):
-    global _index, _chunks, INTEGRITY_WARNING, _source_path_map
-    
-    # Identify environment
-    provider = get_llm_provider()
-    model = DEFAULT_MODEL_LLM
-    logger.info(f"[startup] AgNav {AGNAV_VERSION} starting...")
-    logger.info(f"[startup] Provider: {provider}")
-    logger.info(f"[startup] Default Model: {DEFAULT_MODEL_LLM}")
-
-
-    logger.info(f"[startup] Build Integrity: {AGNAV_VERSION}")
-
-    _test_registry.load(TESTS_DIR)
-    # Ensure cache directory is writable
-    import indexing
-    indexing.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    try:
-        test_file = indexing.CACHE_DIR / "permissions_test"
-        test_file.touch()
-        test_file.unlink()
-    except Exception as e:
-        logger.warning(f"[startup] {indexing.CACHE_DIR} is not writable: {e}. Indexing may fail.")
-
-    _fetch_pdf_cache_if_missing()
-    _index, _chunks = load_precomputed_index()
-    if _index is None or force_rebuild:
-        _index, _chunks = build_index_from_sources(force=True)
-    if _index is not None:
-        all_files = _get_rag_source_files()
-        _source_path_map = { _get_source_name(p.stem): p for p in all_files }
-        report = get_integrity_report()
-    
-    doc_list = _get_download_source_files()
-    logger.info(f"[startup] {len(doc_list)} reference documents found.")
-
-# ─── Chainlit UI ────────────────────────────────────────────────────────────
-# Starters are handled by ChatProfiles now.
-
-# Module-level startup gate. startup() is sync (it does blocking I/O: PDF
-# fetch, FAISS index build/load, registry load). We run it exactly once,
-# off the event loop, on the first chat session.
-_startup_done = False
-_startup_lock = asyncio.Lock()
-
-
-async def _ensure_startup() -> None:
-    global _startup_done
-    if _startup_done:
-        return
-    async with _startup_lock:
-        if _startup_done:
-            return
-        
-        await asyncio.to_thread(startup)
-        
-        _startup_done = True
-
-
-# ── Auth ────────────────────────────────────────────────────────────────────
-# Match the previous Gradio behaviour: enable password auth only when the
-# AGNAV_PASSWORD env var is set. Chainlit only registers the callback if it
-# is decorated, so we gate the decoration itself.
 if os.getenv("AGNAV_PASSWORD"):
     _agn_user = os.getenv("AGNAV_USERNAME", "admin")
     _agn_password = os.environ["AGNAV_PASSWORD"]
-    logger.info(f"[startup] Authentication enabled for user '{_agn_user}'")
 
     @cl.password_auth_callback
     async def auth_callback(username: str, password: str) -> "cl.User | None":
-        if username == _agn_user and password == _agn_password:
-            return cl.User(identifier=username)
-        return None
-
+        return cl.User(identifier=username) if username == _agn_user and password == _agn_password else None
 
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
 
-
-PERSONAS = ["Lookup", "Grieve", "Manage"]
-DEFAULT_PERSONA = "Lookup"
-VEXILON_SAVE_SENTINEL = "__VEXILON_SAVE__"
-
-EXAMPLES = [
-    "What are the Article 14 (Discipline) requirements for just cause?",
-    "What are my rights as a steward during an investigation meeting?",
-    "What is the nexus test for establishing a link in off-duty conduct cases?",
-    "Show me the Harassment Threshold test.",
-    "I need to file a grievance for a member. What steps should I take?",
-]
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
     all_starters = [
@@ -1080,103 +61,34 @@ async def chat_profiles(user: cl.User):
         cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
     ]
     return [
-        cl.ChatProfile(
-            name="Lookup",
-            icon="",
-            default=True,
-            markdown_description="Forensic lookup of labor law excerpts.",
-            starters=all_starters,
-        ),
-        cl.ChatProfile(
-            name="Grieve",
-            icon="",
-            markdown_description="Strategic guidance and forensic auditing for grievance filing.",
-            starters=all_starters,
-        ),
-        cl.ChatProfile(
-            name="Manage",
-            icon="",
-            markdown_description="Strategic management consulting.",
-            starters=all_starters,
-        ),
+        cl.ChatProfile(name="Lookup", icon="", default=True, markdown_description="Forensic lookup of labor law excerpts.", starters=all_starters),
+        cl.ChatProfile(name="Grieve", icon="", markdown_description="Strategic guidance and forensic auditing for grievance filing.", starters=all_starters),
+        cl.ChatProfile(name="Manage", icon="", markdown_description="Strategic management consulting.", starters=all_starters),
     ]
-
 
 @cl.on_chat_start
 async def on_chat_start():
     await _ensure_startup()
-    
-
-    # ── Chat Settings (Gear Icon) ─────────────────────────────────────────
-    await cl.ChatSettings(
-        [
-            cl.input_widget.Select(
-                id="Persona",
-                label="Navigator Persona",
-                values=["Lookup", "Grieve", "Manage"],
-                initial_index=0,
-            ),
-        ]
-    ).send()
-    
-    # Initialize session state
+    await cl.ChatSettings([cl.input_widget.Select(id="Persona", label="Navigator Persona", values=["Lookup", "Grieve", "Manage"], initial_index=0)]).send()
     cl.user_session.set("history", [])
     cl.user_session.set("persona", "Lookup")
     cl.user_session.set("selected_model", get_default_model_setting())
-
-
-
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
 
-
-# ── Message handler ────────────────────────────────────────────────────────
-def _parse_client_uuid(candidate) -> str | None:
-    """Validate a client-supplied UUID string, or None if invalid.
-
-    Only accepts well-formed UUID v4 strings so an untrusted window_message
-    payload can't inject arbitrary/oversized content into session state or
-    logs (same defensive posture as sanitize_input()).
-    """
-    if not isinstance(candidate, str):
-        return None
-    try:
-        parsed = uuid.UUID(candidate)
-    except (ValueError, AttributeError, TypeError):
-        return None
-    if parsed.version != 4:
-        return None
-    return str(parsed)
-
-
 @cl.on_window_message
 async def on_window_message(data):
-    """Receive the pseudonymous client UUID posted by public/index.js.
-
-    Random, client-generated, browser-local identifier — not derived from
-    IP/device/any real identifying information. See PRIVACY.md.
-    """
-    if not isinstance(data, dict) or data.get("type") != "vexilon_client_id":
-        return
-    client_uuid = _parse_client_uuid(data.get("clientId"))
-    if client_uuid:
-        cl.user_session.set("client_uuid", client_uuid)
-
+    if isinstance(data, dict) and data.get("type") == "vexilon_client_id":
+        client_uuid = _parse_client_uuid(data.get("clientId"))
+        if client_uuid:
+            cl.user_session.set("client_uuid", client_uuid)
 
 def _client_id() -> str:
-    """Pseudonymous client identifier for rate limiting and log correlation.
-
-    Prefers the persistent, client-generated UUID captured by
-    on_window_message (survives page reloads); falls back to Chainlit's
-    ephemeral session id for the brief window before the client posts it.
-    """
     persistent = cl.user_session.get("client_uuid")
     if persistent:
         return persistent
     sid = getattr(cl.user_session, "id", None) or cl.user_session.get("id")
     return str(sid) if sid else "default"
-
-
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
@@ -1185,205 +97,40 @@ async def on_persona_action(action: cl.Action):
 
 @cl.action_callback("starter_query")
 async def on_action(action: cl.Action):
-    query = action.payload.get('value')
+    query = action.payload.get("value")
     if not query:
         return
-    # Show the query the user selected
     await cl.Message(content=f"**Query:** {query}", author="System").send()
-    # Trigger the processing
     await on_message(cl.Message(content=query))
-    # Remove the buttons to keep it clean
     await action.remove()
-
-async def trigger_session_save():
-    """Save conversation history to downloadable markdown file (PIPA-compliant)."""
-    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
-    if not allowed:
-        await cl.Message(content=rate_msg, author="System").send()
-        return
-
-    history: list[dict] = cl.user_session.get("history") or []
-    persona: str = cl.user_session.get("persona") or "Lookup"
-    
-    if not history:
-        await cl.Message(content="No conversation to save yet.", author="System").send()
-        return
-    
-    try:
-        markdown_content = serialize_conversation(history, persona)
-        
-        # Generate timestamped filename (client-side, user controls final location)
-        timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
-        filename = f"conversation_{timestamp}.md"
-        
-        msg = cl.Message(
-            content=f"Conversation saved as markdown. Click below to download.",
-            author="System",
-            elements=[cl.File(name=filename, content=markdown_content, display="inline", mime="text/markdown")]
-        )
-        await msg.send()
-        
-        logger.info(f"[save] Conversation saved by {_client_id()} ({len(history)} messages)")
-    except Exception as e:
-        logger.error(f"[save] Failed to save conversation: {e}")
-        await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
-        if file_path:
-            try:
-                Path(file_path).unlink(missing_ok=True)
-            except OSError:
-                pass
-
 
 @cl.action_callback("save_conversation")
 async def on_save_conversation(action: cl.Action):
-    """Callback for native Chainlit Action button."""
-    await trigger_session_save()
-
-
-async def trigger_session_load(file_content: str):
-    """Load conversation from uploaded markdown or JSON file."""
-    allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
-    if not allowed:
-        await cl.Message(content=rate_msg, author="System").send()
-        return
-        
-    try:
-        messages, saved_persona, saved_at, warnings = deserialize_conversation(file_content)
-        
-        # Append to current history
-        current_history: list[dict] = cl.user_session.get("history") or []
-        current_history.extend(messages)
-        cl.user_session.set("history", current_history)
-        
-        # If there are warnings, display them clearly to the user
-        if warnings:
-            warnings_text = "\n".join(f"- {w}" for w in warnings)
-            await cl.Message(
-                content=f"⚠️ **Upload Notice**\n\n{warnings_text}",
-                author="System",
-            ).send()
-        
-        # Display notification with restore marker
-        msg = cl.Message(
-            content=f"**Restored Conversation** (Persona: {saved_persona}, Saved: {saved_at})\n\nLoaded {len(messages)} messages. These are read-only.",
-            author="System",
-        )
-        msg.metadata = {"restored": True}
-        await msg.send()
-        
-        # Re-render loaded messages as read-only in UI
-        for i, loaded_msg in enumerate(messages):
-            display_role = "👤 You" if loaded_msg["role"] == "user" else "🤖 Assistant"
-            msg_content = loaded_msg["content"]
-            msg_obj = cl.Message(content=msg_content, author=display_role)
-            msg_obj.metadata = {"restored": True, "readonly": True}
-            await msg_obj.send()
-        
-        logger.info(f"[load] Conversation loaded by {_client_id()} ({len(messages)} messages)")
-    except json.JSONDecodeError as e:
-        logger.error(f"[load] Invalid JSON in file: {e}")
-        await cl.Message(content="Invalid conversation file format. Expected JSON.", author="System").send()
-    except ValueError as e:
-        logger.error(f"[load] Conversation validation error: {e}")
-        await cl.Message(content=f"Conversation file is invalid: {e}", author="System").send()
-    except Exception as e:
-        logger.error(f"[load] Failed to load conversation: {e}")
-        await cl.Message(content=f"Error loading conversation: {e}", author="System").send()
-
-
-async def _ask_for_session_file() -> None:
-    """Background coroutine: prompts for a session file using AskFileMessage.
-
-    Runs detached from the action callback so the UI is never locked.
-    contextvars are copied by asyncio.create_task(), preserving the
-    Chainlit session context for send() calls.
-    """
-    try:
-        res = await cl.AskFileMessage(
-            content="Select your `.md` session backup file to restore this conversation.",
-            accept=["text/markdown", "text/plain"],
-            max_size_mb=2,
-            timeout=120,
-        ).send()
-
-        if res:
-            file = res[0]
-            with open(file.path, "r", encoding="utf-8") as f:
-                file_content = f.read()
-            await trigger_session_load(file_content)
-    except Exception as e:
-        logger.error(f"[load] AskFileMessage background task failed: {e}")
-        await cl.Message(content="Failed to load session file.", author="System").send()
-
+    await trigger_session_save(_client_id())
 
 @cl.action_callback("load_conversation")
 async def on_load_conversation(action: cl.Action):
-    """Callback for native Chainlit Action button.
-
-    Returns immediately to prevent UI lock; file prompt runs in background.
-    """
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         await cl.Message(content=rate_msg, author="System").send()
         return
-
-    task = asyncio.create_task(_ask_for_session_file())
+    task = asyncio.create_task(ask_for_session_file(_client_id()))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
-def resolve_pdf_path(md_path: Path) -> Path:
-    """Resolve the matching PDF file path for a given Markdown source path."""
-    if md_path.suffix.lower() == ".pdf":
-        return md_path
-
-    # 1. Try same directory PDF
-    pdf_same_dir = md_path.with_suffix(".pdf")
-    if pdf_same_dir.exists():
-        return pdf_same_dir
-
-    # 2. Try public docs directory
-    exact_pdf = PUBLIC_DOCS_DIR / f"{md_path.stem}.pdf"
-    if exact_pdf.exists():
-        return exact_pdf
-
-    # 3. Try subdirectories in public docs (e.g. forms/)
-    for found_pdf in PUBLIC_DOCS_DIR.rglob(f"{md_path.stem}.pdf"):
-        if found_pdf.is_file():
-            return found_pdf
-
-    if "_-_" in md_path.stem:
-        base_stem = md_path.stem.split("_-_")[0]
-        prefix_pdf = PUBLIC_DOCS_DIR / f"{base_stem}.pdf"
-        if prefix_pdf.exists():
-            return prefix_pdf
-
-        for found_pdf in PUBLIC_DOCS_DIR.rglob(f"{base_stem}.pdf"):
-            if found_pdf.is_file():
-                return found_pdf
-
-    return md_path
-
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
-    # Initialize steps to remove at the start of message processing
     cl.user_session.set("steps_to_remove", [])
-
-    # Internal sentinel: toolbar save button bypasses normal message flow
     if (message.content or "").strip() == VEXILON_SAVE_SENTINEL:
-        await trigger_session_save()
+        await trigger_session_save(_client_id())
         return
-
     await _ensure_startup()
-
-    # Intercept session file uploads natively
     if message.elements:
         for element in message.elements:
             if element.mime in ["text/markdown", "text/plain", "application/json", "application/octet-stream"] or element.name.lower().endswith((".md", ".json")):
                 try:
-                    with open(element.path, 'r', encoding='utf-8') as f:
-                        file_content = f.read()
-                    await trigger_session_load(file_content)
-                    # Cleanly close the execution loop so the UI stop button unlocks
+                    with open(element.path, "r", encoding="utf-8") as f:
+                        await trigger_session_load(f.read(), _client_id())
                     await cl.Message(content="✓ Session restored successfully.", author="System").send()
                 except Exception as e:
                     logger.error(f"[load] Failed to read uploaded session file: {e}")
@@ -1394,7 +141,6 @@ async def on_message(message: cl.Message) -> None:
     if not msg_str:
         return
 
-    # Strip action buttons from the previous assistant message to keep thread clean
     prev_msg = cl.user_session.get("last_assistant_message")
     if prev_msg:
         try:
@@ -1403,175 +149,69 @@ async def on_message(message: cl.Message) -> None:
         except Exception:
             pass
 
-    # Rate limit (per session)
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
         await cl.Message(content=rate_msg or "⚠️ Rate limit exceeded. Please wait before sending another message.").send()
         return
 
-    # Prompt-injection / length sanitisation
     sanitized, flagged = sanitize_input(msg_str)
     if flagged:
         await cl.Message(content="⚠️ Your request contained invalid input or exceeded maximum length.").send()
         return
 
-    # Order of precedence: session['persona'] (settings) -> session['chat_profile'] (profiles) -> DEFAULT_PERSONA
     persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     history: list[dict] = cl.user_session.get("history") or []
-
     out = cl.Message(content="")
     await out.send()
 
     accumulated = ""
-    word_count = len(sanitized.split())
-    char_count = len(sanitized)
-    logger.info(f"[chat] Starting stream for {persona} mode (Words: {word_count}, Chars: {char_count})")
+    logger.info(f"[chat] Starting stream for {persona} mode (Words: {len(sanitized.split())}, Chars: {len(sanitized)})")
     try:
         queries, context, snippets = await get_rag_context(sanitized, history)
-        
-        # Build clean reference document links for retrieved sources (eliminating bottom cl.File chips)
-        ref_links = []
-        seen_sources = set()
-        for s in snippets:
-            source_name = s.get("source", "")
-            if source_name and source_name not in seen_sources and source_name != "Unknown":
-                md_path = _source_path_map.get(source_name)
-                if md_path:
-                    download_path = resolve_pdf_path(md_path)
-                    if download_path.exists():
-                        try:
-                            rel_path = download_path.relative_to(PUBLIC_DOCS_DIR)
-                            rel_url = f"/public/docs/{rel_path}"
-                        except ValueError:
-                            rel_url = f"/public/docs/{download_path.name}"
-                        clean_title = source_name.replace("_", " ")
-                        ref_links.append(f"- [{clean_title}]({rel_url})")
-                seen_sources.add(source_name)
-
+        ref_links = build_reference_links(snippets, _source_path_map)
         out.elements = []
-
         first_token_received = False
         async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
             if not chunk:
                 continue
             if not first_token_received:
                 first_token_received = True
-                # Clean up intermediate steps immediately as streaming begins to keep scrolling smooth!
                 await clear_active_status_steps()
-            
             accumulated += chunk
             await out.stream_token(chunk)
 
-        # Stream Reference Documents section if retrieved sources are present
         if ref_links:
             ref_section = "\n\n### 📄 Reference Documents\n" + "\n".join(ref_links)
             accumulated += ref_section
             await out.stream_token(ref_section)
-    except Exception as exc:  # defensive — rag_review_stream already catches
+    except Exception as exc:
         logger.error(f"[chat] Unexpected error: {exc}", exc_info=True)
         accumulated = f"⚠️ API error: {exc}"
         out.content = accumulated
 
-    out.actions = [
-        cl.Action(
-            name="save_conversation",
-            value="save",
-            payload={},
-            label="💾 Save Session"
-        )
-    ]
+    out.actions = [cl.Action(name="save_conversation", value="save", payload={}, label="💾 Save Session")]
     await out.update()
 
-    # Async Verification pass as per SPEC.md Section 9
-    is_error_response = any(
-        err in accumulated for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
-    )
-    if VERIFY_ENABLED and accumulated and not is_error_response:
-        async def verify_and_update():
-            try:
-                report = await verify_response(accumulated, context)
-                if report and "ALL_CLAIMS_VERIFIED" not in report:
-                    out.content += f"\n\n---\n**Verification Note:**\n{report}"
-                    await out.update()
-            except Exception as e:
-                logger.error(f"[chat] Background verification task failed: {e}", exc_info=True)
-        
-        task = asyncio.create_task(verify_and_update())
-        _background_tasks.add(task)
-        task.add_done_callback(_background_tasks.discard)
+    await trigger_verification_task(accumulated, context if "context" in locals() else "", out, _background_tasks)
 
     history.append({"role": "user", "content": sanitized})
     history.append({"role": "assistant", "content": accumulated})
     cl.user_session.set("history", history)
     cl.user_session.set("last_assistant_message", out)
-
-    # Clean up intermediate steps to keep chat history pristine
     await clear_active_status_steps()
-
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
 
-
-# ─── Custom FastAPI Routes ───────────────────────────────────────────────────
-from chainlit.server import app as cl_app
-from fastapi.routing import APIRoute
-from fastapi import HTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
-
-class PartitionedCookieMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        cookie_headers = response.headers.getlist("set-cookie")
-        if cookie_headers:
-            del response.headers["set-cookie"]
-            for header in cookie_headers:
-                # Append Partitioned for SameSite=None cookies to comply with CHIPS
-                if "samesite=none" in header.lower() and "partitioned" not in header.lower():
-                    header += "; Partitioned"
-                response.headers.append("set-cookie", header)
-        return response
-
 cl_app.add_middleware(PartitionedCookieMiddleware)
-
-def get_version():
-    return {
-        "version": AGNAV_VERSION
-    }
-
-def get_brand_config():
-    from brand import get_brand as _get_brand
-    return _get_brand()
 
 async def get_health():
     try:
         client = get_llm_client()
-        # Fast lightweight check to ensure credentials and network are valid
         await client.models.list(timeout=10.0)
         return {"status": "ok", "llm": "connected"}
     except Exception as e:
         logger.error(f"[health] LLM connection failed: {e}")
         raise HTTPException(status_code=503, detail="LLM connection failed")
 
-# Prepend the API routes to bypass Chainlit's catch-all wildcard router
-brand_route = APIRoute(
-    "/api/brand",
-    endpoint=get_brand_config,
-    methods=["GET"],
-    include_in_schema=False
-)
-cl_app.router.routes.insert(0, brand_route)
-
-version_route = APIRoute(
-    "/api/version",
-    endpoint=get_version,
-    methods=["GET"],
-    include_in_schema=False
-)
-cl_app.router.routes.insert(1, version_route)
-
-health_route = APIRoute(
-    "/api/health",
-    endpoint=get_health,
-    methods=["GET"],
-    include_in_schema=False
-)
-cl_app.router.routes.insert(2, health_route)
+cl_app.router.routes.insert(0, APIRoute("/api/brand", endpoint=_get_brand, methods=["GET"], include_in_schema=False))
+cl_app.router.routes.insert(1, APIRoute("/api/version", endpoint=lambda: {"version": AGNAV_VERSION}, methods=["GET"], include_in_schema=False))
+cl_app.router.routes.insert(2, APIRoute("/api/health", endpoint=get_health, methods=["GET"], include_in_schema=False))
