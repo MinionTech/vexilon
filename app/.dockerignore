@@ -6,6 +6,8 @@
 # Development artifacts
 .pytest_cache
 .pdf_cache
+data/cache
+*.faiss
 reports
 .tmp
 .files

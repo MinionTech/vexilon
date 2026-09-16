@@ -20,6 +20,17 @@ import main as app
 import indexing
 
 
+@pytest.fixture(autouse=True)
+def _isolate_cache_dir(tmp_path, monkeypatch):
+    """Ensure all tests in this module run against an isolated tmp_path cache directory."""
+    monkeypatch.setattr(indexing, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
+    monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")
+    monkeypatch.setattr(indexing, "MANIFEST_PATH", tmp_path / "manifest.json")
+    monkeypatch.setattr(indexing, "INTEGRITY_PATH", tmp_path / "integrity.json")
+
+
 def _tiny_index(n: int = 3) -> tuple[faiss.IndexFlatIP, list[dict]]:
     """
     Create a minimal FAISS IndexFlatIP with *n* random unit vectors and matching chunks.
@@ -192,6 +203,7 @@ def test_load_precomputed_index_proactively_deletes_legacy_pkl(tmp_path, monkeyp
     """load_precomputed_index should delete legacy .pkl regardless of other files (security)."""
     import pickle
     import json
+    monkeypatch.setattr(indexing, "CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "PDF_CACHE_DIR", tmp_path)
     monkeypatch.setattr(indexing, "INDEX_PATH", tmp_path / "index.faiss")
     monkeypatch.setattr(indexing, "CHUNKS_PATH", tmp_path / "chunks.json")

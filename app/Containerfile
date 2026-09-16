@@ -4,7 +4,9 @@ FROM python:3.14-slim AS base
 # System paths, Hugging Face configurations, and environment variables
 ENV HF_HOME=/hf_cache \
     EMBED_MODEL=/model \
-    CHAINLIT_FILES_DIR=/tmp/chainlit_files
+    CHAINLIT_FILES_DIR=/tmp/chainlit_files \
+    AGNAV_DATA_DIR=/data/sources \
+    AGNAV_CACHE_DIR=/data/cache
 
 # Install basic runtime libraries and extraction utilities
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -61,14 +63,16 @@ ENV PATH="/venv-dev/bin:$PATH" \
 
 # Compile RAG index (Cached unless data/ or indexing logic changes)
 COPY --from=model_fetcher /model /model
-COPY data/ ./data/
+RUN mkdir -p /data/sources /data/cache
+COPY data/ /data/sources/
+RUN ln -s /data/sources ./data
 COPY indexing.py ./
 COPY scripts/build_index.py ./scripts/
-RUN --mount=type=cache,target=/app/.pdf_cache_mount \
-    mkdir -p /app/.pdf_cache && \
-    cp -r /app/.pdf_cache_mount/* /app/.pdf_cache/ 2>/dev/null || true && \
+RUN --mount=type=cache,target=/data/cache_mount \
+    mkdir -p /data/cache && \
+    cp -r /data/cache_mount/* /data/cache/ 2>/dev/null || true && \
     TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 python scripts/build_index.py && \
-    cp -r /app/.pdf_cache/* /app/.pdf_cache_mount/ 2>/dev/null || true
+    cp -r /data/cache/* /data/cache_mount/ 2>/dev/null || true
 
 # Copy rest of the application files in optimal cache order
 COPY .chainlit/ ./.chainlit/
@@ -84,8 +88,8 @@ COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 
 # Prepare directories for local testing and Chainlit runtime with non-root ownership
-RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache /app/.files /app/.pdf_cache && \
-    chown -R 1000:1000 /app/reports /app/.pytest_cache /app/.files /app/.pdf_cache /app/.chainlit
+RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache /app/.files /data/cache /data/sources && \
+    chown -R 1000:1000 /app/reports /app/.pytest_cache /app/.files /data /app/.chainlit
 
 # ─── Stage 3: Minimal, Hardened Production Runner ─────────────────────────────
 # The clean, locked-down image compiled for production deployments.
@@ -98,6 +102,7 @@ ENV CHAINLIT_FILES_DIR=/tmp/chainlit_files \
 # Copy pure production dependencies and built app (with compiled FAISS index)
 COPY --chown=app:app --from=builder /venv /venv
 COPY --chown=app:app --from=builder /app /app
+COPY --chown=app:app --from=builder /data /data
 COPY --from=model_fetcher /model /model
 
 RUN mkdir -p /hf_cache
