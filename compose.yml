@@ -1,6 +1,7 @@
 
 # Reusable environment for Python/App services
 x-app-env: &app-env
+  UV_NO_SYNC: "1"
   HF_TOKEN: ${HF_TOKEN:-}
   HF_HUB_OFFLINE: "1"
   TRANSFORMERS_OFFLINE: "1"
@@ -63,7 +64,7 @@ services:
       retries: 10
       start_period: 120s
     command: >
-      sh -c "cd /app && uv run chainlit run main.py --host 0.0.0.0 --port 7860 --headless --watch"
+      sh -c "cd /app && uv run --no-sync chainlit run main.py --host 0.0.0.0 --port 7860 --headless --watch"
 
   # Staging / Cloud Parity test container running locally (Hugging Face)
   staging:
@@ -94,7 +95,7 @@ services:
       retries: 10
       start_period: 120s
     command: >
-      sh -c "cd /app && uv run chainlit run main.py --host 0.0.0.0 --port 7861 --headless --watch"
+      sh -c "cd /app && uv run --no-sync chainlit run main.py --host 0.0.0.0 --port 7861 --headless --watch"
 
   # ── Tests
   # Pure logic tests with fully mocked external dependencies.
