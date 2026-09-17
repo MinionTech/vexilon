@@ -74,7 +74,7 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     )
 
     # Scroll content down substantially and verify the inner container scrolled
-    scroll_container = dialog.locator(".overflow-y-auto").first
+    scroll_container = dialog.locator("> div").first
     scroll_top = scroll_container.evaluate(
         "el => { el.scrollTop = 400; return el.scrollTop; }"
     )

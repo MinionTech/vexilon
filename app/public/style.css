@@ -102,11 +102,17 @@ body {
     display: none !important;
 }
 
+/* Confine scrolling to drawer content wrapper and avoid nested scroll containers */
 [role="dialog"][data-knowledge-base-drawer] > div:first-child {
     overflow-y: auto !important;
     height: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
+}
+
+[role="dialog"][data-knowledge-base-drawer] > div:first-child > div.overflow-y-auto {
+    overflow-y: visible !important;
+    height: auto !important;
 }
 
 [role="dialog"][data-knowledge-base-drawer] > button {
