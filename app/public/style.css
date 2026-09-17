@@ -93,27 +93,23 @@ body {
 
 /* 7. Knowledge Base drawer: Pin close button, align with header, and preserve mobile accessibility */
 /* Prevent close button from scrolling out of view when reading drawer contents. */
-[role="dialog"][data-knowledge-base-drawer],
-[role="dialog"].h-screen {
+[role="dialog"][data-knowledge-base-drawer] {
     overflow: hidden !important;
 }
 
 /* Suppress empty DialogHeader container so Knowledge Base title aligns directly with close button */
-[role="dialog"][data-knowledge-base-drawer] > div:first-child > div:first-child,
-[role="dialog"].h-screen > div:first-child > div:first-child {
+[role="dialog"][data-knowledge-base-drawer] > div:first-child > div:first-child {
     display: none !important;
 }
 
-[role="dialog"][data-knowledge-base-drawer] > div:first-child,
-[role="dialog"].h-screen > div:first-child {
+[role="dialog"][data-knowledge-base-drawer] > div:first-child {
     overflow-y: auto !important;
     height: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
 }
 
-[role="dialog"][data-knowledge-base-drawer] > button,
-[role="dialog"].h-screen > button {
+[role="dialog"][data-knowledge-base-drawer] > button {
     position: absolute !important;
     top: max(1.25rem, env(safe-area-inset-top)) !important;
     right: max(1rem, env(safe-area-inset-right)) !important;
@@ -125,7 +121,11 @@ body {
     align-items: center !important;
     justify-content: center !important;
     border-radius: 9999px !important;
-    background-color: inherit !important;
+    background-color: #ffffff !important;
     z-index: 50 !important;
     cursor: pointer !important;
+}
+
+.dark [role="dialog"][data-knowledge-base-drawer] > button {
+    background-color: #212121 !important;
 }

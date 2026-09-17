@@ -79,7 +79,6 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
         "el => { el.scrollTop = 400; return el.scrollTop; }"
     )
     assert scroll_top > 0, f"Inner content container must be scrollable and have moved, got {scroll_top}"
-    page.wait_for_timeout(300)
 
     # Close button must remain inside the mobile viewport and visible
     scrolled_box = close_btn.bounding_box()
