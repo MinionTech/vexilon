@@ -90,3 +90,34 @@ body {
 .dark [role="dialog"][data-knowledge-base-drawer] a.text-primary {
     color: #ff6b9d !important; /* 6.0:1 on #212121 */
 }
+
+/* 7. Knowledge Base drawer: Pin close button and preserve mobile accessibility */
+/* Prevent close button from scrolling out of view when reading drawer contents. */
+[role="dialog"][data-knowledge-base-drawer],
+[role="dialog"].h-screen {
+    overflow: hidden !important;
+}
+
+[role="dialog"][data-knowledge-base-drawer] > div:first-child,
+[role="dialog"].h-screen > div:first-child {
+    overflow-y: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+}
+
+[role="dialog"][data-knowledge-base-drawer] > button,
+[role="dialog"].h-screen > button {
+    position: absolute !important;
+    top: max(0.75rem, env(safe-area-inset-top)) !important;
+    right: max(0.75rem, env(safe-area-inset-right)) !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9999px !important;
+    background-color: inherit !important;
+    z-index: 50 !important;
+    cursor: pointer !important;
+}
