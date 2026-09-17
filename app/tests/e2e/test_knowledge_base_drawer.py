@@ -55,6 +55,26 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     # Allow 200ms dialog entrance animation to settle before measuring geometry
     page.wait_for_timeout(300)
 
+    # Verify dialog override is active: top-anchored without modal centering transform
+    dialog_style = dialog.evaluate(
+        "el => { const s = getComputedStyle(el); return { top: s.top, left: s.left, transform: s.transform }; }"
+    )
+    assert dialog_style["top"] == "0px", (
+        f"Dialog should be top-anchored (top: 0px), got {dialog_style['top']}"
+    )
+    assert dialog_style["left"] == "0px", (
+        f"Dialog should be left-anchored (left: 0px), got {dialog_style['left']}"
+    )
+    assert dialog_style["transform"] == "none", (
+        f"Dialog should have no centering transform (transform: none), got {dialog_style['transform']}"
+    )
+
+    # Verify dialog fills the mobile viewport dimensions
+    dialog_box = dialog.bounding_box()
+    assert dialog_box is not None, "Dialog bounding box should exist"
+    assert abs(dialog_box["width"] - 390) < 1, f"Expected width 390, got {dialog_box['width']}"
+    assert abs(dialog_box["height"] - 844) < 1, f"Expected height 844, got {dialog_box['height']}"
+
     # Verify touch target size meets the 44 CSS pixel target
     initial_box = close_btn.bounding_box()
     assert initial_box is not None, "Close button bounding box should exist"
