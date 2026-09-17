@@ -59,6 +59,18 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     assert initial_box["width"] >= 40, f"Expected width >= 40, got {initial_box['width']}"
     assert initial_box["height"] >= 40, f"Expected height >= 40, got {initial_box['height']}"
 
+    # Verify close button is aligned with the Knowledge Base heading line (not pushed above it)
+    kb_heading = dialog.get_by_role("heading", name="Knowledge Base")
+    expect(kb_heading).to_be_visible()
+    heading_box = kb_heading.bounding_box()
+    assert heading_box is not None, "Knowledge Base heading bounding box should exist"
+    btn_center_y = initial_box["y"] + initial_box["height"] / 2
+    heading_center_y = heading_box["y"] + heading_box["height"] / 2
+    assert abs(btn_center_y - heading_center_y) < 15, (
+        f"Close button (center {btn_center_y}) should vertically align with "
+        f"Knowledge Base title (center {heading_center_y})"
+    )
+
     # Scroll content down substantially
     content_div = dialog.locator("> div").first
     content_div.evaluate("el => el.scrollTop = 400")

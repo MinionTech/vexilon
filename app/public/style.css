@@ -91,11 +91,17 @@ body {
     color: #ff6b9d !important; /* 6.0:1 on #212121 */
 }
 
-/* 7. Knowledge Base drawer: Pin close button and preserve mobile accessibility */
+/* 7. Knowledge Base drawer: Pin close button, align with header, and preserve mobile accessibility */
 /* Prevent close button from scrolling out of view when reading drawer contents. */
 [role="dialog"][data-knowledge-base-drawer],
 [role="dialog"].h-screen {
     overflow: hidden !important;
+}
+
+/* Suppress empty DialogHeader container so Knowledge Base title aligns directly with close button */
+[role="dialog"][data-knowledge-base-drawer] > div:first-child > div:first-child,
+[role="dialog"].h-screen > div:first-child > div:first-child {
+    display: none !important;
 }
 
 [role="dialog"][data-knowledge-base-drawer] > div:first-child,
@@ -109,8 +115,8 @@ body {
 [role="dialog"][data-knowledge-base-drawer] > button,
 [role="dialog"].h-screen > button {
     position: absolute !important;
-    top: max(0.75rem, env(safe-area-inset-top)) !important;
-    right: max(0.75rem, env(safe-area-inset-right)) !important;
+    top: max(1.25rem, env(safe-area-inset-top)) !important;
+    right: max(1rem, env(safe-area-inset-right)) !important;
     width: 2.75rem !important;
     height: 2.75rem !important;
     display: inline-flex !important;
