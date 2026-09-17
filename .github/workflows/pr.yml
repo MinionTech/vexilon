@@ -331,7 +331,7 @@ jobs:
     steps:
       - name: Build and Push
         id: builder
-        uses: bcgov/action-builder-ghcr@main
+        uses: bcgov/actions/builder@main
         with:
           package: agnav
           build_context: app
