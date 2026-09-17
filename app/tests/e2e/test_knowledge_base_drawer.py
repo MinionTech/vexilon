@@ -55,6 +55,16 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     # Allow 200ms dialog entrance animation to settle before measuring geometry
     page.wait_for_timeout(300)
 
+    # Verify dialog is anchored to the top of the viewport (no negative offset from modal centering)
+    dialog_box = dialog.bounding_box()
+    assert dialog_box is not None, "Dialog bounding box should exist"
+    assert (
+        abs(dialog_box["y"]) < 1
+    ), f"Dialog should be anchored at viewport top (y=0), got y={dialog_box['y']}"
+    assert (
+        abs(dialog_box["x"]) < 1
+    ), f"Dialog should be anchored at viewport left (x=0), got x={dialog_box['x']}"
+
     # Verify touch target size meets the 44 CSS pixel target
     initial_box = close_btn.bounding_box()
     assert initial_box is not None, "Close button bounding box should exist"
