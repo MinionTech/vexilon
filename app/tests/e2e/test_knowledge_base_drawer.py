@@ -52,12 +52,14 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     dialog = open_knowledge_base_drawer(page)
     close_btn = dialog.locator("> button")
     expect(close_btn).to_be_visible()
+    # Allow 200ms dialog entrance animation to settle before measuring geometry
+    page.wait_for_timeout(300)
 
-    # Verify touch target size meets accessibility guidelines (>= 40px)
+    # Verify touch target size meets the 44 CSS pixel target
     initial_box = close_btn.bounding_box()
     assert initial_box is not None, "Close button bounding box should exist"
-    assert initial_box["width"] >= 40, f"Expected width >= 40, got {initial_box['width']}"
-    assert initial_box["height"] >= 40, f"Expected height >= 40, got {initial_box['height']}"
+    assert initial_box["width"] >= 44, f"Expected width >= 44, got {initial_box['width']}"
+    assert initial_box["height"] >= 44, f"Expected height >= 44, got {initial_box['height']}"
 
     # Verify close button is aligned with the Knowledge Base heading line (not pushed above it)
     kb_heading = dialog.get_by_role("heading", name="Knowledge Base")
@@ -71,9 +73,12 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
         f"Knowledge Base title (center {heading_center_y})"
     )
 
-    # Scroll content down substantially
-    content_div = dialog.locator("> div").first
-    content_div.evaluate("el => el.scrollTop = 400")
+    # Scroll content down substantially and verify the inner container scrolled
+    scroll_container = dialog.locator(".overflow-y-auto").first
+    scroll_top = scroll_container.evaluate(
+        "el => { el.scrollTop = 400; return el.scrollTop; }"
+    )
+    assert scroll_top > 0, f"Inner content container must be scrollable and have moved, got {scroll_top}"
     page.wait_for_timeout(300)
 
     # Close button must remain inside the mobile viewport and visible

@@ -117,8 +117,10 @@ body {
     position: absolute !important;
     top: max(1.25rem, env(safe-area-inset-top)) !important;
     right: max(1rem, env(safe-area-inset-right)) !important;
-    width: 2.75rem !important;
-    height: 2.75rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
