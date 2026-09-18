@@ -16,6 +16,12 @@ def test_user_message_and_assistant_response_appear(page: Page, app_url: str):
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
+    stop_button = page.locator("#stop-button")
+    if stop_button.is_visible():
+        stop_button.click()
+        stop_button.wait_for(state="hidden", timeout=10000)
+    page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
+
     textarea = page.locator("textarea")
     textarea.press_sequentially("What is a steward?", delay=10)
     textarea.press("Enter")
