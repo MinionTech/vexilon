@@ -25,6 +25,7 @@ def test_enter_submits_message(page: Page, app_url: str):
     filled_value = textarea.input_value()
     assert filled_value == test_message, f"Failed to type into textarea. Got: {repr(filled_value)}"
 
+    page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
     textarea.press("Enter")
 
     page.wait_for_function(
