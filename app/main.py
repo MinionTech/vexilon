@@ -50,6 +50,7 @@ import sniffio
 
 # ─── Agnav Imports ────────────────────────────────────────────────────────
 from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION
+from telemetry import log_telemetry
 from chainlit.config import config as _cl_config
 _cl_config.ui.name = AGNAV_APP_NAME
 _cl_config.ui.description = AGNAV_APP_DESCRIPTION
@@ -679,6 +680,14 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
     
     first_chunk = True
     async for chunk in stream:
+        if getattr(chunk, "usage", None) and has_chainlit_context():
+            u = chunk.usage
+            cl.user_session.set("last_tokens", {
+                "prompt_tokens": getattr(u, "prompt_tokens", None),
+                "completion_tokens": getattr(u, "completion_tokens", None),
+                "total_tokens": getattr(u, "total_tokens", None),
+            })
+
         if first_chunk:
             elapsed = time.perf_counter() - t0
             logger.info(f"[llm-call] First stream chunk received in {elapsed:.2f} seconds")
@@ -1426,6 +1435,10 @@ async def on_message(message: cl.Message) -> None:
     word_count = len(sanitized.split())
     char_count = len(sanitized)
     logger.info(f"[chat] Starting stream for {persona} mode (Words: {word_count}, Chars: {char_count})")
+    snippets: list[dict] = []
+    t_msg_start = time.perf_counter()
+    if has_chainlit_context():
+        cl.user_session.set("last_tokens", None)
     try:
         queries, context, snippets = await get_rag_context(sanitized, history)
         
@@ -1509,6 +1522,24 @@ async def on_message(message: cl.Message) -> None:
     await clear_active_status_steps()
 
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
+
+    # Dispatch non-blocking operational telemetry
+    latency_ms = (time.perf_counter() - t_msg_start) * 1000.0
+    provider, actual_model = resolve_model_and_provider(REVIEWER_MODEL)
+    tokens = cl.user_session.get("last_tokens") if has_chainlit_context() else None
+    scores = [s["score"] for s in snippets if isinstance(s, dict) and "score" in s and s["score"] is not None]
+    retrieval_metadata = {
+        "chunk_count": len(snippets),
+        "top_score": round(float(max(scores)), 4) if scores else None,
+        "mean_score": round(float(sum(scores) / len(scores)), 4) if scores else None,
+    }
+    log_telemetry(
+        latency_ms=latency_ms,
+        tokens=tokens,
+        retrieval_metadata=retrieval_metadata,
+        model=actual_model,
+        provider=provider,
+    )
 
 
 # ─── Custom FastAPI Routes ───────────────────────────────────────────────────
