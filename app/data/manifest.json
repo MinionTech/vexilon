@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-19T05:57:41.781799+00:00",
+  "generated_at": "2026-09-18T21:25:58.303283+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
@@ -201,6 +201,10 @@
     "03_resources/BCGEU_Steward_Resources.md": {
       "hash": "73f1e7ca9982dcab4fbb5dbb58917c6e500afb1486732166d36bbd7840d2e295",
       "size_bytes": 84819
+    },
+    "03_resources/BC_Criminal_Notification_Procedures.md": {
+      "hash": "192f9affe107b3d1bc6688aea222c825cb2b52c6d5dcfdaae12415caf89e8b33",
+      "size_bytes": 2728
     },
     "03_resources/BC_Social_Media_Guidance_for_Public_Service_Employees.md": {
       "hash": "f27116574c4e6eb56804176666af965b8ffe1b9e1641bce126bd543d5122fbfb",
