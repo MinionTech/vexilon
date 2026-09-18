@@ -251,6 +251,18 @@ def test_startup_integrity_warning_capture(monkeypatch):
     import services.llm as llm_mod
 
     active_main = llm_mod._get_active_main()
+
+    # Pre-register module globals with monkeypatch so teardown restores original state
+    monkeypatch.setattr(llm_mod, "_index", getattr(llm_mod, "_index", None))
+    monkeypatch.setattr(llm_mod, "_chunks", getattr(llm_mod, "_chunks", []))
+    monkeypatch.setattr(llm_mod, "_source_path_map", getattr(llm_mod, "_source_path_map", {}))
+    monkeypatch.setattr(llm_mod, "INTEGRITY_WARNING", getattr(llm_mod, "INTEGRITY_WARNING", None))
+    if active_main:
+        monkeypatch.setattr(active_main, "_index", getattr(active_main, "_index", None), raising=False)
+        monkeypatch.setattr(active_main, "_chunks", getattr(active_main, "_chunks", []), raising=False)
+        monkeypatch.setattr(active_main, "_source_path_map", getattr(active_main, "_source_path_map", {}), raising=False)
+        monkeypatch.setattr(active_main, "INTEGRITY_WARNING", getattr(active_main, "INTEGRITY_WARNING", None), raising=False)
+
     mock_report = {"failed_files": ["corrupt_agreement.pdf", "bad_memo.docx"]}
     if active_main:
         monkeypatch.setattr(active_main, "get_integrity_report", lambda: mock_report, raising=False)
