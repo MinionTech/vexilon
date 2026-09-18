@@ -127,3 +127,61 @@ def test_middleware_version_endpoint_isolated():
     data = get_version()
     assert "version" in data
     assert isinstance(data["version"], str)
+
+
+def test_middleware_re_registration_idempotency():
+    """Verify register_routes_and_middleware can run repeatedly without error or route duplication."""
+    from fastapi import FastAPI
+    from middleware.cookies import register_routes_and_middleware
+
+    test_app = FastAPI()
+    # First pass: clean registration
+    register_routes_and_middleware(test_app)
+    initial_route_count = len(test_app.routes)
+    assert any(getattr(r, "path", None) == "/api/version" for r in test_app.routes)
+
+    # Second pass: simulate reload before build_middleware_stack
+    register_routes_and_middleware(test_app)
+    assert len(test_app.routes) == initial_route_count
+
+    # Third pass: simulate reload after application startup (middleware_stack exists)
+    test_app.middleware_stack = object()
+    register_routes_and_middleware(test_app)
+    assert len(test_app.routes) == initial_route_count
+
+
+def test_active_main_resolution_under_dunder_main(monkeypatch):
+    """Verify _get_active_main discovers entry point under __main__ when main is missing."""
+    import sys
+    import types
+    from services.llm import _get_active_main
+
+    mock_dunder_main = types.ModuleType("__main__")
+    mock_dunder_main.CUSTOM_CONFIG = "test_custom_value"
+
+    monkeypatch.setitem(sys.modules, "__main__", mock_dunder_main)
+    monkeypatch.delitem(sys.modules, "main", raising=False)
+
+    resolved = _get_active_main()
+    assert resolved is mock_dunder_main
+    assert getattr(resolved, "CUSTOM_CONFIG", None) == "test_custom_value"
+
+
+def test_build_reference_links_dynamic_lookup(monkeypatch, tmp_path):
+    """Verify build_reference_links dynamically resolves from services.llm._source_path_map."""
+    from pathlib import Path
+    from services.llm import build_reference_links
+    import services.llm as llm_service
+
+    pdf_file = tmp_path / "Test_Agreement.pdf"
+    pdf_file.write_text("dummy pdf")
+
+    monkeypatch.setattr(llm_service, "_source_path_map", {"Test Agreement": pdf_file})
+    monkeypatch.setattr(llm_service, "PUBLIC_DOCS_DIR", tmp_path)
+
+    snippets = [{"source": "Test Agreement", "text": "sample text"}]
+    links = build_reference_links(snippets)
+    assert len(links) == 1
+    assert "Test Agreement" in links[0]
+    assert "/public/docs/Test_Agreement.pdf" in links[0]
+
