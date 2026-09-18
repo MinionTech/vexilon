@@ -103,7 +103,7 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[s
         messages = messages[:100]
         warnings.append("Conversation exceeded the limit of 100 turns. Truncated excess historical messages.")
 
-    main_mod = sys.modules.get("main")
+    main_mod = sys.modules.get("main") or sys.modules.get("__main__")
     effective_max_length = getattr(main_mod, "MAX_INPUT_LENGTH", MAX_INPUT_LENGTH)
 
     sanitized_messages = []

@@ -41,7 +41,7 @@ def sanitize_input(user_input: str) -> tuple[str, bool]:
     if not user_input:
         return user_input, False
 
-    main_mod = sys.modules.get("main")
+    main_mod = sys.modules.get("main") or sys.modules.get("__main__")
     effective_log_suspicious = getattr(main_mod, "LOG_SUSPICIOUS_INPUTS", LOG_SUSPICIOUS_INPUTS)
     effective_max_length = getattr(main_mod, "MAX_INPUT_LENGTH", MAX_INPUT_LENGTH)
 

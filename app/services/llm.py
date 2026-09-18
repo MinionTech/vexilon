@@ -63,6 +63,9 @@ _source_path_map: dict[str, Path] = {}
 _startup_done = False
 _startup_lock = asyncio.Lock()
 
+def _get_active_main():
+    return sys.modules.get("main") or sys.modules.get("__main__")
+
 def has_chainlit_context() -> bool:
     try:
         from chainlit.context import get_context
@@ -187,7 +190,7 @@ def get_llm_client(provider: str = None) -> AsyncOpenAI:
         raise ValueError(f"Unsupported LLM provider: {provider}")
 
 def _resolve_llm_client(provider: str = None) -> AsyncOpenAI:
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     getter = get_llm_client
     if main_mod and hasattr(main_mod, "get_llm_client") and main_mod.get_llm_client is not get_llm_client:
         getter = main_mod.get_llm_client
@@ -268,7 +271,7 @@ def compute_retry_delay(attempt: int, exc: Exception | None = None) -> float:
     """Calculate exponential backoff with jitter, respecting Retry-After header if present."""
     effective_base_delay = LLM_RETRY_BASE_DELAY
     effective_max_delay = LLM_RETRY_MAX_DELAY
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     if main_mod:
         if hasattr(main_mod, "LLM_RETRY_BASE_DELAY") and main_mod.LLM_RETRY_BASE_DELAY != 0.5:
             effective_base_delay = main_mod.LLM_RETRY_BASE_DELAY
@@ -308,7 +311,7 @@ async def unified_chat_create(model: str, messages: list, system: str | list = N
 
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "timeout": 60.0}
 
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     effective_max_retries = getattr(main_mod, "LLM_MAX_RETRIES", LLM_MAX_RETRIES)
 
     for attempt in range(effective_max_retries + 1):
@@ -340,7 +343,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
 
     kwargs = {"model": actual_model, "max_tokens": max_tokens, "messages": full_messages, "stream": True, "timeout": 300.0}
 
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     effective_max_retries = getattr(main_mod, "LLM_MAX_RETRIES", LLM_MAX_RETRIES)
 
     stream = None
@@ -420,7 +423,7 @@ async def unified_chat_stream(model: str, messages: list, system: str | list = N
         yield buffer
 
 async def verify_response(assistant_response: str, context: str) -> str:
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     effective_verify_enabled = getattr(main_mod, "VERIFY_ENABLED", VERIFY_ENABLED)
     effective_verify_model = getattr(main_mod, "VERIFY_MODEL", VERIFY_MODEL)
 
@@ -473,7 +476,7 @@ async def trigger_verification_task(
     is_error_response = any(
         err in accumulated for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
     )
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     effective_verify_enabled = getattr(main_mod, "VERIFY_ENABLED", VERIFY_ENABLED)
     if effective_verify_enabled and accumulated and not is_error_response:
         verify_fn = getattr(main_mod, "verify_response", verify_response)
@@ -603,25 +606,25 @@ async def condense_query(message: str, history: list[dict]) -> str:
         return message
 
 def _get_active_index():
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     if main_mod and hasattr(main_mod, "_index"):
         return main_mod._index
     return _index
 
 def _get_active_chunks():
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     if main_mod and hasattr(main_mod, "_chunks"):
         return main_mod._chunks
     return _chunks
 
 def _get_active_search_batch():
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     if main_mod and hasattr(main_mod, "search_index_batch"):
         return main_mod.search_index_batch
     return search_index_batch
 
 def _get_active_test_registry():
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     if main_mod and hasattr(main_mod, "_test_registry"):
         return main_mod._test_registry
     return _test_registry
@@ -672,7 +675,7 @@ async def rag_stream(message: str, history: list[dict]) -> AsyncIterator[tuple[s
         yield "⚠️ Knowledge base not loaded.", ""
         return
     try:
-        main_mod = sys.modules.get("main")
+        main_mod = _get_active_main()
         ctx_fn = getattr(main_mod, "get_rag_context", get_rag_context)
         queries, context, snippets = await ctx_fn(message, history)
         system = get_system_prompt().format(manifest="", verify_message="") + f"\n\nContext:\n{context}"
@@ -707,7 +710,7 @@ async def rag_review_stream(
     queries: list[str] | None = None
 ) -> AsyncIterator[str]:
     try:
-        main_mod = sys.modules.get("main")
+        main_mod = _get_active_main()
         if not context or not queries:
             ctx_fn = getattr(main_mod, "get_rag_context", get_rag_context)
             q_new, c_new, s_new = await ctx_fn(message, history)
@@ -764,7 +767,7 @@ def resolve_pdf_path(md_path: Path) -> Path:
     if md_path.suffix.lower() == ".pdf":
         return md_path
 
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     effective_docs_dir = getattr(main_mod, "PUBLIC_DOCS_DIR", PUBLIC_DOCS_DIR)
 
     pdf_same_dir = md_path.with_suffix(".pdf")
@@ -793,7 +796,7 @@ def resolve_pdf_path(md_path: Path) -> Path:
 
 def build_reference_links(snippets: list[dict], source_path_map: dict[str, Path] | None = None) -> list[str]:
     """Build clean reference document links for retrieved sources."""
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     active_path_map = source_path_map or getattr(main_mod, "_source_path_map", _source_path_map)
     effective_docs_dir = getattr(main_mod, "PUBLIC_DOCS_DIR", PUBLIC_DOCS_DIR)
 
@@ -825,7 +828,7 @@ def startup(force_rebuild: bool = False):
     logger.info(f"[startup] Default Model: {DEFAULT_MODEL_LLM}")
     logger.info(f"[startup] Build Integrity: {AGNAV_VERSION}")
 
-    main_mod = sys.modules.get("main")
+    main_mod = _get_active_main()
     active_test_registry = getattr(main_mod, "_test_registry", _test_registry)
     active_test_registry.load(TESTS_DIR)
 

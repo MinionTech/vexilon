@@ -53,7 +53,6 @@ from services.llm import (  # noqa: F401
     _index,
     _chunks,
     INTEGRITY_WARNING,
-    _source_path_map,
     _test_registry,
     _startup_done,
     _startup_lock,
@@ -240,7 +239,7 @@ async def on_message(message: cl.Message) -> None:
     logger.info(f"[chat] Starting stream for {persona} mode (Words: {word_count}, Chars: {char_count})")
     try:
         queries, context, snippets = await get_rag_context(sanitized, history)
-        ref_links = build_reference_links(snippets, _source_path_map)
+        ref_links = build_reference_links(snippets)
         out.elements = []
 
         first_token_received = False
