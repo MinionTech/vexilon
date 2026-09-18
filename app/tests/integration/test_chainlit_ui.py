@@ -48,3 +48,17 @@ async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
         assert isinstance(p, cl.ChatProfile)
         assert p.starters is not None and len(p.starters) >= 1
     assert sum(1 for p in profiles if p.default) == 1
+
+
+@pytest.mark.asyncio
+async def test_chat_profiles_all_starters_preserved():
+    """Each persona profile must preserve all 5 default starter questions with valid labels and messages."""
+    profiles = await app.chat_profiles(None)
+    assert len(profiles) == 3
+    for p in profiles:
+        assert p.starters is not None
+        assert len(p.starters) == 5, f"Profile '{p.name}' had {len(p.starters)} starters; expected 5"
+        for starter in p.starters:
+            assert isinstance(starter.label, str) and starter.label.strip()
+            assert isinstance(starter.message, str) and starter.message.strip()
+

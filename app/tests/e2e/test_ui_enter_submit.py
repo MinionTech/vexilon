@@ -25,6 +25,7 @@ def test_enter_submits_message(page: Page, app_url: str):
     filled_value = textarea.input_value()
     assert filled_value == test_message, f"Failed to type into textarea. Got: {repr(filled_value)}"
 
+    page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
     textarea.press("Enter")
 
     page.wait_for_function(
@@ -34,6 +35,14 @@ def test_enter_submits_message(page: Page, app_url: str):
 
     final_textarea_value = textarea.input_value()
     assert final_textarea_value == "", f"Textarea should be cleared after submission. Got: {repr(final_textarea_value)}"
+
+    stop_button = page.locator("#stop-button")
+    try:
+        stop_button.wait_for(state="visible", timeout=5000)
+        stop_button.click()
+        stop_button.wait_for(state="hidden", timeout=10000)
+    except Exception:
+        pass
 
 
 def test_shift_enter_creates_newline(page: Page, app_url: str):

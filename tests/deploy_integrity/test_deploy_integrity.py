@@ -145,10 +145,12 @@ def test_manifest_source_files_exist():
 
 def test_default_model_alignment_with_spec():
     """Ensures that the default Hugging Face model in the code matches the flagship model in SPEC.md."""
-    app_path = REPO_ROOT / "app" / "main.py"
+    config_path = REPO_ROOT / "app" / "core" / "config.py"
+    if not config_path.exists():
+        config_path = REPO_ROOT / "app" / "main.py"
     spec_path = REPO_ROOT / "app" / "SPEC.md"
     
-    app_content = app_path.read_text()
+    config_content = config_path.read_text()
     spec_content = spec_path.read_text()
     
     # Extract the specified flagship model from SPEC.md (from the AGNAV_DEFAULT_MODEL row)
@@ -156,9 +158,9 @@ def test_default_model_alignment_with_spec():
     assert spec_model_match, "Could not find AGNAV_DEFAULT_MODEL definition in app/SPEC.md"
     expected_model = spec_model_match.group(1).strip()
     
-    # Extract the constant value from app/main.py
-    app_model_match = re.search(r'DEFAULT_HF_MODEL_ID\s*=\s*["\']([^"\']+)["\']', app_content)
-    assert app_model_match, "Could not find DEFAULT_HF_MODEL_ID constant in app/main.py"
+    # Extract the constant value from app/core/config.py (the single source of truth)
+    app_model_match = re.search(r'DEFAULT_HF_MODEL_ID\s*=\s*["\']([^"\']+)["\']', config_content)
+    assert app_model_match, f"Could not find DEFAULT_HF_MODEL_ID constant in {config_path}"
     actual_model = app_model_match.group(1).strip()
     
     assert actual_model == expected_model, (
@@ -242,4 +244,22 @@ def test_verify_deployment_sh_requires_space_id():
     res = subprocess.run([str(verify_script)], capture_output=True, text=True)
     assert res.returncode != 0
     assert "SPACE_ID argument missing" in res.stdout or "SPACE_ID argument missing" in res.stderr
+
+
+def test_containerfile_package_copy_sync():
+    """Ensures all python packages in app/ (directories with __init__.py) are explicitly copied in Containerfile."""
+    containerfile_path = REPO_ROOT / "app" / "Containerfile"
+    assert containerfile_path.exists(), "Containerfile not found"
+    content = containerfile_path.read_text()
+
+    app_dir = REPO_ROOT / "app"
+    for item in app_dir.iterdir():
+        if item.is_dir() and (item / "__init__.py").exists():
+            pkg_name = item.name
+            pattern = rf"COPY\s+{pkg_name}/?\s+\./{pkg_name}/?"
+            assert re.search(pattern, content), (
+                f"Package '{pkg_name}' has an __init__.py in app/ but is not explicitly COPY'd in app/Containerfile. "
+                f"Add 'COPY {pkg_name}/ ./{pkg_name}/' to avoid runtime ModuleNotFoundError."
+            )
+
 

@@ -35,6 +35,7 @@ def test_stop_button_accessible_name_during_generation(page: Page, app_url: str)
 
     textarea = page.locator("textarea")
     textarea.press_sequentially("What is the nexus test?", delay=10)
+    page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
     textarea.press("Enter")
 
     stop_button = page.locator("#stop-button")
@@ -42,3 +43,8 @@ def test_stop_button_accessible_name_during_generation(page: Page, app_url: str)
 
     wait_for_aria_label(page, "#stop-button", "Stop generation")
     expect(stop_button).to_have_accessible_name("Stop generation")
+    try:
+        stop_button.click()
+        stop_button.wait_for(state="hidden", timeout=10000)
+    except Exception:
+        pass
