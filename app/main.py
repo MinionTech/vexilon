@@ -1,8 +1,6 @@
 import os
-import sys
 import asyncio
 import logging
-from pathlib import Path
 
 from patches import apply_patches
 apply_patches()
@@ -63,9 +61,6 @@ from services.llm import (  # noqa: F401
     _format_history,
     _get_download_source_files,
 )
-
-# Explicit declaration for test_deploy_integrity regex match
-DEFAULT_HF_MODEL_ID = "google/gemma-4-31B-it"
 
 logger = logging.getLogger(__name__)
 _background_tasks: set[asyncio.Task] = set()

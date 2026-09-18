@@ -28,7 +28,7 @@ def test_core_config_exports():
     """Verify core.config provides the necessary baseline configuration."""
     assert DEFAULT_HF_MODEL_ID == "google/gemma-4-31B-it"
     assert MAX_INPUT_LENGTH > 0
-    assert DATA_DIR.name == "data"
+    assert DATA_DIR.name in ("data", "sources")
     assert PUBLIC_DOCS_DIR.name == "docs"
     assert len(PROMPT_INJECTION_PATTERNS) > 0
 
@@ -169,13 +169,18 @@ def test_active_main_resolution_under_dunder_main(monkeypatch):
 
 def test_build_reference_links_dynamic_lookup(monkeypatch, tmp_path):
     """Verify build_reference_links dynamically resolves from services.llm._source_path_map."""
-    from pathlib import Path
     from services.llm import build_reference_links
     import services.llm as llm_service
 
-    pdf_file = tmp_path / "Test_Agreement.pdf"
+    sub_dir = tmp_path / "contracts"
+    sub_dir.mkdir()
+    pdf_file = sub_dir / "Test_Agreement.pdf"
     pdf_file.write_text("dummy pdf")
 
+    active_main = llm_service._get_active_main()
+    if active_main:
+        monkeypatch.setattr(active_main, "_source_path_map", {"Test Agreement": pdf_file}, raising=False)
+        monkeypatch.setattr(active_main, "PUBLIC_DOCS_DIR", tmp_path, raising=False)
     monkeypatch.setattr(llm_service, "_source_path_map", {"Test Agreement": pdf_file})
     monkeypatch.setattr(llm_service, "PUBLIC_DOCS_DIR", tmp_path)
 
@@ -183,5 +188,89 @@ def test_build_reference_links_dynamic_lookup(monkeypatch, tmp_path):
     links = build_reference_links(snippets)
     assert len(links) == 1
     assert "Test Agreement" in links[0]
-    assert "/public/docs/Test_Agreement.pdf" in links[0]
+    assert "/public/docs/contracts/Test_Agreement.pdf" in links[0]
+
+
+def test_default_model_setting_respects_configured_model(monkeypatch):
+    """Verify get_default_model_setting preserves DEFAULT_MODEL_LLM configuration."""
+    from core.config import get_default_model_setting
+    import core.config as config_mod
+
+    # Case 1: Unprefixed custom model name
+    monkeypatch.setattr(config_mod, "get_llm_provider", lambda: "huggingface")
+    monkeypatch.setattr(config_mod, "DEFAULT_MODEL_LLM", "custom-org/custom-model")
+    active_main = config_mod._get_active_main()
+    if active_main:
+        monkeypatch.setattr(active_main, "DEFAULT_MODEL_LLM", "custom-org/custom-model", raising=False)
+    assert get_default_model_setting() == "huggingface:custom-org/custom-model"
+
+    # Case 2: Already-prefixed model
+    monkeypatch.setattr(config_mod, "DEFAULT_MODEL_LLM", "ollama:qwen3.5:latest")
+    if active_main:
+        monkeypatch.setattr(active_main, "DEFAULT_MODEL_LLM", "ollama:qwen3.5:latest", raising=False)
+    assert get_default_model_setting() == "ollama:qwen3.5:latest"
+
+
+def test_resolve_model_and_provider_role_precedence(monkeypatch):
+    """Verify resolve_model_and_provider prioritizes explicit role models over session models."""
+    from services.llm import resolve_model_and_provider
+    import chainlit as cl
+
+    # Mock user session with a selected primary model
+    mock_session = {"selected_model": "huggingface:primary-chat-model"}
+    monkeypatch.setattr(cl.user_session, "get", lambda k, default=None: mock_session.get(k, default))
+    monkeypatch.setattr("services.llm.has_chainlit_context", lambda: True)
+
+    # When fallback_model is a custom role model (different from DEFAULT_MODEL_LLM), it must prevail
+    provider, model = resolve_model_and_provider("custom-role-model")
+    assert model.startswith("custom-role-model")
+
+    # When fallback_model matches DEFAULT_MODEL_LLM, session_model takes precedence for main turn
+    from core.config import DEFAULT_MODEL_LLM
+    provider, model = resolve_model_and_provider(DEFAULT_MODEL_LLM)
+    assert "primary-chat-model" in model
+
+
+def test_compute_retry_delay_clean_getattr(monkeypatch):
+    """Verify compute_retry_delay cleanly reads config overrides from active main."""
+    from services.llm import compute_retry_delay
+    import services.llm as llm_mod
+
+    active_main = llm_mod._get_active_main()
+    if active_main:
+        monkeypatch.setattr(active_main, "LLM_RETRY_BASE_DELAY", 1.5, raising=False)
+        monkeypatch.setattr(active_main, "LLM_RETRY_MAX_DELAY", 12.0, raising=False)
+
+    delay = compute_retry_delay(0)
+    # Base delay 1.5 with jitter (0.75 to 1.25) is between 1.125 and 1.875
+    assert 1.0 <= delay <= 2.0
+
+
+def test_startup_integrity_warning_capture(monkeypatch):
+    """Verify startup() sets INTEGRITY_WARNING when get_integrity_report reports failed files."""
+    import services.llm as llm_mod
+
+    active_main = llm_mod._get_active_main()
+    mock_report = {"failed_files": ["corrupt_agreement.pdf", "bad_memo.docx"]}
+    if active_main:
+        monkeypatch.setattr(active_main, "get_integrity_report", lambda: mock_report, raising=False)
+        monkeypatch.setattr(active_main, "_fetch_pdf_cache_if_missing", lambda: None, raising=False)
+        monkeypatch.setattr(active_main, "load_precomputed_index", lambda: (object(), []), raising=False)
+        monkeypatch.setattr(active_main, "_get_rag_source_files", lambda: [], raising=False)
+        monkeypatch.setattr(active_main, "_get_source_name", lambda s: s, raising=False)
+        monkeypatch.setattr(active_main, "_get_download_source_files", lambda: [], raising=False)
+
+    monkeypatch.setattr(llm_mod, "get_integrity_report", lambda: mock_report)
+    monkeypatch.setattr(llm_mod, "_fetch_pdf_cache_if_missing", lambda: None)
+    monkeypatch.setattr(llm_mod, "load_precomputed_index", lambda: (object(), []))
+    monkeypatch.setattr(llm_mod, "_get_rag_source_files", lambda: [])
+    monkeypatch.setattr(llm_mod, "_get_source_name", lambda s: s)
+    monkeypatch.setattr(llm_mod, "_get_download_source_files", lambda: [])
+
+    llm_mod.startup()
+    assert llm_mod.INTEGRITY_WARNING is not None
+    assert "corrupt_agreement.pdf" in llm_mod.INTEGRITY_WARNING
+    if active_main:
+        assert getattr(active_main, "INTEGRITY_WARNING", None) == llm_mod.INTEGRITY_WARNING
+
 

@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import time
 import random
 import email.utils
@@ -40,6 +39,7 @@ from core.config import (
     TESTS_DIR,
     PUBLIC_DOCS_DIR,
     get_llm_provider,
+    _get_active_main,
 )
 from indexing import (
     DATA_DIR,
@@ -62,9 +62,6 @@ INTEGRITY_WARNING: str | None = None
 _source_path_map: dict[str, Path] = {}
 _startup_done = False
 _startup_lock = asyncio.Lock()
-
-def _get_active_main():
-    return sys.modules.get("main") or sys.modules.get("__main__")
 
 def has_chainlit_context() -> bool:
     try:
@@ -191,26 +188,19 @@ def get_llm_client(provider: str = None) -> AsyncOpenAI:
 
 def _resolve_llm_client(provider: str = None) -> AsyncOpenAI:
     main_mod = _get_active_main()
-    getter = get_llm_client
-    if main_mod and hasattr(main_mod, "get_llm_client") and main_mod.get_llm_client is not get_llm_client:
-        getter = main_mod.get_llm_client
-
-    try:
-        if provider is not None:
-            return getter(provider)
-        return getter()
-    except TypeError:
-        try:
-            return getter()
-        except TypeError:
-            return getter(provider)
+    getter = getattr(main_mod, "get_llm_client", get_llm_client)
+    return getter(provider) if provider is not None else getter()
 
 def resolve_model_and_provider(fallback_model: str) -> tuple[str, str]:
     session_model = None
     if has_chainlit_context():
         session_model = cl.user_session.get("selected_model")
 
-    model_str = session_model or fallback_model
+    if fallback_model and fallback_model != DEFAULT_MODEL_LLM:
+        model_str = fallback_model
+    else:
+        model_str = session_model or fallback_model
+
     if ":" in model_str:
         provider, model_id = model_str.split(":", 1)
     else:
@@ -269,14 +259,9 @@ def is_transient_llm_error(exc: Exception) -> bool:
 
 def compute_retry_delay(attempt: int, exc: Exception | None = None) -> float:
     """Calculate exponential backoff with jitter, respecting Retry-After header if present."""
-    effective_base_delay = LLM_RETRY_BASE_DELAY
-    effective_max_delay = LLM_RETRY_MAX_DELAY
     main_mod = _get_active_main()
-    if main_mod:
-        if hasattr(main_mod, "LLM_RETRY_BASE_DELAY") and main_mod.LLM_RETRY_BASE_DELAY != 0.5:
-            effective_base_delay = main_mod.LLM_RETRY_BASE_DELAY
-        if hasattr(main_mod, "LLM_RETRY_MAX_DELAY") and main_mod.LLM_RETRY_MAX_DELAY != 8.0:
-            effective_max_delay = main_mod.LLM_RETRY_MAX_DELAY
+    effective_base_delay = getattr(main_mod, "LLM_RETRY_BASE_DELAY", LLM_RETRY_BASE_DELAY)
+    effective_max_delay = getattr(main_mod, "LLM_RETRY_MAX_DELAY", LLM_RETRY_MAX_DELAY)
 
     if exc is not None:
         response = getattr(exc, "response", None)
@@ -839,23 +824,29 @@ def startup(force_rebuild: bool = False):
         test_file.touch()
         test_file.unlink()
     except Exception as e:
-        logger.warning(f"[startup] {indexing.CACHE_DIR} is not writable: {e}. Indexing may fail.")
+        logger.warning(f"[startup] {CACHE_DIR} is not writable: {e}. Indexing may fail.")
 
-    fetch_cache_fn = getattr(main_mod, "_fetch_pdf_cache_if_missing", indexing._fetch_pdf_cache_if_missing)
-    load_index_fn = getattr(main_mod, "load_precomputed_index", indexing.load_precomputed_index)
-    build_index_fn = getattr(main_mod, "build_index_from_sources", indexing.build_index_from_sources)
+    fetch_cache_fn = getattr(main_mod, "_fetch_pdf_cache_if_missing", _fetch_pdf_cache_if_missing)
+    load_index_fn = getattr(main_mod, "load_precomputed_index", load_precomputed_index)
+    build_index_fn = getattr(main_mod, "build_index_from_sources", build_index_from_sources)
 
     fetch_cache_fn()
     _index, _chunks = load_index_fn()
     if _index is None or force_rebuild:
         _index, _chunks = build_index_fn(force=True)
     if _index is not None:
-        get_files_fn = getattr(main_mod, "_get_rag_source_files", indexing._get_rag_source_files)
-        get_name_fn = getattr(main_mod, "_get_source_name", indexing._get_source_name)
+        get_files_fn = getattr(main_mod, "_get_rag_source_files", _get_rag_source_files)
+        get_name_fn = getattr(main_mod, "_get_source_name", _get_source_name)
         all_files = get_files_fn()
         _source_path_map = {get_name_fn(p.stem): p for p in all_files}
-        report_fn = getattr(main_mod, "get_integrity_report", indexing.get_integrity_report)
-        report_fn()
+        report_fn = getattr(main_mod, "get_integrity_report", get_integrity_report)
+        report = report_fn()
+        failed_files = report.get("failed_files", []) if isinstance(report, dict) else []
+        INTEGRITY_WARNING = (
+            f"Integrity check failed for: {', '.join(failed_files)}"
+            if failed_files
+            else None
+        )
 
     # Sync state into main module if present
     if main_mod:

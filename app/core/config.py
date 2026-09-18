@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 # CHAINLIT_FILES_DIR defensive fallback for non-container dev (must precede chainlit imports)
@@ -43,6 +44,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def _get_active_main():
+    return sys.modules.get("main") or sys.modules.get("__main__")
+
 AGNAV_VERSION = os.getenv("AGNAV_VERSION", "Dev mode")
 IS_DEV = not (os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID"))
 AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexilon")
@@ -65,12 +69,6 @@ def get_llm_provider() -> str:
 # Curated List of Supported Models
 HF_PROVIDER = os.getenv("AGNAV_HF_PROVIDER", "fastest").strip()
 
-def get_default_model_setting() -> str:
-    provider = get_llm_provider()
-    if provider == "ollama":
-        return f"ollama:{CURRENT_MODEL_ID}"
-    return f"huggingface:{DEFAULT_HF_MODEL_ID}"
-
 def _get_default_model() -> str:
     provider = get_llm_provider()
     # Default to Hugging Face or Ollama
@@ -84,6 +82,14 @@ CLAUDE_MODEL = os.getenv("AGNAV_CLAUDE_MODEL", DEFAULT_MODEL_LLM)
 REVIEWER_MODEL = os.getenv("AGNAV_REVIEWER_MODEL", DEFAULT_MODEL_LLM)
 CONDENSE_MODEL = os.getenv("AGNAV_CONDENSE_MODEL", DEFAULT_MODEL_LLM)
 VERIFY_MODEL = os.getenv("AGNAV_VERIFY_MODEL", DEFAULT_MODEL_LLM)
+
+def get_default_model_setting() -> str:
+    provider = get_llm_provider()
+    main_mod = _get_active_main()
+    model = getattr(main_mod, "DEFAULT_MODEL_LLM", DEFAULT_MODEL_LLM)
+    if ":" in model:
+        return model
+    return f"{provider}:{model}"
 
 RAG_MAX_TOKENS = 4096
 REVIEWER_MAX_TOKENS = 4096
