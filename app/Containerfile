@@ -79,6 +79,9 @@ COPY .chainlit/ ./.chainlit/
 COPY public/ ./public/
 COPY chainlit.md chainlit_en-US.md ./
 COPY data/ ./public/docs/
+COPY core/ ./core/
+COPY services/ ./services/
+COPY middleware/ ./middleware/
 COPY main.py ./
 COPY patches.py ./
 COPY brand.py ./
