@@ -101,4 +101,4 @@ if __name__ == "__main__":
     process_file(Path("/tmp/raw_wca.html"), "BC Workers Compensation Act")
     process_file(Path("/tmp/raw_statute.html"), "BC OHS Regulation")
     
-    print("\nProcessing complete. Rebuild the index with: python3 -c 'from services.rag import startup; startup(force_rebuild=True)'")
+    print("\nProcessing complete. Rebuild the index with: python3 -c 'from main import startup; startup(force_rebuild=True)'")

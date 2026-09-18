@@ -8,8 +8,7 @@ patterns and length limits correctly.
 import pytest
 from unittest.mock import patch
 
-from core.security import sanitize_input
-from core.config import MAX_INPUT_LENGTH
+from main import sanitize_input, MAX_INPUT_LENGTH
 
 
 class TestSanitizeInput:

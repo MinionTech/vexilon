@@ -1,1 +1,1 @@
-"""Core module configuration, security, and shared utilities."""
+# Core domain package

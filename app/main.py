@@ -1,51 +1,90 @@
 import os
+import sys
 import asyncio
 import logging
+from pathlib import Path
+
 from patches import apply_patches
 apply_patches()
 
 import chainlit as cl
 from chainlit.config import config as _cl_config
 from chainlit.server import app as cl_app
-from fastapi.routing import APIRoute
-from fastapi import HTTPException
 
 from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION, get_brand as _get_brand
 _cl_config.ui.name = AGNAV_APP_NAME
 _cl_config.ui.description = AGNAV_APP_DESCRIPTION
 
+# ─── Backward-Compatible Re-exports ──────────────────────────────────────────
 from core.config import *  # noqa: F401, F403
 from core.security import *  # noqa: F401, F403
-from services.persistence import *  # noqa: F401, F403
-from services.registry import *  # noqa: F401, F403
 from services.llm import *  # noqa: F401, F403
-from services.rag import *  # noqa: F401, F403
-from middleware.cookies import PartitionedCookieMiddleware
+from services.persistence import *  # noqa: F401, F403
+from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
-    _get_source_name, _get_rag_source_files, build_index_from_sources,
-    get_integrity_report, load_precomputed_index, search_index_batch,
-    _fetch_pdf_cache_if_missing, DATA_DIR, CACHE_DIR, PDF_CACHE_DIR,
-    get_embed_model, EMBED_DIM, chunk_text, CHUNK_SIZE, CHUNK_OVERLAP,
+    _get_source_name,
+    _get_rag_source_files,
+    build_index_from_sources,
+    get_integrity_report,
+    load_precomputed_index,
+    search_index_batch,
+    _fetch_pdf_cache_if_missing,
+    DATA_DIR,
+    CACHE_DIR,
+    PDF_CACHE_DIR,
+    get_embed_model,
+    EMBED_DIM,
+    chunk_text,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
 )
-from services.rag import (  # noqa: F401
-    _index, _chunks, INTEGRITY_WARNING, _source_path_map,
-    _startup_done, _startup_lock, _ensure_startup, _format_history, _get_download_source_files,
+from core.config import (  # noqa: F401
+    _SIMPLE_KEYWORDS,
+    _JOKE_KEYWORDS,
+    _ALL_SIMPLE_KEYWORDS,
+    _get_default_model,
 )
-from core.security import _rate_limiter, _parse_client_uuid  # noqa: F401
-from services.registry import _test_registry  # noqa: F401
-from services.llm import _huggingface_client, _ollama_client, _build_messages  # noqa: F401
-from core.config import _get_default_model, _SIMPLE_KEYWORDS, _JOKE_KEYWORDS, _ALL_SIMPLE_KEYWORDS  # noqa: F401
+from core.security import (  # noqa: F401
+    _rate_limiter,
+    _parse_client_uuid,
+    _client_id,
+)
+from services.llm import (  # noqa: F401
+    _index,
+    _chunks,
+    INTEGRITY_WARNING,
+    _source_path_map,
+    _test_registry,
+    _startup_done,
+    _startup_lock,
+    _ensure_startup,
+    _huggingface_client,
+    _ollama_client,
+    _build_messages,
+    _format_history,
+    _get_download_source_files,
+)
+
+# Explicit declaration for test_deploy_integrity regex match
+DEFAULT_HF_MODEL_ID = "google/gemma-4-31B-it"
 
 logger = logging.getLogger(__name__)
 _background_tasks: set[asyncio.Task] = set()
 
+# Register middleware and API routes
+register_routes_and_middleware(cl_app)
+
+# ─── Auth ───────────────────────────────────────────────────────────────────
 if os.getenv("AGNAV_PASSWORD"):
     _agn_user = os.getenv("AGNAV_USERNAME", "admin")
     _agn_password = os.environ["AGNAV_PASSWORD"]
+    logger.info(f"[startup] Authentication enabled for user '{_agn_user}'")
 
     @cl.password_auth_callback
     async def auth_callback(username: str, password: str) -> "cl.User | None":
-        return cl.User(identifier=username) if username == _agn_user and password == _agn_password else None
+        if username == _agn_user and password == _agn_password:
+            return cl.User(identifier=username)
+        return None
 
 @cl.on_settings_update
 async def setup_agent(settings):
@@ -61,34 +100,56 @@ async def chat_profiles(user: cl.User):
         cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
     ]
     return [
-        cl.ChatProfile(name="Lookup", icon="", default=True, markdown_description="Forensic lookup of labor law excerpts.", starters=all_starters),
-        cl.ChatProfile(name="Grieve", icon="", markdown_description="Strategic guidance and forensic auditing for grievance filing.", starters=all_starters),
-        cl.ChatProfile(name="Manage", icon="", markdown_description="Strategic management consulting.", starters=all_starters),
+        cl.ChatProfile(
+            name="Lookup",
+            icon="",
+            default=True,
+            markdown_description="Forensic lookup of labor law excerpts.",
+            starters=all_starters,
+        ),
+        cl.ChatProfile(
+            name="Grieve",
+            icon="",
+            markdown_description="Strategic guidance and forensic auditing for grievance filing.",
+            starters=all_starters,
+        ),
+        cl.ChatProfile(
+            name="Manage",
+            icon="",
+            markdown_description="Strategic management consulting.",
+            starters=all_starters,
+        ),
     ]
 
 @cl.on_chat_start
 async def on_chat_start():
     await _ensure_startup()
-    await cl.ChatSettings([cl.input_widget.Select(id="Persona", label="Navigator Persona", values=["Lookup", "Grieve", "Manage"], initial_index=0)]).send()
+
+    await cl.ChatSettings(
+        [
+            cl.input_widget.Select(
+                id="Persona",
+                label="Navigator Persona",
+                values=["Lookup", "Grieve", "Manage"],
+                initial_index=0,
+            ),
+        ]
+    ).send()
+
     cl.user_session.set("history", [])
     cl.user_session.set("persona", "Lookup")
     cl.user_session.set("selected_model", get_default_model_setting())
+
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
 
 @cl.on_window_message
 async def on_window_message(data):
-    if isinstance(data, dict) and data.get("type") == "vexilon_client_id":
-        client_uuid = _parse_client_uuid(data.get("clientId"))
-        if client_uuid:
-            cl.user_session.set("client_uuid", client_uuid)
-
-def _client_id() -> str:
-    persistent = cl.user_session.get("client_uuid")
-    if persistent:
-        return persistent
-    sid = getattr(cl.user_session, "id", None) or cl.user_session.get("id")
-    return str(sid) if sid else "default"
+    if not isinstance(data, dict) or data.get("type") != "vexilon_client_id":
+        return
+    client_uuid = _parse_client_uuid(data.get("clientId"))
+    if client_uuid:
+        cl.user_session.set("client_uuid", client_uuid)
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
@@ -114,6 +175,7 @@ async def on_load_conversation(action: cl.Action):
     if not allowed:
         await cl.Message(content=rate_msg, author="System").send()
         return
+
     task = asyncio.create_task(ask_for_session_file(_client_id()))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
@@ -121,16 +183,23 @@ async def on_load_conversation(action: cl.Action):
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
     cl.user_session.set("steps_to_remove", [])
+
     if (message.content or "").strip() == VEXILON_SAVE_SENTINEL:
         await trigger_session_save(_client_id())
         return
+
     await _ensure_startup()
+
     if message.elements:
         for element in message.elements:
-            if element.mime in ["text/markdown", "text/plain", "application/json", "application/octet-stream"] or element.name.lower().endswith((".md", ".json")):
+            if (
+                element.mime in ["text/markdown", "text/plain", "application/json", "application/octet-stream"]
+                or element.name.lower().endswith((".md", ".json"))
+            ):
                 try:
                     with open(element.path, "r", encoding="utf-8") as f:
-                        await trigger_session_load(f.read(), _client_id())
+                        file_content = f.read()
+                    await trigger_session_load(file_content, _client_id())
                     await cl.Message(content="✓ Session restored successfully.", author="System").send()
                 except Exception as e:
                     logger.error(f"[load] Failed to read uploaded session file: {e}")
@@ -161,15 +230,19 @@ async def on_message(message: cl.Message) -> None:
 
     persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     history: list[dict] = cl.user_session.get("history") or []
+
     out = cl.Message(content="")
     await out.send()
 
     accumulated = ""
-    logger.info(f"[chat] Starting stream for {persona} mode (Words: {len(sanitized.split())}, Chars: {len(sanitized)})")
+    word_count = len(sanitized.split())
+    char_count = len(sanitized)
+    logger.info(f"[chat] Starting stream for {persona} mode (Words: {word_count}, Chars: {char_count})")
     try:
         queries, context, snippets = await get_rag_context(sanitized, history)
         ref_links = build_reference_links(snippets, _source_path_map)
         out.elements = []
+
         first_token_received = False
         async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
             if not chunk:
@@ -177,6 +250,7 @@ async def on_message(message: cl.Message) -> None:
             if not first_token_received:
                 first_token_received = True
                 await clear_active_status_steps()
+
             accumulated += chunk
             await out.stream_token(chunk)
 
@@ -189,7 +263,14 @@ async def on_message(message: cl.Message) -> None:
         accumulated = f"⚠️ API error: {exc}"
         out.content = accumulated
 
-    out.actions = [cl.Action(name="save_conversation", value="save", payload={}, label="💾 Save Session")]
+    out.actions = [
+        cl.Action(
+            name="save_conversation",
+            value="save",
+            payload={},
+            label="💾 Save Session"
+        )
+    ]
     await out.update()
 
     await trigger_verification_task(accumulated, context if "context" in locals() else "", out, _background_tasks)
@@ -198,20 +279,6 @@ async def on_message(message: cl.Message) -> None:
     history.append({"role": "assistant", "content": accumulated})
     cl.user_session.set("history", history)
     cl.user_session.set("last_assistant_message", out)
+
     await clear_active_status_steps()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
-
-cl_app.add_middleware(PartitionedCookieMiddleware)
-
-async def get_health():
-    try:
-        client = get_llm_client()
-        await client.models.list(timeout=10.0)
-        return {"status": "ok", "llm": "connected"}
-    except Exception as e:
-        logger.error(f"[health] LLM connection failed: {e}")
-        raise HTTPException(status_code=503, detail="LLM connection failed")
-
-cl_app.router.routes.insert(0, APIRoute("/api/brand", endpoint=_get_brand, methods=["GET"], include_in_schema=False))
-cl_app.router.routes.insert(1, APIRoute("/api/version", endpoint=lambda: {"version": AGNAV_VERSION}, methods=["GET"], include_in_schema=False))
-cl_app.router.routes.insert(2, APIRoute("/api/health", endpoint=get_health, methods=["GET"], include_in_schema=False))

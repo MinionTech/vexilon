@@ -8,7 +8,7 @@ session state or logs via an untrusted window_message payload.
 
 import uuid
 
-from core.security import _parse_client_uuid
+from main import _parse_client_uuid
 
 
 class TestParseClientUuid:

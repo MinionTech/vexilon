@@ -4,6 +4,7 @@ import time
 import uuid
 import logging
 from threading import Lock
+
 from core.config import (
     MAX_INPUT_LENGTH,
     LOG_SUSPICIOUS_INPUTS,
@@ -41,13 +42,8 @@ def sanitize_input(user_input: str) -> tuple[str, bool]:
         return user_input, False
 
     main_mod = sys.modules.get("main")
-    # Resolve dynamic overrides from main (or local/config defaults)
-    effective_log_suspicious = getattr(
-        main_mod, "LOG_SUSPICIOUS_INPUTS", getattr(sys.modules[__name__], "LOG_SUSPICIOUS_INPUTS", LOG_SUSPICIOUS_INPUTS)
-    )
-    effective_max_length = getattr(
-        main_mod, "MAX_INPUT_LENGTH", getattr(sys.modules[__name__], "MAX_INPUT_LENGTH", MAX_INPUT_LENGTH)
-    )
+    effective_log_suspicious = getattr(main_mod, "LOG_SUSPICIOUS_INPUTS", LOG_SUSPICIOUS_INPUTS)
+    effective_max_length = getattr(main_mod, "MAX_INPUT_LENGTH", MAX_INPUT_LENGTH)
 
     injection_found = False
     for pattern in PROMPT_INJECTION_PATTERNS:
@@ -113,3 +109,21 @@ def _parse_client_uuid(candidate) -> str | None:
     if parsed.version != 4:
         return None
     return str(parsed)
+
+
+def _client_id() -> str:
+    """Pseudonymous client identifier for rate limiting and log correlation.
+
+    Prefers the persistent, client-generated UUID captured by
+    on_window_message (survives page reloads); falls back to Chainlit's
+    ephemeral session id for the brief window before the client posts it.
+    """
+    try:
+        import chainlit as cl
+        persistent = cl.user_session.get("client_uuid")
+        if persistent:
+            return persistent
+        sid = getattr(cl.user_session, "id", None) or cl.user_session.get("id")
+        return str(sid) if sid else "default"
+    except Exception:
+        return "default"

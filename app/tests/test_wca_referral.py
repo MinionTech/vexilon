@@ -1,7 +1,5 @@
 import pytest
-from services.registry import _test_registry
-from core.config import TESTS_DIR
-from services.rag import rag_review_stream
+from main import _test_registry, TESTS_DIR, rag_review_stream
 from unittest.mock import MagicMock, patch, AsyncMock
 from contextlib import asynccontextmanager
 

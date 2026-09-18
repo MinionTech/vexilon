@@ -1,8 +1,8 @@
 import json
 import re
+import sys
 import datetime
 import logging
-from pathlib import Path
 import chainlit as cl
 
 from core.config import MAX_INPUT_LENGTH
@@ -25,7 +25,6 @@ def serialize_conversation(history: list[dict], persona: str) -> str:
     """
     saved_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-    # YAML front matter (end-user readable metadata)
     md = f"""---
 saved_at: {saved_at}
 persona: {persona}
@@ -42,12 +41,10 @@ message_count: {len(history)}
 
 """
 
-    # Convert each turn to readable markdown
     for i, msg in enumerate(history, 1):
         role_label = "👤 You" if msg["role"] == "user" else "🤖 Assistant"
         md += f"## Turn {i}: {role_label}\n\n{msg['content']}\n\n"
 
-    # Append JSON payload at end in code block for re-import
     payload = {
         "saved_at": saved_at,
         "persona": persona,
@@ -78,12 +75,10 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[s
     """
     warnings = []
 
-    # Try to extract JSON from markdown <details> section
     json_matches = re.findall(r'```json\s*\n(.*?)\n\s*```', content, re.DOTALL)
     if json_matches:
         json_str = json_matches[-1]
     else:
-        # Fallback: assume raw JSON (for old exports or direct JSON files)
         json_str = content
 
     try:
@@ -101,14 +96,15 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[s
     if not isinstance(messages, list):
         raise ValueError("Messages must be a list")
 
-    # Enforce standard safe string types for persona and saved_at
     persona = str(persona)[:50]
     saved_at = str(saved_at)[:50]
 
-    # Limit number of messages to prevent memory exhaustion DoS
     if len(messages) > 100:
         messages = messages[:100]
         warnings.append("Conversation exceeded the limit of 100 turns. Truncated excess historical messages.")
+
+    main_mod = sys.modules.get("main")
+    effective_max_length = getattr(main_mod, "MAX_INPUT_LENGTH", MAX_INPUT_LENGTH)
 
     sanitized_messages = []
     truncated_count = 0
@@ -124,14 +120,12 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[s
 
         orig_content = str(msg["content"])
 
-        # Enforce max length constraint strictly
-        if len(orig_content) > MAX_INPUT_LENGTH:
-            content_str = orig_content[:MAX_INPUT_LENGTH]
+        if len(orig_content) > effective_max_length:
+            content_str = orig_content[:effective_max_length]
             truncated_count += 1
         else:
             content_str = orig_content
 
-        # Secure HTML/script sanitization pass
         clean_content = re.sub(r'(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', content_str)
         clean_content = re.sub(r'(?i)\bon\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)', '', clean_content)
         clean_content = re.sub(r'(?i)<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>', '', clean_content)
@@ -146,7 +140,7 @@ def deserialize_conversation(content: str) -> tuple[list[dict], str, str, list[s
         })
 
     if truncated_count > 0:
-        warnings.append(f"Safely truncated {truncated_count} messages exceeding the length limit of {MAX_INPUT_LENGTH} characters.")
+        warnings.append(f"Safely truncated {truncated_count} messages exceeding the length limit of {effective_max_length} characters.")
 
     if script_stripped:
         warnings.append("Security sanitization: Removed potential script injections from conversation history.")
@@ -176,9 +170,10 @@ async def trigger_session_save(client_id: str = "default") -> None:
         msg = cl.Message(
             content="Conversation saved as markdown. Click below to download.",
             author="System",
-            elements=[cl.File(name=filename, content=markdown_content, display="inline", mime="text/markdown")],
+            elements=[cl.File(name=filename, content=markdown_content, display="inline", mime="text/markdown")]
         )
         await msg.send()
+
         logger.info(f"[save] Conversation saved by {client_id} ({len(history)} messages)")
     except Exception as e:
         logger.error(f"[save] Failed to save conversation: {e}")
@@ -201,7 +196,10 @@ async def trigger_session_load(file_content: str, client_id: str = "default") ->
 
         if warnings:
             warnings_text = "\n".join(f"- {w}" for w in warnings)
-            await cl.Message(content=f"⚠️ **Upload Notice**\n\n{warnings_text}", author="System").send()
+            await cl.Message(
+                content=f"⚠️ **Upload Notice**\n\n{warnings_text}",
+                author="System",
+            ).send()
 
         msg = cl.Message(
             content=f"**Restored Conversation** (Persona: {saved_persona}, Saved: {saved_at})\n\nLoaded {len(messages)} messages. These are read-only.",
@@ -212,7 +210,8 @@ async def trigger_session_load(file_content: str, client_id: str = "default") ->
 
         for loaded_msg in messages:
             display_role = "👤 You" if loaded_msg["role"] == "user" else "🤖 Assistant"
-            msg_obj = cl.Message(content=loaded_msg["content"], author=display_role)
+            msg_content = loaded_msg["content"]
+            msg_obj = cl.Message(content=msg_content, author=display_role)
             msg_obj.metadata = {"restored": True, "readonly": True}
             await msg_obj.send()
 
@@ -229,7 +228,7 @@ async def trigger_session_load(file_content: str, client_id: str = "default") ->
 
 
 async def ask_for_session_file(client_id: str = "default") -> None:
-    """Prompts user for session file using AskFileMessage and triggers load."""
+    """Background coroutine: prompts for a session file using AskFileMessage."""
     try:
         res = await cl.AskFileMessage(
             content="Select your `.md` session backup file to restore this conversation.",
@@ -239,8 +238,10 @@ async def ask_for_session_file(client_id: str = "default") -> None:
         ).send()
 
         if res:
-            with open(res[0].path, "r", encoding="utf-8") as f:
-                await trigger_session_load(f.read(), client_id=client_id)
+            file = res[0]
+            with open(file.path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+            await trigger_session_load(file_content, client_id=client_id)
     except Exception as e:
         logger.error(f"[load] AskFileMessage background task failed: {e}")
         await cl.Message(content="Failed to load session file.", author="System").send()

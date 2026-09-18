@@ -18,7 +18,16 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import logging
 from brand import AGNAV_APP_NAME, AGNAV_APP_DESCRIPTION
-from indexing import DATA_DIR, CACHE_DIR, PDF_CACHE_DIR
+from indexing import (
+    DATA_DIR,
+    CACHE_DIR,
+    PDF_CACHE_DIR,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
+    chunk_text,
+    get_embed_model,
+    EMBED_DIM,
+)
 
 # Single Source of Truth for local development models.
 OLLAMA_MODEL_ID = "tinyllama"
@@ -104,7 +113,7 @@ EXAMPLES = [
 ]
 
 TESTS_DIR = DATA_DIR / "test_fixtures"
-PUBLIC_DOCS_DIR = Path(__file__).parent.parent / "public" / "docs"
+PUBLIC_DOCS_DIR = Path(__file__).resolve().parent.parent / "public" / "docs"
 
 # ─── RAG Pipeline Constants ─────────────────────────────────────────────────
 _SIMPLE_KEYWORDS = {"phone", "number", "address", "email", "contact", "list", "who", "are", "you", "hello", "hi"}
@@ -113,11 +122,3 @@ _ALL_SIMPLE_KEYWORDS = _SIMPLE_KEYWORDS | _JOKE_KEYWORDS
 
 HIGH_TRAFFIC_MESSAGE = "⏳ The AI service is currently experiencing high traffic. Please wait a moment and try again."
 GENERIC_ERROR_MESSAGE = "⚠️ An unexpected error occurred while processing your request. Please try again."
-
-def format_rag_error_message(exc: Exception) -> str:
-    """Map exceptions to user-facing error messages, hiding internal error details."""
-    from services.llm import is_transient_llm_error
-    if is_transient_llm_error(exc):
-        return HIGH_TRAFFIC_MESSAGE
-
-    return GENERIC_ERROR_MESSAGE
