@@ -63,7 +63,13 @@ health_route = APIRoute(
 
 def register_routes_and_middleware(app):
     """Register partitioned cookie middleware and custom FastAPI routes on the app."""
-    app.add_middleware(PartitionedCookieMiddleware)
-    app.router.routes.insert(0, brand_route)
-    app.router.routes.insert(1, version_route)
-    app.router.routes.insert(2, health_route)
+    if getattr(app, "middleware_stack", None) is None:
+        app.add_middleware(PartitionedCookieMiddleware)
+
+    existing_paths = {getattr(r, "path", None) for r in getattr(app.router, "routes", [])}
+    if "/api/brand" not in existing_paths:
+        app.router.routes.insert(0, brand_route)
+    if "/api/version" not in existing_paths:
+        app.router.routes.insert(1, version_route)
+    if "/api/health" not in existing_paths:
+        app.router.routes.insert(2, health_route)
