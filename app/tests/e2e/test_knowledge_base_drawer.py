@@ -81,17 +81,15 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     assert initial_box["width"] >= 44, f"Expected width >= 44, got {initial_box['width']}"
     assert initial_box["height"] >= 44, f"Expected height >= 44, got {initial_box['height']}"
 
-    # Verify hit target: close button or its child icon is directly interactive at its center
-    initial_hit = page.evaluate(
-        """(pt) => {
+    # Verify hit target: close button itself (or an element inside it) owns the hit point at its center
+    initial_hit = close_btn.evaluate(
+        """(btn, pt) => {
             const el = document.elementFromPoint(pt.x, pt.y);
-            return el ? el.tagName.toLowerCase() : null;
+            return el !== null && (el === btn || btn.contains(el));
         }""",
         {"x": initial_box["x"] + initial_box["width"] / 2, "y": initial_box["y"] + initial_box["height"] / 2},
     )
-    assert initial_hit in ["button", "svg", "path"], (
-        f"Expected close button hit target before scroll, got {initial_hit}"
-    )
+    assert initial_hit, "Expected close button or its child to own the hit target at its center before scroll"
 
     # Verify close button is aligned with the Knowledge Base heading line (not pushed above it)
     kb_heading = dialog.get_by_role("heading", name="Knowledge Base")
@@ -112,6 +110,13 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     )
     assert scroll_top > 0, f"Inner content container must be scrollable and have moved, got {scroll_top}"
 
+    # Verify the scroll container spans the full viewport width so its scrollbar hugs the screen edge
+    scroll_box = scroll_container.bounding_box()
+    assert scroll_box is not None, "Scroll container bounding box should exist"
+    assert abs(scroll_box["x"] + scroll_box["width"] - 390) < 1, (
+        f"Scroll container right edge should reach viewport boundary (390px), got {scroll_box['x'] + scroll_box['width']}"
+    )
+
     # Close button must remain inside the mobile viewport and visible
     scrolled_box = close_btn.bounding_box()
     assert scrolled_box is not None, "Close button bounding box should exist after scroll"
@@ -119,23 +124,21 @@ def test_knowledge_base_drawer_close_button_remains_visible_on_mobile_scroll(
     assert (
         scrolled_box["y"] + scrolled_box["height"] <= 844
     ), f"Close button below viewport: y={scrolled_box['y']}"
-    # Verify close button has gutter clearance from right edge to avoid scrollbar track collision
+    # Verify close button has 24px gutter clearance from right edge to avoid scrollbar track collision
     assert (
-        scrolled_box["x"] + scrolled_box["width"] <= 390 - 16
-    ), f"Close button lacks gutter clearance from right edge: right edge={scrolled_box['x'] + scrolled_box['width']}"
+        scrolled_box["x"] + scrolled_box["width"] <= 390 - 24
+    ), f"Close button lacks 24px gutter clearance from right edge: right edge={scrolled_box['x'] + scrolled_box['width']}"
     expect(close_btn).to_be_visible()
 
-    # Verify hit target remains unobstructed after scrolling
-    scrolled_hit = page.evaluate(
-        """(pt) => {
+    # Verify hit target remains unobstructed by any overlay or container after scrolling
+    scrolled_hit = close_btn.evaluate(
+        """(btn, pt) => {
             const el = document.elementFromPoint(pt.x, pt.y);
-            return el ? el.tagName.toLowerCase() : null;
+            return el !== null && (el === btn || btn.contains(el));
         }""",
         {"x": scrolled_box["x"] + scrolled_box["width"] / 2, "y": scrolled_box["y"] + scrolled_box["height"] / 2},
     )
-    assert scrolled_hit in ["button", "svg", "path"], (
-        f"Expected close button hit target after scroll, got {scrolled_hit}"
-    )
+    assert scrolled_hit, "Expected close button or its child to own the hit target at its center after scroll"
 
     # Clicking close button successfully dismisses drawer
     close_btn.click()
@@ -166,24 +169,30 @@ def test_knowledge_base_drawer_compressed_viewport_address_bar_simulation(
         f"Dialog height should match compressed viewport 720px, got {dialog_box['height']}"
     )
 
+    # Verify the scroll container spans the full viewport width
+    scroll_container = dialog.locator("> div").first
+    scroll_box = scroll_container.bounding_box()
+    assert scroll_box is not None, "Scroll container bounding box should exist in compressed viewport"
+    assert abs(scroll_box["x"] + scroll_box["width"] - 390) < 1, (
+        f"Scroll container right edge should reach viewport boundary (390px), got {scroll_box['x'] + scroll_box['width']}"
+    )
+
     btn_box = close_btn.bounding_box()
     assert btn_box is not None, "Close button bounding box should exist"
     assert btn_box["y"] >= 0, f"Close button should not be clipped at top: y={btn_box['y']}"
-    assert btn_box["x"] + btn_box["width"] <= 390 - 16, (
-        f"Close button right edge should have gutter clearance, got {btn_box['x'] + btn_box['width']}"
+    assert btn_box["x"] + btn_box["width"] <= 390 - 24, (
+        f"Close button right edge should have 24px gutter clearance, got {btn_box['x'] + btn_box['width']}"
     )
 
     # Verify close button hit target in compressed viewport
-    hit_tag = page.evaluate(
-        """(pt) => {
+    hit_target = close_btn.evaluate(
+        """(btn, pt) => {
             const el = document.elementFromPoint(pt.x, pt.y);
-            return el ? el.tagName.toLowerCase() : null;
+            return el !== null && (el === btn || btn.contains(el));
         }""",
         {"x": btn_box["x"] + btn_box["width"] / 2, "y": btn_box["y"] + btn_box["height"] / 2},
     )
-    assert hit_tag in ["button", "svg", "path"], (
-        f"Expected close button hit target in compressed viewport, got {hit_tag}"
-    )
+    assert hit_target, "Expected close button or its child to own the hit target in compressed viewport"
 
     # Dismiss drawer
     close_btn.click()
