@@ -132,6 +132,12 @@ class HTMLContentExtractor(HTMLParser):
 
     BLOCK_TAGS = {"p", "div", "section", "article", "blockquote", "tr"}
 
+    VOID_TAGS = {
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "param", "source", "track", "wbr",
+    }
+
+
     def __init__(self, target_selector: str | None = None):
         super().__init__()
         self.target_selector = target_selector
@@ -173,7 +179,8 @@ class HTMLContentExtractor(HTMLParser):
                 return
 
         if self.inside_target and self.target_selector and self.selector_depth > 0:
-            self.selector_depth += 1
+            if tag_lower not in self.VOID_TAGS:
+                self.selector_depth += 1
 
         if not self.inside_target:
             return
@@ -199,7 +206,9 @@ class HTMLContentExtractor(HTMLParser):
             if href and not href.startswith("javascript:"):
                 self.current_link = href
 
-        self.tag_stack.append(tag_lower)
+        if tag_lower not in self.VOID_TAGS:
+            self.tag_stack.append(tag_lower)
+
 
     def handle_endtag(self, tag: str) -> None:
         tag_lower = tag.lower()
@@ -216,11 +225,15 @@ class HTMLContentExtractor(HTMLParser):
         if self.ignore_depth > 0:
             return
 
+        if tag_lower in self.VOID_TAGS:
+            return
+
         if self.inside_target and self.target_selector and self.selector_depth > 0:
             self.selector_depth -= 1
             if self.selector_depth == 0:
                 self.inside_target = False
                 return
+
 
         if not self.inside_target:
             return

@@ -80,6 +80,44 @@ def test_html_content_extractor_selector():
     assert "*italic*" in markdown
 
 
+def test_html_content_extractor_void_tags_do_not_corrupt_selector_depth():
+    """Regression: void elements inside a selector must not corrupt selector_depth.
+
+    Before the fix, <br> and self-closing void tags incremented selector_depth in
+    handle_starttag but Python's HTMLParser never emits a matching handle_endtag,
+    leaving selector_depth permanently positive and leaking footer/post-container
+    content into the extracted body.  With XHTML <br/>, handle_startendtag calls
+    both handle_starttag and handle_endtag; the paired decrement would decrement
+    depth to 0 prematurely, closing the container early.
+    """
+    raw_html = """
+    <html>
+    <head><title>Void Tag Test</title></head>
+    <body>
+        <div id="body">
+            <h1>Inside Section</h1>
+            <p>First paragraph.<br>Second line after br.<br/>Third line after self-close.</p>
+            <img src="logo.png" alt="logo">
+            <hr>
+            <p>Still inside the container.</p>
+        </div>
+        <p>This paragraph is OUTSIDE the container and must not appear.</p>
+    </body>
+    </html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "# Inside Section" in markdown
+    assert "First paragraph." in markdown
+    assert "Second line after br." in markdown
+    assert "Third line after self-close." in markdown
+    assert "Still inside the container." in markdown
+    assert "This paragraph is OUTSIDE" not in markdown
+
+
+
 def test_clean_bclaws_content():
     """Verify BCLaws specific cleaner removes script artifacts and watermarks."""
     raw_bclaws_html = """
