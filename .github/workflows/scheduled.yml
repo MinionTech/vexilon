@@ -14,3 +14,65 @@ jobs:
       contents: read
       security-events: write
     uses: ./.github/workflows/reusable-analysis.yml
+
+  detect-drift:
+    name: Detect Document Drift
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "app/uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install Dependencies
+        run: |
+          cd app
+          uv sync --frozen
+
+      - name: Run Drift Detection
+        id: drift_check
+        run: |
+          cd app
+          set +e
+          uv run python scripts/sync_sources.py --check --json --alert-body ../issue_body.md > ../drift_report.json
+          EXIT_CODE=$?
+          set -e
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          cat ../drift_report.json
+          if [ "$EXIT_CODE" -gt 1 ]; then
+            echo "::error::Drift detection encountered an operational error (exit code $EXIT_CODE)"
+            exit "$EXIT_CODE"
+          fi
+
+
+      - name: File Drift Alert Issue
+        if: steps.drift_check.outputs.exit_code == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING_ISSUE=$(gh issue list --search "Drift Detected in Knowledge Base Sources in:title" --state open --json number -q '.[0].number')
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "An open drift alert issue already exists (#$EXISTING_ISSUE). Skipping duplicate creation."
+            exit 0
+          fi
+
+          if [ -f issue_body.md ]; then
+            gh issue create \
+              --title "Drift Detected in Knowledge Base Sources" \
+              --body-file issue_body.md \
+              --label "documentation"
+          fi
+
+
