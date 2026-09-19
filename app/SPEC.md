@@ -61,6 +61,10 @@ Agreement Navigator moves beyond messy PDF-to-text extraction by using a special
     - **NO IMPROVEMENT:** Do not fix typos; if the raw text is broken, preserve it.
     - **NO NOISE:** Removal of page numbers, URLs, and footers is the only structural change allowed.
 3. **Integrity Audit:** A side-by-side verification report (`.integrity.md`) uses diffing to ensure the resulting Markdown preserves 100% of the substantive source content.
+4. **Declarative Source Registry (`sources.yaml`):** Maps web-sourced documents to canonical upstream URLs, container selectors (`#body`, `#civix-document`), categories, and baseline substantive content hashes.
+5. **Standardized Provenance & Ingestion:** The sync utility (`sync_sources.py`) cleanly extracts body content, prepends standard provenance metadata headers (`# <Title>`, `**Source:**`, `**Upstream Last Modified:**`, `**Ingestion Date:**`), and synchronizes `manifest.json`.
+6. **Scheduled Drift Sentinel:** Weekly CI workflows detect upstream divergence via substantive content hashing, generating deduplicated GitHub Issues for steward review without silent automated updates to legal text.
+
 
 ---
 
@@ -131,6 +135,9 @@ The Agreement Navigator is successful when:
 2. **Grievance Builder:** A wizard-style interface for generating a "Grievance Fact Sheet" based on retrieved clauses.
 3. **Arbitration Awards:** Indexing a library of BC labour arbitration awards for jurisprudence context.
 4. **Member-Only Auth:** Integration with union member portals for secure access.
+5. **Granular Incremental Indexing:** Per-document chunk and float32 vector embedding caching (`.npy`) in `/data/cache/embeddings/` to eliminate full re-indexing passes when individual documents change.
+6. **Link-Driven Knowledge Base Hydration:** Expanding `sources.yaml` to support upstream PDF extraction and conditional HTTP syncs (`ETag` / `304 Not Modified`), transitioning from committed static files to build-time declarative hydration.
+
 
 ---
 
