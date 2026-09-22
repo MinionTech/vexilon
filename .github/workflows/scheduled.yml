@@ -18,6 +18,10 @@ jobs:
   detect-drift:
     name: Detect Document Drift
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: detect-drift
+      cancel-in-progress: false
     permissions:
       contents: read
       issues: write
@@ -62,7 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          EXISTING_ISSUE=$(gh issue list --search "Drift Detected in Knowledge Base Sources in:title" --state open --json number -q '.[0].number')
+          EXISTING_ISSUE=$(gh issue list --search "Drift Detected in Knowledge Base Sources in:title" --state open --json number -q 'if length > 0 then .[0].number | tostring else "" end')
           if [ -n "$EXISTING_ISSUE" ]; then
             echo "An open drift alert issue already exists (#$EXISTING_ISSUE). Skipping duplicate creation."
             exit 0

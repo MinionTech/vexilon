@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import html
 import json
 import logging
 import os
@@ -37,11 +36,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 if str(_APP_ROOT) not in sys.path:
     sys.path.insert(0, str(_APP_ROOT))
 
-# Optional import of PyYAML with fallback
-try:
-    import yaml
-except ImportError:
-    yaml = None  # type: ignore
+import yaml
 
 from generate_cache_manifest import generate_manifest
 
@@ -74,49 +69,16 @@ class DriftResult:
 
 
 class SimpleYamlLoader:
-    """Minimal YAML loader for sources.yaml if PyYAML is unavailable."""
+    """Thin YAML wrapper using PyYAML."""
 
     @staticmethod
     def load(stream_or_str: str) -> dict[str, Any]:
-        if yaml is not None:
-            return yaml.safe_load(stream_or_str) or {}
-        # Simple fallback parser for our known sources.yaml schema
-        data: dict[str, Any] = {"sources": []}
-        current_source: dict[str, Any] | None = None
-        for line in stream_or_str.splitlines():
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-            if stripped == "sources:":
-                continue
-            if stripped.startswith("- path:"):
-                if current_source:
-                    data["sources"].append(current_source)
-                current_source = {"path": stripped.split(":", 1)[1].strip()}
-            elif current_source is not None and ":" in stripped:
-                key, val = stripped.split(":", 1)
-                key = key.strip().lstrip("- ")
-                val = val.strip().strip('"').strip("'")
-                current_source[key] = val
-        if current_source:
-            data["sources"].append(current_source)
-        return data
+        return yaml.safe_load(stream_or_str) or {}
 
     @staticmethod
     def dump(data: dict[str, Any]) -> str:
-        if yaml is not None:
-            return yaml.safe_dump(data, sort_keys=False)
-        # Fallback simple serializer
-        out = ["sources:"]
-        for s in data.get("sources", []):
-            first = True
-            for k, v in s.items():
-                if v is None:
-                    continue
-                prefix = "  - " if first else "    "
-                out.append(f"{prefix}{k}: {v}")
-                first = False
-        return "\n".join(out) + "\n"
+        return yaml.safe_dump(data, sort_keys=False)
+
 
 
 class HTMLContentExtractor(HTMLParser):
@@ -127,7 +89,7 @@ class HTMLContentExtractor(HTMLParser):
 
     IGNORABLE_TAGS = {
         "script", "style", "nav", "header", "footer", "aside", "svg",
-        "noscript", "iframe", "button", "input", "form"
+        "noscript", "iframe", "button", "form"
     }
 
     BLOCK_TAGS = {"p", "div", "section", "article", "blockquote", "tr"}
@@ -154,6 +116,7 @@ class HTMLContentExtractor(HTMLParser):
         self.heading_level: int = 0
         self.is_bold = False
         self.is_italic = False
+        self.link_text_tokens: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag_lower = tag.lower()
@@ -250,7 +213,12 @@ class HTMLContentExtractor(HTMLParser):
             self.is_italic = False
             self.tokens.append("*")
         elif tag_lower == "a":
+            if self.current_link and self.link_text_tokens:
+                anchor_text = "".join(self.link_text_tokens).strip()
+                if anchor_text:
+                    self.tokens.append(f"[{anchor_text}]({self.current_link})")
             self.current_link = None
+            self.link_text_tokens = []
 
         if self.tag_stack and self.tag_stack[-1] == tag_lower:
             self.tag_stack.pop()
@@ -263,16 +231,13 @@ class HTMLContentExtractor(HTMLParser):
         if self.ignore_depth > 0 or not self.inside_target:
             return
 
-        text = html.unescape(data)
+        text = data
         if not text:
             return
 
         if self.current_link:
-            cleaned_anchor = text.strip()
-            if cleaned_anchor:
-                self.tokens.append(f"[{cleaned_anchor}]({self.current_link})")
-                self.current_link = None
-                return
+            self.link_text_tokens.append(text)
+            return
 
         self.tokens.append(text)
 
@@ -313,7 +278,7 @@ def clean_bclaws_content(raw_html: str, selector: str | None = "#civix-document"
         content = fallback.get_markdown()
 
     # Strip bclaws URL watermarks and boilerplate footers
-    content = re.sub(r"https?://www\.bclaws\.gov\.bc\.ca/\S+", "", content)
+    content = re.sub(r'https?://www\.bclaws\.gov\.bc\.ca/[^\s)\]>"]+', "", content)
     content = re.sub(r"function\s+launchNewWindow[\s\S]*?\}", "", content)
     content = re.sub(r"window\.onload\s*=[\s\S]*?\}", "", content)
     content = re.sub(r"\n{3,}", "\n\n", content)
@@ -367,7 +332,7 @@ def extract_substantive_body(markdown_text: str) -> str:
                 or stripped.startswith("**Official Page Last Updated:")
                 or stripped.startswith("**Ingestion Date:")
                 or stripped.startswith("> **Format:")
-                or stripped.startswith("*Updated ")
+                or re.match(r"^\*Updated: \d", stripped)
                 or stripped == "---"
                 or not stripped
             ):
@@ -376,7 +341,7 @@ def extract_substantive_body(markdown_text: str) -> str:
         body_lines.append(line)
 
     substantive = "\n".join(body_lines).strip()
-    return substantive if substantive else markdown_text.strip()
+    return substantive
 
 
 def compute_content_hash(text: str) -> str:
@@ -457,6 +422,12 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
         local_text = local_file.read_text(encoding="utf-8")
         local_substantive = extract_substantive_body(local_text)
         local_hash = compute_content_hash(local_substantive)
+    elif source.content_hash is None:
+        return DriftResult(
+            path=source.path,
+            url=source.url,
+            status="UNTRACKED",
+        )
 
     try:
         raw_html, headers = fetch_upstream(source.url)
@@ -563,6 +534,7 @@ def sync_source(
 def format_drift_alert_markdown(results: list[DriftResult]) -> str:
     """Formats markdown issue body for drifted documents."""
     drifted = [r for r in results if r.status == "DRIFT_DETECTED"]
+    errored = [r for r in results if r.status == "ERROR"]
     lines = [
         "## Upstream Document Drift Detected",
         "",
@@ -577,6 +549,19 @@ def format_drift_alert_markdown(results: list[DriftResult]) -> str:
         upstream_h = (d.upstream_hash or "")[:8]
         last_mod = d.upstream_last_modified or "Unknown"
         lines.append(f"| `{d.path}` | [{doc_name}]({d.url}) | `{local_h}` | `{upstream_h}` | {last_mod} |")
+
+    if errored:
+        lines.extend([
+            "",
+            "### Sources That Could Not Be Reached",
+            "",
+            "| Document Path | Upstream URL | Error |",
+            "| :--- | :--- | :--- |",
+        ])
+        for e in errored:
+            doc_name = e.path.split("/")[-1]
+            error_msg = (e.error or "Unknown error").replace("|", "\\|")
+            lines.append(f"| `{e.path}` | [{doc_name}]({e.url}) | {error_msg} |")
 
     lines.extend([
         "",
@@ -632,6 +617,17 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    if args.check and args.sync:
+        parser.error("--check and --sync are mutually exclusive: --check reads only, --sync writes.")
+
+    try:
+        return _run(args)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        return 2
+
+
+def _run(args: argparse.Namespace) -> int:
     config_path = args.config.resolve()
     if not config_path.exists():
         logger.error(f"Config file not found: {config_path}")
@@ -670,13 +666,22 @@ def main() -> int:
             print("DRIFT DETECTION REPORT")
             print("=" * 60)
             for r in results:
-                status_symbol = "✅" if r.status == "MATCH" else ("⚠️" if r.status == "DRIFT_DETECTED" else "❌")
+                if r.status == "MATCH":
+                    status_symbol = "✅"
+                elif r.status == "DRIFT_DETECTED":
+                    status_symbol = "⚠️"
+                elif r.status == "UNTRACKED":
+                    status_symbol = "ℹ️"
+                else:
+                    status_symbol = "❌"
                 print(f"{status_symbol} [{r.status}] {r.path}")
                 if r.status == "DRIFT_DETECTED":
                     print(f"    Local Hash:    {r.local_hash}")
                     print(f"    Upstream Hash: {r.upstream_hash}")
                 elif r.status == "ERROR":
                     print(f"    Error:         {r.error}")
+                elif r.status == "UNTRACKED":
+                    print(f"    No local file and no registry hash — run --sync to initialise.")
 
         if has_drift:
             return 1
@@ -698,6 +703,10 @@ def main() -> int:
             data_dir = _APP_ROOT / "data"
             generate_manifest(data_dir=data_dir)
             logger.info("Sync complete and manifest updated.")
+
+        if entries and updated == 0:
+            logger.error("All sources failed to sync.")
+            return 2
 
         return 0
 

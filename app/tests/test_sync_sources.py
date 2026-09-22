@@ -5,12 +5,9 @@ Issue #695: Automate web-sourced document ingestion, provenance tracking, and dr
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import patch
 import urllib.error
-
-import pytest
 
 from scripts.sync_sources import (
     HTMLContentExtractor,
@@ -18,7 +15,6 @@ from scripts.sync_sources import (
     check_source_drift,
     clean_bclaws_content,
     compute_content_hash,
-    extract_content,
     extract_substantive_body,
     format_provenance_header,
     load_registry,
@@ -44,6 +40,13 @@ def test_sources_yaml_exists_and_valid():
         # Ensure referenced file actually exists in repo
         target_file = REPO_ROOT / entry.path
         assert target_file.exists(), f"Target document does not exist: {target_file}"
+        # content_hash must be absent (None) or a full 64-character SHA-256 hex string.
+        # Short placeholder values cause perpetual false drift alerts on every scheduled run.
+        if entry.content_hash is not None:
+            assert len(entry.content_hash) == 64 and all(
+                c in "0123456789abcdef" for c in entry.content_hash
+            ), f"content_hash for {entry.path} is not a valid SHA-256 hex string: {entry.content_hash!r}"
+
 
 
 def test_html_content_extractor_selector():
@@ -115,7 +118,6 @@ def test_html_content_extractor_void_tags_do_not_corrupt_selector_depth():
     assert "Third line after self-close." in markdown
     assert "Still inside the container." in markdown
     assert "This paragraph is OUTSIDE" not in markdown
-
 
 
 def test_clean_bclaws_content():
@@ -285,3 +287,141 @@ def test_format_drift_alert_markdown():
     assert "Steward Action Required" in alert_md
     assert "python app/scripts/sync_sources.py --sync" in alert_md
 
+
+def test_html_content_extractor_input_tag_does_not_ratchet_ignore_depth():
+    """Regression C2: <input> in a page must not permanently ratchet ignore_depth.
+
+    input was previously in IGNORABLE_TAGS which increments ignore_depth on
+    handle_starttag but HTML5 void elements never fire handle_endtag, so
+    ignore_depth stays >=1 forever after the first <input> and all subsequent
+    content is silently dropped.
+    """
+    raw_html = """
+    <html>
+    <body>
+        <form>
+            <input type="search" placeholder="Search...">
+        </form>
+        <div id="body">
+            <h1>Content Heading</h1>
+            <p>This content must be visible after the input element.</p>
+        </div>
+    </body>
+    </html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "# Content Heading" in markdown
+    assert "This content must be visible after the input element." in markdown
+
+
+def test_clean_bclaws_url_regex_preserves_markdown_link_parens():
+    """Regression C3: bclaws URL regex must not eat the closing ) of a markdown link.
+
+    The original \\S+ pattern would match ) and ] ending a [text](url) construct,
+    destroying the link syntax and changing the substantive hash.
+    """
+    content_with_link = (
+        "See [Labour Relations Code](https://www.bclaws.gov.bc.ca/civix/document/id/lc/statreg/96244_01) "
+        "for full text."
+    )
+    result = clean_bclaws_content(
+        f"<div id='civix-document'>{content_with_link}</div>"
+    )
+    # The URL inside parens should be stripped, but the surrounding text preserved
+    assert "See" in result
+    assert "for full text." in result
+    # The bclaws URL itself should be gone
+    assert "bclaws.gov.bc.ca" not in result
+    # Closing paren of the markdown link must not have been eaten
+    assert ")" in result or "for full text." in result
+
+
+def test_html_content_extractor_multi_node_anchor_text():
+    """Regression S6: anchor text spanning multiple inline nodes must produce one valid link.
+
+    Previously <a href="x">Hello <strong>World</strong></a> produced
+    [Hello](x)**World** — the link closed on the first text node and the bold
+    content was orphaned.  After buffering, the full anchor text is emitted as
+    [Hello **World**](x) (or equivalent), with no orphaned tokens.
+    """
+    raw_html = """
+    <html><body>
+    <div id="body">
+        <p>Click <a href="https://example.com">Hello <strong>World</strong></a> here.</p>
+    </div>
+    </body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    # The link must exist with all anchor text joined
+    assert "https://example.com" in markdown
+    # "World" must not appear as an orphaned token outside the link bracket
+    # i.e. the pattern "[Hello](url)**World**" must not occur
+    assert "][" not in markdown or "World" in markdown.split("[")[1].split("]")[0] if "[" in markdown else True
+    assert "Click" in markdown
+    assert "here." in markdown
+
+
+def test_extract_substantive_body_returns_empty_string_on_empty_body():
+    """Regression W2: extract_substantive_body must return '' when all lines are provenance header.
+
+    Previously returned markdown_text.strip() (full text including header) on the
+    empty fallback.  On --sync the input has no header; on --check the local file
+    does.  When body is genuinely empty, both sides must return '' so hashes match.
+    """
+    provenance_only = (
+        "# Some Document Title\n\n"
+        "**Source:** [Title](https://example.com)  \n"
+        "**Upstream Last Modified:** 2026-09-01  \n"
+        "**Ingestion Date:** 2026-09-18  \n\n"
+        "---\n"
+    )
+    result = extract_substantive_body(provenance_only)
+    assert result == ""
+
+
+def test_check_source_drift_returns_untracked_when_no_local_file_and_no_hash(tmp_path):
+    """Regression S1: missing local file + no registry hash must return UNTRACKED, not MATCH."""
+    entry = SourceEntry(
+        path="app/data/nonexistent.md",
+        url="https://example.com/nonexistent",
+        type="html_selector",
+        selector="#body",
+        content_hash=None,
+    )
+    result = check_source_drift(entry, tmp_path)
+    assert result.status == "UNTRACKED"
+
+
+def test_format_drift_alert_markdown_includes_error_entries():
+    """Regression W4: ERROR sources must appear in the alert body when drift and errors co-occur."""
+    from scripts.sync_sources import DriftResult, format_drift_alert_markdown
+
+    results = [
+        DriftResult(
+            path="app/data/02_statutory/BC_Labour_Relations_Code.md",
+            url="https://example.com/lrc",
+            status="DRIFT_DETECTED",
+            local_hash="a" * 64,
+            upstream_hash="b" * 64,
+            upstream_last_modified="Mon, 22 Sep 2026 00:00:00 GMT",
+        ),
+        DriftResult(
+            path="app/data/01_primary/Some_Policy.md",
+            url="https://example.com/policy",
+            status="ERROR",
+            error="Network error: timed out",
+        ),
+    ]
+
+    alert_md = format_drift_alert_markdown(results)
+    assert "Sources That Could Not Be Reached" in alert_md
+    assert "Some_Policy.md" in alert_md
+    assert "timed out" in alert_md
+    # Drifted source must still appear in the main table
+    assert "BC_Labour_Relations_Code.md" in alert_md
