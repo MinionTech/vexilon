@@ -37,6 +37,9 @@ if str(_APP_ROOT) not in sys.path:
     sys.path.insert(0, str(_APP_ROOT))
 
 import yaml
+from yaml.constructor import ConstructorError
+from yaml.nodes import MappingNode
+
 
 from generate_cache_manifest import generate_manifest
 
@@ -68,17 +71,48 @@ class DriftResult:
     error: str | None = None
 
 
+class _StrictSafeLoader(yaml.SafeLoader):
+    """PyYAML SafeLoader that raises ConstructorError on duplicate mapping keys.
+
+    PyYAML's default SafeLoader silently overwrites duplicate keys with the last
+    value.  A duplicate ``path`` or ``url`` in sources.yaml would silently
+    redirect a scheduled drift check; a duplicate ``content_hash`` would corrupt
+    the drift baseline.  This loader treats duplicates as hard errors.
+    Merge keys (<<) are preserved and never flagged.
+    """
+
+    def construct_mapping(self, node: MappingNode, deep: bool = False) -> dict:  # type: ignore[override]
+        if isinstance(node, MappingNode):
+            seen: set[object] = set()
+            for key_node, _ in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    continue
+                key = self.construct_object(key_node, deep=deep)
+                try:
+                    is_dup = key in seen
+                except TypeError:
+                    continue
+                if is_dup:
+                    raise ConstructorError(
+                        "while constructing a mapping",
+                        node.start_mark,
+                        f"found duplicate key ({key!r})",
+                        key_node.start_mark,
+                    )
+                seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
 class SimpleYamlLoader:
-    """Thin YAML wrapper using PyYAML."""
+    """Thin YAML wrapper using PyYAML with strict duplicate-key detection."""
 
     @staticmethod
     def load(stream_or_str: str) -> dict[str, Any]:
-        return yaml.safe_load(stream_or_str) or {}
+        return yaml.load(stream_or_str, Loader=_StrictSafeLoader) or {}  # noqa: S506 — loader is explicitly strict
 
     @staticmethod
     def dump(data: dict[str, Any]) -> str:
         return yaml.safe_dump(data, sort_keys=False)
-
 
 
 class HTMLContentExtractor(HTMLParser):

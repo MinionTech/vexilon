@@ -9,6 +9,9 @@ from pathlib import Path
 from unittest.mock import patch
 import urllib.error
 
+import pytest
+from yaml.constructor import ConstructorError
+
 from scripts.sync_sources import (
     HTMLContentExtractor,
     SourceEntry,
@@ -47,6 +50,27 @@ def test_sources_yaml_exists_and_valid():
                 c in "0123456789abcdef" for c in entry.content_hash
             ), f"content_hash for {entry.path} is not a valid SHA-256 hex string: {entry.content_hash!r}"
 
+
+def test_load_registry_rejects_duplicate_keys(tmp_path):
+    """Regression: load_registry must raise ConstructorError on duplicate mapping keys.
+
+    PyYAML's SafeLoader silently overwrites duplicate keys with the last value.
+    A duplicate 'path' or 'content_hash' in sources.yaml would corrupt drift
+    baselines without any visible error.  _StrictSafeLoader makes this a hard
+    failure so operator typos are caught at load time.
+    """
+    bad_yaml = tmp_path / "sources.yaml"
+    bad_yaml.write_text(
+        "sources:\n"
+        "  - path: app/data/test.md\n"
+        "    path: app/data/other.md\n"  # duplicate key
+        "    url: https://example.com/test\n"
+        "    type: html_selector\n"
+        "    category: primary\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConstructorError, match="duplicate key"):
+        load_registry(bad_yaml)
 
 
 def test_html_content_extractor_selector():
@@ -335,8 +359,10 @@ def test_clean_bclaws_url_regex_preserves_markdown_link_parens():
     assert "for full text." in result
     # The bclaws URL itself should be gone
     assert "bclaws.gov.bc.ca" not in result
-    # Closing paren of the markdown link must not have been eaten
-    assert ")" in result or "for full text." in result
+    # The URL is stripped but the closing ) must survive, leaving an empty target.
+    # Old buggy output (\\S+ regex): the ) was eaten, breaking the link entirely.
+    # Fixed output: [Labour Relations Code]() for full text.
+    assert "Labour Relations Code]() for full text." in result
 
 
 def test_html_content_extractor_multi_node_anchor_text():
@@ -358,11 +384,10 @@ def test_html_content_extractor_multi_node_anchor_text():
     extractor.feed(raw_html)
     markdown = extractor.get_markdown()
 
-    # The link must exist with all anchor text joined
-    assert "https://example.com" in markdown
-    # "World" must not appear as an orphaned token outside the link bracket
-    # i.e. the pattern "[Hello](url)**World**" must not occur
-    assert "][" not in markdown or "World" in markdown.split("[")[1].split("]")[0] if "[" in markdown else True
+    # The link must emit the full joined anchor text, not just the first text node.
+    # Old buggy output: [Hello](url)**World** — link closed on first data node,
+    # "World" orphaned.  Fixed output: [Hello World](url).
+    assert "[Hello World](https://example.com)" in markdown
     assert "Click" in markdown
     assert "here." in markdown
 

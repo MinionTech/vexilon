@@ -24,6 +24,7 @@ dependencies = [
     { name = "openai" },
     { name = "pymupdf" },
     { name = "pymupdf4llm" },
+    { name = "pyyaml" },
     { name = "sentence-transformers" },
     { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
@@ -49,6 +50,7 @@ requires-dist = [
     { name = "openai", specifier = ">=1.60.0" },
     { name = "pymupdf", specifier = ">=1.27.2.2" },
     { name = "pymupdf4llm", specifier = ">=1.27.2.2" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "sentence-transformers", specifier = ">=5.0.0" },
     { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
 ]
