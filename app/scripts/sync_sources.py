@@ -78,9 +78,12 @@ class SelectorNotFoundError(Exception):
     banners) and let ``--sync`` overwrite a committed legal file with that chrome.
     """
 
-    def __init__(self, selector: str) -> None:
-        self.selector = selector
-        super().__init__(f"Selector not found in upstream HTML: {selector}")
+    def __init__(self, selector: str | None = None) -> None:
+        self.selector = selector or ""
+        if self.selector:
+            super().__init__(f"Selector not found in upstream HTML: {self.selector}")
+        else:
+            super().__init__("Source is missing its selector")
 
 
 class _StrictSafeLoader(yaml.SafeLoader):
@@ -327,7 +330,7 @@ def clean_bclaws_content(raw_html: str, selector: str | None) -> str:
     no default container: a null selector must not fall through to the whole page.
     """
     if not selector:
-        raise SelectorNotFoundError(selector or "")
+        raise SelectorNotFoundError()
     extractor = HTMLContentExtractor(target_selector=selector)
     extractor.feed(raw_html)
     _require_selector(extractor)
@@ -348,7 +351,7 @@ def extract_content(raw_html: str, doc_type: str, selector: str | None) -> tuple
         # container, and do not hash the whole page when the registry omits one.
         resolved_selector = selector
         if not resolved_selector:
-            raise SelectorNotFoundError(resolved_selector or "")
+            raise SelectorNotFoundError()
         extractor = HTMLContentExtractor(target_selector=resolved_selector)
         extractor.feed(raw_html)
         _require_selector(extractor)

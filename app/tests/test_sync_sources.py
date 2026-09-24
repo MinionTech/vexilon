@@ -479,10 +479,19 @@ def test_bclaws_body_uses_validated_selector_not_whole_page():
       </div>
     </body></html>
     """
-    with pytest.raises(SelectorNotFoundError):
+    with pytest.raises(SelectorNotFoundError) as missing_clean:
         clean_bclaws_content(raw_html, selector=None)
-    with pytest.raises(SelectorNotFoundError):
+    clean_error = str(missing_clean.value)
+    assert clean_error.strip()
+    assert "missing" in clean_error.lower()
+    assert "selector" in clean_error.lower()
+
+    with pytest.raises(SelectorNotFoundError) as missing_extract:
         extract_content(raw_html, "bclaws", None)
+    extract_error = str(missing_extract.value)
+    assert extract_error.strip()
+    assert "missing" in extract_error.lower()
+    assert "selector" in extract_error.lower()
 
     _title, body = extract_content(raw_html, "bclaws", "#act-text")
     assert "Section 1 Definitions." in body
