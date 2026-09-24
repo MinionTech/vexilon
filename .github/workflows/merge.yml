@@ -44,7 +44,7 @@ jobs:
       - name: Resolve image
         id: resolve
         if: ${{ !inputs.image_tag }}
-        uses: bcgov/actions/image-tracker@main
+        uses: bcgov/actions/image-tracker@c4694d429e6c8025974ba383f6f26ff8a41f7755 # v0.7.1
         with:
           package: agnav
           revision: ${{ github.sha }}
@@ -80,7 +80,7 @@ jobs:
 
       - name: Notify Owners on Failure
         if: failure()
-        uses: bcgov/actions/workflow-notifier@v0.6.0
+        uses: bcgov/actions/workflow-notifier@c4694d429e6c8025974ba383f6f26ff8a41f7755 # v0.7.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "TEST Deployment Failure: Vexilon"
@@ -136,7 +136,7 @@ jobs:
 
       - name: Notify Owners on Failure
         if: failure()
-        uses: bcgov/actions/workflow-notifier@v0.6.0
+        uses: bcgov/actions/workflow-notifier@c4694d429e6c8025974ba383f6f26ff8a41f7755 # v0.7.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "PROD Deployment Failure: Agreement Navigator (AgNav)"

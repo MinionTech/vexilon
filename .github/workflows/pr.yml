@@ -29,7 +29,7 @@ jobs:
         with:
           lfs: true
       - id: diff
-        uses: bcgov/actions/diff-triggers@main
+        uses: bcgov/actions/diff-triggers@c4694d429e6c8025974ba383f6f26ff8a41f7755 # v0.7.1
         with:
           triggers: |
             app/**
@@ -91,7 +91,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v10.1.0
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
           cache-dependency-glob: "app/uv.lock"
@@ -331,7 +331,7 @@ jobs:
     steps:
       - name: Build and Push
         id: builder
-        uses: bcgov/actions/builder@main
+        uses: bcgov/actions/builder@c4694d429e6c8025974ba383f6f26ff8a41f7755 # v0.7.1
         with:
           package: agnav
           build_context: app
