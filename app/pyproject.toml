@@ -21,6 +21,8 @@ dependencies = [
     # ── PDF processing ───────────────────────────────────────────────────────
     "pymupdf>=1.27.2.2",
     "pymupdf4llm>=1.27.2.2",
+    # ── YAML parsing ─────────────────────────────────────────────────────────
+    "pyyaml>=6.0",                  # sources.yaml registry loader (sync_sources)
 ]
 
 [dependency-groups]

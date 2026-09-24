@@ -1,0 +1,53 @@
+# Declarative Source Registry for Web-Sourced Knowledge Base Documents
+# Issue #695: Automate web-sourced document ingestion, provenance tracking, and drift detection.
+#
+# Schema:
+#   sources:
+#     - path: Relative path to markdown document within repo (e.g. app/data/03_resources/doc.md)
+#       url: Canonical upstream URL
+#       type: Ingestion parser strategy (html_selector | bclaws)
+#       selector: CSS or container selector to isolate substantive content (e.g. '#body', '#civix-document')
+#       category: Document classification (primary | statutory | resources | jurisprudence)
+#       content_hash: SHA-256 hash of substantive body content (for drift baseline)
+#       last_synced: ISO date when the document was last synced
+
+sources:
+  - path: app/data/03_resources/BC_Criminal_Notification_Procedures.md
+    url: https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee
+    type: html_selector
+    selector: "#body"
+    category: resources
+    content_hash: 73fd01d02cae218b4c4a64d0085f251d4c501d1693d367514f51fc2ad51f44ce
+    last_synced: "2026-09-18"
+
+  - path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
+    url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct
+    type: html_selector
+    selector: "#body"
+    category: primary
+    content_hash: 5f1284df6e0dcc625ef6638ce514caf6bb63669c8609b32d7d0a45e30e9ef7e1
+    last_synced: "2026-09-18"
+
+  - path: app/data/02_statutory/BC_Labour_Relations_Code.md
+    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01
+    type: bclaws
+    selector: "#civix-document"
+    category: statutory
+    content_hash: f58315e75d7f36e174276203bcd48a37606afd3912c0bff5a3046281431d371b
+    last_synced: "2026-09-18"
+
+  - path: app/data/02_statutory/BC_Employment_Standards_Act.md
+    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01
+    type: bclaws
+    selector: "#civix-document"
+    category: statutory
+    content_hash: c0286b4a86efd585d03cdee54d5019690041cd38ffa07367843159824727a27b
+    last_synced: "2026-09-18"
+
+  - path: app/data/02_statutory/BC_Human_Rights_Code.md
+    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01
+    type: bclaws
+    selector: "#civix-document"
+    category: statutory
+    content_hash: 0c26917e003827cc2160599dc55b89b2b8732dc6d9779eba0c8a1da3a5beea41
+    last_synced: "2026-09-18"
