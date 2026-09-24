@@ -19,6 +19,7 @@ from scripts.sync_sources import (
     check_source_drift,
     clean_bclaws_content,
     compute_content_hash,
+    extract_content,
     extract_substantive_body,
     format_provenance_header,
     load_registry,
@@ -354,7 +355,8 @@ def test_clean_bclaws_url_regex_preserves_markdown_link_parens():
         "for full text."
     )
     result = clean_bclaws_content(
-        f"<div id='civix-document'>{content_with_link}</div>"
+        f"<div id='civix-document'>{content_with_link}</div>",
+        selector="#civix-document",
     )
     # The URL inside parens should be stripped, but the surrounding text preserved
     assert "See" in result
@@ -459,6 +461,33 @@ def test_clean_bclaws_content_raises_when_selector_missing():
     raw_html = "<html><body><div id='toolBar'>Search Results</div><p>Copyright</p></body></html>"
     with pytest.raises(SelectorNotFoundError, match="#civix-document"):
         clean_bclaws_content(raw_html, selector="#civix-document")
+
+
+def test_bclaws_body_uses_validated_selector_not_whole_page():
+    """The body is the container the guard validated, not a second default or the whole page.
+
+    A null registry selector must fail closed. An entry selector other than any
+    historical default must be the container that is hashed.
+    """
+    raw_html = """
+    <html><body>
+      <div id="toolBar">Search Results Copyright banner</div>
+      <div id="decoy"><p>Whole page decoy that must not be hashed.</p></div>
+      <div id="act-text">
+        <h1>Labour Relations Code</h1>
+        <p>Section 1 Definitions.</p>
+      </div>
+    </body></html>
+    """
+    with pytest.raises(SelectorNotFoundError):
+        clean_bclaws_content(raw_html, selector=None)
+    with pytest.raises(SelectorNotFoundError):
+        extract_content(raw_html, "bclaws", None)
+
+    _title, body = extract_content(raw_html, "bclaws", "#act-text")
+    assert "Section 1 Definitions." in body
+    assert "Search Results" not in body
+    assert "Whole page decoy" not in body
 
 
 def test_save_registry_preserves_leading_comment_block(tmp_path):

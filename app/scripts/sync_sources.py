@@ -320,8 +320,14 @@ def _require_selector(extractor: HTMLContentExtractor) -> None:
         raise SelectorNotFoundError(extractor.target_selector)
 
 
-def clean_bclaws_content(raw_html: str, selector: str | None = "#civix-document") -> str:
-    """Specialized cleaner for BC Laws statutory documents."""
+def clean_bclaws_content(raw_html: str, selector: str | None) -> str:
+    """Specialized cleaner for BC Laws statutory documents.
+
+    ``selector`` is the registry value already chosen for this entry. There is
+    no default container: a null selector must not fall through to the whole page.
+    """
+    if not selector:
+        raise SelectorNotFoundError(selector or "")
     extractor = HTMLContentExtractor(target_selector=selector)
     extractor.feed(raw_html)
     _require_selector(extractor)
@@ -338,11 +344,16 @@ def clean_bclaws_content(raw_html: str, selector: str | None = "#civix-document"
 def extract_content(raw_html: str, doc_type: str, selector: str | None) -> tuple[str, str]:
     """Extracts (title, substantive_markdown_body) from raw HTML."""
     if doc_type == "bclaws":
-        extractor = HTMLContentExtractor(target_selector=selector or "#civix-document")
+        # One resolved selector for the guard and the body. Do not substitute a
+        # container, and do not hash the whole page when the registry omits one.
+        resolved_selector = selector
+        if not resolved_selector:
+            raise SelectorNotFoundError(resolved_selector or "")
+        extractor = HTMLContentExtractor(target_selector=resolved_selector)
         extractor.feed(raw_html)
         _require_selector(extractor)
         title = extractor.extracted_title or "BC Statute"
-        body = clean_bclaws_content(raw_html, selector=selector)
+        body = clean_bclaws_content(raw_html, selector=resolved_selector)
     else:
         extractor = HTMLContentExtractor(target_selector=selector or "#body")
         extractor.feed(raw_html)
