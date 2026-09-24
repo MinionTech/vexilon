@@ -64,11 +64,23 @@ class SourceEntry:
 class DriftResult:
     path: str
     url: str
-    status: str  # "MATCH", "DRIFT_DETECTED", "ERROR"
+    status: str  # "MATCH", "DRIFT_DETECTED", "ERROR", "UNTRACKED"
     local_hash: str | None = None
     upstream_hash: str | None = None
     upstream_last_modified: str | None = None
     error: str | None = None
+
+
+class SelectorNotFoundError(Exception):
+    """The configured container selector is absent from the upstream HTML.
+
+    Falling through to the whole page would hash chrome (toolbars, copyright
+    banners) and let ``--sync`` overwrite a committed legal file with that chrome.
+    """
+
+    def __init__(self, selector: str) -> None:
+        self.selector = selector
+        super().__init__(f"Selector not found in upstream HTML: {selector}")
 
 
 class _StrictSafeLoader(yaml.SafeLoader):
@@ -138,6 +150,7 @@ class HTMLContentExtractor(HTMLParser):
         super().__init__()
         self.target_selector = target_selector
         self.inside_target = target_selector is None
+        self.selector_found = target_selector is None
         self.selector_depth = 0
         self.tag_stack: list[str] = []
         self.ignore_depth = 0
@@ -172,6 +185,7 @@ class HTMLContentExtractor(HTMLParser):
         if not self.inside_target and self.target_selector:
             if self._matches_selector(tag_lower, attr_dict):
                 self.inside_target = True
+                self.selector_found = True
                 self.selector_depth = 1
                 return
 
@@ -300,16 +314,18 @@ class HTMLContentExtractor(HTMLParser):
         return cleaned.strip()
 
 
+def _require_selector(extractor: HTMLContentExtractor) -> None:
+    """Refuse a whole-page extract when the configured container is missing."""
+    if extractor.target_selector and not extractor.selector_found:
+        raise SelectorNotFoundError(extractor.target_selector)
+
+
 def clean_bclaws_content(raw_html: str, selector: str | None = "#civix-document") -> str:
     """Specialized cleaner for BC Laws statutory documents."""
     extractor = HTMLContentExtractor(target_selector=selector)
     extractor.feed(raw_html)
+    _require_selector(extractor)
     content = extractor.get_markdown()
-    if not content:
-        # Fallback to whole body extraction if selector not found
-        fallback = HTMLContentExtractor(target_selector=None)
-        fallback.feed(raw_html)
-        content = fallback.get_markdown()
 
     # Strip bclaws URL watermarks and boilerplate footers
     content = re.sub(r'https?://www\.bclaws\.gov\.bc\.ca/[^\s)\]>"]+', "", content)
@@ -324,18 +340,15 @@ def extract_content(raw_html: str, doc_type: str, selector: str | None) -> tuple
     if doc_type == "bclaws":
         extractor = HTMLContentExtractor(target_selector=selector or "#civix-document")
         extractor.feed(raw_html)
+        _require_selector(extractor)
         title = extractor.extracted_title or "BC Statute"
         body = clean_bclaws_content(raw_html, selector=selector)
     else:
         extractor = HTMLContentExtractor(target_selector=selector or "#body")
         extractor.feed(raw_html)
+        _require_selector(extractor)
         title = extractor.extracted_title or "Document"
         body = extractor.get_markdown()
-        if not body:
-            # Fallback to body tag
-            fallback = HTMLContentExtractor(target_selector="body")
-            fallback.feed(raw_html)
-            body = fallback.get_markdown()
 
     # If title is in the body's first h1, extract it
     h1_match = re.match(r"^#\s+(.+)$", body, re.MULTILINE)
@@ -434,13 +447,41 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
     return entries
 
 
+def leading_comment_block(text: str) -> str:
+    """Return the leading ``#`` comment block, including blank lines between comments.
+
+    ``yaml.safe_dump`` drops comments. ``--sync`` rewrites sources.yaml, so the
+    schema header has to be captured and written back or the first sync deletes it.
+    """
+    kept: list[str] = []
+    started = False
+    for line in text.splitlines():
+        if line.startswith("#"):
+            started = True
+            kept.append(line)
+            continue
+        if started and line.strip() == "":
+            kept.append(line)
+            continue
+        break
+    while kept and kept[-1].strip() == "":
+        kept.pop()
+    if not kept:
+        return ""
+    return "\n".join(kept) + "\n\n"
+
+
 def save_registry(config_path: Path, entries: list[SourceEntry]) -> None:
-    """Saves updated entries back to sources.yaml."""
+    """Saves updated entries back to sources.yaml, preserving the leading comment block."""
+    existing = config_path.read_text(encoding="utf-8") if config_path.exists() else ""
+    header = leading_comment_block(existing)
     data = {
         "sources": [asdict(e) for e in entries]
     }
-    content = SimpleYamlLoader.dump(data)
-    config_path.write_text(content, encoding="utf-8")
+    body = SimpleYamlLoader.dump(data)
+    if not body.endswith("\n"):
+        body += "\n"
+    config_path.write_text(header + body, encoding="utf-8")
 
 
 def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
@@ -467,6 +508,14 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
         raw_html, headers = fetch_upstream(source.url)
         title, upstream_body = extract_content(raw_html, source.type, source.selector)
         upstream_substantive = extract_substantive_body(upstream_body)
+        if not upstream_substantive:
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="ERROR",
+                local_hash=local_hash,
+                error="Upstream extraction produced no substantive content",
+            )
         upstream_hash = compute_content_hash(upstream_substantive)
         upstream_last_modified = headers.get("last-modified")
 
@@ -547,6 +596,8 @@ def sync_source(
         full_content = header + clean_body + "\n"
 
         substantive = extract_substantive_body(clean_body)
+        if not substantive:
+            return False, "Upstream extraction produced no substantive content"
         new_hash = compute_content_hash(substantive)
 
         if not dry_run:

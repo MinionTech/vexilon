@@ -14,6 +14,7 @@ from yaml.constructor import ConstructorError
 
 from scripts.sync_sources import (
     HTMLContentExtractor,
+    SelectorNotFoundError,
     SourceEntry,
     check_source_drift,
     clean_bclaws_content,
@@ -21,6 +22,7 @@ from scripts.sync_sources import (
     extract_substantive_body,
     format_provenance_header,
     load_registry,
+    save_registry,
     sync_source,
 )
 
@@ -43,12 +45,12 @@ def test_sources_yaml_exists_and_valid():
         # Ensure referenced file actually exists in repo
         target_file = REPO_ROOT / entry.path
         assert target_file.exists(), f"Target document does not exist: {target_file}"
-        # content_hash must be absent (None) or a full 64-character SHA-256 hex string.
-        # Short placeholder values cause perpetual false drift alerts on every scheduled run.
-        if entry.content_hash is not None:
-            assert len(entry.content_hash) == 64 and all(
-                c in "0123456789abcdef" for c in entry.content_hash
-            ), f"content_hash for {entry.path} is not a valid SHA-256 hex string: {entry.content_hash!r}"
+        # The registry baseline is the committed file. A stale hash makes MATCH
+        # impossible and the Sunday job files a drift issue while this test stays green.
+        substantive = extract_substantive_body(target_file.read_text(encoding="utf-8"))
+        assert entry.content_hash == compute_content_hash(substantive), (
+            f"content_hash for {entry.path} does not match the committed file"
+        )
 
 
 def test_load_registry_rejects_duplicate_keys(tmp_path):
@@ -450,3 +452,89 @@ def test_format_drift_alert_markdown_includes_error_entries():
     assert "timed out" in alert_md
     # Drifted source must still appear in the main table
     assert "BC_Labour_Relations_Code.md" in alert_md
+
+
+def test_clean_bclaws_content_raises_when_selector_missing():
+    """A missing container must not fall back to hashing the whole page."""
+    raw_html = "<html><body><div id='toolBar'>Search Results</div><p>Copyright</p></body></html>"
+    with pytest.raises(SelectorNotFoundError, match="#civix-document"):
+        clean_bclaws_content(raw_html, selector="#civix-document")
+
+
+def test_save_registry_preserves_leading_comment_block(tmp_path):
+    """--sync rewrites sources.yaml and must keep the schema comment header."""
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Declarative Source Registry\n"
+        "# Schema comment that must survive --sync\n"
+        "\n"
+        "sources:\n"
+        "  - path: app/data/test.md\n"
+        "    url: https://example.com/test\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n",
+        encoding="utf-8",
+    )
+    entries = load_registry(config)
+    entries[0].content_hash = "ab" * 32
+    save_registry(config, entries)
+    text = config.read_text(encoding="utf-8")
+    assert text.startswith("# Declarative Source Registry\n")
+    assert "# Schema comment that must survive --sync\n" in text
+    reloaded = load_registry(config)
+    assert reloaded[0].content_hash == "ab" * 32
+    assert reloaded[0].selector == "#body"
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_missing_selector_is_error_and_does_not_overwrite(mock_fetch, tmp_path):
+    """Selector miss is an operational error. --sync must not replace the committed file."""
+    target = tmp_path / "app" / "data" / "statute.md"
+    target.parent.mkdir(parents=True)
+    original = "# Statute\n\n## Definitions\n\nThe act text.\n"
+    target.write_text(original, encoding="utf-8")
+    mock_fetch.return_value = (
+        "<html><body><div id='toolBar'>Search Results</div><p>Copyright banner</p></body></html>",
+        {},
+    )
+    entry = SourceEntry(
+        path="app/data/statute.md",
+        url="https://example.com/statute",
+        type="bclaws",
+        selector="#civix-document",
+        content_hash="a" * 64,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+    assert result.status == "ERROR"
+    assert "Selector not found" in (result.error or "")
+    assert "Search Results" not in (result.error or "")
+
+    success, message = sync_source(entry, tmp_path, dry_run=False)
+    assert success is False
+    assert "Selector not found" in message
+    assert target.read_text(encoding="utf-8") == original
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_empty_upstream_body_is_error_not_drift(mock_fetch, tmp_path):
+    """An extract with no substantive body is an operational error, not drift."""
+    target = tmp_path / "app" / "data" / "doc.md"
+    target.parent.mkdir(parents=True)
+    target.write_text("# Title\n\nBody text that must stay.\n", encoding="utf-8")
+    mock_fetch.return_value = (
+        "<html><head><title>T</title></head><body><div id='body'><h1>T</h1></div></body></html>",
+        {},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash="c" * 64,
+    )
+    result = check_source_drift(entry, tmp_path)
+    assert result.status == "ERROR"
+    assert "no substantive" in (result.error or "")
+    assert "Body text that must stay." in target.read_text(encoding="utf-8")

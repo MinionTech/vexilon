@@ -17,7 +17,7 @@ sources:
     type: html_selector
     selector: "#body"
     category: resources
-    content_hash: 4c3e8006b53dbd0bbce6e44b8d234a9fcbe48b71eead9c054f280bbaefeb016f
+    content_hash: 73fd01d02cae218b4c4a64d0085f251d4c501d1693d367514f51fc2ad51f44ce
     last_synced: "2026-09-18"
 
   - path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
@@ -25,7 +25,7 @@ sources:
     type: html_selector
     selector: "#body"
     category: primary
-    content_hash: e46006093d58434b9d0b7b137d6e8b4e72dd87010467b93708bb003bc4c71ef6
+    content_hash: 5f1284df6e0dcc625ef6638ce514caf6bb63669c8609b32d7d0a45e30e9ef7e1
     last_synced: "2026-09-18"
 
   - path: app/data/02_statutory/BC_Labour_Relations_Code.md
@@ -33,7 +33,7 @@ sources:
     type: bclaws
     selector: "#civix-document"
     category: statutory
-    content_hash: 10cebf35d648f572a15fefffe0f75e927c8584877e841fe7f5fe38dcfe5fa453
+    content_hash: f58315e75d7f36e174276203bcd48a37606afd3912c0bff5a3046281431d371b
     last_synced: "2026-09-18"
 
   - path: app/data/02_statutory/BC_Employment_Standards_Act.md
@@ -41,7 +41,7 @@ sources:
     type: bclaws
     selector: "#civix-document"
     category: statutory
-    content_hash: a0fb4f23bc38a9a6ff336f33aa3b8d009b0b4ae83efd85c2c77ef1c09930f30c
+    content_hash: c0286b4a86efd585d03cdee54d5019690041cd38ffa07367843159824727a27b
     last_synced: "2026-09-18"
 
   - path: app/data/02_statutory/BC_Human_Rights_Code.md
@@ -49,5 +49,5 @@ sources:
     type: bclaws
     selector: "#civix-document"
     category: statutory
-    content_hash: 5db1c356f9e612660a9504c55ec8bf9098dfc63964ec80bc135f29d91f24d352
+    content_hash: 0c26917e003827cc2160599dc55b89b2b8732dc6d9779eba0c8a1da3a5beea41
     last_synced: "2026-09-18"
