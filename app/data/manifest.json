@@ -1,10 +1,14 @@
 {
-  "generated_at": "2026-09-18T21:25:58.303283+00:00",
+  "generated_at": "2026-09-24T22:11:39.784585+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
       "hash": "fa58d818e31e1541aacaab1bd164f6e53e4b938d95923106bf2ff4bb4ca12648",
       "size_bytes": 597844
+    },
+    "01_primary/Gov_BC_Core_Policy.md": {
+      "hash": "39b000ccde8c58c5403e15710ab704cbdc47f8dc2c58fdc21feae5f3489dd2ec",
+      "size_bytes": 5478
     },
     "01_primary/Gov_BC_Standards_of_Conduct.md": {
       "hash": "decf3e1688a4409e9b6c5792dbcda485776eeb3b78c120ab86b74e31a354fec1",

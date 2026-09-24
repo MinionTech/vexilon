@@ -51,3 +51,11 @@ sources:
     category: statutory
     content_hash: 0c26917e003827cc2160599dc55b89b2b8732dc6d9779eba0c8a1da3a5beea41
     last_synced: "2026-09-18"
+
+  - path: app/data/01_primary/Gov_BC_Core_Policy.md
+    url: https://www2.gov.bc.ca/gov/content/governments/policies-for-government/core-policy/about-cppm
+    type: html_selector
+    selector: "#body"
+    category: primary
+    content_hash: 68f522c85decba0a18396f86cf3a1bd202658fa91c3b93c6e6c7b791cfb0eb80
+    last_synced: "2026-09-24"

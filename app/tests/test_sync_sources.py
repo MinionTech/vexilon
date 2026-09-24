@@ -576,3 +576,70 @@ def test_empty_upstream_body_is_error_not_drift(mock_fetch, tmp_path):
     assert result.status == "ERROR"
     assert "no substantive" in (result.error or "")
     assert "Body text that must stay." in target.read_text(encoding="utf-8")
+
+
+# URLs and selectors shipped with the five-source catalogue. A later source
+# must not retarget these entries.
+_SHIPPED_CATALOGUE = {
+    "https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee": (
+        "app/data/03_resources/BC_Criminal_Notification_Procedures.md",
+        "html_selector",
+        "#body",
+    ),
+    "https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct": (
+        "app/data/01_primary/Gov_BC_Standards_of_Conduct.md",
+        "html_selector",
+        "#body",
+    ),
+    "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01": (
+        "app/data/02_statutory/BC_Labour_Relations_Code.md",
+        "bclaws",
+        "#civix-document",
+    ),
+    "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01": (
+        "app/data/02_statutory/BC_Employment_Standards_Act.md",
+        "bclaws",
+        "#civix-document",
+    ),
+    "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01": (
+        "app/data/02_statutory/BC_Human_Rights_Code.md",
+        "bclaws",
+        "#civix-document",
+    ),
+}
+
+CORE_POLICY_URL = (
+    "https://www2.gov.bc.ca/gov/content/governments/policies-for-government/core-policy/about-cppm"
+)
+
+
+def test_shipped_catalogue_urls_and_selectors_stay():
+    """The five sources already on main keep their URLs and selectors."""
+    entries = load_registry(SOURCES_YAML)
+    by_url = {entry.url: entry for entry in entries}
+    assert len(by_url) == len(entries)
+    for url, (path, doc_type, selector) in _SHIPPED_CATALOGUE.items():
+        assert url in by_url, f"Shipped source missing: {url}"
+        entry = by_url[url]
+        assert entry.path == path
+        assert entry.type == doc_type
+        assert entry.selector == selector
+
+
+def test_core_policy_source_is_catalogued():
+    """Issue #565: the public CPPM about page is registered and matches the synced file."""
+    entries = [entry for entry in load_registry(SOURCES_YAML) if entry.url == CORE_POLICY_URL]
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry.path == "app/data/01_primary/Gov_BC_Core_Policy.md"
+    assert entry.type == "html_selector"
+    assert entry.selector == "#body"
+    assert entry.category == "primary"
+    assert entry.last_synced == "2026-09-24"
+
+    text = (REPO_ROOT / entry.path).read_text(encoding="utf-8")
+    assert text.startswith("# ")
+    assert "**Source:** [" in text
+    assert CORE_POLICY_URL in text
+    assert "Core Policy and Procedures Manual" in text
+    assert entry.content_hash == compute_content_hash(extract_substantive_body(text))
