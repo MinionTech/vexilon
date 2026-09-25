@@ -186,14 +186,16 @@ class HTMLContentExtractor(HTMLParser):
         if self.ignore_depth > 0:
             return
 
-        # Check selector entry condition
-        if not self.inside_target and self.target_selector:
+        # A listed container nested inside an active one is recorded as found but
+        # not re-entered, so its content is emitted once as part of the outer container.
+        if self.target_selector:
             matched = self._matches_selector(tag_lower, attr_dict)
             if matched:
-                self.inside_target = True
                 self.found_selectors.add(matched)
-                self.selector_depth = 1
-                return
+                if not self.inside_target:
+                    self.inside_target = True
+                    self.selector_depth = 1
+                    return
 
         if self.inside_target and self.target_selector and self.selector_depth > 0:
             if tag_lower not in self.VOID_TAGS:

@@ -462,6 +462,20 @@ def test_extract_content_selector_list_keeps_sibling_containers():
     assert "Site menu" not in body
     assert "Copyright" not in body
 
+    nested_html = """
+    <html><body>
+      <div id="body"><p>Outer text.</p>
+        <div id="resources"><h2>Resources</h2><p>Nested once.</p></div>
+        <p>After nested.</p>
+      </div>
+      <footer>Copyright</footer>
+    </body></html>
+    """
+    _title, nested_body = extract_content(nested_html, "html_selector", "#body, #resources")
+    assert nested_body.count("Nested once.") == 1
+    assert nested_body.index("Outer text.") < nested_body.index("Nested once.") < nested_body.index("After nested.")
+    assert "Copyright" not in nested_body
+
     without_resources = raw_html.replace('id="cmf-ui-supplementary-content"', 'id="gone"')
     with pytest.raises(SelectorNotFoundError, match="#cmf-ui-supplementary-content"):
         extract_content(without_resources, "html_selector", "#body, #cmf-ui-supplementary-content")
