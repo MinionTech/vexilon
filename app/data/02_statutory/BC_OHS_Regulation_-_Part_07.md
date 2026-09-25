@@ -1,322 +1,520 @@
-# Part 7 — Noise, Vibration, Radiation and Temperature
+# Occupational Health and Safety Regulation
+
+**Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_05)  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:15 GMT  
+**Ingestion Date:** 2026-09-25  
+
+B.C. Reg. 296/97
+Workers' Compensation Board Deposited September 8, 1997
+effective April 15, 1998
+
+**This consolidation is current to September 22, 2026.
+See “Amendments Not in Force” and the
+[Cumulative B.C. Regulations Bulletin 2026](http://www.bclaws.ca/civix/document/id/regulationbulletin/regulationbulletin/2026cumulati) for
+amendments effective after September 22, 2026.**
+
+##### **[Link to consolidated regulation (PDF)](/civix/content/crbc/crbc/901199259/19001/296_97_multi_dir/?xsl=/templates/browse.xsl)**
+
+## Workers Compensation Act
+
+## Occupational Health and Safety Regulation
+
+[Last amended April 1, 2026 by B.C. Reg. 229/2025]
+
+Part 7 — Noise, Vibration, Radiation and Temperature
 
 Division 1 — Noise Exposure
 
-Definition
-7.1
-(1) In this Division, "noise exposure limits" means either of the noise exposure limits established under section 7.2.
+#### Definition
+
+**7.1** (1) In this Division, "noise exposure limits" means either of the noise exposure limits established under section 7.2.
+
 (2) Noise terminology and measurements used or described in this Division have the same meaning that they have in
-(a) CSA Standard Z107.56-94, Procedures for the Measurement of Occupational Noise Exposure, as amended from time to time, and
-(b) ANSI Standard S1.25-1991, Specification for Personal Noise Dosimeters, as amended from time to time.
+
+(a) *CSA Standard Z107.56-94, Procedures for the Measurement of Occupational Noise Exposure*, as amended from time to time, and
+
+(b) *ANSI Standard S1.25-1991, Specification for Personal Noise Dosimeters*, as amended from time to time.
+
 [en. B.C. Reg. 382/2004.]
 
-Noise exposure limits
-7.2
-An employer must ensure that a worker is not exposed to noise levels above either of the following exposure limits:
+#### Noise exposure limits
+
+**7.2** An employer must ensure that a worker is not exposed to noise levels above either of the following exposure limits:
+
 (a) 85 dBA Lex daily noise exposure level;
+
 (b) 140 dBC peak sound level.
+
 [en. B.C. Reg. 382/2004.]
 
-Noise measurement required
-7.3
-(1) If a worker is or may be exposed to potentially harmful levels of noise, or if information indicates that a worker may be exposed to a level exceeding 82 dBA Lex, the employer must measure the noise exposure.
+#### Noise measurement required
+
+**7.3** (1) If a worker is or may be exposed to potentially harmful levels of noise, or if information indicates that a worker may be exposed to a level exceeding 82 dBA Lex, the employer must measure the noise exposure.
+
 (2) The noise exposure measurement must
-(a) be performed in accordance with CSA Standard Z107.56-94, Procedures for the Measurement of Occupational Noise Exposure, as amended from time to time, except as otherwise determined by the Board, and
+
+(a) be performed in accordance with *CSA Standard Z107.56-94, Procedures for the Measurement of Occupational Noise Exposure*, as amended from time to time, except as otherwise determined by the Board, and
+
 (b) be updated if a change in equipment or process affects the noise level or the duration of noise exposure.
-(3) Except as otherwise determined by the Board, noise dosimeters and sound level meters used for measuring noise exposure must meet the requirements of ANSI Standard S1.25-1991, Specification for Personal Noise Dosimeters, as amended from time to time.
+
+(3) Except as otherwise determined by the Board, noise dosimeters and sound level meters used for measuring noise exposure must meet the requirements of *ANSI Standard S1.25-1991, Specification for Personal Noise Dosimeters*, as amended from time to time.
+
 (4) The employer must inform affected workers of the results of any noise exposure measurement and the significance of the measurement to risk of hearing loss.
+
 [en. B.C. Reg. 382/2004.]
 
-Exemption
-7.4
-An employer is not required to measure the noise exposure of a worker if
+#### Exemption
+
+**7.4** An employer is not required to measure the noise exposure of a worker if
+
 (a) based on other information, the employer identifies the worker as being exposed to noise in excess of an exposure limit, and
+
 (b) the employer establishes an effective noise control and hearing conservation program for that worker.
+
 [en. B.C. Reg. 382/2004.]
 
-Noise control and hearing conservation program
-7.5
-If noise in the workplace exceeds either of the noise exposure limits, the employer must develop and implement an effective noise control and hearing conservation program with the following elements:
+#### Noise control and hearing conservation program
+
+**7.5** If noise in the workplace exceeds either of the noise exposure limits, the employer must develop and implement an effective noise control and hearing conservation program with the following elements:
+
 (a) noise measurement;
+
 (b) education and training;
+
 (c) engineered noise control;
+
 (d) hearing protection;
+
 (e) posting of noise hazard areas;
+
 (f) hearing tests;
+
 (g) annual program review.
+
 [en. B.C. Reg. 382/2004.]
 
-Engineered noise control
-7.6
-If a worker is exposed to noise above a noise exposure limit, the employer must
+#### Engineered noise control
+
+**7.6** If a worker is exposed to noise above a noise exposure limit, the employer must
+
 (a) investigate options for engineered noise control, and
+
 (b) when practicable, implement one or more of those options to reduce noise exposure of workers to or below the exposure limits.
+
 [en. B.C. Reg. 382/2004.]
 
-Hearing protection and warning signs
-7.7
-(1) If it is not practicable to reduce noise levels to or below noise exposure limits, the employer must
+#### Hearing protection and warning signs
+
+**7.7** (1) If it is not practicable to reduce noise levels to or below noise exposure limits, the employer must
+
 (a) reduce noise exposure to the lowest level practicable,
+
 (b) post warning signs in the noise hazard areas,
-(c) give to affected workers hearing protection that meets the requirements of CSA Standard Z94.2-02, Hearing Protection Devices — Performance, Selection, Care, and Use, as amended from time to time, except as otherwise determined by the Board, and maintain the hearing protection so that it continues to meet those standards, and
+
+(c) give to affected workers hearing protection that meets the requirements of *CSA Standard Z94.2-02, Hearing Protection Devices — Performance, Selection, Care, and Use*, as amended from time to time, except as otherwise determined by the Board, and maintain the hearing protection so that it continues to meet those standards, and
+
 (d) ensure that hearing protection is worn effectively in noise hazard areas.
+
 (2) Workers in a posted noise hazard area must wear hearing protection.
+
 [en. B.C. Reg. 382/2004.]
 
-Hearing tests
-7.8
-(1) The employer must give workers who are exposed to noise that exceeds noise exposure limits
+#### Hearing tests
+
+**7.8** (1) The employer must give workers who are exposed to noise that exceeds noise exposure limits
+
 (a) an initial hearing test as soon as practicable after employment starts, but not later than 6 months after the start of employment, and
+
 (b) a test at least once every 12 months after the initial test.
+
 (2) Hearing tests must be administered by a hearing tester authorized by the Board.
+
 (3) The employer must ensure that the authorized hearing tester sends the test results to the Board.
+
 [en. B.C. Reg. 382/2004.]
 
-Records to be kept
-7.9
-The employer must keep records of
+#### Records to be kept
+
+**7.9** The employer must keep records of
+
 (a) the annual hearing test results for each worker, which must
+
 (i) be kept as long as the worker is employed by the employer, and
+
 (ii) be kept confidential and not released to anyone without the written permission of the worker, or as otherwise required by law,
+
 (b) the education and training provided to workers, and
+
 (c) the results of noise exposure measurements taken under section 7.3.
+
 [en. B.C. Reg. 382/2004.]
+
 Division 2 — Vibration Exposure
 
-Definitions
-7.10
-In this Division:
+#### Definitions
+
+**7.10** In this Division:
+
 "hand-arm vibration" means vibration that is transmitted from vibrating surfaces of objects, such as hand tools, through the hands and arms;
+
 "vibration exposure limits" means the limits referred to in section 7.11;
+
 "whole-body vibration" means vibration that is transmitted to a worker's body from vibrating surfaces on which a worker stands or sits.
+
 [en. B.C. Reg. 382/2004.]
 
-Vibration exposure limits
-7.11
-An employer must ensure, to the extent practicable, that workers are not exposed to vibration in excess of the limits specified in
-(a) for hand-arm vibration, the American Conference of Governmental Industrial Hygienists publication entitled Threshold Limit Values and Biological Exposure Indices, dated 2003, as amended from time to time;
-(b) for whole-body vibration, ANSI Standard S3.18-2002/ISO 2631-1-1997, Mechanical Vibration and Shock — Evaluation of Human Exposure to Whole Body Vibration — Part 1: General Requirements, as amended from time to time;
+#### Vibration exposure limits
+
+**7.11** An employer must ensure, to the extent practicable, that workers are not exposed to vibration in excess of the limits specified in
+
+(a) for hand-arm vibration, the *American Conference of Governmental Industrial Hygienists* publication entitled *Threshold Limit Values and Biological Exposure Indices*, dated 2003, as amended from time to time;
+
+(b) for whole-body vibration, *ANSI Standard S3.18-2002/ISO 2631-1-1997, Mechanical Vibration and Shock — Evaluation of Human Exposure to Whole Body Vibration — Part 1: General Requirements*, as amended from time to time;
+
 except as otherwise determined by the Board.
+
 [en. B.C. Reg. 382/2004.]
 
-Evaluation of vibration
-7.12
-The evaluation of hand-arm vibration and whole-body vibration must be conducted by the employer in accordance with
-(a) for hand-arm vibration, ISO Standard 5349-1:2001, Mechanical Vibration — Measurement and Evaluation of Human Exposure to Hand-transmitted Vibration — Part 1: General Requirements and ISO Standard 5349-2:2001, Mechanical Vibration — Measurement and Evaluation of Human Exposure to Hand-transmitted Vibration — Part 2: Practical Guidance for Measurement at the Workplace, as amended from time to time;
-(b) for whole-body vibration, ANSI Standard S3.18-2002/1SO 2631-1-1997, Mechanical Vibration and Shock — Evaluation of Human Exposure to the Whole Body Vibration — Part 1: General Requirements, as amended from time to time;
+#### Evaluation of vibration
+
+**7.12** The evaluation of hand-arm vibration and whole-body vibration must be conducted by the employer in accordance with
+
+(a) for hand-arm vibration, *ISO Standard 5349-1:2001, Mechanical Vibration — Measurement and Evaluation of Human Exposure to Hand-transmitted Vibration — Part 1: General Requirements and ISO Standard 5349-2:2001, Mechanical Vibration — Measurement and Evaluation of Human Exposure to Hand-transmitted Vibration — Part 2: Practical Guidance for Measurement at the Workplace*, as amended from time to time;
+
+(b) for whole-body vibration, *ANSI Standard S3.18-2002/1SO 2631-1-1997, Mechanical Vibration and Shock — Evaluation of Human Exposure to the Whole Body Vibration — Part 1: General Requirements*, as amended from time to time;
+
 except as otherwise determined by the Board.
+
 [en. B.C. Reg. 382/2004.]
 
-Vibration exposure control obligations
-7.13
-The employer must, if a worker is or may be exposed to vibration in excess of the vibration exposure limits, develop and implement an exposure control plan that meets the requirements of section 5.54 (2).
+#### Vibration exposure control obligations
+
+**7.13** The employer must, if a worker is or may be exposed to vibration in excess of the vibration exposure limits, develop and implement an exposure control plan that meets the requirements of section 5.54 (2).
+
 [en. B.C. Reg. 382/2004.]
 
-Information about vibration hazards
-7.14
-The employer must, if a worker is exposed to levels of vibration above the vibration exposure limits, inform the worker of the nature of the hazard and possible adverse effects.
+#### Information about vibration hazards
+
+**7.14** The employer must, if a worker is exposed to levels of vibration above the vibration exposure limits, inform the worker of the nature of the hazard and possible adverse effects.
+
 [en. B.C. Reg. 382/2004.]
 
-Labels
-7.15
-If the manufacturer of equipment that produces levels of vibration in excess of the vibration exposure limits does not label the equipment to identify the hazard, the employer is responsible for doing so.
+#### Labels
+
+**7.15** If the manufacturer of equipment that produces levels of vibration in excess of the vibration exposure limits does not label the equipment to identify the hazard, the employer is responsible for doing so.
+
 [en. B.C. Reg. 382/2004.]
 
-Exposure to cold and hand-arm vibration
-7.16
-When a worker is exposed to hand-arm vibration, the employer, to the extent practicable, must ensure that the worker's hands or arms are not exposed to cold, either
+#### Exposure to cold and hand-arm vibration
+
+**7.16** When a worker is exposed to hand-arm vibration, the employer, to the extent practicable, must ensure that the worker's hands or arms are not exposed to cold, either
+
 (a) from the environment in which the worker is working or as a result of using equipment, or
+
 (b) from coming into contact with cold objects.
+
 [en. B.C. Reg. 382/2004.]
+
 Division 3 — Radiation Exposure
 
-Definitions
-7.17
-In this Division:
+#### Definitions
+
+**7.17** In this Division:
+
 "action level, ionizing radiation" means an effective dose of 1 milliSievert (mSv) per year;
+
 "action level, non-ionizing radiation" means the exposure limits for the general public referred to in section 7.19 (4) or, if no public limit is referred to, it means the maximum exposure limit for workers referred to in section 7.19 (4);
+
 "effective dose" means the amount of ionizing radiation, measured in mSv, absorbed by the worker's whole body, adjusted for the energy level and type of radiation and the differing susceptibilities of the organs and tissues irradiated, and if only part of the body is exposed the effective dose is the sum of the weighted equivalent doses in all irradiated tissues and organs;
+
 "equivalent dose" means the amount of ionizing radiation, measured in mSv, absorbed by a specific body part and adjusted for the energy level and type of radiation.
+
 [en. B.C. Reg. 382/2004.]
 
-Application
-7.18
-(1) This Division applies to all sources of ultrasonic energy, non-ionizing and ionizing radiation, including radiation sources governed by the Nuclear Safety and Control Act (Canada), except as otherwise determined by the Board.
+#### Application
+
+**7.18** (1) This Division applies to all sources of ultrasonic energy, non-ionizing and ionizing radiation, including radiation sources governed by the [Nuclear Safety and Control Act](http://laws-lois.justice.gc.ca/eng/acts/N-28.3/index.html) (Canada), except as otherwise determined by the Board.
+
 (2) This Division does not apply to medical or dental radiation received by a patient, or to natural background radiation, except as specified by the Board.
+
 [en. B.C. Reg. 382/2004.]
 
-Exposure limits
-7.19   (1) A worker's exposure to ionizing radiation must not exceed any of the following:
-(a) an effective dose of 20 mSv over any period of 12 consecutive months;
+#### Exposure limits
+
+**7.19** (1) A worker's exposure to ionizing radiation must not exceed any of the following:
+
+(a) an effective dose of 20 mSv over any period of 12 consecutive months;
+
 (b) with respect to exposure to the lens of an eye,
-(i) an equivalent dose of 50 mSv over any period of 12 consecutive months that starts on or after December 1, 2021, and
-(ii) an equivalent dose of 100 mSv over any period of 60 consecutive months that starts on or after December 1, 2021;
-(c) with respect to exposure to the skin, averaged over any 1 cm2 area at a nominal depth of 7 mg/cm2, regardless of the area exposed, an equivalent dose of 500 mSv over any period of 12 consecutive months;
-(d) with respect to exposure to the hands and feet, an equivalent dose of 500 mSv over any period of 12 consecutive months.
+
+(i) an equivalent dose of 50 mSv over any period of 12 consecutive months that starts on or after December 1, 2021, and
+
+(ii) an equivalent dose of 100 mSv over any period of 60 consecutive months that starts on or after December 1, 2021;
+
+(c) with respect to exposure to the skin, averaged over any 1 cm2 area at a nominal depth of 7 mg/cm2, regardless of the area exposed, an equivalent dose of 500 mSv over any period of 12 consecutive months;
+
+(d) with respect to exposure to the hands and feet, an equivalent dose of 500 mSv over any period of 12 consecutive months.
+
 (2) If a worker declares the worker's pregnancy to the employer, the worker's effective dose of ionizing radiation, for the remainder of the pregnancy, from external and internal sources, must be limited by the employer to the lesser of
+
 (a) 4 mSv, or
-(b) the dose limit specified for pregnant workers under the Nuclear Safety and Control Act (Canada).
+
+(b) the dose limit specified for pregnant workers under the [Nuclear Safety and Control Act](http://laws-lois.justice.gc.ca/eng/acts/N-28.3/index.html) (Canada).
+
 (3) The employer must ensure that the exposure of workers to ionizing radiation is kept as low as reasonably achievable below the exposure limits.
+
 (4) The employer must ensure that a worker's exposure to non-ionizing radiation does not exceed the exposure limits specified in
+
 (a) for radiofrequency:
-(i) Health Canada Safety Code 25, Short-Wave Diathermy Guidelines for Limiting Radiofrequency Exposure, 1983, as amended from time to time;
-(ii) Health Canada Safety Code 26, Guidelines on Exposure to Electromagnetic Fields from Magnetic Resonance Clinical Systems, 1987, as amended from time to time;
-(iii) Health Canada Safety Code 6, Limits of Human Exposure to Radiofrequency Electromagnetic Fields in the Frequency Range from 3 kHz to 300 GHz, 1999, as amended from time to time, and
+
+(i) *Health Canada Safety Code 25, Short-Wave Diathermy Guidelines for Limiting Radiofrequency Exposure*, 1983, as amended from time to time;
+
+(ii) *Health Canada Safety Code 26, Guidelines on Exposure to Electromagnetic Fields from Magnetic Resonance Clinical Systems*, 1987, as amended from time to time;
+
+(iii) *Health Canada Safety Code 6, Limits of Human Exposure to Radiofrequency Electromagnetic Fields in the Frequency Range from 3 kHz to 300 GHz*, 1999, as amended from time to time, and
+
 (b) for lasers:
-(i) ANSI Standard Z136.1-2000, Safe Use of Lasers, as amended from time to time;
-(ii) ANSI Standard Z136.2-1997, Safe Use of Optical Fiber Communication Systems Utilizing Laser Diode and LED Sources, as amended from time to time;
-(iii) ANSI Standard Z136.3-1996, Safe Use of Lasers in Health Care Facilities, as amended from time to time;
-(iv) CSA Standard Z386-01, Laser Safety in Health Care Facilities, as amended from time to time,
+
+(i) *ANSI Standard Z136.1-2000, Safe Use of Lasers*, as amended from time to time;
+
+(ii) *ANSI Standard Z136.2-1997, Safe Use of Optical Fiber Communication Systems Utilizing Laser Diode and LED Sources*, as amended from time to time;
+
+(iii) *ANSI Standard Z136.3-1996, Safe Use of Lasers in Health Care Facilities*, as amended from time to time;
+
+(iv) *CSA Standard Z386-01, Laser Safety in Health Care Facilities*, as amended from time to time,
+
 except as otherwise determined by the Board.
-(5) A worker's exposure to ultraviolet radiation produced by equipment or industrial processes must not exceed the threshold limit values specified in the American Conference of Governmental Industrial Hygienists publication entitled Threshold Limit Values and Biological Exposure Indices, dated 2003, as amended from time to time.
+
+(5) A worker's exposure to ultraviolet radiation produced by equipment or industrial processes must not exceed the threshold limit values specified in the *American Conference of Governmental Industrial Hygienists* publication entitled *Threshold Limit Values and Biological Exposure Indices*, dated 2003, as amended from time to time.
+
 [en. B.C. Reg. 382/2004; am. B.C. Regs. 222/2021, App. B; 116/2022, App. B, s. 8.]
 
-Exposure control plan
-7.20   (1) If a worker exceeds or may exceed an action level, ionizing radiation or action level, non-ionizing radiation, the employer must develop and implement an exposure control plan meeting the requirements of section 5.54 (2).
+#### Exposure control plan
+
+**7.20** (1) If a worker exceeds or may exceed an action level, ionizing radiation or action level, non-ionizing radiation, the employer must develop and implement an exposure control plan meeting the requirements of section 5.54 (2).
+
 (2) The instructions to workers developed under subsection (1) must be posted or otherwise available in the work area or near the applicable equipment controls.
+
 [en. B.C. Reg. 382/2004.]
 
-Reproductive hazards
-7.21
-(1) The employer must ensure that every worker who exceeds, or may exceed, the action level, ionizing radiation is fully informed of any potential reproductive hazards associated with exposure to ionizing radiation.
+#### Reproductive hazards
+
+**7.21** (1) The employer must ensure that every worker who exceeds, or may exceed, the action level, ionizing radiation is fully informed of any potential reproductive hazards associated with exposure to ionizing radiation.
+
 (2) When requested by a pregnant worker or by a worker intending to conceive a child, the employer must make counselling available with respect to the reproductive hazards associated with exposure to ionizing radiation.
+
 [en. B.C. Reg. 382/2004.]
 
-Monitoring exposure
-7.22
-Unless exempted by the Board, if a worker exceeds or may exceed the action level, ionizing radiation, the employer must ensure that the worker is provided with and properly uses a personal dosimeter acceptable to the Board.
+#### Monitoring exposure
+
+**7.22** Unless exempted by the Board, if a worker exceeds or may exceed the action level, ionizing radiation, the employer must ensure that the worker is provided with and properly uses a personal dosimeter acceptable to the Board.
+
 [en. B.C. Reg. 382/2004.]
 
-Standards for use of equipment
-7.23
-Equipment producing ionizing or non-ionizing radiation or ultrasonic energy must be installed, operated and maintained in accordance with the following:
+#### Standards for use of equipment
+
+**7.23** Equipment producing ionizing or non-ionizing radiation or ultrasonic energy must be installed, operated and maintained in accordance with the following:
+
 (a) for ionizing radiation:
-(i) Health Canada Safety Code 20A, X-Ray Equipment in Medical Diagnosis Part A: Recommended Safety Procedures for Installation and Use, 1980, as amended from time to time;
-(ii) Health Canada Safety Code 27, Requirements for Industrial X-Ray Equipment Use and Installation, 1987, as amended from time to time;
-(iii) Health Canada Safety Code 28, Radiation Protection in Veterinary Medicine — Recommended Safety Procedures for Installation and Use of Veterinary X-Ray Equipment, 1991, as amended from time to time;
-(iv) Health Canada Safety Code 29, Requirements for the Safe Use of Baggage X-Ray Inspection Systems, 1993, as amended from time to time;
-(v) Health Canada Safety Code 30, Radiation Protection in Dentistry — Recommended Safety Procedures for the Use of Dental X-Ray Equipment, 1999, as amended from time to time;
-(vi) Health Canada Safety Code 31, Radiation Protection in Computed Tomography Installation, 1994, as amended from time to time;
-(vii) Health Canada Safety Code 32, Safety Requirements and Guidance for Analytical X-Ray Equipment, 1994, as amended from time to time;
-(viii) Health Canada Safety Code 33, Radiation Protection in Mammography, 1995, as amended from time to time;
+
+(i) *Health Canada Safety Code 20A, X-Ray Equipment in Medical Diagnosis Part A: Recommended Safety Procedures for Installation and Use*, 1980, as amended from time to time;
+
+(ii) *Health Canada Safety Code 27, Requirements for Industrial X-Ray Equipment Use and Installation*, 1987, as amended from time to time;
+
+(iii) *Health Canada Safety Code 28, Radiation Protection in Veterinary Medicine — Recommended Safety Procedures for Installation and Use of Veterinary X-Ray Equipment*, 1991, as amended from time to time;
+
+(iv) *Health Canada Safety Code 29, Requirements for the Safe Use of Baggage X-Ray Inspection Systems*, 1993, as amended from time to time;
+
+(v) *Health Canada Safety Code 30, Radiation Protection in Dentistry — Recommended Safety Procedures for the Use of Dental X-Ray Equipment*, 1999, as amended from time to time;
+
+(vi) *Health Canada Safety Code 31, Radiation Protection in Computed Tomography Installation*, 1994, as amended from time to time;
+
+(vii) *Health Canada Safety Code 32, Safety Requirements and Guidance for Analytical X-Ray Equipment*, 1994, as amended from time to time;
+
+(viii) *Health Canada Safety Code 33, Radiation Protection in Mammography*, 1995, as amended from time to time;
+
 (b) for radiofrequency:
-(i) Health Canada Safety Code 25, Guidelines for Limiting Radiofrequency Exposure — Short-Wave Diathermy, 1983, as amended from time to time;
-(ii) Health Canada Safety Code 26, Guidelines on Exposure to Electromagnetic Fields from Magnetic Resonance Clinical Systems, 1987, as amended from time to time;
-(iii) Health Canada Safety Code 6, Limits of Human Exposure to Radiofrequency Electromagnetic Fields in the Frequency Range from 3 kHz to 300 GHz, 1999, as amended from time to time;
+
+(i) *Health Canada Safety Code 25, Guidelines for Limiting Radiofrequency Exposure — Short-Wave Diathermy*, 1983, as amended from time to time;
+
+(ii) *Health Canada Safety Code 26, Guidelines on Exposure to Electromagnetic Fields from Magnetic Resonance Clinical Systems*, 1987, as amended from time to time;
+
+(iii) *Health Canada Safety Code 6, Limits of Human Exposure to Radiofrequency Electromagnetic Fields in the Frequency Range from 3 kHz to 300 GHz*, 1999, as amended from time to time;
+
 (c) for lasers:
-(i) ANSI Standard Z136.1-2000, Safe Use of Lasers, as amended from time to time;
-(ii) ANSI Standard Z136.2-1997, Safe Use of Optical Fiber Communication Systems Utilizing Laser Diode and LED Sources, as amended from time to time;
-(iii) ANSI Standard Z136.3-1996, Safe Use of Lasers in Health Care Facilities, as amended from time to time;
-(iv) CSA Standard Z386-01, Laser Safety in Health Care Facilities, as amended from time to time;
+
+(i) *ANSI Standard Z136.1-2000, Safe Use of Lasers*, as amended from time to time;
+
+(ii) *ANSI Standard Z136.2-1997, Safe Use of Optical Fiber Communication Systems Utilizing Laser Diode and LED Sources*, as amended from time to time;
+
+(iii) *ANSI Standard Z136.3-1996, Safe Use of Lasers in Health Care Facilities*, as amended from time to time;
+
+(iv) *CSA Standard Z386-01, Laser Safety in Health Care Facilities*, as amended from time to time;
+
 (d) for infrared and ultraviolet:
-(i) CSA Standard CAN/CSA-C22.2 No. 224-M89 (R1994), Radiant Heaters and Infrared and Ultraviolet Lamp Assemblies for Cosmetic or Hygienic Purposes in Nonmedical Applications, as amended from time to time;
+
+(i) *CSA Standard CAN/CSA-C22.2 No. 224-M89 (R1994), Radiant Heaters and Infrared and Ultraviolet Lamp Assemblies for Cosmetic or Hygienic Purposes in Nonmedical Applications*, as amended from time to time;
+
 (e) for ultrasound:
-(i) Health Canada Guidelines for the Safe Use of Diagnostic Ultrasound, 2001, as amended from time to time;
-(ii) Health Canada Safety Code 24, Guidelines for the Safe Use of Ultrasound: Part II — Industrial and Commercial Applications, 1991, as amended from time to time,
+
+(i) *Health Canada Guidelines for the Safe Use of Diagnostic Ultrasound*, 2001, as amended from time to time;
+
+(ii) *Health Canada Safety Code 24, Guidelines for the Safe Use of Ultrasound: Part II — Industrial and Commercial Applications*, 1991, as amended from time to time,
+
 except as otherwise determined by the Board.
+
 [en. B.C. Reg. 382/2004.]
 
-Radiation surveys
-7.24
-Except as otherwise determined by the Board, the employer must conduct a radiation survey for ionizing radiation in accordance with the standard practice specified under the applicable Safety Code listed in section 7.23 (a) or the regulations under the Nuclear Safety and Control Act (Canada),
+#### Radiation surveys
+
+**7.24** Except as otherwise determined by the Board, the employer must conduct a radiation survey for ionizing radiation in accordance with the standard practice specified under the applicable Safety Code listed in section 7.23 (a) or the regulations under the [Nuclear Safety and Control Act](http://laws-lois.justice.gc.ca/eng/acts/N-28.3/index.html) (Canada),
+
 (a) at the times required by the Safety Code or regulations, as the case requires,
+
 (b) if equipment has been damaged or modified, or
+
 (c) if there is an indication of an unusually high exposure of a worker to ionizing radiation.
+
 [en. B.C. Reg. 382/2004.]
 
-Records
-7.25   The employer must
+#### Records
+
+**7.25** The employer must
+
 (a) maintain and make available to the Board,
+
 (i) for at least 10 years, records of radiation surveys, and
+
 (ii) for the period that the worker is employed plus 10 years, records of exposure monitoring and personal dosimetry data, and
+
 (b) make the records available to workers.
+
 [en. B.C. Reg. 382/2004.]
+
 Division 4 — Thermal Exposure
 
-Definitions
-7.26
-In this Division:
-"ACGIH Standard" means the American Conference of Governmental Industrial Hygienists publication entitled Threshold Limit Values and Biological Exposure Indices, dated 2003, as amended from time to time, except as otherwise determined by the Board;
+#### Definitions
+
+**7.26** In this Division:
+
+"ACGIH Standard" means the *American Conference of Governmental Industrial Hygienists* publication entitled *Threshold Limit Values and Biological Exposure Indices*, dated 2003, as amended from time to time, except as otherwise determined by the Board;
+
 "unacclimatized worker" means a worker who is not accustomed to working in a hot environment or who has been out of a hot environment for seven consecutive days.
-[en. B.C. Reg. 382/2004.]
-Heat Exposure
 
-Application
-7.27
-(1) Subject to subsection (2), sections 7.28 to 7.32 apply to a workplace if
+[en. B.C. Reg. 382/2004.]
+
+**Heat Exposure**
+
+#### Application
+
+**7.27** (1) Subject to subsection (2), sections 7.28 to 7.32 apply to a workplace if
+
 (a) a worker is or may be exposed to thermal conditions which could cause heat stress,
+
 (b) the thermal conditions could result in a worker's core body temperature exceeding 38°C (100°F), or
+
 (c) the thermal conditions are in excess of the levels listed in the screening criteria for heat stress exposure in the heat stress and strain section of the ACGIH Standard for unacclimatized workers.
+
 (2) Subsection (1) does not apply to firefighting if special provisions, satisfactory to the Board, are in place to ensure that the firefighter's core body temperature is maintained below 38°C (100°F).
+
 [en. B.C. Reg. 382/2004.]
 
-Exposure limits
-7.28
-(1) A worker must not be exposed to levels that exceed those listed in the screening criteria for heat stress exposure in the heat stress and strain section of the ACGIH Standard.
+#### Exposure limits
+
+**7.28** (1) A worker must not be exposed to levels that exceed those listed in the screening criteria for heat stress exposure in the heat stress and strain section of the ACGIH Standard.
+
 (2) Clothing corrections must be applied in accordance with the heat stress and strain section of the ACGIH Standard.
+
 [en. B.C. Reg. 382/2004.]
 
-Heat stress assessment and exposure control plan
-7.29
-(1) If a worker is or may be exposed to the conditions specified in section 7.27, the employer must
+#### Heat stress assessment and exposure control plan
+
+**7.29** (1) If a worker is or may be exposed to the conditions specified in section 7.27, the employer must
+
 (a) conduct a heat stress assessment to determine the potential for hazardous exposure of workers, using measures and methods that are acceptable to the Board, and
+
 (b) develop and implement a heat stress exposure control plan meeting the requirements of section 5.54 (2).
+
 [en. B.C. Reg. 382/2004.]
 
-Heat stress controls
-7.30
-(1) If a worker is or may be exposed to the conditions specified in section 7.27, the employer must implement engineering controls to reduce the exposure of workers to levels below those listed in the screening criteria for heat stress exposure in the heat stress and strain section of the ACGIH Standard.
+#### Heat stress controls
+
+**7.30** (1) If a worker is or may be exposed to the conditions specified in section 7.27, the employer must implement engineering controls to reduce the exposure of workers to levels below those listed in the screening criteria for heat stress exposure in the heat stress and strain section of the ACGIH Standard.
+
 (2) If the action described in subsection (1) is not practicable, the employer must reduce the exposure of workers to levels below those listed in the screening criteria for heat stress exposure in the heat stress and strain section of the ACGIH Standard by providing
+
 (a) administrative controls, including a work-rest cycle, acceptable to the Board, or
+
 (b) personal protective equipment, if the equipment provides protection equally effective as administrative controls.
+
 [en. B.C. Reg. 382/2004.]
 
-Provision of water
-7.31
-If a worker is or may be exposed to the conditions specified in section 7.27, the employer must provide and maintain an adequate supply of cool potable water close to the work area for the use of a heat exposed worker.
+#### Provision of water
+
+**7.31** If a worker is or may be exposed to the conditions specified in section 7.27, the employer must provide and maintain an adequate supply of cool potable water close to the work area for the use of a heat exposed worker.
+
 [en. B.C. Reg. 382/2004.]
 
-Removal from and treatment for heat exposure
-7.32
-If a worker shows signs or reports symptoms of heat stress or strain, the worker must be removed from the hot environment and treated by an appropriate first aid attendant, if available, or by a physician.
-[en. B.C. Reg. 382/2004.]
-Cold Exposure
+#### Removal from and treatment for heat exposure
 
-Application
-7.33
-Sections 7.34 to 7.38 apply to a workplace if a worker is or may be exposed to
+**7.32** If a worker shows signs or reports symptoms of heat stress or strain, the worker must be removed from the hot environment and treated by an appropriate first aid attendant, if available, or by a physician.
+
+[en. B.C. Reg. 382/2004.]
+
+**Cold Exposure**
+
+#### Application
+
+**7.33** Sections 7.34 to 7.38 apply to a workplace if a worker is or may be exposed to
+
 (a) thermal conditions that could cause cold stress or injury,
+
 (b) thermal conditions that could cause a worker's core body temperature to fall below 36°C (96.8°F), or
+
 (c) thermal conditions that are below the levels classified as "little danger" to workers in the criteria for the cooling power of wind on exposed flesh in the cold stress section of the ACGIH Standard.
+
 [en. B.C. Reg. 382/2004.]
 
-Cold stress assessment and exposure control plan
-7.34
-If a worker is or may be exposed to the conditions specified in section 7.33, the employer must
+#### Cold stress assessment and exposure control plan
+
+**7.34** If a worker is or may be exposed to the conditions specified in section 7.33, the employer must
+
 (a) conduct a cold stress assessment to determine the potential for hazardous exposure of workers, using measures and methods that are acceptable to the Board, and
+
 (b) develop and implement a cold exposure control plan meeting the requirements of section 5.54 (2).
+
 [en. B.C. Reg. 382/2004.]
 
-Cold stress controls
-7.35
-(1) If a worker is or may be exposed to the conditions specified in section 7.33, the employer must implement effective engineering controls to reduce the exposure hazard to levels above those classified as "little danger" to workers in the criteria for the cooling power of wind on exposed flesh in the cold stress section of the ACGIH Standard.
+#### Cold stress controls
+
+**7.35** (1) If a worker is or may be exposed to the conditions specified in section 7.33, the employer must implement effective engineering controls to reduce the exposure hazard to levels above those classified as "little danger" to workers in the criteria for the cooling power of wind on exposed flesh in the cold stress section of the ACGIH Standard.
+
 (2) If the action described in subsection (1) is not practicable, the employer must reduce the exposure hazard by providing
+
 (a) effective administrative controls, or
+
 (b) personal protective equipment, if the equipment provides protection equally effective as administrative controls.
+
 [en. B.C. Reg. 382/2004.]
 
-Heated shelters
-7.36
-If a worker is exposed to a thermal environment with an equivalent chill temperature less than −7°C (19°F), as determined using the criteria for the cooling power of wind on exposed flesh in the cold stress section of the ACGIH Standard, a nearby heated shelter must be available to the worker.
+#### Heated shelters
+
+**7.36** If a worker is exposed to a thermal environment with an equivalent chill temperature less than −7°C (19°F), as determined using the criteria for the cooling power of wind on exposed flesh in the cold stress section of the ACGIH Standard, a nearby heated shelter must be available to the worker.
+
 [en. B.C. Reg. 382/2004.]
 
-Clothing and personal protective equipment
-7.37
-(1) A worker who is or may be exposed to the conditions referred to in section 7.33 must wear adequate insulating clothing and personal protective equipment.
+#### Clothing and personal protective equipment
+
+**7.37** (1) A worker who is or may be exposed to the conditions referred to in section 7.33 must wear adequate insulating clothing and personal protective equipment.
+
 (2) If work takes place outdoors in snow or ice covered terrain where excessive ultraviolet light, glare or blowing ice crystals present a risk of injury to the eyes, workers must wear eye protection appropriate to the hazards.
+
 [en. B.C. Reg. 382/2004.]
 
-Removal and treatment
-7.38
-If a worker exposed to cold shows signs or reports symptoms of cold stress or injury, the worker must be removed from further exposure and treated by an appropriate first aid attendant, if available, or a physician.
+#### Removal and treatment
+
+**7.38** If a worker exposed to cold shows signs or reports symptoms of cold stress or injury, the worker must be removed from further exposure and treated by an appropriate first aid attendant, if available, or a physician.
+
 [en. B.C. Reg. 382/2004.]
+
+**[Contents](/civix/document/id/complete/statreg/296_97_00) | [Parts 1 to 3](/civix/document/id/complete/statreg/296_97_01) | [Part 4](/civix/document/id/complete/statreg/296_97_02) | [Part 5](/civix/document/id/complete/statreg/296_97_03) | [Part 6](/civix/document/id/complete/statreg/296_97_04) | Part 7 | [Part 8](/civix/document/id/complete/statreg/296_97_06) | [Part 9](/civix/document/id/complete/statreg/296_97_07) | [Parts 10 to 11](/civix/document/id/complete/statreg/296_97_08) | [Part 12](/civix/document/id/complete/statreg/296_97_09) | [Part 13](/civix/document/id/complete/statreg/296_97_10) | [Part 14](/civix/document/id/complete/statreg/296_97_11) | [Part 15](/civix/document/id/complete/statreg/296_97_12) | [Part 16](/civix/document/id/complete/statreg/296_97_13) | [Parts 17 to 18](/civix/document/id/complete/statreg/296_97_14) | [Part 19](/civix/document/id/complete/statreg/296_97_15) | [Part 20](/civix/document/id/complete/statreg/296_97_16) | [Part 21](/civix/document/id/complete/statreg/296_97_17) | [Part 22](/civix/document/id/complete/statreg/296_97_18) | [Part 23](/civix/document/id/complete/statreg/296_97_19) | [Part 24](/civix/document/id/complete/statreg/296_97_20) | [Parts 25 to 26](/civix/document/id/complete/statreg/296_97_21) | [Part 27](/civix/document/id/complete/statreg/296_97_22) | [Part 28](/civix/document/id/complete/statreg/296_97_23) | [Parts 29 to 34](/civix/document/id/complete/statreg/296_97_24) | [Schedules](/civix/document/id/complete/statreg/296_97_25)**

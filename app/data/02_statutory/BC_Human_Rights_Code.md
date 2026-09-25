@@ -1,12 +1,8 @@
 # Human Rights Code
 
 **Source:** [Human Rights Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 04:09:39 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:13 GMT  
 **Ingestion Date:** 2026-09-25  
-
-Copyright © King's Printer,
-Victoria, British Columbia, Canada[Licence](/standards/Licence.html)
-[Disclaimer](/standards/Disclaimer.html)
 
 This Act is current to September 15, 2026
 
@@ -18,163 +14,163 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 *Contents*
 
-[1](#section1)[Definitions](#section1)
+[1](#section1) [Definitions](#section1)
 
-[2](#section2)[Discrimination and intent](#section2)
+[2](#section2) [Discrimination and intent](#section2)
 
-[3](#section3)[Purposes](#section3)
+[3](#section3) [Purposes](#section3)
 
-[4](#section4)[Code prevails](#section4)
+[4](#section4) [Code prevails](#section4)
 
-[5-6](#section5t6)[Repealed](#section5t6)
+[5-6](#section5t6) [Repealed](#section5t6)
 
-[7](#section7)[Discriminatory publication](#section7)
+[7](#section7) [Discriminatory publication](#section7)
 
-[8](#section8)[Discrimination in accommodation, service and facility](#section8)
+[8](#section8) [Discrimination in accommodation, service and facility](#section8)
 
-[9](#section9)[Discrimination in purchase of property](#section9)
+[9](#section9) [Discrimination in purchase of property](#section9)
 
-[10](#section10)[Discrimination in tenancy premises](#section10)
+[10](#section10) [Discrimination in tenancy premises](#section10)
 
-[11](#section11)[Discrimination in employment advertisements](#section11)
+[11](#section11) [Discrimination in employment advertisements](#section11)
 
-[12](#section12)[Discrimination in wages](#section12)
+[12](#section12) [Discrimination in wages](#section12)
 
-[13](#section13)[Discrimination in employment](#section13)
+[13](#section13) [Discrimination in employment](#section13)
 
-[14](#section14)[Discrimination by unions and associations](#section14)
+[14](#section14) [Discrimination by unions and associations](#section14)
 
-[15-20](#section15t20)[Repealed](#section15t20)
+[15-20](#section15t20) [Repealed](#section15t20)
 
-[21](#section21)[Complaints](#section21)
+[21](#section21) [Complaints](#section21)
 
-[22](#section22)[Time limit for filing a complaint](#section22)
+[22](#section22) [Time limit for filing a complaint](#section22)
 
-[22.1](#section22.1)[Commissioner and other intervenors](#section22.1)
+[22.1](#section22.1) [Commissioner and other intervenors](#section22.1)
 
-[23-24](#section23t24)[Repealed](#section23t24)
+[23-24](#section23t24) [Repealed](#section23t24)
 
-[25](#section25)[Deferral of a complaint](#section25)
+[25](#section25) [Deferral of a complaint](#section25)
 
-[26](#section26)[Repealed](#section26)
+[26](#section26) [Repealed](#section26)
 
-[27](#section27)[Dismissal of a complaint](#section27)
+[27](#section27) [Dismissal of a complaint](#section27)
 
-[27.1](#section27.1)[Assignment of complaints](#section27.1)
+[27.1](#section27.1) [Assignment of complaints](#section27.1)
 
-[27.2](#section27.2)[Evidence](#section27.2)
+[27.2](#section27.2) [Evidence](#section27.2)
 
-[27.3](#section27.3)[Powers to make rules and orders respecting practice and procedure](#section27.3)
+[27.3](#section27.3) [Powers to make rules and orders respecting practice and procedure](#section27.3)
 
-[27.4](#section27.4)[Repealed](#section27.4)
+[27.4](#section27.4) [Repealed](#section27.4)
 
-[27.5](#section27.5)[Dismissal for failure to pursue complaint](#section27.5)
+[27.5](#section27.5) [Dismissal for failure to pursue complaint](#section27.5)
 
-[27.6](#section27.6)[Assisting parties to settle](#section27.6)
+[27.6](#section27.6) [Assisting parties to settle](#section27.6)
 
-[28-29](#section28t29)[Repealed](#section28t29)
+[28-29](#section28t29) [Repealed](#section28t29)
 
-[30](#section30)[Enforcement of settlement agreements](#section30)
+[30](#section30) [Enforcement of settlement agreements](#section30)
 
-[31](#section31)[Human Rights Tribunal](#section31)
+[31](#section31) [Human Rights Tribunal](#section31)
 
-[31.1](#section31.1)[Repealed](#section31.1)
+[31.1](#section31.1) [Repealed](#section31.1)
 
-[32](#section32)[Application of Administrative Tribunals Act to tribunal](#section32)
+[32](#section32) [Application of Administrative Tribunals Act to tribunal](#section32)
 
-[33](#section33)[Staff of the tribunal](#section33)
+[33](#section33) [Staff of the tribunal](#section33)
 
-[34](#section34)[Repealed](#section34)
+[34](#section34) [Repealed](#section34)
 
-[34.1](#section34.1)[Repealed](#section34.1)
+[34.1](#section34.1) [Repealed](#section34.1)
 
-[35-36](#section35t36)[Repealed](#section35t36)
+[35-36](#section35t36) [Repealed](#section35t36)
 
-[37](#section37)[Remedies](#section37)
+[37](#section37) [Remedies](#section37)
 
-[38](#section38)[Modification of orders](#section38)
+[38](#section38) [Modification of orders](#section38)
 
-[38.1](#section38.1)[Repealed](#section38.1)
+[38.1](#section38.1) [Repealed](#section38.1)
 
-[39](#section39)[Enforcement of remedies](#section39)
+[39](#section39) [Enforcement of remedies](#section39)
 
-[39.1](#section39.1)[Annual report](#section39.1)
+[39.1](#section39.1) [Annual report](#section39.1)
 
-[40](#section40)[Disclosure](#section40)
+[40](#section40) [Disclosure](#section40)
 
-[41](#section41)[Exemptions](#section41)
+[41](#section41) [Exemptions](#section41)
 
-[42](#section42)[Special programs](#section42)
+[42](#section42) [Special programs](#section42)
 
-[43](#section43)[Protection](#section43)
+[43](#section43) [Protection](#section43)
 
-[44](#section44)[Style of cause for proceedings](#section44)
+[44](#section44) [Style of cause for proceedings](#section44)
 
-[45](#section45)[Technical defects](#section45)
+[45](#section45) [Technical defects](#section45)
 
-[46](#section46)[Delegation of powers](#section46)
+[46](#section46) [Delegation of powers](#section46)
 
-[47](#section47)[Time limits](#section47)
+[47](#section47) [Time limits](#section47)
 
-[47.01](#section47.01)[Human Rights Commissioner](#section47.01)
+[47.01](#section47.01) [Human Rights Commissioner](#section47.01)
 
-[47.02](#section47.02)[Resignation, suspension or removal of commissioner](#section47.02)
+[47.02](#section47.02) [Resignation, suspension or removal of commissioner](#section47.02)
 
-[47.03](#section47.03)[Acting commissioner](#section47.03)
+[47.03](#section47.03) [Acting commissioner](#section47.03)
 
-[47.04](#section47.04)[Salary, expenses and benefits of commissioner](#section47.04)
+[47.04](#section47.04) [Salary, expenses and benefits of commissioner](#section47.04)
 
-[47.05](#section47.05)[Oath of commissioner](#section47.05)
+[47.05](#section47.05) [Oath of commissioner](#section47.05)
 
-[47.06](#section47.06)[Staff of commissioner](#section47.06)
+[47.06](#section47.06) [Staff of commissioner](#section47.06)
 
-[47.07](#section47.07)[Delegation by commissioner](#section47.07)
+[47.07](#section47.07) [Delegation by commissioner](#section47.07)
 
-[47.08](#section47.08)[Advisory council](#section47.08)
+[47.08](#section47.08) [Advisory council](#section47.08)
 
-[47.09](#section47.09)[Restrictions on disclosure by commissioner and staff](#section47.09)
+[47.09](#section47.09) [Restrictions on disclosure by commissioner and staff](#section47.09)
 
-[47.10](#section47.10)[Non-compellability of commissioner and staff](#section47.10)
+[47.10](#section47.10) [Non-compellability of commissioner and staff](#section47.10)
 
-[47.11](#section47.11)[Personal liability protection of commissioner and staff](#section47.11)
+[47.11](#section47.11) [Personal liability protection of commissioner and staff](#section47.11)
 
-[47.12](#section47.12)[Powers of commissioner](#section47.12)
+[47.12](#section47.12) [Powers of commissioner](#section47.12)
 
-[47.13](#section47.13)[Provision of tribunal records to commissioner](#section47.13)
+[47.13](#section47.13) [Provision of tribunal records to commissioner](#section47.13)
 
-[47.14](#section47.14)[Referrals](#section47.14)
+[47.14](#section47.14) [Referrals](#section47.14)
 
-[47.15](#section47.15)[Commissioner's inquiry](#section47.15)
+[47.15](#section47.15) [Commissioner's inquiry](#section47.15)
 
-[47.16](#section47.16)[Commissioner's order powers for inquiries](#section47.16)
+[47.16](#section47.16) [Commissioner's order powers for inquiries](#section47.16)
 
-[47.17](#section47.17)[Expenses reimbursement](#section47.17)
+[47.17](#section47.17) [Expenses reimbursement](#section47.17)
 
-[47.18](#section47.18)[Cabinet information protected](#section47.18)
+[47.18](#section47.18) [Cabinet information protected](#section47.18)
 
-[47.19](#section47.19)[Enforcement of commissioner's orders](#section47.19)
+[47.19](#section47.19) [Enforcement of commissioner's orders](#section47.19)
 
-[47.20](#section47.20)[Commissioner's inquiry reports](#section47.20)
+[47.20](#section47.20) [Commissioner's inquiry reports](#section47.20)
 
-[47.21](#section47.21)[Protection](#section47.21)
+[47.21](#section47.21) [Protection](#section47.21)
 
-[47.22](#section47.22)[Offences](#section47.22)
+[47.22](#section47.22) [Offences](#section47.22)
 
-[47.23](#section47.23)[Annual report of commissioner](#section47.23)
+[47.23](#section47.23) [Annual report of commissioner](#section47.23)
 
-[47.24](#section47.24)[Special reports of commissioner](#section47.24)
+[47.24](#section47.24) [Special reports of commissioner](#section47.24)
 
-[48](#section48)[Offence Act](#section48)
+[48](#section48) [Offence Act](#section48)
 
-[49](#section49)[Power to make regulations](#section49)
+[49](#section49) [Power to make regulations](#section49)
 
-[50](#section50)[Repealed](#section50)
+[50](#section50) [Repealed](#section50)
 
-[50.1](#section50.1)[Review of sections 47.01 to 47.24](#section50.1)
+[50.1](#section50.1) [Review of sections 47.01 to 47.24](#section50.1)
 
 #### Definitions
 
-**1**   In this Code:
+**1** In this Code:
 
 "age" means an age of 19 years or more;
 
@@ -184,11 +180,11 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 "commissioner" means the Human Rights Commissioner appointed under section 47.01;
 
-"complainant" means a person or group of persons that files a complaint under section 21;
+"complainant" means a person or group of persons that files a complaint under section 21;
 
 "complaint" means a complaint filed under section 21;
 
-"discrimination" includes the conduct described in sections 7, 8 (1) (a), (9) (a) and (b), 10 (1) (a), 11, 13 (1) (a) and (2), 14 (a) and (b), 43 and 47.21;
+"discrimination" includes the conduct described in sections 7, 8 (1) (a), (9) (a) and (b), 10 (1) (a), 11, 13 (1) (a) and (2), 14 (a) and (b), 43 and 47.21;
 
 "employers' organization" means an organization of employers formed for purposes that include the regulation of relations between employers and employees;
 
@@ -212,16 +208,15 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 "trade union" means an organization of employees formed for purposes that include the regulation of relations between employees and employers;
 
-"tribunal" means the British Columbia Human Rights Tribunal continued under section 31.
+"tribunal" means the British Columbia Human Rights Tribunal continued under section 31.
 
 #### Discrimination and intent
 
-**2**   Discrimination in contravention of this Code does not require an intention to contravene this Code.
+**2** Discrimination in contravention of this Code does not require an intention to contravene this Code.
 
 #### Purposes
 
-**3**
-The purposes of this Code are as follows:
+**3** The purposes of this Code are as follows:
 
 (a) to foster a society in British Columbia in which there are no impediments to full and free participation in the economic, social, political and cultural life of British Columbia;
 
@@ -237,18 +232,15 @@ The purposes of this Code are as follows:
 
 #### Code prevails
 
-**4**
-If there is a conflict between this Code and any other enactment, this Code prevails.
+**4** If there is a conflict between this Code and any other enactment, this Code prevails.
 
 #### Repealed
 
-**5-6**
-[Repealed 2018-48-3.]
+**5-6** [Repealed 2018-48-3.]
 
 #### Discriminatory publication
 
-**7**
-(1) A person must not publish, issue or display, or cause to be published, issued or displayed, any statement, publication, notice, sign, symbol, emblem or other representation that
+**7** (1) A person must not publish, issue or display, or cause to be published, issued or displayed, any statement, publication, notice, sign, symbol, emblem or other representation that
 
 (a) indicates discrimination or an intention to discriminate against a person or a group or class of persons, or
 
@@ -256,13 +248,11 @@ If there is a conflict between this Code and any other enactment, this Code prev
 
 because of the Indigenous identity, race, colour, ancestry, place of origin, religion, marital status, family status, physical or mental disability, sex, sexual orientation, gender identity or expression, or age of that person or that group or class of persons.
 
-(2)
-Subsection (1) does not apply to a private communication, a communication intended to be private or a communication related to an activity otherwise permitted by this Code.
+(2) Subsection (1) does not apply to a private communication, a communication intended to be private or a communication related to an activity otherwise permitted by this Code.
 
 #### Discrimination in accommodation, service and facility
 
-**8**
-(1) A person must not, without a bona fide and reasonable justification,
+**8** (1) A person must not, without a bona fide and reasonable justification,
 
 (a) deny to a person or class of persons any accommodation, service or facility customarily available to the public, or
 
@@ -278,8 +268,7 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, rel
 
 #### Discrimination in purchase of property
 
-**9**
-A person must not
+**9** A person must not
 
 (a) deny to a person or class of persons the opportunity to purchase a commercial unit or dwelling unit that is in any way represented as being available for sale,
 
@@ -291,8 +280,7 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, rel
 
 #### Discrimination in tenancy premises
 
-**10**
-(1) A person must not
+**10** (1) A person must not
 
 (a) deny to a person or class of persons the right to occupy, as a tenant, space that is represented as being available for occupancy by a tenant, or
 
@@ -300,14 +288,13 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, rel
 
 because of the Indigenous identity, race, colour, ancestry, place of origin, religion, marital status, family status, physical or mental disability, sex, sexual orientation, gender identity or expression, age or lawful source of income of that person or class of persons, or of any other person or class of persons.
 
-(2)
-Subsection (1) does not apply in the following circumstances:
+(2) Subsection (1) does not apply in the following circumstances:
 
 (a) if the space is to be occupied by another person who is to share, with the person making the representation, the use of any sleeping, bathroom or cooking facilities in the space;
 
 (b) as it relates to family status or age,
 
-(i) if the space is a rental unit in residential premises in which every rental unit is reserved for rental to a person who has reached 55 years of age or to 2 or more persons, at least one of whom has reached 55 years of age, or
+(i) if the space is a rental unit in residential premises in which every rental unit is reserved for rental to a person who has reached 55 years of age or to 2 or more persons, at least one of whom has reached 55 years of age, or
 
 (ii) a rental unit in a prescribed class of residential premises;
 
@@ -325,13 +312,11 @@ Subsection (1) does not apply in the following circumstances:
 
 #### Discrimination in employment advertisements
 
-**11**
-A person must not publish or cause to be published an advertisement in connection with employment or prospective employment that expresses a limitation, specification or preference as to Indigenous identity, race, colour, ancestry, place of origin, political belief, religion, marital status, family status, physical or mental disability, sex, sexual orientation, gender identity or expression, or age unless the limitation, specification or preference is based on a bona fide occupational requirement.
+**11** A person must not publish or cause to be published an advertisement in connection with employment or prospective employment that expresses a limitation, specification or preference as to Indigenous identity, race, colour, ancestry, place of origin, political belief, religion, marital status, family status, physical or mental disability, sex, sexual orientation, gender identity or expression, or age unless the limitation, specification or preference is based on a bona fide occupational requirement.
 
 #### Discrimination in wages
 
-**12**
-(1) An employer must not discriminate between employees by employing an employee of one sex for work at a rate of pay that is less than the rate of pay at which an employee of another sex is employed by that employer for similar or substantially similar work.
+**12** (1) An employer must not discriminate between employees by employing an employee of one sex for work at a rate of pay that is less than the rate of pay at which an employee of another sex is employed by that employer for similar or substantially similar work.
 
 (2) For the purposes of subsection (1), the concept of skill, effort and responsibility must, subject to factors in respect of pay rates such as seniority systems, merit systems and systems that measure earnings by quantity or quality of production, be used to determine what is similar or substantially similar work.
 
@@ -341,14 +326,13 @@ A person must not publish or cause to be published an advertisement in connectio
 
 (5) If an employee is paid less than the rate of pay to which the employee is entitled under this section, the employee is entitled to recover from the employer, by action, the difference between the amount paid and the amount to which the employee is entitled, together with the costs, but
 
-(a) the action must be commenced no later than 12 months from the termination of the employee's services, and
+(a) the action must be commenced no later than 12 months from the termination of the employee's services, and
 
-(b) the action applies only to wages of an employee during the 12 month period immediately before the earlier of the date of the employee's termination or the commencement of the action.
+(b) the action applies only to wages of an employee during the 12 month period immediately before the earlier of the date of the employee's termination or the commencement of the action.
 
 #### Discrimination in employment
 
-**13**
-(1) A person must not
+**13** (1) A person must not
 
 (a) refuse to employ or refuse to continue to employ a person, or
 
@@ -358,20 +342,17 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 (2) An employment agency must not refuse to refer a person for employment for any reason mentioned in subsection (1).
 
-(3)
-Subsection (1) does not apply
+(3) Subsection (1) does not apply
 
 (a) as it relates to age, to a bona fide scheme based on seniority, or
 
 (b) as it relates to marital status, physical or mental disability, sex or age, to the operation of a bona fide retirement, superannuation or pension plan or to a bona fide group or employee insurance plan, whether or not the plan is the subject of a contract of insurance between an insurer and an employer.
 
-(4)
-Subsections (1) and (2) do not apply with respect to a refusal, limitation, specification or preference based on a bona fide occupational requirement.
+(4) Subsections (1) and (2) do not apply with respect to a refusal, limitation, specification or preference based on a bona fide occupational requirement.
 
 #### Discrimination by unions and associations
 
-**14**
-A trade union, employers' organization or occupational association must not
+**14** A trade union, employers' organization or occupational association must not
 
 (a) exclude any person from membership,
 
@@ -383,13 +364,11 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Repealed
 
-**15-20**
-[Repealed 2002-62-5.]
+**15-20** [Repealed 2002-62-5.]
 
 #### Complaints
 
-**21**
-(1) Any person or group of persons that alleges that a person has contravened this Code may file a complaint with the tribunal in a form satisfactory to the tribunal.
+**21** (1) Any person or group of persons that alleges that a person has contravened this Code may file a complaint with the tribunal in a form satisfactory to the tribunal.
 
 (2) and (3) [Repealed 2002-62-7.]
 
@@ -409,12 +388,11 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Time limit for filing a complaint
 
-**22**
-(1) A complaint must be filed within one year of the alleged contravention.
+**22** (1) A complaint must be filed within one year of the alleged contravention.
 
 (2) If a continuing contravention is alleged in a complaint, the complaint must be filed within one year of the last alleged instance of the contravention.
 
-(3) If a complaint is filed after the expiration of the time limit referred to in subsection (1) or (2), a member or panel may accept all or part of the complaint if the member or panel determines that
+(3) If a complaint is filed after the expiration of the time limit referred to in subsection (1) or (2), a member or panel may accept all or part of the complaint if the member or panel determines that
 
 (a) it is in the public interest to accept the complaint, and
 
@@ -422,20 +400,17 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Commissioner and other intervenors
 
-**22.1**
-(1) The commissioner may, at any time after a complaint is filed, intervene in the complaint on terms a member or panel may determine having regard to the role and mandate of the commissioner under this Code.
+**22.1** (1) The commissioner may, at any time after a complaint is filed, intervene in the complaint on terms a member or panel may determine having regard to the role and mandate of the commissioner under this Code.
 
 (2) A member or panel may, at any time after a complaint is filed and on the terms specified by the member or panel, allow any other person or group of persons to intervene in the complaint, whether or not that person or group of persons would be affected by an order made by the member or panel under section 37.
 
 #### Repealed
 
-**23-24**
-[Repealed 2002-62-10.]
+**23-24** [Repealed 2002-62-10.]
 
 #### Deferral of a complaint
 
-**25**
-(1) In this section and in section 27, "proceeding" includes a proceeding authorized by another Act and a grievance under a collective agreement.
+**25** (1) In this section and in section 27, "proceeding" includes a proceeding authorized by another Act and a grievance under a collective agreement.
 
 (2) If at any time after a complaint is filed a member or panel determines that another proceeding is capable of appropriately dealing with the substance of a complaint, the member or panel may defer further consideration of the complaint until the outcome of the other proceeding.
 
@@ -443,13 +418,11 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Repealed
 
-**26**
-[Repealed 2002-62-12.]
+**26** [Repealed 2002-62-12.]
 
 #### Dismissal of a complaint
 
-**27**
-(1) A member or panel may, at any time after a complaint is filed and with or without a hearing, dismiss all or part of the complaint if that member or panel determines that any of the following apply:
+**27** (1) A member or panel may, at any time after a complaint is filed and with or without a hearing, dismiss all or part of the complaint if that member or panel determines that any of the following apply:
 
 (a) the complaint or that part of the complaint is not within the jurisdiction of the tribunal;
 
@@ -469,7 +442,7 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 (g) the contravention alleged in the complaint or that part of the complaint occurred more than one year before the complaint was filed unless the complaint or that part of the complaint was accepted under section 22 (3).
 
-(2) If a member or panel dismisses a complaint or part of a complaint under subsection (1), that member or panel must inform the following persons of the decision in writing and give reasons for the decision:
+(2) If a member or panel dismisses a complaint or part of a complaint under subsection (1), that member or panel must inform the following persons of the decision in writing and give reasons for the decision:
 
 (a) the complainant;
 
@@ -481,8 +454,7 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Assignment of complaints
 
-**27.1**
-(1) For the purposes of making a decision or order in respect of a complaint, the chair may assign the complaint to
+**27.1** (1) For the purposes of making a decision or order in respect of a complaint, the chair may assign the complaint to
 
 (a) a single member designated by the chair, or
 
@@ -494,8 +466,7 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Evidence
 
-**27.2**
-(1) A member or panel may receive and accept on oath, by affidavit or otherwise, evidence and information that the member or panel considers necessary and appropriate, whether or not the evidence or information would be admissible in a court of law.
+**27.2** (1) A member or panel may receive and accept on oath, by affidavit or otherwise, evidence and information that the member or panel considers necessary and appropriate, whether or not the evidence or information would be admissible in a court of law.
 
 (2) Nothing is admissible in evidence before a member or panel that is inadmissible in a court because of a privilege under the law of evidence.
 
@@ -505,8 +476,7 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Powers to make rules and orders respecting practice and procedure
 
-**27.3**
-(1) The tribunal may make rules respecting practice and procedure to facilitate just and timely resolution of complaints.
+**27.3** (1) The tribunal may make rules respecting practice and procedure to facilitate just and timely resolution of complaints.
 
 (2) Without limiting subsection (1), the tribunal may make rules as follows:
 
@@ -522,9 +492,9 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 (f) providing that a party's or an intervenor's address of record is to be treated as an address for service;
 
-(g) respecting procedures for matters under sections 22, 25 and 27;
+(g) respecting procedures for matters under sections 22, 25 and 27;
 
-(h) respecting mediation and other dispute resolution processes, including, without limitation, rules that would permit or require mediation of a complaint, whether the mediation is provided by a member or by a person appointed, engaged or retained under section 33;
+(h) respecting mediation and other dispute resolution processes, including, without limitation, rules that would permit or require mediation of a complaint, whether the mediation is provided by a member or by a person appointed, engaged or retained under section 33;
 
 (i) respecting procedures for formal offers to settle a complaint;
 
@@ -540,28 +510,23 @@ because of the Indigenous identity, race, colour, ancestry, place of origin, pol
 
 #### Repealed
 
-**27.4**
-[Repealed 2004-45-104.]
+**27.4** [Repealed 2004-45-104.]
 
 #### Dismissal for failure to pursue complaint
 
-**27.5**
-If, under the rules, a party has been given notice requiring the party to diligently pursue a complaint and the party fails to act on the notice within the time allowed, then on the request of another party or on its own initiative, a member or panel may dismiss the complaint.
+**27.5** If, under the rules, a party has been given notice requiring the party to diligently pursue a complaint and the party fails to act on the notice within the time allowed, then on the request of another party or on its own initiative, a member or panel may dismiss the complaint.
 
 #### Assisting parties to settle
 
-**27.6**
-A member or a person appointed, engaged or retained under section 33 may assist the parties to a complaint, through mediation or any other dispute resolution process, to achieve a settlement.
+**27.6** A member or a person appointed, engaged or retained under section 33 may assist the parties to a complaint, through mediation or any other dispute resolution process, to achieve a settlement.
 
 #### Repealed
 
-**28-29**
-[Repealed 2002-62-12.]
+**28-29** [Repealed 2002-62-12.]
 
 #### Enforcement of settlement agreements
 
-**30**
-(1) If there has been a breach of the terms of a settlement agreement, a party to the settlement agreement may apply to the Supreme Court to enforce the settlement agreement to the extent that the terms of the settlement agreement could have been ordered by the tribunal.
+**30** (1) If there has been a breach of the terms of a settlement agreement, a party to the settlement agreement may apply to the Supreme Court to enforce the settlement agreement to the extent that the terms of the settlement agreement could have been ordered by the tribunal.
 
 (2) The right to enforce a settlement agreement under subsection (1) cannot be waived.
 
@@ -569,8 +534,7 @@ A member or a person appointed, engaged or retained under section 33 may assist 
 
 #### Human Rights Tribunal
 
-**31**
-The British Columbia Human Rights Tribunal is continued consisting of the following individuals appointed by the Lieutenant Governor in Council after a merit-based process:
+**31** The British Columbia Human Rights Tribunal is continued consisting of the following individuals appointed by the Lieutenant Governor in Council after a merit-based process:
 
 (a) a member designated as the chair;
 
@@ -578,13 +542,11 @@ The British Columbia Human Rights Tribunal is continued consisting of the follow
 
 #### Repealed
 
-**31.1**
-[Repealed 2003-47-35.]
+**31.1** [Repealed 2003-47-35.]
 
 #### Application of *Administrative Tribunals Act* to tribunal
 
-**32**
-The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
+**32** The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
 
 (a) Part 1 *[Interpretation and Application]*;
 
@@ -630,7 +592,7 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Staff of the tribunal
 
-**33**   (1) Employees necessary to carry out the powers and duties of the tribunal may be appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01).
+**33** (1) Employees necessary to carry out the powers and duties of the tribunal may be appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01).
 
 (2) The tribunal may engage or retain consultants or specialists that the tribunal considers necessary to carry out the powers and duties of the tribunal and may determine their remuneration.
 
@@ -638,22 +600,19 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Repealed
 
-**34**   [Repealed 2002-62-17.]
+**34** [Repealed 2002-62-17.]
 
 #### Repealed
 
-**34.1**
-[Repealed 2004-45-106.]
+**34.1** [Repealed 2004-45-106.]
 
 #### Repealed
 
-**35-36**
-[Repealed 2002-62-17.]
+**35-36** [Repealed 2002-62-17.]
 
 #### Remedies
 
-**37**
-(1) If the member or panel designated to hear a complaint determines that the complaint is not justified, the member or panel must dismiss the complaint.
+**37** (1) If the member or panel designated to hear a complaint determines that the complaint is not justified, the member or panel must dismiss the complaint.
 
 (2) If the member or panel determines that the complaint is justified, the member or panel
 
@@ -689,8 +648,7 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Modification of orders
 
-**38**
-(1) Until an order made under section 37 (2) (c) or (d) (i) has been fully implemented, any party or a person designated in the order may apply to the member or panel that made the order, or to a member or panel designated by the chair, for a modification of that order on the grounds that the order is no longer appropriate because of unforeseen circumstances.
+**38** (1) Until an order made under section 37 (2) (c) or (d) (i) has been fully implemented, any party or a person designated in the order may apply to the member or panel that made the order, or to a member or panel designated by the chair, for a modification of that order on the grounds that the order is no longer appropriate because of unforeseen circumstances.
 
 (2) The member or panel may vary or rescind the order after determining that the order
 
@@ -702,20 +660,17 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Repealed
 
-**38.1**
-[Repealed 2002-62-20.]
+**38.1** [Repealed 2002-62-20.]
 
 #### Enforcement of remedies
 
-**39**
-(1) If an order is made under section 37 (2) (a), (c) or (d) or (4) or 38 (2), the party in whose favour the order is made or a person designated in the order may file a certified copy of the order with the Supreme Court.
+**39** (1) If an order is made under section 37 (2) (a), (c) or (d) or (4) or 38 (2), the party in whose favour the order is made or a person designated in the order may file a certified copy of the order with the Supreme Court.
 
 (2) An order filed under subsection (1) has the same force and effect, and all proceedings may be taken on it, as if it were a judgment of the Supreme Court.
 
 #### Annual report
 
-**39.1**
-(1) As soon as practicable after the end of the fiscal year of the government, the tribunal must submit to the minister an annual report on the activities of the tribunal.
+**39.1** (1) As soon as practicable after the end of the fiscal year of the government, the tribunal must submit to the minister an annual report on the activities of the tribunal.
 
 (2) The minister must,
 
@@ -725,8 +680,7 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Disclosure
 
-**40**
-(1) [Repealed 2004-45-106.]
+**40** (1) [Repealed 2004-45-106.]
 
 (2) Any information received by any person in the course of attempting to reach a settlement of a complaint is confidential and may not be disclosed or admitted in evidence except with the consent of the person who gave the information.
 
@@ -734,15 +688,13 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Exemptions
 
-**41**
-(1) If a charitable, philanthropic, educational, fraternal, religious or social organization or corporation that is not operated for profit has as a primary purpose the promotion of the interests and welfare of an identifiable group or class of persons characterized by a physical or mental disability or by a common Indigenous identity, race, religion, age, sex, sexual orientation, gender identity or expression, marital status, political belief, colour, ancestry or place of origin, that organization or corporation must not be considered to be contravening this Code because it is granting a preference to members of the identifiable group or class of persons.
+**41** (1) If a charitable, philanthropic, educational, fraternal, religious or social organization or corporation that is not operated for profit has as a primary purpose the promotion of the interests and welfare of an identifiable group or class of persons characterized by a physical or mental disability or by a common Indigenous identity, race, religion, age, sex, sexual orientation, gender identity or expression, marital status, political belief, colour, ancestry or place of origin, that organization or corporation must not be considered to be contravening this Code because it is granting a preference to members of the identifiable group or class of persons.
 
 (2) Nothing in this Code prohibits a distinction on the basis of age if that distinction is permitted or required by any Act or regulation.
 
 #### Special programs
 
-**42**
-(1) It is not discrimination or a contravention of this Code to plan, advertise, adopt or implement an employment equity program that
+**42** (1) It is not discrimination or a contravention of this Code to plan, advertise, adopt or implement an employment equity program that
 
 (a) has as its objective the amelioration of conditions of disadvantaged individuals or groups who are disadvantaged because of Indigenous identity, race, colour, ancestry, place of origin, physical or mental disability, sex, sexual orientation, or gender identity or expression, and
 
@@ -756,25 +708,21 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Protection
 
-**43**
-A person must not evict, discharge, suspend, expel, intimidate, coerce, impose any pecuniary or other penalty on, deny a right or benefit to or otherwise discriminate against a person because that person complains or is named in a complaint, might complain or be named in a complaint, gives evidence, might give evidence or otherwise assists or might assist in a complaint or other proceeding under this Code.
+**43** A person must not evict, discharge, suspend, expel, intimidate, coerce, impose any pecuniary or other penalty on, deny a right or benefit to or otherwise discriminate against a person because that person complains or is named in a complaint, might complain or be named in a complaint, gives evidence, might give evidence or otherwise assists or might assist in a complaint or other proceeding under this Code.
 
 #### Style of cause for proceedings
 
-**44**
-(1) A proceeding under this Code in respect of a trade union, employers' organization or occupational association may be taken in its name.
+**44** (1) A proceeding under this Code in respect of a trade union, employers' organization or occupational association may be taken in its name.
 
 (2) An act or thing done or omitted by an employee, officer, director, official or agent of any person within the scope of the person's authority is deemed to be an act or thing done or omitted by that person.
 
 #### Technical defects
 
-**45**
-A proceeding under this Code is not invalid because of any defect in form or any technical irregularity.
+**45** A proceeding under this Code is not invalid because of any defect in form or any technical irregularity.
 
 #### Delegation of powers
 
-**46**
-(1) to (3) [Repealed 2002-62-24.]
+**46** (1) to (3) [Repealed 2002-62-24.]
 
 (4) The chair may, in writing, delegate to one or more of the members any of the chair's powers or duties under this Code, except the power to delegate under this section.
 
@@ -788,8 +736,7 @@ A proceeding under this Code is not invalid because of any defect in form or any
 
 #### Time limits
 
-**47**
-Despite the fact that a period prescribed under section 49 (2) (b) has expired and the period has not been extended in accordance with the regulations, this Code continues to apply to the complaint to which the period relates, and
+**47** Despite the fact that a period prescribed under section 49 (2) (b) has expired and the period has not been extended in accordance with the regulations, this Code continues to apply to the complaint to which the period relates, and
 
 (a) all proceedings taken under this Code with respect to the complaint may continue, and
 
@@ -797,8 +744,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Human Rights Commissioner
 
-**47.01**
-(1) The Legislative Assembly may, by resolution, appoint as the Human Rights Commissioner a person who has been unanimously recommended for the appointment by a special committee of the Legislative Assembly.
+**47.01** (1) The Legislative Assembly may, by resolution, appoint as the Human Rights Commissioner a person who has been unanimously recommended for the appointment by a special committee of the Legislative Assembly.
 
 (2) The commissioner is an officer of the Legislature.
 
@@ -808,8 +754,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Resignation, suspension or removal of commissioner
 
-**47.02**
-(1) In this section, "standing committee" means the select standing committee of the Legislative Assembly that has been designated for the purposes of subsection (4).
+**47.02** (1) In this section, "standing committee" means the select standing committee of the Legislative Assembly that has been designated for the purposes of subsection (4).
 
 (2) The commissioner may resign at any time by giving written notice to the Speaker of the Legislative Assembly or, if there is no Speaker or the Speaker is absent from British Columbia, to the Clerk of the Legislative Assembly.
 
@@ -819,8 +764,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Acting commissioner
 
-**47.03**
-(1) In this section, "standing committee" means the select standing committee of the Legislative Assembly that has been designated for the purposes of subsections (2), (3) and (4).
+**47.03** (1) In this section, "standing committee" means the select standing committee of the Legislative Assembly that has been designated for the purposes of subsections (2), (3) and (4).
 
 (2) If the commissioner is suspended or temporarily absent because of illness or another reason, or if the office of commissioner is vacant, the Legislative Assembly, on the recommendation of the standing committee, may appoint an acting commissioner to exercise the powers and perform the duties of the commissioner until whichever of the following is the case and occurs first:
 
@@ -842,8 +786,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Salary, expenses and benefits of commissioner
 
-**47.04**
-(1) A commissioner appointed under section 47.01 or 47.03 is entitled
+**47.04** (1) A commissioner appointed under section 47.01 or 47.03 is entitled
 
 (a) to be paid compensation as may be set by the Lieutenant Governor in Council, and
 
@@ -853,12 +796,11 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Oath of commissioner
 
-**47.05**   Before taking office, a commissioner appointed under section 47.01 or 47.03 must make an oath or solemn affirmation before the Clerk of the Legislative Assembly to faithfully and impartially exercise the powers and perform the duties of the office.
+**47.05** Before taking office, a commissioner appointed under section 47.01 or 47.03 must make an oath or solemn affirmation before the Clerk of the Legislative Assembly to faithfully and impartially exercise the powers and perform the duties of the office.
 
 #### Staff of commissioner
 
-**47.06**
-(1) The commissioner may appoint, in accordance with the [Public Service Act](/civix/document/id/complete/statreg/96385_01), employees necessary to enable the commissioner to exercise the powers and perform the duties of the office.
+**47.06** (1) The commissioner may appoint, in accordance with the [Public Service Act](/civix/document/id/complete/statreg/96385_01), employees necessary to enable the commissioner to exercise the powers and perform the duties of the office.
 
 (2) The commissioner may engage or retain consultants or specialists the commissioner considers necessary to exercise the powers and perform the duties of the office and may determine their remuneration and other terms and conditions of their engagement or retainers.
 
@@ -866,7 +808,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Delegation by commissioner
 
-**47.07**   (1) The commissioner may, in writing, delegate to any person employed, engaged or retained by the commissioner any power or duty of the commissioner under this Code, except the power
+**47.07** (1) The commissioner may, in writing, delegate to any person employed, engaged or retained by the commissioner any power or duty of the commissioner under this Code, except the power
 
 (a) to delegate under this section, and
 
@@ -882,8 +824,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Advisory council
 
-**47.08**
-(1) The human rights advisory council is established.
+**47.08** (1) The human rights advisory council is established.
 
 (2) On recommendation by the commissioner, the Lieutenant Governor in Council may appoint members of the human rights advisory council and may set the terms and conditions of office of the members appointed.
 
@@ -891,20 +832,17 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 #### Restrictions on disclosure by commissioner and staff
 
-**47.09**
-Except in the proper exercise of powers or performance of duties under this Code, the commissioner, and anyone acting for or under the direction of the commissioner, must not disclose any information received in the course of exercising those powers or performing those duties.
+**47.09** Except in the proper exercise of powers or performance of duties under this Code, the commissioner, and anyone acting for or under the direction of the commissioner, must not disclose any information received in the course of exercising those powers or performing those duties.
 
 #### Non-compellability of commissioner and staff
 
-**47.10**
-(1) Subject to subsection (2), the commissioner, and anyone acting for or under the direction of the commissioner, must not be compelled to give evidence in court or in any other proceedings respecting any information received in the course of exercising powers or performing duties under this Code.
+**47.10** (1) Subject to subsection (2), the commissioner, and anyone acting for or under the direction of the commissioner, must not be compelled to give evidence in court or in any other proceedings respecting any information received in the course of exercising powers or performing duties under this Code.
 
 (2) The commissioner, and anyone acting for or under the direction of the commissioner, may be compelled to give evidence in a prosecution of an offence under this Code.
 
 #### Personal liability protection of commissioner and staff
 
-**47.11**
-(1) Subject to subsection (2), no legal proceeding for damages lies or may be commenced or maintained against the commissioner, or against a person acting for or under the direction of the commissioner, because of anything done or omitted
+**47.11** (1) Subject to subsection (2), no legal proceeding for damages lies or may be commenced or maintained against the commissioner, or against a person acting for or under the direction of the commissioner, because of anything done or omitted
 
 (a) in the exercise or intended exercise of any power under this Code, or
 
@@ -914,8 +852,7 @@ Except in the proper exercise of powers or performance of duties under this Code
 
 #### Powers of commissioner
 
-**47.12**
-(1) The commissioner is responsible for promoting and protecting human rights, including by doing any of the following:
+**47.12** (1) The commissioner is responsible for promoting and protecting human rights, including by doing any of the following:
 
 (a) identifying, and promoting the elimination of, discriminatory practices, policies and programs;
 
@@ -945,13 +882,11 @@ Except in the proper exercise of powers or performance of duties under this Code
 
 #### Provision of tribunal records to commissioner
 
-**47.13**
-On request by the commissioner, the tribunal must provide to the commissioner copies of complaints and responses filed with the tribunal and may provide to the commissioner other records in its custody or control.
+**47.13** On request by the commissioner, the tribunal must provide to the commissioner copies of complaints and responses filed with the tribunal and may provide to the commissioner other records in its custody or control.
 
 #### Referrals
 
-**47.14**
-(1) The Legislative Assembly or any of its committees may at any time refer a matter to the commissioner for inquiry and report.
+**47.14** (1) The Legislative Assembly or any of its committees may at any time refer a matter to the commissioner for inquiry and report.
 
 (2) If the commissioner accepts a referral, the commissioner must
 
@@ -963,15 +898,13 @@ On request by the commissioner, the tribunal must provide to the commissioner co
 
 #### Commissioner's inquiry
 
-**47.15**
-(1) If the commissioner is of the opinion that an inquiry into a matter would promote or protect human rights, the commissioner may inquire into the matter.
+**47.15** (1) If the commissioner is of the opinion that an inquiry into a matter would promote or protect human rights, the commissioner may inquire into the matter.
 
 (2) An inquiry may be conducted in public.
 
 #### Commissioner's order powers for inquiries
 
-**47.16**
-(1) For the purpose of conducting an inquiry, the commissioner may make an order, in writing, requiring a person to do one or more of the following:
+**47.16** (1) For the purpose of conducting an inquiry, the commissioner may make an order, in writing, requiring a person to do one or more of the following:
 
 (a) attend, in person or by electronic means, before the commissioner and answer questions on oath or solemn affirmation or in any other manner;
 
@@ -993,21 +926,19 @@ On request by the commissioner, the tribunal must provide to the commissioner co
 
 (b) by written order, confirm, vary or rescind the order.
 
-(7) The commissioner must provide written reasons for an order under subsection (3) or (6).
+(7) The commissioner must provide written reasons for an order under subsection (3) or (6).
 
-(8) An order under subsection (1), (3) or (6) is not suspended during the period of the commissioner's consideration of a request under subsection (4) unless the commissioner, in writing, suspends it.
+(8) An order under subsection (1), (3) or (6) is not suspended during the period of the commissioner's consideration of a request under subsection (4) unless the commissioner, in writing, suspends it.
 
 (9) At the conclusion of an inquiry, the commissioner must return any record or other thing produced in the inquiry to the person who produced it.
 
 #### Expenses reimbursement
 
-**47.17**
-If a person incurs expenses in complying with an order of the commissioner under section 47.16, the commissioner may reimburse the person for reasonable expenses.
+**47.17** If a person incurs expenses in complying with an order of the commissioner under section 47.16, the commissioner may reimburse the person for reasonable expenses.
 
 #### Cabinet information protected
 
-**47.18**
-(1) The commissioner must not require any information or answer to be given or any record or other thing to be produced if the Attorney General certifies that giving the information, answering the question or producing the record or other thing might
+**47.18** (1) The commissioner must not require any information or answer to be given or any record or other thing to be produced if the Attorney General certifies that giving the information, answering the question or producing the record or other thing might
 
 (a) interfere with or impede the investigation or detection of an offence,
 
@@ -1019,37 +950,33 @@ If a person incurs expenses in complying with an order of the commissioner under
 
 #### Enforcement of commissioner's orders
 
-**47.19**
-(1) The commissioner may file a copy of an order made under section 47.16 (1), (3) or (6) with the Supreme Court.
+**47.19** (1) The commissioner may file a copy of an order made under section 47.16 (1), (3) or (6) with the Supreme Court.
 
 (2) An order filed under subsection (1) of this section has the same force and effect, and all proceedings may be taken on it, as if it were a judgment of the Supreme Court.
 
 #### Commissioner's inquiry reports
 
-**47.20**
-(1) At the conclusion of an inquiry under section 47.15, the commissioner may make a written report containing any recommendations the commissioner considers appropriate.
+**47.20** (1) At the conclusion of an inquiry under section 47.15, the commissioner may make a written report containing any recommendations the commissioner considers appropriate.
 
-(2) The commissioner may publish a report referred to in subsection (1) and provide the report to the Speaker of the Legislative Assembly.
+(2) The commissioner may publish a report referred to in subsection (1) and provide the report to the Speaker of the Legislative Assembly.
 
 (3) If a report referred to in subsection (1) of this section or section 47.14 contains a recommendation made to a person, the commissioner may require the person to notify the commissioner, within a specified period of time, of steps taken, or intended to be taken, to address the recommendation.
 
-(4) On request by a person who is subject to a notification requirement under subsection (3), the commissioner may extend the period of time for the notification, either before or after that period of time has expired.
+(4) On request by a person who is subject to a notification requirement under subsection (3), the commissioner may extend the period of time for the notification, either before or after that period of time has expired.
 
 (5) If the commissioner considers that a person has not, within the original or extended period of time, adequately addressed a recommendation, the commissioner may make a written report about the person's failure to adequately address the recommendation.
 
-(6) The commissioner may publish a report referred to in subsection (5) and provide the report to the Speaker of the Legislative Assembly.
+(6) The commissioner may publish a report referred to in subsection (5) and provide the report to the Speaker of the Legislative Assembly.
 
-(7) If the commissioner provides a report to the Speaker under subsection (2) or (6), the Speaker must lay the report before the Legislative Assembly as soon as practicable.
+(7) If the commissioner provides a report to the Speaker under subsection (2) or (6), the Speaker must lay the report before the Legislative Assembly as soon as practicable.
 
 #### Protection
 
-**47.21**
-A person must not evict, discharge, suspend, expel, intimidate, coerce, impose any pecuniary or other penalty on, deny a right or benefit to or otherwise discriminate against a person because that person participates in or might participate in an inquiry under this Code.
+**47.21** A person must not evict, discharge, suspend, expel, intimidate, coerce, impose any pecuniary or other penalty on, deny a right or benefit to or otherwise discriminate against a person because that person participates in or might participate in an inquiry under this Code.
 
 #### Offences
 
-**47.22**
-(1) A person who wilfully does any of the following commits an offence:
+**47.22** (1) A person who wilfully does any of the following commits an offence:
 
 (a) makes a false statement to, or misleads or attempts to mislead, the commissioner in the exercise of powers or performance of duties under this Code;
 
@@ -1057,21 +984,19 @@ A person must not evict, discharge, suspend, expel, intimidate, coerce, impose a
 
 (2) A person who commits an offence under this section is liable,
 
-(a) for a first offence, to a fine of not more than $25 000, and
+(a) for a first offence, to a fine of not more than $25 000, and
 
-(b) for a second or subsequent offence, to a fine of not more than $100 000.
+(b) for a second or subsequent offence, to a fine of not more than $100 000.
 
 #### Annual report of commissioner
 
-**47.23**
-(1) The commissioner must submit to the Speaker of the Legislative Assembly an annual report on the activities of the commissioner's office.
+**47.23** (1) The commissioner must submit to the Speaker of the Legislative Assembly an annual report on the activities of the commissioner's office.
 
 (2) The Speaker must lay the report before the Legislative Assembly as soon as practicable.
 
 #### Special reports of commissioner
 
-**47.24**
-(1) The commissioner may, at any time, make a special report to the Speaker of the Legislative Assembly respecting any of the following:
+**47.24** (1) The commissioner may, at any time, make a special report to the Speaker of the Legislative Assembly respecting any of the following:
 
 (a) the exercise of the commissioner's powers or performance of the commissioner's duties;
 
@@ -1083,16 +1008,15 @@ A person must not evict, discharge, suspend, expel, intimidate, coerce, impose a
 
 #### *Offence Act*
 
-**48**
-Section 5 of the [Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Code or the regulations.
+**48** Section 5 of the [Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Code or the regulations.
 
 #### Power to make regulations
 
-**49**   (1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
+**49** (1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
 
 (2) Without limiting subsection (1), the Lieutenant Governor in Council may make regulations as follows:
 
-(a) prescribing the standards for the purposes of section 10;
+(a) prescribing the standards for the purposes of section 10;
 
 (b) prescribing a period
 
@@ -1132,16 +1056,12 @@ Section 5 of the [Offence Act](/civix/document/id/complete/statreg/96338_01) doe
 
 #### Repealed
 
-**50**   [Repealed 2002-62-26.]
+**50** [Repealed 2002-62-26.]
 
 #### Review of sections 47.01 to 47.24
 
-**50.1**
-(1) At least once every 5 years, a special committee of the Legislative Assembly must begin a comprehensive review of sections 47.01 to 47.24 of this Code and must submit a report respecting those sections to the Legislative Assembly within one year after the date of the appointment of the special committee.
+**50.1** (1) At least once every 5 years, a special committee of the Legislative Assembly must begin a comprehensive review of sections 47.01 to 47.24 of this Code and must submit a report respecting those sections to the Legislative Assembly within one year after the date of the appointment of the special committee.
 
 (2) A report submitted under subsection (1) of this section may include any recommended amendments to sections 47.01 to 47.24.
 
 (3) For the purposes of subsection (1), the first 5-year period begins on the date that this section comes into force.
-
-Copyright © King's Printer, Victoria, British
-Columbia, Canada
