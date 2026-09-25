@@ -1,12 +1,8 @@
 # Employment Standards Act
 
 **Source:** [Employment Standards Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 04:09:39 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:21 GMT  
 **Ingestion Date:** 2026-09-25  
-
-Copyright © King's Printer,
-Victoria, British Columbia, Canada[Licence](/standards/Licence.html)
-[Disclaimer](/standards/Disclaimer.html)
 
 This Act is current to September 15, 2026
 
@@ -20,355 +16,355 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/41478612
 
 [Part 1 — Introductory Provisions](#part1)
 
-[1](#section1)[Definitions](#section1)
+[1](#section1) [Definitions](#section1)
 
-[2](#section2)[Purposes of this Act](#section2)
+[2](#section2) [Purposes of this Act](#section2)
 
-[3](#section3)[Scope of this Act](#section3)
+[3](#section3) [Scope of this Act](#section3)
 
-[3.1](#section3.1)[Online platform workers](#section3.1)
+[3.1](#section3.1) [Online platform workers](#section3.1)
 
-[4](#section4)[Requirements of this Act cannot be waived](#section4)
+[4](#section4) [Requirements of this Act cannot be waived](#section4)
 
-[5](#section5)[Promoting awareness of employment standards](#section5)
+[5](#section5) [Promoting awareness of employment standards](#section5)
 
-[6](#section6)[Informing employees of their rights](#section6)
+[6](#section6) [Informing employees of their rights](#section6)
 
-[7](#section7)[Repealed](#section7)
+[7](#section7) [Repealed](#section7)
 
 [Part 2 — Hiring Employees](#part2)
 
-[8](#section8)[No false representations](#section8)
+[8](#section8) [No false representations](#section8)
 
-[9](#section9)[Hiring children — under 16 years of age](#section9)
+[9](#section9) [Hiring children — under 16 years of age](#section9)
 
-[9.1](#section9.1)[Hiring children — hazardous industry or hazardous work](#section9.1)
+[9.1](#section9.1) [Hiring children — hazardous industry or hazardous work](#section9.1)
 
-[10](#section10)[No charge for hiring or providing information](#section10)
+[10](#section10) [No charge for hiring or providing information](#section10)
 
-[11](#section11)[No fees to other persons](#section11)
+[11](#section11) [No fees to other persons](#section11)
 
-[12](#section12)[Employment and talent agencies must be licensed](#section12)
+[12](#section12) [Employment and talent agencies must be licensed](#section12)
 
-[13](#section13)[Farm labour contractors must be licensed](#section13)
+[13](#section13) [Farm labour contractors must be licensed](#section13)
 
-[14](#section14)[Written employment contract required for domestic workers](#section14)
+[14](#section14) [Written employment contract required for domestic workers](#section14)
 
-[15](#section15)[Register of employees working in residences](#section15)
+[15](#section15) [Register of employees working in residences](#section15)
 
 [Part 3 — Wages, Special Clothing, Records and Gratuities](#part3)
 
-[16](#section16)[Employers required to pay minimum wage](#section16)
+[16](#section16) [Employers required to pay minimum wage](#section16)
 
-[16.1](#section16.1)[Minimum wage](#section16.1)
+[16.1](#section16.1) [Minimum wage](#section16.1)
 
-[16.2](#section16.2)[Annual adjustment of minimum wage](#section16.2)
+[16.2](#section16.2) [Annual adjustment of minimum wage](#section16.2)
 
-[17](#section17)[Paydays](#section17)
+[17](#section17) [Paydays](#section17)
 
-[18](#section18)[If employment is terminated](#section18)
+[18](#section18) [If employment is terminated](#section18)
 
-[19](#section19)[If employee cannot be located](#section19)
+[19](#section19) [If employee cannot be located](#section19)
 
-[20](#section20)[How wages are paid](#section20)
+[20](#section20) [How wages are paid](#section20)
 
-[21](#section21)[Deductions](#section21)
+[21](#section21) [Deductions](#section21)
 
-[22](#section22)[Assignments](#section22)
+[22](#section22) [Assignments](#section22)
 
-[23](#section23)[Employer's duty to make assigned payments](#section23)
+[23](#section23) [Employer's duty to make assigned payments](#section23)
 
-[24](#section24)[How an assignment is cancelled](#section24)
+[24](#section24) [How an assignment is cancelled](#section24)
 
-[25](#section25)[Special clothing](#section25)
+[25](#section25) [Special clothing](#section25)
 
-[26](#section26)[Payments by employer to funds, insurers or others](#section26)
+[26](#section26) [Payments by employer to funds, insurers or others](#section26)
 
-[27](#section27)[Wage statements](#section27)
+[27](#section27) [Wage statements](#section27)
 
-[28](#section28)[Payroll records](#section28)
+[28](#section28) [Payroll records](#section28)
 
-[29](#section29)[Repealed](#section29)
+[29](#section29) [Repealed](#section29)
 
-[30](#section30)[Producer and farm labour contractor are liable for unpaid wages](#section30)
+[30](#section30) [Producer and farm labour contractor are liable for unpaid wages](#section30)
 
-[30.1](#section30.1)[Liability of farm labour contractor for transportation costs](#section30.1)
+[30.1](#section30.1) [Liability of farm labour contractor for transportation costs](#section30.1)
 
-[30.2](#section30.2)[Enforcement of administrative fee](#section30.2)
+[30.2](#section30.2) [Enforcement of administrative fee](#section30.2)
 
-[30.3](#section30.3)[Gratuities](#section30.3)
+[30.3](#section30.3) [Gratuities](#section30.3)
 
-[30.4](#section30.4)[Redistribution of gratuities](#section30.4)
+[30.4](#section30.4) [Redistribution of gratuities](#section30.4)
 
 [Part 4 — Hours of Work and Overtime](#part4)
 
-[31](#section31)[Repealed](#section31)
+[31](#section31) [Repealed](#section31)
 
-[32](#section32)[Meal breaks](#section32)
+[32](#section32) [Meal breaks](#section32)
 
-[33](#section33)[Split shifts](#section33)
+[33](#section33) [Split shifts](#section33)
 
-[34](#section34)[Minimum daily hours](#section34)
+[34](#section34) [Minimum daily hours](#section34)
 
-[35](#section35)[Maximum hours of work before overtime applies](#section35)
+[35](#section35) [Maximum hours of work before overtime applies](#section35)
 
-[36](#section36)[Hours free from work](#section36)
+[36](#section36) [Hours free from work](#section36)
 
-[37](#section37)[Agreements to average hours of work](#section37)
+[37](#section37) [Agreements to average hours of work](#section37)
 
-[38](#section38)[Repealed](#section38)
+[38](#section38) [Repealed](#section38)
 
-[39](#section39)[No excessive hours](#section39)
+[39](#section39) [No excessive hours](#section39)
 
-[40](#section40)[Overtime wages for employees not working under an averaging agreement](#section40)
+[40](#section40) [Overtime wages for employees not working under an averaging agreement](#section40)
 
-[41](#section41)[Repealed](#section41)
+[41](#section41) [Repealed](#section41)
 
-[42](#section42)[Banking of overtime wages](#section42)
+[42](#section42) [Banking of overtime wages](#section42)
 
-[43](#section43)[Repealed](#section43)
+[43](#section43) [Repealed](#section43)
 
 [Part 5 — Statutory Holidays](#part5)
 
-[44](#section44)[Entitlement to statutory holiday](#section44)
+[44](#section44) [Entitlement to statutory holiday](#section44)
 
-[45](#section45)[Statutory holiday pay](#section45)
+[45](#section45) [Statutory holiday pay](#section45)
 
-[46](#section46)[If employee is required to work on statutory holiday](#section46)
+[46](#section46) [If employee is required to work on statutory holiday](#section46)
 
-[47](#section47)[Repealed](#section47)
+[47](#section47) [Repealed](#section47)
 
-[48](#section48)[Substituting another day for a statutory holiday](#section48)
+[48](#section48) [Substituting another day for a statutory holiday](#section48)
 
-[49](#section49)[Repealed](#section49)
+[49](#section49) [Repealed](#section49)
 
 [Part 6 — Leaves and Jury Duty](#part6)
 
-[49.01](#section49.01)[Serious personal illness or injury — up to 27 weeks unpaid leave](#section49.01)
+[49.01](#section49.01) [Serious personal illness or injury — up to 27 weeks unpaid leave](#section49.01)
 
-[49.1](#section49.1)[Illness or injury leave](#section49.1)
+[49.1](#section49.1) [Illness or injury leave](#section49.1)
 
-[49.2](#section49.2)[Sick note not required](#section49.2)
+[49.2](#section49.2) [Sick note not required](#section49.2)
 
-[50](#section50)[Maternity leave](#section50)
+[50](#section50) [Maternity leave](#section50)
 
-[51](#section51)[Parental leave](#section51)
+[51](#section51) [Parental leave](#section51)
 
-[52](#section52)[Family responsibility leave](#section52)
+[52](#section52) [Family responsibility leave](#section52)
 
-[52.1](#section52.1)[Compassionate care leave](#section52.1)
+[52.1](#section52.1) [Compassionate care leave](#section52.1)
 
-[52.11](#section52.11)[Critical illness or injury leave](#section52.11)
+[52.11](#section52.11) [Critical illness or injury leave](#section52.11)
 
-[52.12](#section52.12)[COVID-19-related leave](#section52.12)
+[52.12](#section52.12) [COVID-19-related leave](#section52.12)
 
-[52.121](#section52.121)[Repealed](#section52.121)
+[52.121](#section52.121) [Repealed](#section52.121)
 
-[52.13](#section52.13)[Leave for COVID-19 vaccination](#section52.13)
+[52.13](#section52.13) [Leave for COVID-19 vaccination](#section52.13)
 
-[52.2](#section52.2)[Reservists' leave](#section52.2)
+[52.2](#section52.2) [Reservists' leave](#section52.2)
 
-[52.3](#section52.3)[Leave respecting disappearance of child](#section52.3)
+[52.3](#section52.3) [Leave respecting disappearance of child](#section52.3)
 
-[52.4](#section52.4)[Leave respecting death of child](#section52.4)
+[52.4](#section52.4) [Leave respecting death of child](#section52.4)
 
-[52.5](#section52.5)[Leave respecting domestic or sexual violence](#section52.5)
+[52.5](#section52.5) [Leave respecting domestic or sexual violence](#section52.5)
 
-[53](#section53)[Bereavement leave](#section53)
+[53](#section53) [Bereavement leave](#section53)
 
-[54](#section54)[Duties of employer](#section54)
+[54](#section54) [Duties of employer](#section54)
 
-[55](#section55)[Jury duty](#section55)
+[55](#section55) [Jury duty](#section55)
 
-[56](#section56)[Employment deemed continuous while employee on leave or jury duty](#section56)
+[56](#section56) [Employment deemed continuous while employee on leave or jury duty](#section56)
 
 [Part 7 — Annual Vacation](#part7)
 
-[57](#section57)[Entitlement to annual vacation](#section57)
+[57](#section57) [Entitlement to annual vacation](#section57)
 
-[58](#section58)[Vacation pay](#section58)
+[58](#section58) [Vacation pay](#section58)
 
-[59](#section59)[Other payments or benefits do not affect vacation rights](#section59)
+[59](#section59) [Other payments or benefits do not affect vacation rights](#section59)
 
-[60](#section60)[Common date for calculating vacation entitlement](#section60)
+[60](#section60) [Common date for calculating vacation entitlement](#section60)
 
-[61](#section61)[Repealed](#section61)
+[61](#section61) [Repealed](#section61)
 
 [Part 8 — Termination of Employment](#part8)
 
-[62](#section62)[Definition](#section62)
+[62](#section62) [Definition](#section62)
 
-[63](#section63)[Liability resulting from length of service](#section63)
+[63](#section63) [Liability resulting from length of service](#section63)
 
-[64](#section64)[Group terminations](#section64)
+[64](#section64) [Group terminations](#section64)
 
-[65](#section65)[Exceptions](#section65)
+[65](#section65) [Exceptions](#section65)
 
-[66](#section66)[Director may determine employment has been terminated](#section66)
+[66](#section66) [Director may determine employment has been terminated](#section66)
 
-[67](#section67)[Rules about notice](#section67)
+[67](#section67) [Rules about notice](#section67)
 
-[68](#section68)[Rules about payments](#section68)
+[68](#section68) [Rules about payments](#section68)
 
-[69-70](#section69t70)[Repealed](#section69t70)
+[69-70](#section69t70) [Repealed](#section69t70)
 
-[71](#section71)[Adjustment committee](#section71)
+[71](#section71) [Adjustment committee](#section71)
 
 [Part 9 — Variances](#part9)
 
-[72](#section72)[Application for variance](#section72)
+[72](#section72) [Application for variance](#section72)
 
-[73](#section73)[Power to grant variance](#section73)
+[73](#section73) [Power to grant variance](#section73)
 
 [Part 10 — Investigations, Complaints and Determinations](#part10)
 
-[73.1](#section73.1)[Investigations initiated by director](#section73.1)
+[73.1](#section73.1) [Investigations initiated by director](#section73.1)
 
-[74](#section74)[Complaint and time limit](#section74)
+[74](#section74) [Complaint and time limit](#section74)
 
-[75](#section75)[If complainant requests identity be kept confidential](#section75)
+[75](#section75) [If complainant requests identity be kept confidential](#section75)
 
-[76](#section76)[Review and investigation of complaints](#section76)
+[76](#section76) [Review and investigation of complaints](#section76)
 
-[76.1](#section76.1)[Complaint resolution process during investigation](#section76.1)
+[76.1](#section76.1) [Complaint resolution process during investigation](#section76.1)
 
-[77](#section77)[Opportunity to respond](#section77)
+[77](#section77) [Opportunity to respond](#section77)
 
-[77.1](#section77.1)[Oral hearing not required](#section77.1)
+[77.1](#section77.1) [Oral hearing not required](#section77.1)
 
-[78](#section78)[Settlement agreements](#section78)
+[78](#section78) [Settlement agreements](#section78)
 
-[78.1](#section78.1)[Report may be prepared and served](#section78.1)
+[78.1](#section78.1) [Report may be prepared and served](#section78.1)
 
-[78.2](#section78.2)[Repealed](#section78.2)
+[78.2](#section78.2) [Repealed](#section78.2)
 
-[79](#section79)[Determinations and consequences](#section79)
+[79](#section79) [Determinations and consequences](#section79)
 
-[80](#section80)[Limit on amount of wages required to be paid](#section80)
+[80](#section80) [Limit on amount of wages required to be paid](#section80)
 
-[81](#section81)[Notifying others of determination](#section81)
+[81](#section81) [Notifying others of determination](#section81)
 
-[82](#section82)[No other proceedings](#section82)
+[82](#section82) [No other proceedings](#section82)
 
-[83](#section83)[Employee not to be mistreated because of complaint or investigation](#section83)
+[83](#section83) [Employee not to be mistreated because of complaint or investigation](#section83)
 
-[84](#section84)[Power to compel persons to answer questions and order disclosure](#section84)
+[84](#section84) [Power to compel persons to answer questions and order disclosure](#section84)
 
-[84.1](#section84.1)[Maintenance of order at hearings](#section84.1)
+[84.1](#section84.1) [Maintenance of order at hearings](#section84.1)
 
-[84.2](#section84.2)[Contempt proceeding for uncooperative person](#section84.2)
+[84.2](#section84.2) [Contempt proceeding for uncooperative person](#section84.2)
 
-[84.3](#section84.3)[Immunity protection](#section84.3)
+[84.3](#section84.3) [Immunity protection](#section84.3)
 
-[85](#section85)[Entry and inspection powers](#section85)
+[85](#section85) [Entry and inspection powers](#section85)
 
-[86](#section86)[Power to reconsider](#section86)
+[86](#section86) [Power to reconsider](#section86)
 
-[86.1](#section86.1)[No jurisdiction to determine constitutional question](#section86.1)
+[86.1](#section86.1) [No jurisdiction to determine constitutional question](#section86.1)
 
-[86.2](#section86.2)[Director without jurisdiction to apply the Human Rights Code](#section86.2)
+[86.2](#section86.2) [Director without jurisdiction to apply the Human Rights Code](#section86.2)
 
 [Part 11 — Enforcement](#part11)
 
-[87](#section87)[Lien for unpaid wages](#section87)
+[87](#section87) [Lien for unpaid wages](#section87)
 
-[88](#section88)[Payment of interest](#section88)
+[88](#section88) [Payment of interest](#section88)
 
-[89](#section89)[Demand on third party](#section89)
+[89](#section89) [Demand on third party](#section89)
 
-[90](#section90)[Failure to comply with demand](#section90)
+[90](#section90) [Failure to comply with demand](#section90)
 
-[91](#section91)[Determination or order may be filed and enforced as judgment](#section91)
+[91](#section91) [Determination or order may be filed and enforced as judgment](#section91)
 
-[92](#section92)[Seizure of assets](#section92)
+[92](#section92) [Seizure of assets](#section92)
 
-[93](#section93)[Release of assets](#section93)
+[93](#section93) [Release of assets](#section93)
 
-[94](#section94)[Wrongful removal of seized assets](#section94)
+[94](#section94) [Wrongful removal of seized assets](#section94)
 
-[95](#section95)[Associated employers](#section95)
+[95](#section95) [Associated employers](#section95)
 
-[96](#section96)[Corporate officer's liability for unpaid wages](#section96)
+[96](#section96) [Corporate officer's liability for unpaid wages](#section96)
 
-[97](#section97)[Sale of business](#section97)
+[97](#section97) [Sale of business](#section97)
 
-[98](#section98)[Monetary penalties](#section98)
+[98](#section98) [Monetary penalties](#section98)
 
-[99](#section99)[If money is paid to director](#section99)
+[99](#section99) [If money is paid to director](#section99)
 
-[100](#section100)[Security to ensure compliance](#section100)
+[100](#section100) [Security to ensure compliance](#section100)
 
-[101](#section101)[Publication of violators' names](#section101)
+[101](#section101) [Publication of violators' names](#section101)
 
-[101.1](#section101.1)[Searching of records](#section101.1)
+[101.1](#section101.1) [Searching of records](#section101.1)
 
 [Part 12 — Employment Standards Tribunal](#part12)
 
-[102](#section102)[Employment Standards Tribunal continued](#section102)
+[102](#section102) [Employment Standards Tribunal continued](#section102)
 
-[103](#section103)[Application of Administrative Tribunals Act](#section103)
+[103](#section103) [Application of Administrative Tribunals Act](#section103)
 
-[104](#section104)[Chair may delegate authority](#section104)
+[104](#section104) [Chair may delegate authority](#section104)
 
-[105](#section105)[Employees](#section105)
+[105](#section105) [Employees](#section105)
 
-[106](#section106)[Organization of tribunal](#section106)
+[106](#section106) [Organization of tribunal](#section106)
 
-[107-108](#section107t108)[Repealed](#section107t108)
+[107-108](#section107t108) [Repealed](#section107t108)
 
-[109](#section109)[Other powers of tribunal](#section109)
+[109](#section109) [Other powers of tribunal](#section109)
 
-[110](#section110)[Exclusive jurisdiction of tribunal](#section110)
+[110](#section110) [Exclusive jurisdiction of tribunal](#section110)
 
-[111](#section111)[Repealed](#section111)
+[111](#section111) [Repealed](#section111)
 
 [Part 13 — Appeals](#part13)
 
-[112](#section112)[Appeal of director's determination](#section112)
+[112](#section112) [Appeal of director's determination](#section112)
 
-[113](#section113)[Director's determination may be suspended](#section113)
+[113](#section113) [Director's determination may be suspended](#section113)
 
-[114](#section114)[After an appeal is requested](#section114)
+[114](#section114) [After an appeal is requested](#section114)
 
-[115](#section115)[Tribunal's orders](#section115)
+[115](#section115) [Tribunal's orders](#section115)
 
-[116](#section116)[Reconsideration of orders and decisions](#section116)
+[116](#section116) [Reconsideration of orders and decisions](#section116)
 
 [Part 14 — General Provisions](#part14)
 
-[117](#section117)[Director's power to delegate](#section117)
+[117](#section117) [Director's power to delegate](#section117)
 
-[118](#section118)[Right to sue preserved](#section118)
+[118](#section118) [Right to sue preserved](#section118)
 
-[119](#section119)[Extraprovincial certificates](#section119)
+[119](#section119) [Extraprovincial certificates](#section119)
 
-[120](#section120)[Warrant to carry out inspection powers](#section120)
+[120](#section120) [Warrant to carry out inspection powers](#section120)
 
-[121](#section121)[Director cannot be required to give evidence in other proceedings](#section121)
+[121](#section121) [Director cannot be required to give evidence in other proceedings](#section121)
 
-[122](#section122)[Service of determinations, demands, notices and reports](#section122)
+[122](#section122) [Service of determinations, demands, notices and reports](#section122)
 
-[123](#section123)[Irregularities](#section123)
+[123](#section123) [Irregularities](#section123)
 
-[124](#section124)[Limitation period](#section124)
+[124](#section124) [Limitation period](#section124)
 
-[125](#section125)[Offences](#section125)
+[125](#section125) [Offences](#section125)
 
-[126](#section126)[Evidence and burden of proof](#section126)
+[126](#section126) [Evidence and burden of proof](#section126)
 
-[127](#section127)[Power to make regulations](#section127)
+[127](#section127) [Power to make regulations](#section127)
 
-[128-129](#section128t129)[Repealed](#section128t129)
+[128-129](#section128t129) [Repealed](#section128t129)
 
 Part 1 — Introductory Provisions
 
 #### Definitions
 
-**1**   (1) In this Act:
+**1** (1) In this Act:
 
 "assignment of wages" includes a written authorization to pay all or part of an employee's wages to another person;
 
-"collective agreement" means the same as in the [Fishing Collective Bargaining Act](/civix/document/id/complete/statreg/96150_01), the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), or the [Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01);
+"collective agreement" means the same as in the [Fishing Collective Bargaining Act](/civix/document/id/complete/statreg/96150_01), the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), or the [Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01);
 
 "conditions of employment" means all matters and circumstances that in any way affect the employment relationship of employers and employees;
 
@@ -382,7 +378,7 @@ Part 1 — Introductory Provisions
 
 "determination" means any decision made by the director under section 30 (2), 66, 68 (3), 73, 74 (5), 76 (2), (3) or (8), 79, 80 (3), 100 or 119;
 
-"director" means the Director of Employment Standards appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01) and, in relation to a function, duty or power that the director has under section 117 of this Act delegated to another person, "director" includes that other person;
+"director" means the Director of Employment Standards appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01) and, in relation to a function, duty or power that the director has under section 117 of this Act delegated to another person, "director" includes that other person;
 
 "domestic worker" means a person who is employed at an employer's private residence to provide cooking, cleaning, child care or other prescribed services;
 
@@ -412,7 +408,7 @@ Part 1 — Introductory Provisions
 
 "farm labour contractor" means an employer whose employees work, for or under the control or direction of another person, in connection with the planting, cultivating or harvesting of an agricultural product;
 
-"former Act" means the *Employment Standards Act*, S.B.C. 1980, c. 10;
+"former Act" means the *Employment Standards Act*, S.B.C. 1980, c. 10;
 
 "gratuity" means
 
@@ -438,7 +434,7 @@ but does not include
 
 (b) any person who lives with an employee as a member of the employee's family;
 
-"insolvency Act" means the [Bankruptcy and Insolvency Act](http://laws-lois.justice.gc.ca/eng/acts/B-3/) (Canada), the [Companies' Creditors Arrangement Act](http://laws-lois.justice.gc.ca/eng/acts/C-36/) (Canada) or the [Winding-up and Restructuring Act](http://laws-lois.justice.gc.ca/eng/acts/W-11/) (Canada);
+"insolvency Act" means the [Bankruptcy and Insolvency Act](http://laws-lois.justice.gc.ca/eng/acts/B-3/) (Canada), the [Companies' Creditors Arrangement Act](http://laws-lois.justice.gc.ca/eng/acts/C-36/) (Canada) or the [Winding-up and Restructuring Act](http://laws-lois.justice.gc.ca/eng/acts/W-11/) (Canada);
 
 "Labour Relations Board" means the board as defined in the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
 
@@ -448,9 +444,9 @@ but does not include
 
 "pay period" means a period of up to 16 consecutive days of employment;
 
-"payroll record" means a record required under section 28 to be kept by an employer;
+"payroll record" means a record required under section 28 to be kept by an employer;
 
-"penalty" means a monetary penalty imposed under section 98;
+"penalty" means a monetary penalty imposed under section 98;
 
 "producer" means a person who engages the services of a farm labour contractor;
 
@@ -488,13 +484,13 @@ but does not include
 
 (a) in the case of an employee who has a right of recall, a layoff that exceeds the specified period within which the employee is entitled to be recalled to employment, and
 
-(b) in any other case, a layoff of up to 13 weeks in any period of 20 consecutive weeks;
+(b) in any other case, a layoff of up to 13 weeks in any period of 20 consecutive weeks;
 
 "termination of employment" includes a layoff other than a temporary layoff;
 
-"termination pay" means, for each week of notice an employee is entitled to, the amount obtained by totalling the employee's weekly wages, at the regular wage, during the last 8 weeks in which the employee worked normal or average hours of work and dividing the total by 8;
+"termination pay" means, for each week of notice an employee is entitled to, the amount obtained by totalling the employee's weekly wages, at the regular wage, during the last 8 weeks in which the employee worked normal or average hours of work and dividing the total by 8;
 
-"time bank" means a time bank established under section 42 at the request of an employee;
+"time bank" means a time bank established under section 42 at the request of an employee;
 
 "trade union" means the same as in the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
 
@@ -506,11 +502,11 @@ but does not include
 
 (b) money that is paid or payable by an employer as an incentive and relates to hours of work, production or efficiency,
 
-(c) money, including the amount of any liability under section 63, required to be paid by an employer to an employee under this Act,
+(c) money, including the amount of any liability under section 63, required to be paid by an employer to an employee under this Act,
 
 (d) money required to be paid in accordance with
 
-(i) a determination, other than costs required to be paid under section 79 (1) (f), or
+(i) a determination, other than costs required to be paid under section 79 (1) (f), or
 
 (ii) a settlement agreement or an order of the tribunal, and
 
@@ -542,7 +538,7 @@ but does not include
 
 #### Purposes of this Act
 
-**2**   The purposes of this Act are as follows:
+**2** The purposes of this Act are as follows:
 
 (a) to ensure that employees in British Columbia receive at least basic standards of compensation and conditions of employment;
 
@@ -558,49 +554,41 @@ but does not include
 
 #### Scope of this Act
 
-**3**
-(1) Subject to this section, this Act applies to all employees other than those excluded by regulation.
+**3** (1) Subject to this section, this Act applies to all employees other than those excluded by regulation.
 
 (2) If a collective agreement contains any provisions respecting a matter set out in column 1 of the following table, and the provisions, when considered together, meet or exceed the requirements, when considered together, of the Part or section of this Act specified opposite the matter in column 2 of the table, those provisions of the collective agreement replace the requirements of that Part or section of the Act in respect of employees covered by the collective agreement:
 
 **Column 1
-Matter****Column 2
+MatterColumn 2
 Part or Section**
 
 Special clothing Section 25 (1) or (2)
 
-Hours of work or overtime
-Part 4
+Hours of work or overtime Part 4
 
-Statutory holidays
-Part 5
+Statutory holidays Part 5
 
-Annual vacation or vacation pay
-Part 7
+Annual vacation or vacation pay Part 7
 
-Seniority retention, recall, termination of employment or layoff
-Section 63
+Seniority retention, recall, termination of employment or layoff Section 63
 
-(2.1) Despite subsection (2), any provisions of a collective agreement respecting statutory holidays only replace the requirements of Part 5 of this Act as that Part applies to statutory holidays other than the National Day for Truth and Reconciliation.
+(2.1) Despite subsection (2), any provisions of a collective agreement respecting statutory holidays only replace the requirements of Part 5 of this Act as that Part applies to statutory holidays other than the National Day for Truth and Reconciliation.
 
 (3) If a collective agreement contains no provisions respecting a matter set out in column 1 of the following table, or contains any provisions respecting a matter set out in column 1 that, when considered together, do not meet or exceed the requirements, when considered together, of the Part or section of this Act specified opposite the matter in column 2 of the table, that Part or section of the Act is deemed to be incorporated in the collective agreement as part of its terms:
 
 **Column 1
-Matter****Column 2
+MatterColumn 2
 Part or Section**
 
 Special clothing Section 25 (1) or (2)
 
 Hours of work or overtime Part 4, except section 37
 
-Statutory holidays
-Part 5
+Statutory holidays Part 5
 
-Annual vacation or vacation pay
-Part 7
+Annual vacation or vacation pay Part 7
 
-Seniority retention, recall, termination of employment or layoff
-Section 63
+Seniority retention, recall, termination of employment or layoff Section 63
 
 (4) and (5) [Repealed 2019-27-3.]
 
@@ -612,11 +600,11 @@ section 3 (2.1) *[collective agreement does not replace Part 5 in relation to Na
 
 section 3 (3) *[when requirements of this Act are deemed incorporated into collective agreement]*;
 
-section 9 *[hiring children]*;
+section 9 *[hiring children]*;
 
-section 10 *[no charge for hiring or providing information]*;
+section 10 *[no charge for hiring or providing information]*;
 
-section 16 *[employers required to pay minimum wage]*;
+section 16 *[employers required to pay minimum wage]*;
 
 section 16.1 *[minimum wage]*;
 
@@ -630,7 +618,7 @@ section 18 (2) *[payment of wages when employee terminates]*;
 
 section 20 *[how wages are paid]*;
 
-section 21 *[deductions]*;
+section 21 *[deductions]*;
 
 section 22 *[assignment of wages]*;
 
@@ -654,17 +642,17 @@ Part 5 *[Statutory Holidays]*, as that Part applies to the National Day for Trut
 
 Part 6 *[leaves and jury duty]*;
 
-section 64 *[group terminations]*;
+section 64 *[group terminations]*;
 
-section 65 *[exceptions to section 64]*;
+section 65 *[exceptions to section 64]*;
 
-section 67 *[rules about notice of termination]*;
+section 67 *[rules about notice of termination]*;
 
-section 68 *[rules about payments on termination]*.
+section 68 *[rules about payments on termination]*.
 
 (7) If a dispute arises respecting the application, interpretation or operation of
 
-(a) a Part or provision of this Act deemed by subsection (3) to be incorporated in a collective agreement, or
+(a) a Part or provision of this Act deemed by subsection (3) to be incorporated in a collective agreement, or
 
 (b) a provision specified in subsection (6),
 
@@ -676,7 +664,7 @@ the grievance procedure contained in the collective agreement or, if applicable,
 
 #### Online platform workers
 
-**3.1**   For the purposes of this Act,
+**3.1** For the purposes of this Act,
 
 (a) an online platform worker is to be considered an employee, whether or not the online platform worker is an employee under any law, and
 
@@ -684,30 +672,25 @@ the grievance procedure contained in the collective agreement or, if applicable,
 
 #### Requirements of this Act cannot be waived
 
-**4**
-The requirements of this Act and the regulations are minimum requirements and an agreement to waive any of those requirements, not being an agreement referred to in section 3 (2), has no effect.
+**4** The requirements of this Act and the regulations are minimum requirements and an agreement to waive any of those requirements, not being an agreement referred to in section 3 (2), has no effect.
 
 #### Promoting awareness of employment standards
 
-**5**
-The director must develop and carry out policies to promote greater awareness of this Act.
+**5** The director must develop and carry out policies to promote greater awareness of this Act.
 
 #### Informing employees of their rights
 
-**6**
-An employer must make available or provide to each employee, in a form provided or approved by the director, information about the rights of the employee under this Act.
+**6** An employer must make available or provide to each employee, in a form provided or approved by the director, information about the rights of the employee under this Act.
 
 #### Repealed
 
-**7**
-[Repealed 2003-65-2.]
+**7** [Repealed 2003-65-2.]
 
 Part 2 — Hiring Employees
 
 #### No false representations
 
-**8**
-An employer must not induce, influence or persuade a person to become an employee, or to work or to be available for work, by misrepresenting any of the following:
+**8** An employer must not induce, influence or persuade a person to become an employee, or to work or to be available for work, by misrepresenting any of the following:
 
 (a) the availability of a position;
 
@@ -719,8 +702,7 @@ An employer must not induce, influence or persuade a person to become an employe
 
 #### Hiring children — under 16 years of age
 
-**9**
-(1) In this section, "light work" means prescribed work or a prescribed occupation that the Lieutenant Governor in Council considers is unlikely to be harmful to the health or development of a child who is 14 or 15 years of age.
+**9** (1) In this section, "light work" means prescribed work or a prescribed occupation that the Lieutenant Governor in Council considers is unlikely to be harmful to the health or development of a child who is 14 or 15 years of age.
 
 (2) A person must not employ a child
 
@@ -732,14 +714,13 @@ An employer must not induce, influence or persuade a person to become an employe
 
 (ii) to perform any other work without the director's permission.
 
-(3) In permitting the employment of a child under subsection (2) (a) or (b) (ii), the director may set conditions of employment for the child.
+(3) In permitting the employment of a child under subsection (2) (a) or (b) (ii), the director may set conditions of employment for the child.
 
-(4) An employer must comply with the conditions of employment set by the director under subsection (3).
+(4) An employer must comply with the conditions of employment set by the director under subsection (3).
 
 #### Hiring children — hazardous industry or hazardous work
 
-**9.1**
-(1) In this section:
+**9.1** (1) In this section:
 
 "hazardous industry" means a prescribed industry that the Lieutenant Governor in Council considers is likely to be harmful to the health, safety or morals of a person under 16 years of age;
 
@@ -753,8 +734,7 @@ An employer must not induce, influence or persuade a person to become an employe
 
 #### No charge for hiring or providing information
 
-**10**
-(1) A person must not request, charge or receive, directly or indirectly, from a person seeking employment a payment for
+**10** (1) A person must not request, charge or receive, directly or indirectly, from a person seeking employment a payment for
 
 (a) employing or obtaining employment for the person seeking employment, or
 
@@ -766,8 +746,7 @@ An employer must not induce, influence or persuade a person to become an employe
 
 #### No fees to other persons
 
-**11**
-(1) An employment agency must not make a payment, directly or indirectly, to a person for obtaining or assisting in obtaining employment for someone else.
+**11** (1) An employment agency must not make a payment, directly or indirectly, to a person for obtaining or assisting in obtaining employment for someone else.
 
 (2) A farm labour contractor must not make a payment, directly or indirectly, to a person for whom the farm labour contractor's employees work.
 
@@ -775,16 +754,13 @@ An employer must not induce, influence or persuade a person to become an employe
 
 #### Employment and talent agencies must be licensed
 
-**12**
-(1) A person must not operate an employment agency or a talent agency unless the person is licensed under this Act.
+**12** (1) A person must not operate an employment agency or a talent agency unless the person is licensed under this Act.
 
-(2)
-Subsection (1) does not apply to a person operating an employment agency for the sole purpose of hiring employees exclusively for one employer.
+(2) Subsection (1) does not apply to a person operating an employment agency for the sole purpose of hiring employees exclusively for one employer.
 
 #### Farm labour contractors must be licensed
 
-**13**
-(1) A person must not act as a farm labour contractor unless the person is licensed under this Act.
+**13** (1) A person must not act as a farm labour contractor unless the person is licensed under this Act.
 
 (2) A producer must not engage the services of a farm labour contractor unless the farm labour contractor is licensed under this Act.
 
@@ -792,8 +768,7 @@ Subsection (1) does not apply to a person operating an employment agency for the
 
 #### Written employment contract required for domestic workers
 
-**14**
-(1) On employing a domestic worker, the employer must provide the domestic worker with a copy of the employment contract.
+**14** (1) On employing a domestic worker, the employer must provide the domestic worker with a copy of the employment contract.
 
 (2) The copy of the employment contract provided to the domestic worker must clearly state the conditions of employment, including
 
@@ -809,68 +784,63 @@ Subsection (1) does not apply to a person operating an employment agency for the
 
 #### Register of employees working in residences
 
-**15**
-An employer must provide to the director, in accordance with the regulations, any information required for establishing and maintaining a register of employees working in private residences.
+**15** An employer must provide to the director, in accordance with the regulations, any information required for establishing and maintaining a register of employees working in private residences.
 
 Part 3 — Wages, Special Clothing, Records and Gratuities
 
 #### Employers required to pay minimum wage
 
-**16**
-(1) An employer must pay an employee at least the minimum wage as set out in sections 16.1 and 16.2.
+**16** (1) An employer must pay an employee at least the minimum wage as set out in sections 16.1 and 16.2.
 
 (2) An employer must not, directly or indirectly, withhold, deduct or require payment of all or part of an employee's wages in a pay period to comply with subsection (1) in relation to any other pay period.
 
 #### Minimum wage
 
-**16.1**
-(1) Subject to subsection (2) and section 16.2, the minimum wage is $16.75 per hour.
+**16.1** (1) Subject to subsection (2) and section 16.2, the minimum wage is $16.75 per hour.
 
 (2) Subject to section 16.2, the minimum wage for a prescribed class of employees is the amount specified in, or calculated in accordance with, the regulations.
 
 #### Annual adjustment of minimum wage
 
-**16.2**
-(1) In this section, "consumer price index" means the annual average All-items Consumer Price Index for British Columbia, as published by Statistics Canada under the authority of the [Statistics Act](http://laws-lois.justice.gc.ca/eng/acts/S-19/index.html) (Canada).
+**16.2** (1) In this section, "consumer price index" means the annual average All-items Consumer Price Index for British Columbia, as published by Statistics Canada under the authority of the [Statistics Act](http://laws-lois.justice.gc.ca/eng/acts/S-19/index.html) (Canada).
 
-(2) Subject to this section, every year on June 1, beginning on June 1, 2024,
+(2) Subject to this section, every year on June 1, beginning on June 1, 2024,
 
-(a) the minimum wage referred to in section 16.1 (1) is adjusted in accordance with the formula set out in subsection (4) of this section, and
+(a) the minimum wage referred to in section 16.1 (1) is adjusted in accordance with the formula set out in subsection (4) of this section, and
 
 (b) the adjusted minimum wage is rounded to the nearest multiple of $0.05 or, if the adjusted minimum wage is equidistant from 2 consecutive multiples, to the higher multiple.
 
-(3) Subject to this section and the regulations, every year on June 1, beginning on June 1, 2024,
+(3) Subject to this section and the regulations, every year on June 1, beginning on June 1, 2024,
 
 (a) a minimum wage referred to in section 16.1 (2) is adjusted in accordance with the formula set out in subsection (4) of this section, and
 
 (b) the adjusted minimum wage is rounded to the nearest multiple of $0.01 or, if the adjusted minimum wage is equidistant from 2 consecutive multiples, to the higher multiple.
 
-(4) The following formula applies for the purposes of subsections (2) (a) and (3) (a):
+(4) The following formula applies for the purposes of subsections (2) (a) and (3) (a):
 
-adjusted minimum wage = previous minimum wage ×Index A
+adjusted minimum wage = previous minimum wage × Index A
 
 Index B
 
 where
 
-adjusted minimum wage is, subject to subsection (2) (b) or (3) (b), the new minimum wage;
+adjusted minimum wage is, subject to subsection (2) (b) or (3) (b), the new minimum wage;
 
-previous minimum wage is the minimum wage that applied immediately before the adjustment under this section;
+previous minimum wage is the minimum wage that applied immediately before the adjustment under this section;
 
-Index Ais the consumer price index for the immediately preceding calendar year;
+Index A is the consumer price index for the immediately preceding calendar year;
 
-Index Bis the consumer price index for the calendar year immediately preceding the calendar year referred to in the description of Index A.
+Index B is the consumer price index for the calendar year immediately preceding the calendar year referred to in the description of Index A.
 
-(5) Subsections (2) and (3) do not apply to a minimum wage referred to in section 16.1 (1) or (2), as the case may be, in relation to a calendar year if the adjustment to the minimum wage under this section in that calendar year would result in a decrease in the minimum wage.
+(5) Subsections (2) and (3) do not apply to a minimum wage referred to in section 16.1 (1) or (2), as the case may be, in relation to a calendar year if the adjustment to the minimum wage under this section in that calendar year would result in a decrease in the minimum wage.
 
-(6) The minister must publish the minimum wages referred to in section 16.1, as adjusted under this section, on a publicly accessible website.
+(6) The minister must publish the minimum wages referred to in section 16.1, as adjusted under this section, on a publicly accessible website.
 
 #### Paydays
 
-**17**   (1) At least semimonthly and within 8 days after the end of the pay period, an employer must pay to an employee all wages earned by the employee in a pay period.
+**17** (1) At least semimonthly and within 8 days after the end of the pay period, an employer must pay to an employee all wages earned by the employee in a pay period.
 
-(2)
-Subsection (1) does not apply to
+(2) Subsection (1) does not apply to
 
 (a) overtime wages credited to an employee's time bank, or
 
@@ -878,17 +848,15 @@ Subsection (1) does not apply to
 
 #### If employment is terminated
 
-**18**
-(1) An employer must pay all wages owing to an employee within 48 hours after the employer terminates the employment.
+**18** (1) An employer must pay all wages owing to an employee within 48 hours after the employer terminates the employment.
 
-(2) An employer must pay all wages owing to an employee within 6 days after the employee terminates the employment.
+(2) An employer must pay all wages owing to an employee within 6 days after the employee terminates the employment.
 
 #### If employee cannot be located
 
-**19**
-(1) In this section, "administrator" has the same meaning as in the [Unclaimed Property Act](/civix/document/id/complete/statreg/99048_01).
+**19** (1) In this section, "administrator" has the same meaning as in the [Unclaimed Property Act](/civix/document/id/complete/statreg/99048_01).
 
-(1.1) If an employer cannot locate an employee to pay the employee's wages, the employer must pay the wages to the director within 60 days after the wages became payable.
+(1.1) If an employer cannot locate an employee to pay the employee's wages, the employer must pay the wages to the director within 60 days after the wages became payable.
 
 (2) The director must give an employer a receipt for any wages received from the employer under subsection (1.1).
 
@@ -900,7 +868,7 @@ Subsection (1) does not apply to
 
 #### How wages are paid
 
-**20**   An employer must pay all wages
+**20** An employer must pay all wages
 
 (a) in Canadian currency,
 
@@ -910,8 +878,7 @@ Subsection (1) does not apply to
 
 #### Deductions
 
-**21**
-(1) Except as permitted or required by this Act or any other enactment of British Columbia or Canada, an employer must not, directly or indirectly, withhold, deduct or require payment of all or part of an employee's wages for any purpose.
+**21** (1) Except as permitted or required by this Act or any other enactment of British Columbia or Canada, an employer must not, directly or indirectly, withhold, deduct or require payment of all or part of an employee's wages for any purpose.
 
 (2) An employer must not require an employee to pay any of the employer's business costs except as permitted by the regulations.
 
@@ -919,8 +886,7 @@ Subsection (1) does not apply to
 
 #### Assignments
 
-**22**
-(1) An employer must honour an employee's written assignment of wages
+**22** (1) An employer must honour an employee's written assignment of wages
 
 (a) to a trade union in accordance with the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01),
 
@@ -946,7 +912,7 @@ Subsection (1) does not apply to
 
 #### Employer's duty to make assigned payments
 
-**23**   An employer who deducts an amount from an employee's wages under an assignment of wages must pay the amount
+**23** An employer who deducts an amount from an employee's wages under an assignment of wages must pay the amount
 
 (a) according to the terms of that assignment, or
 
@@ -956,8 +922,7 @@ whichever is sooner.
 
 #### How an assignment is cancelled
 
-**24**
-To cancel an assignment of wages, an employee must notify in writing
+**24** To cancel an assignment of wages, an employee must notify in writing
 
 (a) the employer, and
 
@@ -965,8 +930,7 @@ To cancel an assignment of wages, an employee must notify in writing
 
 #### Special clothing
 
-**25**
-(1) An employer who requires an employee to wear special clothing must, without charge to the employee,
+**25** (1) An employer who requires an employee to wear special clothing must, without charge to the employee,
 
 (a) provide the special clothing, and
 
@@ -988,13 +952,11 @@ To cancel an assignment of wages, an employee must notify in writing
 
 #### Payments by employer to funds, insurers or others
 
-**26**
-An employer who agrees under an employment contract to pay an amount on behalf of an employee to a fund, insurer or other person must pay the amount in accordance with the contract.
+**26** An employer who agrees under an employment contract to pay an amount on behalf of an employee to a fund, insurer or other person must pay the amount in accordance with the contract.
 
 #### Wage statements
 
-**27**
-(1) On every payday, an employer must give each employee a written wage statement for the pay period stating all of the following:
+**27** (1) On every payday, an employer must give each employee a written wage statement for the pay period stating all of the following:
 
 (a) the employer's name and address;
 
@@ -1028,8 +990,7 @@ An employer who agrees under an employment contract to pay an amount on behalf o
 
 #### Payroll records
 
-**28**
-(1) For each employee, an employer must keep records of the following information:
+**28** (1) For each employee, an employer must keep records of the following information:
 
 (a) the employee's name, date of birth, occupation, telephone number and residential address;
 
@@ -1061,16 +1022,13 @@ An employer who agrees under an employment contract to pay an amount on behalf o
 
 #### Repealed
 
-**29**
-[Repealed 2002-42-10.]
+**29** [Repealed 2002-42-10.]
 
 #### Producer and farm labour contractor are liable for unpaid wages
 
-**30**
-(1) A producer and a farm labour contractor are jointly and separately liable for wages earned by an employee of the farm labour contractor for work done on behalf of the producer.
+**30** (1) A producer and a farm labour contractor are jointly and separately liable for wages earned by an employee of the farm labour contractor for work done on behalf of the producer.
 
-(2)
-Subsection (1) does not apply in respect of a producer if
+(2) Subsection (1) does not apply in respect of a producer if
 
 (a) the farm labour contractor is licensed under this Act at the time the producer engages the services of the farm labour contractor, and
 
@@ -1078,8 +1036,7 @@ Subsection (1) does not apply in respect of a producer if
 
 #### Liability of farm labour contractor for transportation costs
 
-**30.1**
-(1) A farm labour contractor is liable to pay a prescribed administrative fee to the Province if
+**30.1** (1) A farm labour contractor is liable to pay a prescribed administrative fee to the Province if
 
 (a) a motor vehicle used by the farm labour contractor to transport employees of the farm labour contractor, of another farm labour contractor or of a producer is, during the transportation of the employees, removed from service as the result of a failure to comply with, or a contravention of, an enactment of British Columbia or of Canada, and
 
@@ -1101,7 +1058,7 @@ Subsection (1) does not apply in respect of a producer if
 
 (a) if
 
-(i) the farm labour contractor on whom the notice was served provides evidence satisfactory to the director that the finding that the farm labour contractor failed to comply with or contravened an enactment as described in subsection (1) (a) has been reversed on appeal under that enactment, or
+(i) the farm labour contractor on whom the notice was served provides evidence satisfactory to the director that the finding that the farm labour contractor failed to comply with or contravened an enactment as described in subsection (1) (a) has been reversed on appeal under that enactment, or
 
 (ii) evidence comes to the attention of the director that was not available at the time the notice was issued that another requirement under subsection (1) was not met, or
 
@@ -1109,8 +1066,7 @@ Subsection (1) does not apply in respect of a producer if
 
 #### Enforcement of administrative fee
 
-**30.2**
-(1) An administrative fee imposed under section 30.1 is a debt payable to the government.
+**30.2** (1) An administrative fee imposed under section 30.1 is a debt payable to the government.
 
 (2) If a farm labour contractor fails to pay the administrative fee as required under section 30.1, the director may do one or more of the following:
 
@@ -1124,8 +1080,7 @@ Subsection (1) does not apply in respect of a producer if
 
 #### Gratuities
 
-**30.3**
-(1) An employer must not
+**30.3** (1) An employer must not
 
 (a) withhold gratuities from an employee,
 
@@ -1141,12 +1096,11 @@ Subsection (1) does not apply in respect of a producer if
 
 #### Redistribution of gratuities
 
-**30.4**
-(1) Despite section 30.3 (1), an employer may withhold gratuities from an employee, make a deduction from an employee's gratuities or require the employee to return or give the employee's gratuities to the employer if the employer collects and redistributes gratuities among some or all of the employer's employees.
+**30.4** (1) Despite section 30.3 (1), an employer may withhold gratuities from an employee, make a deduction from an employee's gratuities or require the employee to return or give the employee's gratuities to the employer if the employer collects and redistributes gratuities among some or all of the employer's employees.
 
 (2) An employer must not redistribute gratuities under subsection (1) among prescribed employees or classes of employees.
 
-(3) Subject to subsections (4) and (5), an employer or a director or shareholder of an employer may not share in gratuities redistributed under subsection (1).
+(3) Subject to subsections (4) and (5), an employer or a director or shareholder of an employer may not share in gratuities redistributed under subsection (1).
 
 (4) An employer who is a sole proprietor or a partner in a partnership may share in gratuities redistributed under subsection (1) if the employer regularly performs to a substantial degree the same work performed by
 
@@ -1164,29 +1118,25 @@ Part 4 — Hours of Work and Overtime
 
 #### Repealed
 
-**31**
-[Repealed 2002-42-12.]
+**31** [Repealed 2002-42-12.]
 
 #### Meal breaks
 
-**32**
-(1) An employer must ensure
+**32** (1) An employer must ensure
 
 (a) that no employee works more than 5 consecutive hours without a meal break, and
 
-(b) that each meal break lasts at least a 1/2 hour.
+(b) that each meal break lasts at least a 1/2 hour.
 
 (2) An employer who requires an employee to work or be available for work during a meal break must count the meal break as time worked by the employee.
 
 #### Split shifts
 
-**33**
-An employer must ensure that an employee working a split shift completes the shift within 12 hours of starting work.
+**33** An employer must ensure that an employee working a split shift completes the shift within 12 hours of starting work.
 
 #### Minimum daily hours
 
-**34**
-(1) Subject to subsections (2) and (3), if as required by an employer an employee reports for work on any day, the employer must pay the employee for a minimum of 2 hours at the regular wage whether or not the employee starts work, unless the employee is unfit to work or fails to comply with Part 2 of the [Workers Compensation Act](/civix/document/id/complete/statreg/19001_00), or a regulation under that Part.
+**34** (1) Subject to subsections (2) and (3), if as required by an employer an employee reports for work on any day, the employer must pay the employee for a minimum of 2 hours at the regular wage whether or not the employee starts work, unless the employee is unfit to work or fails to comply with Part 2 of the [Workers Compensation Act](/civix/document/id/complete/statreg/19001_00), or a regulation under that Part.
 
 (2) Whether or not the employee starts work, the employer under subsection (1) must pay the employee for a minimum of 4 hours at the employee's regular wage if the employer had previously scheduled the employee to work for more than 8 hours that day, unless
 
@@ -1194,7 +1144,7 @@ An employer must ensure that an employee working a split shift completes the shi
 
 (b) the work is suspended for reasons completely beyond the employer's control, including unsuitable weather conditions.
 
-(3) If the circumstance set out in subsection (2) (b) applies, the employer must pay the employee for a minimum of 2 hours at the employee's regular wage.
+(3) If the circumstance set out in subsection (2) (b) applies, the employer must pay the employee for a minimum of 2 hours at the employee's regular wage.
 
 (4) If
 
@@ -1206,28 +1156,25 @@ the employer must pay the employee for the entire period the employee is require
 
 #### Maximum hours of work before overtime applies
 
-**35**   (1) An employer must pay an employee overtime wages in accordance with section 40 if the employer requires, or directly or indirectly allows, the employee to work more than 8 hours a day or 40 hours a week.
+**35** (1) An employer must pay an employee overtime wages in accordance with section 40 if the employer requires, or directly or indirectly allows, the employee to work more than 8 hours a day or 40 hours a week.
 
 (2) Subsection (1) does not apply for the purposes of an employee who is working under an averaging agreement under section 37.
 
 #### Hours free from work
 
-**36**
-(1) An employer must either
+**36** (1) An employer must either
 
 (a) ensure that an employee has at least 32 consecutive hours free from work each week, or
 
-(b) pay an employee 1 1/2 times the regular wage for time worked by the employee during the 32 hour period the employee would otherwise be entitled to have free from work.
+(b) pay an employee 1 1/2 times the regular wage for time worked by the employee during the 32 hour period the employee would otherwise be entitled to have free from work.
 
 (2) An employer must ensure that each employee has at least 8 consecutive hours free from work between each shift worked.
 
-(3)
-Subsection (2) does not apply in an emergency.
+(3) Subsection (2) does not apply in an emergency.
 
 #### Agreements to average hours of work
 
-**37**
-(1) Despite sections 35, 36 (1) and 40 but subject to this section, an employer and employee may agree to average the employee's hours of work over a period of 1, 2, 3 or 4 weeks for the purpose of determining the employee's entitlement, if any, to overtime wages under subsections (4) and (6) of this section and wages payable under subsection (8) or (9) (b).
+**37** (1) Despite sections 35, 36 (1) and 40 but subject to this section, an employer and employee may agree to average the employee's hours of work over a period of 1, 2, 3 or 4 weeks for the purpose of determining the employee's entitlement, if any, to overtime wages under subsections (4) and (6) of this section and wages payable under subsection (8) or (9) (b).
 
 (2) An averaging agreement under subsection (1) is not valid unless
 
@@ -1245,23 +1192,23 @@ Subsection (2) does not apply in an emergency.
 
 (vi) provides for a start date and an expiry date for the period specified under subparagraph (iii),
 
-(b) the schedule in the agreement under paragraph (a) (iv) is in compliance with subsection (3), and
+(b) the schedule in the agreement under paragraph (a) (iv) is in compliance with subsection (3), and
 
 (c) the employee receives a copy of the agreement before the date on which the period specified in the agreement begins.
 
 (3) A work schedule in an agreement under this section must not provide for more than the following hours of work for the employee:
 
-(a) 40 hours, if the agreement specifies a 1 week period under subsection (2) (a) (iii);
+(a) 40 hours, if the agreement specifies a 1 week period under subsection (2) (a) (iii);
 
-(b) an average of 40 hours per week, if the agreement specifies more than a 1 week period under subsection (2) (a) (iii).
+(b) an average of 40 hours per week, if the agreement specifies more than a 1 week period under subsection (2) (a) (iii).
 
 (4) An employer under this section who requires, or directly or indirectly allows, an employee to work more than 12 hours a day, at any time during the period specified in the agreement, must pay the employee double the employee's regular wage for the time over 12 hours.
 
-(5) An employer under this section who requires, or directly or indirectly allows, an employee to work more than an average of 40 hours a week within the period specified in the agreement must pay the employee 1 1/2 times the employee's regular wage for the time over 40 hours.
+(5) An employer under this section who requires, or directly or indirectly allows, an employee to work more than an average of 40 hours a week within the period specified in the agreement must pay the employee 1 1/2 times the employee's regular wage for the time over 40 hours.
 
 (6) An employer under this section who requires, or directly or indirectly allows, an employee to work more than the hours scheduled for a day during the period of the agreement must pay the employee
 
-(a) 1 1/2 times the employee's regular wage for,
+(a) 1 1/2 times the employee's regular wage for,
 
 (i) if fewer than 8 hours were scheduled for that day, any time worked over 8 hours, or
 
@@ -1275,21 +1222,19 @@ Subsection (2) does not apply in an emergency.
 
 (b) if subsection (6) applies, the time that the employee works beyond the scheduled hours and for which the employee is paid in accordance with that subsection, is excluded.
 
-(8)
-Section 36 (1) applies in relation to an averaging agreement if the period specified in the agreement is 1 week.
+(8) Section 36 (1) applies in relation to an averaging agreement if the period specified in the agreement is 1 week.
 
 (9) If the period specified in an averaging agreement is more than 1 week, the employer must either
 
 (a) ensure that for each week covered by the agreement, the employee has an interval free from work of 32 consecutive hours, whether the interval is taken in the same week, different weeks or consecutively any time during the weeks covered by the agreement, or
 
-(b) pay the employee 1 1/2 times the regular wage for time worked by the employee during the periods the employee would otherwise be entitled to have free from work under paragraph (a).
+(b) pay the employee 1 1/2 times the regular wage for time worked by the employee during the periods the employee would otherwise be entitled to have free from work under paragraph (a).
 
-(10) At the employee's written request, the employer and employee may agree to adjust the work schedule referred to in subsection (2) (a) (iv) provided that the total number of hours scheduled in the agreement remain the same.
+(10) At the employee's written request, the employer and employee may agree to adjust the work schedule referred to in subsection (2) (a) (iv) provided that the total number of hours scheduled in the agreement remain the same.
 
 (11) The parties to an averaging agreement under this section are bound by that agreement until the expiry date set out in the agreement or a later date provided in an agreement to repeat the averaging agreement, as the case may be, and the provisions of the averaging agreement apply for the purpose of determining the employee's entitlement, if any, to overtime wages under subsections (4) and (6) and wages payable under subsection (8) or (9) (b).
 
-(12)
-Subsections (2) to (11) are deemed to be incorporated in an averaging agreement under this section as terms of the agreement.
+(12) Subsections (2) to (11) are deemed to be incorporated in an averaging agreement under this section as terms of the agreement.
 
 (13) An employer must retain an averaging agreement under this section for 4 years after the following, as applicable:
 
@@ -1297,24 +1242,21 @@ Subsections (2) to (11) are deemed to be incorporated in an averaging agreement 
 
 (b) the expiry date set out in one or more agreements to repeat the averaging agreement, whichever date is the latest.
 
-(14) The application and operation of an averaging agreement under this section must not be interpreted as a waiver described in section 4.
+(14) The application and operation of an averaging agreement under this section must not be interpreted as a waiver described in section 4.
 
 #### Repealed
 
-**38**
-[Repealed 2002-42-18.]
+**38** [Repealed 2002-42-18.]
 
 #### No excessive hours
 
-**39**
-Despite any provision of this Part, an employer must not require or directly or indirectly allow an employee to work excessive hours or hours detrimental to the employee's health or safety.
+**39** Despite any provision of this Part, an employer must not require or directly or indirectly allow an employee to work excessive hours or hours detrimental to the employee's health or safety.
 
 #### Overtime wages for employees not working under an averaging agreement
 
-**40**
-(1) An employer must pay an employee who works over 8 hours a day, and is not working under an averaging agreement under section 37,
+**40** (1) An employer must pay an employee who works over 8 hours a day, and is not working under an averaging agreement under section 37,
 
-(a) 1 1/2 times the employee's regular wage for the time over 8 hours, and
+(a) 1 1/2 times the employee's regular wage for the time over 8 hours, and
 
 (b) double the employee's regular wage for any time over 12 hours.
 
@@ -1326,13 +1268,11 @@ Despite any provision of this Part, an employer must not require or directly or 
 
 #### Repealed
 
-**41**
-[Repealed 2002-42-20.]
+**41** [Repealed 2002-42-20.]
 
 #### Banking of overtime wages
 
-**42**
-(1) At the written request of an employee, an employer may establish a time bank for the employee and credit the employee's overtime wages to the time bank instead of paying them to the employee within the time required under section 17.
+**42** (1) At the written request of an employee, an employer may establish a time bank for the employee and credit the employee's overtime wages to the time bank instead of paying them to the employee within the time required under section 17.
 
 (2) Overtime wages must be credited to a time bank at the rates required under section 37 (4), (5) or (6) or 40.
 
@@ -1362,15 +1302,13 @@ Despite any provision of this Part, an employer must not require or directly or 
 
 #### Repealed
 
-**43**
-[Repealed 2002-42-22.]
+**43** [Repealed 2002-42-22.]
 
 Part 5 — Statutory Holidays
 
 #### Entitlement to statutory holiday
 
-**44**
-An employer must comply with section 45 or 46 in respect of an employee who has been employed by the employer for at least 30 calendar days before the statutory holiday and has
+**44** An employer must comply with section 45 or 46 in respect of an employee who has been employed by the employer for at least 30 calendar days before the statutory holiday and has
 
 (a) worked or earned wages for 15 of the 30 calendar days preceding the statutory holiday, or
 
@@ -1378,25 +1316,23 @@ An employer must comply with section 45 or 46 in respect of an employee who has 
 
 #### Statutory holiday pay
 
-**45**
-(1) An employee who is given a day off on a statutory holiday, or is given a day off instead of the statutory holiday under section 48, must be paid an amount equal to at least an average day's pay determined by the formula
+**45** (1) An employee who is given a day off on a statutory holiday, or is given a day off instead of the statutory holiday under section 48, must be paid an amount equal to at least an average day's pay determined by the formula
 
 amount paid ÷ days worked
 
 where
 
-amount paid is the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the statutory holiday, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
+amount paid is the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the statutory holiday, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
 
-days workedis the number of days the employee worked or earned wages within that 30 calendar day period.
+days worked is the number of days the employee worked or earned wages within that 30 calendar day period.
 
 (2) The average day's pay provided under subsection (1) applies whether or not the statutory holiday falls on the employee's regularly scheduled day off.
 
 #### If employee is required to work on statutory holiday
 
-**46**
-An employee who works on a statutory holiday must be paid for that day
+**46** An employee who works on a statutory holiday must be paid for that day
 
-(a) 1 1/2 times the employee's regular wage for the time worked up to 12 hours,
+(a) 1 1/2 times the employee's regular wage for the time worked up to 12 hours,
 
 (b) double the employee's regular wage for any time worked over 12 hours, and
 
@@ -1404,13 +1340,11 @@ An employee who works on a statutory holiday must be paid for that day
 
 #### Repealed
 
-**47**
-[Repealed 2002-42-23.]
+**47** [Repealed 2002-42-23.]
 
 #### Substituting another day for a statutory holiday
 
-**48**
-(1) An employer may for one or more employees at a workplace substitute another day off for a statutory holiday if the employer and the employee or a majority of those employees, as the case may be, agree to the substitution.
+**48** (1) An employer may for one or more employees at a workplace substitute another day off for a statutory holiday if the employer and the employee or a majority of those employees, as the case may be, agree to the substitution.
 
 (2) Any employees affected by the substitution of another day for a statutory holiday have the same rights under this Act and their employer has the same duties under this Act as if the other day were a statutory holiday.
 
@@ -1418,15 +1352,13 @@ An employee who works on a statutory holiday must be paid for that day
 
 #### Repealed
 
-**49**
-[Repealed 2002-42-25.]
+**49** [Repealed 2002-42-25.]
 
 Part 6 — Leaves and Jury Duty
 
 #### Serious personal illness or injury — up to 27 weeks unpaid leave
 
-**49.01**
-(1) In this section, "health practitioner" means the following:
+**49.01** (1) In this section, "health practitioner" means the following:
 
 (a) a medical practitioner;
 
@@ -1486,7 +1418,7 @@ Part 6 — Leaves and Jury Duty
 
 #### Illness or injury leave
 
-**49.1**   (1) After 90 consecutive days of employment with an employer, an employee, for personal illness or injury, is entitled, in each calendar year, to
+**49.1** (1) After 90 consecutive days of employment with an employer, an employee, for personal illness or injury, is entitled, in each calendar year, to
 
 (a) paid leave for up to the number of days prescribed, and
 
@@ -1500,16 +1432,15 @@ amount paid ÷ days worked
 
 where
 
-amount paidis the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the leave, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
+amount paid is the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the leave, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
 
-days workedis the number of days the employee worked or earned wages within that 30 calendar day period.
+days worked is the number of days the employee worked or earned wages within that 30 calendar day period.
 
-(4) An employer must pay an employee in a prescribed circumstance who takes leave under subsection (1) (a) an amount in money equal to at least the amount calculated in accordance with the regulations.
+(4) An employer must pay an employee in a prescribed circumstance who takes leave under subsection (1) (a) an amount in money equal to at least the amount calculated in accordance with the regulations.
 
 #### Sick note not required
 
-**49.2**
-(1) In this section:
+**49.2** (1) In this section:
 
 "health practitioner" means the following:
 
@@ -1535,7 +1466,7 @@ days workedis the number of days the employee worked or earned wages within tha
 
 #### Maternity leave
 
-**50**   (1) A pregnant employee who requests leave under this subsection is entitled to up to 17 consecutive weeks of unpaid leave, which must be taken during the period that begins
+**50** (1) A pregnant employee who requests leave under this subsection is entitled to up to 17 consecutive weeks of unpaid leave, which must be taken during the period that begins
 
 (a) no earlier than 13 weeks before the expected birth date, and
 
@@ -1553,7 +1484,7 @@ and ends no later than 17 weeks after the leave begins.
 
 (a) be given in writing to the employer,
 
-(b) if the request is made during the pregnancy, be given to the employer at least 4 weeks before the day the employee proposes to begin leave, and
+(b) if the request is made during the pregnancy, be given to the employer at least 4 weeks before the day the employee proposes to begin leave, and
 
 (c) if required by the employer, be accompanied by a medical practitioner's or nurse practitioner's certificate stating the expected or actual birth date or the date the pregnancy terminated or stating the reasons for requesting additional leave under subsection (3).
 
@@ -1561,8 +1492,7 @@ and ends no later than 17 weeks after the leave begins.
 
 #### Parental leave
 
-**51**
-(1) An employee who requests leave under paragraph (a), (b) or (d) of this subsection is entitled to,
+**51** (1) An employee who requests leave under paragraph (a), (b) or (d) of this subsection is entitled to,
 
 (a) for a parent who takes leave under section 50 in relation to the birth of the child or children with respect to whom the parental leave is to be taken, up to 61 consecutive weeks of unpaid leave, which must begin, unless the employer and employee agree otherwise, immediately after the end of the leave taken under section 50,
 
@@ -1578,7 +1508,7 @@ and ends no later than 17 weeks after the leave begins.
 
 (a) be given in writing to the employer,
 
-(b) if the request is for leave under subsection (1) (a) or (b), be given to the employer at least 4 weeks before the employee proposes to begin leave, and
+(b) if the request is for leave under subsection (1) (a) or (b), be given to the employer at least 4 weeks before the employee proposes to begin leave, and
 
 (c) if required by the employer, be accompanied by a medical practitioner's or nurse practitioner's certificate or other evidence of the employee's entitlement to leave.
 
@@ -1586,8 +1516,7 @@ and ends no later than 17 weeks after the leave begins.
 
 #### Family responsibility leave
 
-**52**
-An employee is entitled to up to 5 days of unpaid leave during each employment year to meet responsibilities related to
+**52** An employee is entitled to up to 5 days of unpaid leave during each employment year to meet responsibilities related to
 
 (a) the care, health or education of a child in the employee's care, or
 
@@ -1595,8 +1524,7 @@ An employee is entitled to up to 5 days of unpaid leave during each employment 
 
 #### Compassionate care leave
 
-**52.1**
-(1) In this section, "family member" means
+**52.1** (1) In this section, "family member" means
 
 (a) a member of an employee's immediate family, and
 
@@ -1620,28 +1548,27 @@ An employee is entitled to up to 5 days of unpaid leave during each employment 
 
 (6) A leave taken under this section must be taken in units of one or more weeks.
 
-(7) If an employee takes a leave under this section and the family member to whom subsection (2) applies does not die within the period referred to in subsection (5) (b), the employee may take a further leave after obtaining a new certificate in accordance with subsection (2), and subsections (3) to (6) apply to the further leave.
+(7) If an employee takes a leave under this section and the family member to whom subsection (2) applies does not die within the period referred to in subsection (5) (b), the employee may take a further leave after obtaining a new certificate in accordance with subsection (2), and subsections (3) to (6) apply to the further leave.
 
 #### Critical illness or injury leave
 
-**52.11**
-(1) In this section, "family member" means
+**52.11** (1) In this section, "family member" means
 
 (a) a member of an employee's immediate family, and
 
 (b) any other individual who is a member of a prescribed class.
 
-(2) An employee who requests leave under this section is entitled to the following unpaid leave to provide care or support to a family member if a medical practitioner or nurse practitioner issues a certificate in accordance with subsection (4):
+(2) An employee who requests leave under this section is entitled to the following unpaid leave to provide care or support to a family member if a medical practitioner or nurse practitioner issues a certificate in accordance with subsection (4):
 
 (a) up to 36 weeks of unpaid leave to provide care or support to a family member who is under 19 years of age at the start of the leave;
 
 (b) up to 16 weeks of unpaid leave to provide care or support to a family member who is 19 years of age or older.
 
-(3) If a certificate issued in accordance with subsection (4), with respect to a leave under this section, sets out a period for which a family member of an employee requires care or support that is less than the maximum number of weeks specified in subsection (2) (a) or (b), as applicable, the employee
+(3) If a certificate issued in accordance with subsection (4), with respect to a leave under this section, sets out a period for which a family member of an employee requires care or support that is less than the maximum number of weeks specified in subsection (2) (a) or (b), as applicable, the employee
 
 (a) is entitled to take the leave only up to the number of weeks indicated in the certificate, and
 
-(b) may, respecting the leave, obtain one or more additional certificates in accordance with subsection (4), but the employee's entitlement to the leave does not exceed the maximum number of weeks specified in subsection (2) (a) or (b), as applicable.
+(b) may, respecting the leave, obtain one or more additional certificates in accordance with subsection (4), but the employee's entitlement to the leave does not exceed the maximum number of weeks specified in subsection (2) (a) or (b), as applicable.
 
 (4) A certificate referred to in subsection (2) must
 
@@ -1667,12 +1594,11 @@ An employee is entitled to up to 5 days of unpaid leave during each employment 
 
 (8) A leave taken under this section must be taken in units of one or more weeks.
 
-(9) If an employee takes a leave under this section and, at the time referred to in subsection (7) (b), the life of the family member remains at risk as a result of the illness or injury, the employee may take a further leave after obtaining a new certificate in accordance with subsection (4), and subsections (5) to (8) apply to the further leave.
+(9) If an employee takes a leave under this section and, at the time referred to in subsection (7) (b), the life of the family member remains at risk as a result of the illness or injury, the employee may take a further leave after obtaining a new certificate in accordance with subsection (4), and subsections (5) to (8) apply to the further leave.
 
 #### COVID-19-related leave
 
-**52.12**
-(1) In this section, "eligible person", with respect to an employee, means any of the following:
+**52.12** (1) In this section, "eligible person", with respect to an employee, means any of the following:
 
 (a) a child who is under the day-to-day care and control of the employee by way of agreement or court order or because the employee is the child's parent or guardian;
 
@@ -1724,12 +1650,11 @@ An employee is entitled to up to 5 days of unpaid leave during each employment 
 
 #### Repealed
 
-**52.121**   [Repealed RS1996-113-52.121 (8).]
+**52.121** [Repealed RS1996-113-52.121 (8).]
 
 #### Leave for COVID-19 vaccination
 
-**52.13**
-(1) An employee who requests leave under this section is entitled to paid leave for the period described in subsection (2) to be vaccinated against COVID-19.
+**52.13** (1) An employee who requests leave under this section is entitled to paid leave for the period described in subsection (2) to be vaccinated against COVID-19.
 
 (2) An employee is entitled to leave under this section for up to 3 hours for each request for leave made under this section.
 
@@ -1739,9 +1664,9 @@ amount paid ÷ hours worked
 
 where
 
-amount paidis the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the leave, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
+amount paid is the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the leave, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
 
-hours workedis the number of hours the employee worked or earned wages within that 30 calendar day period.
+hours worked is the number of hours the employee worked or earned wages within that 30 calendar day period.
 
 (4) An employer must pay an employee in a prescribed circumstance who takes leave under this section an amount in money equal to at least the amount calculated in accordance with the regulations.
 
@@ -1753,8 +1678,7 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 #### Reservists' leave
 
-**52.2**
-(1) In this section:
+**52.2** (1) In this section:
 
 "Canadian Forces" has the same meaning as in section 14 of the [National Defence Act](http://laws.justice.gc.ca/eng/acts/N-5/index.html) (Canada);
 
@@ -1768,7 +1692,7 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 (c) the prescribed circumstances apply.
 
-(3) An employee who is a reservist is entitled to take leave under this section for the prescribed period or, if no period is prescribed, for as long as subsection (2) (a), (b) or (c) applies to the employee.
+(3) An employee who is a reservist is entitled to take leave under this section for the prescribed period or, if no period is prescribed, for as long as subsection (2) (a), (b) or (c) applies to the employee.
 
 (4) Subject to subsection (5), a request for leave must
 
@@ -1778,13 +1702,13 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 (i) unless subparagraph (ii) or (iii) applies, at least 4 weeks before the employee proposes to begin leave,
 
-(ii) in the case of leave under subsection (2) (a) or (b), if the employee receives notice of the deployment less than 4 weeks before it will begin, as soon as practicable after the employee receives the notice, or
+(ii) in the case of leave under subsection (2) (a) or (b), if the employee receives notice of the deployment less than 4 weeks before it will begin, as soon as practicable after the employee receives the notice, or
 
-(iii) in the case of leave under subsection (2) (c), within the prescribed period, and
+(iii) in the case of leave under subsection (2) (c), within the prescribed period, and
 
 (c) include the date the employee proposes to begin leave and the date the employee proposes to return to work.
 
-(5) If circumstances require leave to be taken beyond the date specified in the request under subsection (4) (c), the employee must
+(5) If circumstances require leave to be taken beyond the date specified in the request under subsection (4) (c), the employee must
 
 (a) notify the employer of the need for the extended leave and of the date the employee now proposes to return to work, and
 
@@ -1792,9 +1716,9 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 (i) unless subparagraph (ii) or (iii) applies, at least 4 weeks before the date the employee had proposed, in the request under subsection (4), to return to work,
 
-(ii) in the case of leave under subsection (2) (a) or (b), if the employee receives notice of the extended deployment less than 4 weeks before the date referred to in subparagraph (i), as soon as practicable after the employee receives the notice, or
+(ii) in the case of leave under subsection (2) (a) or (b), if the employee receives notice of the extended deployment less than 4 weeks before the date referred to in subparagraph (i), as soon as practicable after the employee receives the notice, or
 
-(iii) in the case of a leave under subsection (2) (c), within the prescribed period.
+(iii) in the case of a leave under subsection (2) (c), within the prescribed period.
 
 (6) If an employee who is a reservist proposes to return to work earlier than specified in the request submitted under subsection (4) or the notice provided under subsection (5), if applicable, the employee must notify the employer of this proposal at least one week before the date the employee proposes to return to work.
 
@@ -1804,11 +1728,11 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 (a) provide the prescribed information in accordance with the regulations, or
 
-(b) if no information is prescribed, provide information reasonable in the circumstances to explain why subsection (2) (a), (b) or (c) applies to the employee and provide it within a reasonable time after the employee learns of the requirement under subsection (7).
+(b) if no information is prescribed, provide information reasonable in the circumstances to explain why subsection (2) (a), (b) or (c) applies to the employee and provide it within a reasonable time after the employee learns of the requirement under subsection (7).
 
 #### Leave respecting disappearance of child
 
-**52.3**   (1) In this section and section 52.4:
+**52.3** (1) In this section and section 52.4:
 
 "child" means a person under 19 years of age;
 
@@ -1836,13 +1760,13 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 (d) the date on which the child is found dead;
 
-(e) the date that is the last day of the last unit of time in respect of which the employer consents under subsection (5) (b).
+(e) the date that is the last day of the last unit of time in respect of which the employer consents under subsection (5) (b).
 
 (7) If requested by the employer, the employee must, as soon as practicable, provide to the employer reasonably sufficient proof that the employee's child has disappeared in circumstances in which it is probable the disappearance is a result of a crime.
 
 #### Leave respecting death of child
 
-**52.4**   (1) If a child of an employee dies and the employee requests leave under this section, the employee is entitled to unpaid leave for a period of up to 104 weeks.
+**52.4** (1) If a child of an employee dies and the employee requests leave under this section, the employee is entitled to unpaid leave for a period of up to 104 weeks.
 
 (2) If an employee is charged with a crime that resulted in the death of the employee's child, the employee is not entitled, or, if already on leave, is no longer entitled, to leave under this section.
 
@@ -1864,14 +1788,13 @@ and ends on the date that is 105 weeks after the date referred to in paragraph (
 
 (a) the date the employee is charged with a crime that resulted in the death of the child;
 
-(b) the date that is the last day of the last unit of time in respect of which the employer consents under subsection (4) (b).
+(b) the date that is the last day of the last unit of time in respect of which the employer consents under subsection (4) (b).
 
 (6) If requested by the employer, the employee must, as soon as practicable, provide to the employer reasonably sufficient proof that the employee's child is dead.
 
 #### Leave respecting domestic or sexual violence
 
-**52.5**
-(1) In this section:
+**52.5** (1) In this section:
 
 "child" means a person under 19 years of age;
 
@@ -1955,25 +1878,25 @@ and ends on the date that is 105 weeks after the date referred to in paragraph (
 
 (c) up to 15 weeks of additional unpaid leave.
 
-(4.1) A leave under subsection (4) (a) or (b) may be taken by the employee in one or more units of time.
+(4.1) A leave under subsection (4) (a) or (b) may be taken by the employee in one or more units of time.
 
-(5) A leave under subsection (4) (c) may be taken by the employee in
+(5) A leave under subsection (4) (c) may be taken by the employee in
 
 (a) one unit of time, or
 
 (b) more than one unit of time, with the employer's consent.
 
-(5.1) Subject to subsection (5.2), an employer must pay an employee who takes leave under subsection (4) (a) an amount in money equal to at least the amount calculated by multiplying the period of the leave and the average day's pay determined by the formula
+(5.1) Subject to subsection (5.2), an employer must pay an employee who takes leave under subsection (4) (a) an amount in money equal to at least the amount calculated by multiplying the period of the leave and the average day's pay determined by the formula
 
 amount paid ÷ days worked
 
 where
 
-amount paidis the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the leave, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
+amount paid is the amount paid or payable to the employee for work that is done during and wages that are earned within the 30 calendar day period preceding the leave, including vacation pay that is paid or payable for any days of vacation taken within that period, less any amounts paid or payable for overtime, and
 
-days workedis the number of days the employee worked or earned wages within that 30 calendar day period.
+days worked is the number of days the employee worked or earned wages within that 30 calendar day period.
 
-(5.2) An employer must pay an employee in a prescribed circumstance who takes leave under subsection (4) (a) an amount in money equal to at least the amount calculated in accordance with the regulations.
+(5.2) An employer must pay an employee in a prescribed circumstance who takes leave under subsection (4) (a) an amount in money equal to at least the amount calculated in accordance with the regulations.
 
 (6) An employee is not entitled to leave under this section respecting an eligible person if the employee commits the domestic or sexual violence against the eligible person.
 
@@ -1981,13 +1904,11 @@ days workedis the number of days the employee worked or earned wages within tha
 
 #### Bereavement leave
 
-**53**
-An employee is entitled to up to 3 days of unpaid leave on the death of a member of the employee's immediate family.
+**53** An employee is entitled to up to 3 days of unpaid leave on the death of a member of the employee's immediate family.
 
 #### Duties of employer
 
-**54**
-(1) An employer must give an employee who requests leave under this Part the leave to which the employee is entitled.
+**54** (1) An employer must give an employee who requests leave under this Part the leave to which the employee is entitled.
 
 (2) An employer must not, because of an employee's pregnancy or a leave allowed by this Part,
 
@@ -2007,15 +1928,13 @@ An employee is entitled to up to 3 days of unpaid leave on the death of a membe
 
 #### Jury duty
 
-**55**
-If an employee is required to attend court as a juror, the employer has the same duties under section 54 (2) to (4) in relation to the employee as if that employee were on leave under this Part.
+**55** If an employee is required to attend court as a juror, the employer has the same duties under section 54 (2) to (4) in relation to the employee as if that employee were on leave under this Part.
 
 #### Employment deemed continuous while employee on leave or jury duty
 
-**56**
-(1) The services of an employee who is on leave under this Part or is attending court as a juror are deemed to be continuous for the purposes of
+**56** (1) The services of an employee who is on leave under this Part or is attending court as a juror are deemed to be continuous for the purposes of
 
-(a) calculating annual vacation entitlement and entitlement under sections 63 and 64, and
+(a) calculating annual vacation entitlement and entitlement under sections 63 and 64, and
 
 (b) any pension, medical or other plan beneficial to the employee.
 
@@ -2027,8 +1946,7 @@ If an employee is required to attend court as a juror, the employer has the same
 
 (3) The employee is entitled to all increases in wages and benefits the employee would have been entitled to had the leave not been taken or the attendance as a juror not been required.
 
-(4)
-Subsection (1) does not apply if the employee has, without the employer's consent, taken a longer leave than is allowed under this Part.
+(4) Subsection (1) does not apply if the employee has, without the employer's consent, taken a longer leave than is allowed under this Part.
 
 (5) Subsection (2) does not apply to an employee on leave under section 52.2.
 
@@ -2036,14 +1954,13 @@ Part 7 — Annual Vacation
 
 #### Entitlement to annual vacation
 
-**57**
-(1) An employer must give an employee an annual vacation of
+**57** (1) An employer must give an employee an annual vacation of
 
 (a) at least 2 weeks, after 12 consecutive months of employment, or
 
 (b) at least 3 weeks, after 5 consecutive years of employment.
 
-(2) An employer must ensure an employee takes an annual vacation within 12 months after completing the year of employment entitling the employee to the vacation.
+(2) An employer must ensure an employee takes an annual vacation within 12 months after completing the year of employment entitling the employee to the vacation.
 
 (3) An employer must allow an employee who is entitled to an annual vacation to take it in periods of one or more weeks.
 
@@ -2051,8 +1968,7 @@ Part 7 — Annual Vacation
 
 #### Vacation pay
 
-**58**
-(1) An employer must pay an employee the following amount of vacation pay:
+**58** (1) An employer must pay an employee the following amount of vacation pay:
 
 (a) after 5 calendar days of employment, at least 4% of the employee's total wages during the year of employment entitling the employee to the vacation pay;
 
@@ -2068,46 +1984,41 @@ Part 7 — Annual Vacation
 
 (ii) provided by the collective agreement.
 
-(3) Any vacation pay an employee is entitled to when the employment terminates must be paid to the employee at the time set by section 18 for paying wages.
+(3) Any vacation pay an employee is entitled to when the employment terminates must be paid to the employee at the time set by section 18 for paying wages.
 
 #### Other payments or benefits do not affect vacation rights
 
-**59**
-(1) An employer must not reduce an employee's annual vacation or vacation pay because the employee
+**59** (1) An employer must not reduce an employee's annual vacation or vacation pay because the employee
 
 (a) was paid a bonus or sick pay, or
 
-(b) was previously given a longer annual vacation than the minimum required under section 57.
+(b) was previously given a longer annual vacation than the minimum required under section 57.
 
-(2) Despite subsection (1) (b), an employer may reduce an employee's annual vacation or vacation pay because at the written request of the employee the employer allowed the employee to take an annual vacation in advance.
+(2) Despite subsection (1) (b), an employer may reduce an employee's annual vacation or vacation pay because at the written request of the employee the employer allowed the employee to take an annual vacation in advance.
 
 #### Common date for calculating vacation entitlement
 
-**60**
-An employer may use a common date for calculating the annual vacation entitlement of all employees under sections 57 and 58, so long as this does not result in a reduction of any employee's rights under those sections.
+**60** An employer may use a common date for calculating the annual vacation entitlement of all employees under sections 57 and 58, so long as this does not result in a reduction of any employee's rights under those sections.
 
 #### Repealed
 
-**61**
-[Repealed 2002-42-29.]
+**61** [Repealed 2002-42-29.]
 
 Part 8 — Termination of Employment
 
 #### Definition
 
-**62**
-In this Part, "week of layoff" means a week in which an employee earns less than 50% of the employee's weekly wages, at the regular wage, averaged over the previous 8 weeks.
+**62** In this Part, "week of layoff" means a week in which an employee earns less than 50% of the employee's weekly wages, at the regular wage, averaged over the previous 8 weeks.
 
 #### Liability resulting from length of service
 
-**63**
-(1) After 3 consecutive months of employment, the employer becomes liable to pay an employee an amount equal to one week's wages as compensation for length of service.
+**63** (1) After 3 consecutive months of employment, the employer becomes liable to pay an employee an amount equal to one week's wages as compensation for length of service.
 
 (2) The employer's liability for compensation for length of service increases as follows:
 
-(a) after 12 consecutive months of employment, to an amount equal to 2 weeks' wages;
+(a) after 12 consecutive months of employment, to an amount equal to 2 weeks' wages;
 
-(b) after 3 consecutive years of employment, to an amount equal to 3 weeks' wages plus one additional week's wages for each additional year of employment, to a maximum of 8 weeks' wages.
+(b) after 3 consecutive years of employment, to an amount equal to 3 weeks' wages plus one additional week's wages for each additional year of employment, to a maximum of 8 weeks' wages.
 
 (3) The liability is deemed to be discharged if the employee
 
@@ -2117,15 +2028,15 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 (ii) 2 weeks' notice after 12 consecutive months of employment;
 
-(iii) 3 weeks' notice after 3 consecutive years of employment, plus one additional week for each additional year of employment, to a maximum of 8 weeks' notice;
+(iii) 3 weeks' notice after 3 consecutive years of employment, plus one additional week for each additional year of employment, to a maximum of 8 weeks' notice;
 
-(b) is given a combination of written notice under subsection (3) (a) and money equivalent to the amount the employer is liable to pay, or
+(b) is given a combination of written notice under subsection (3) (a) and money equivalent to the amount the employer is liable to pay, or
 
 (c) terminates the employment, retires from employment, or is dismissed for just cause.
 
 (4) The amount the employer is liable to pay becomes payable on termination of the employment and is calculated by
 
-(a) totalling all the employee's weekly wages, at the regular wage, during the last 8 weeks in which the employee worked normal or average hours of work,
+(a) totalling all the employee's weekly wages, at the regular wage, during the last 8 weeks in which the employee worked normal or average hours of work,
 
 (b) dividing the total by 8, and
 
@@ -2141,8 +2052,7 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 #### Group terminations
 
-**64**
-(1) If the employment of 50 or more employees at a single location is to be terminated within any 2 month period, the employer must give written notice of group termination to all of the following:
+**64** (1) If the employment of 50 or more employees at a single location is to be terminated within any 2 month period, the employer must give written notice of group termination to all of the following:
 
 (a) each employee who will be affected;
 
@@ -2160,9 +2070,9 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 (3) The notice of group termination must be given as follows:
 
-(a) at least 8 weeks before the effective date of the first termination, if 50 to 100 employees will be affected;
+(a) at least 8 weeks before the effective date of the first termination, if 50 to 100 employees will be affected;
 
-(b) at least 12 weeks before the effective date of the first termination, if 101 to 300 employees will be affected;
+(b) at least 12 weeks before the effective date of the first termination, if 101 to 300 employees will be affected;
 
 (c) at least 16 weeks before the effective date of the first termination, if 301 or more employees will be affected.
 
@@ -2174,8 +2084,7 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 #### Exceptions
 
-**65**
-(1) Sections 63 and 64 do not apply to an employee
+**65** (1) Sections 63 and 64 do not apply to an employee
 
 (a) employed under an arrangement by which
 
@@ -2185,15 +2094,15 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 (b) employed for a definite term,
 
-(c) employed for specific work to be completed in a period of up to 12 months,
+(c) employed for specific work to be completed in a period of up to 12 months,
 
-(d) employed under an employment contract that is impossible to perform due to an unforeseeable event or circumstance other than receivership, action under section 427 of the [Bank Act](http://laws-lois.justice.gc.ca/eng/acts/B-1.01/index.html) (Canada) or a proceeding under an insolvency Act,
+(d) employed under an employment contract that is impossible to perform due to an unforeseeable event or circumstance other than receivership, action under section 427 of the [Bank Act](http://laws-lois.justice.gc.ca/eng/acts/B-1.01/index.html) (Canada) or a proceeding under an insolvency Act,
 
 (e) employed at one or more construction sites by an employer whose principal business is construction, or
 
 (f) who has been offered and has refused reasonable alternative employment by the employer.
 
-(2) If an employee who is employed for a definite term or specific work continues to be employed for at least 3 months after completing the definite term or specific work, the employment is
+(2) If an employee who is employed for a definite term or specific work continues to be employed for at least 3 months after completing the definite term or specific work, the employment is
 
 (a) deemed not to be for a definite term or specific work, and
 
@@ -2223,13 +2132,11 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 #### Director may determine employment has been terminated
 
-**66**
-If a condition of employment is substantially altered, the director may determine that the employment of an employee has been terminated.
+**66** If a condition of employment is substantially altered, the director may determine that the employment of an employee has been terminated.
 
 #### Rules about notice
 
-**67**
-(1) A notice given to an employee under this Part has no effect if
+**67** (1) A notice given to an employee under this Part has no effect if
 
 (a) the notice period coincides with a period during which the employee is on annual vacation, leave, temporary layoff, strike or lockout or is unavailable for work due to a strike or lockout or medical reasons, or
 
@@ -2243,22 +2150,19 @@ If a condition of employment is substantially altered, the director may determin
 
 #### Rules about payments
 
-**68**
-(1) A payment made under this Part does not discharge liability for any other payment the employee is entitled to receive under this Act.
+**68** (1) A payment made under this Part does not discharge liability for any other payment the employee is entitled to receive under this Act.
 
-(2) The termination pay requirements of section 64 apply whether or not the employee has obtained other employment or has in any other way realized or recovered any money for the notice period.
+(2) The termination pay requirements of section 64 apply whether or not the employee has obtained other employment or has in any other way realized or recovered any money for the notice period.
 
-(3) If an employee is not covered by a collective agreement, the director may determine that a payment made to the employee in respect of termination of employment, other than money paid under section 64, discharges, to the extent of the payment, the employer's liability to the employee under section 63.
+(3) If an employee is not covered by a collective agreement, the director may determine that a payment made to the employee in respect of termination of employment, other than money paid under section 64, discharges, to the extent of the payment, the employer's liability to the employee under section 63.
 
 #### Repealed
 
-**69-70**
-[Repealed 2002-42-34 and 35.]
+**69-70** [Repealed 2002-42-34 and 35.]
 
 #### Adjustment committee
 
-**71**
-(1) If an employer is required to give notice under section 64, the minister may require the employer to establish an adjustment committee.
+**71** (1) If an employer is required to give notice under section 64, the minister may require the employer to establish an adjustment committee.
 
 (2) The adjustment committee is to consist of
 
@@ -2284,36 +2188,31 @@ Part 9 — Variances
 
 #### Application for variance
 
-**72**
-An employer and any of the employer's employees may, in accordance with the regulations, join in a written application to the director for a variance of any of the following:
+**72** An employer and any of the employer's employees may, in accordance with the regulations, join in a written application to the director for a variance of any of the following:
 
 (a) a time period specified in the definition of "temporary layoff";
 
-(b)
-section 17 (1) (paydays);
+(b) section 17 (1) (paydays);
 
-(c) section 25 (special clothing);
+(c) section 25 (special clothing);
 
-(d)
-section 33 (split shifts);
+(d) section 33 (split shifts);
 
-(e) section 34 (minimum daily hours);
+(e) section 34 (minimum daily hours);
 
-(f) section 35 (maximum hours of work);
+(f) section 35 (maximum hours of work);
 
-(g) section 36 (hours free from work);
+(g) section 36 (hours free from work);
 
-(h)
-section 40 (overtime wages for employees not working under an averaging agreement);
+(h) section 40 (overtime wages for employees not working under an averaging agreement);
 
 (h.1) a period specified in section 37 (1) (number of weeks covered by an agreement to average hours of work);
 
-(i) section 64 (notice and termination pay requirements for group terminations).
+(i) section 64 (notice and termination pay requirements for group terminations).
 
 #### Power to grant variance
 
-**73**
-(1) The director may vary a time period or requirement specified in an application under section 72 if the director is satisfied that
+**73** (1) The director may vary a time period or requirement specified in an application under section 72 if the director is satisfied that
 
 (a) a majority of the employees who will be affected by the variance are aware of its effect and approve of the application, and
 
@@ -2321,7 +2220,7 @@ section 40 (overtime wages for employees not working under an averaging agreemen
 
 (1.1) The application and operation of a variance under this Part must not be interpreted as a waiver described in section 4.
 
-(2) In addition, if the application is for a variance of a time period or a requirement of section 64 the director must be satisfied that the variation will facilitate
+(2) In addition, if the application is for a variance of a time period or a requirement of section 64 the director must be satisfied that the variation will facilitate
 
 (a) the preservation of the employer's operations,
 
@@ -2343,8 +2242,7 @@ Part 10 — Investigations, Complaints and Determinations
 
 #### Investigations initiated by director
 
-**73.1**
-The director may at any time and for any reason
+**73.1** The director may at any time and for any reason
 
 (a) conduct an investigation to ensure compliance with this Act and the regulations, and
 
@@ -2352,21 +2250,19 @@ The director may at any time and for any reason
 
 #### Complaint and time limit
 
-**74**
-(1) An employee, former employee or other person may complain to the director that a person has contravened
+**74** (1) An employee, former employee or other person may complain to the director that a person has contravened
 
 (a) a requirement of Parts 2 to 8 of this Act, or
 
-(b) a requirement of the regulations specified under section 127 (2) (l).
+(b) a requirement of the regulations specified under section 127 (2) (l).
 
 (2) A complaint must be in writing and must be delivered to an office of the Employment Standards Branch.
 
 (3) A complaint relating to an employee whose employment has terminated must be delivered under subsection (2) within 6 months after the last day of employment.
 
-(3.1)
-Subsection (3) applies to an employee whose employment is terminated following a temporary layoff and, for that purpose, the last day of the temporary layoff is deemed to be the last day of employment referred to in subsection (3).
+(3.1) Subsection (3) applies to an employee whose employment is terminated following a temporary layoff and, for that purpose, the last day of the temporary layoff is deemed to be the last day of employment referred to in subsection (3).
 
-(4) A complaint that a person has contravened a requirement of section 8, 10 or 11 must be delivered under subsection (2) within 6 months after the date of the alleged contravention.
+(4) A complaint that a person has contravened a requirement of section 8, 10 or 11 must be delivered under subsection (2) within 6 months after the date of the alleged contravention.
 
 (5) On application, the director may extend the time to deliver a complaint under this section, including making an extension after the time to deliver has expired, if the director is satisfied that
 
@@ -2376,19 +2272,17 @@ Subsection (3) applies to an employee whose employment is terminated following a
 
 #### If complainant requests identity be kept confidential
 
-**75**
-(1) If requested in writing by a complainant, the director must not disclose any identifying information about the complainant unless
+**75** (1) If requested in writing by a complainant, the director must not disclose any identifying information about the complainant unless
 
 (a) the disclosure is necessary for the purposes of a proceeding under this Act, or
 
 (b) the director considers the disclosure is in the public interest.
 
-(2)
-Subsection (1) applies despite any provision of the [Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00) other than section 44 (2) and (3) of that Act.
+(2) Subsection (1) applies despite any provision of the [Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00) other than section 44 (2) and (3) of that Act.
 
 #### Review and investigation of complaints
 
-**76**   (1) Subject to subsection (2), the director must accept a complaint made under section 74.
+**76** (1) Subject to subsection (2), the director must accept a complaint made under section 74.
 
 (2) The director must refuse to accept a complaint if the complaint is not made within the time period under section 74 (3), (4) or (5), as applicable.
 
@@ -2454,8 +2348,7 @@ Subsection (1) applies despite any provision of the [Freedom of Information and 
 
 #### Complaint resolution process during investigation
 
-**76.1**
-(1) In this section, "party", in relation to a complaint made under section 74 (1), means the following:
+**76.1** (1) In this section, "party", in relation to a complaint made under section 74 (1), means the following:
 
 (a) the complainant;
 
@@ -2487,13 +2380,11 @@ Subsection (1) applies despite any provision of the [Freedom of Information and 
 
 #### Opportunity to respond
 
-**77**
-If an investigation is conducted, the director must make reasonable efforts to give a person under investigation an opportunity to respond.
+**77** If an investigation is conducted, the director must make reasonable efforts to give a person under investigation an opportunity to respond.
 
 #### Oral hearing not required
 
-**77.1**
-The director is not required to give an oral hearing to
+**77.1** The director is not required to give an oral hearing to
 
 (a) any person the director investigates under section 73.1 or 76, or
 
@@ -2505,8 +2396,7 @@ The director is not required to give an oral hearing to
 
 #### Settlement agreements
 
-**78**
-(1) The director may do one or more of the following:
+**78** (1) The director may do one or more of the following:
 
 (a) assist in settling a matter investigated under section 73.1 or a complaint made under section 74, whether or not that assistance is provided as part of a complaint resolution process under section 76.1;
 
@@ -2514,18 +2404,17 @@ The director is not required to give an oral hearing to
 
 (c) receive on behalf of an employee or other person any amount to be paid as a result of a settlement agreement under paragraph (a).
 
-(2) The director must pay money received under subsection (1) (c) to the person on whose behalf the money was received.
+(2) The director must pay money received under subsection (1) (c) to the person on whose behalf the money was received.
 
-(3) A person who is a party to a settlement agreement under subsection (1) (a) must comply with the terms of the settlement agreement.
+(3) A person who is a party to a settlement agreement under subsection (1) (a) must comply with the terms of the settlement agreement.
 
-(4) If a person fails to comply with the terms of a settlement agreement under subsection (1) (a), the director may file the settlement agreement under section 91.
+(4) If a person fails to comply with the terms of a settlement agreement under subsection (1) (a), the director may file the settlement agreement under section 91.
 
-(5) The application and operation of a settlement agreement under this section must not be interpreted as a waiver described in section 4.
+(5) The application and operation of a settlement agreement under this section must not be interpreted as a waiver described in section 4.
 
 #### Report may be prepared and served
 
-**78.1**
-(1) The director may, before making a determination under section 79, prepare a written report for the purpose of providing to the persons referred to in subsection (2) of this section the opportunity to respond to the director before the determination is made.
+**78.1** (1) The director may, before making a determination under section 79, prepare a written report for the purpose of providing to the persons referred to in subsection (2) of this section the opportunity to respond to the director before the determination is made.
 
 (2) If the director prepares a report under subsection (1), the director must serve a copy of the report on
 
@@ -2539,13 +2428,11 @@ The director is not required to give an oral hearing to
 
 #### Repealed
 
-**78.2**
-[Repealed 2026-10-7.]
+**78.2** [Repealed 2026-10-7.]
 
 #### Determinations and consequences
 
-**79**
-(1) If satisfied that a person has contravened a requirement of this Act or the regulations, the director may require the person to do one or more of the following:
+**79** (1) If satisfied that a person has contravened a requirement of this Act or the regulations, the director may require the person to do one or more of the following:
 
 (a) comply with the requirement;
 
@@ -2561,9 +2448,9 @@ The director is not required to give an oral hearing to
 
 (e) employ, at the employer's expense, a payroll service for the payment of wages to an employee;
 
-(f) pay any costs incurred by the director in connection with inspections under section 85 related to investigation of the contravention.
+(f) pay any costs incurred by the director in connection with inspections under section 85 related to investigation of the contravention.
 
-(2) In addition to subsection (1), if satisfied that an employer has contravened a requirement of section 8 or 83 or Part 6, the director may require the employer to do one or more of the following:
+(2) In addition to subsection (1), if satisfied that an employer has contravened a requirement of section 8 or 83 or Part 6, the director may require the employer to do one or more of the following:
 
 (a) hire a person and pay the person any wages lost because of the contravention;
 
@@ -2581,14 +2468,13 @@ The director is not required to give an oral hearing to
 
 (6) A person on whom the director imposes a requirement under this section must comply with that requirement.
 
-(7) If the director requires a person to pay costs referred to in subsection (1) (f), the amount required to be paid is a debt due to the government and may be collected by the director in the same manner as wages.
+(7) If the director requires a person to pay costs referred to in subsection (1) (f), the amount required to be paid is a debt due to the government and may be collected by the director in the same manner as wages.
 
 (8) If satisfied that the requirements of this Act and the regulations have not been contravened, the director must dismiss a complaint.
 
 #### Limit on amount of wages required to be paid
 
-**80**
-(1) The amount of wages an employer may be required by a determination to pay an employee is limited to the amount that became payable in the period beginning
+**80** (1) The amount of wages an employer may be required by a determination to pay an employee is limited to the amount that became payable in the period beginning
 
 (a) in the case of a complaint, 12 months before the earlier of the date of the complaint or the termination of the employment, and
 
@@ -2596,7 +2482,7 @@ The director is not required to give an oral hearing to
 
 plus interest on those wages.
 
-(1.1) Despite subsection (1) (a), for the purposes of a complaint that was delivered before May 30, 2002, to an office of the Employment Standards Branch under and in accordance with section 74, the amount of wages an employer may be required by a determination to pay an employee is limited to the amount that became payable in the period beginning 24 months before the earlier of
+(1.1) Despite subsection (1) (a), for the purposes of a complaint that was delivered before May 30, 2002, to an office of the Employment Standards Branch under and in accordance with section 74, the amount of wages an employer may be required by a determination to pay an employee is limited to the amount that became payable in the period beginning 24 months before the earlier of
 
 (a) the date of the complaint, and
 
@@ -2614,12 +2500,11 @@ plus interest on those wages.
 
 (b) by adding interest to the amount obtained under paragraph (a).
 
-(3) Despite subsections (1) and (2), the director may, in prescribed circumstances, extend the 12 months referred to in subsection (1) (a) or (b) or (2) (a) (i) or (ii), as applicable, to 24 months.
+(3) Despite subsections (1) and (2), the director may, in prescribed circumstances, extend the 12 months referred to in subsection (1) (a) or (b) or (2) (a) (i) or (ii), as applicable, to 24 months.
 
 #### Notifying others of determination
 
-**81**
-(1) On making a determination under this Act, the director must serve any person named in the determination with a copy of the determination that includes the following:
+**81** (1) On making a determination under this Act, the director must serve any person named in the determination with a copy of the determination that includes the following:
 
 (a) [Repealed 2002-42-43.]
 
@@ -2639,8 +2524,7 @@ plus interest on those wages.
 
 #### No other proceedings
 
-**82**
-Once a determination is made requiring payment of wages, an employee may commence another proceeding to recover them only if
+**82** Once a determination is made requiring payment of wages, an employee may commence another proceeding to recover them only if
 
 (a) the director has consented in writing, or
 
@@ -2648,8 +2532,7 @@ Once a determination is made requiring payment of wages, an employee may commenc
 
 #### Employee not to be mistreated because of complaint or investigation
 
-**83**
-(1) An employer must not
+**83** (1) An employer must not
 
 (a) refuse to employ or refuse to continue to employ a person,
 
@@ -2665,8 +2548,7 @@ because a complaint or investigation may be or has been made under this Act or b
 
 #### Power to compel persons to answer questions and order disclosure
 
-**84**
-(1) For the purposes of this Act, the director may make an order requiring a person to do either or both of the following:
+**84** (1) For the purposes of this Act, the director may make an order requiring a person to do either or both of the following:
 
 (a) attend, in person or by electronic means, before the director to answer questions on oath or affirmation, or in any other manner;
 
@@ -2680,8 +2562,7 @@ because a complaint or investigation may be or has been made under this Act or b
 
 #### Maintenance of order at hearings
 
-**84.1**
-(1) At an oral hearing, the director may make orders or give directions that the director considers necessary for the maintenance of order at the hearing, and, if any person disobeys or fails to comply with any order or direction, the director may call on the assistance of any peace officer to enforce the order or direction.
+**84.1** (1) At an oral hearing, the director may make orders or give directions that the director considers necessary for the maintenance of order at the hearing, and, if any person disobeys or fails to comply with any order or direction, the director may call on the assistance of any peace officer to enforce the order or direction.
 
 (2) A peace officer called on under subsection (1) may take any action that is necessary to enforce the order or direction and may use such force as is reasonably required for that purpose.
 
@@ -2693,8 +2574,7 @@ because a complaint or investigation may be or has been made under this Act or b
 
 #### Contempt proceeding for uncooperative person
 
-**84.2**
-(1) The failure or refusal of a person subject to an order under section 84 to do any of the following makes the person, on application to the Supreme Court by the director, liable to be committed for contempt as if in breach of an order or judgment of the Supreme Court:
+**84.2** (1) The failure or refusal of a person subject to an order under section 84 to do any of the following makes the person, on application to the Supreme Court by the director, liable to be committed for contempt as if in breach of an order or judgment of the Supreme Court:
 
 (a) attend before the director;
 
@@ -2706,25 +2586,21 @@ because a complaint or investigation may be or has been made under this Act or b
 
 (2) The failure or refusal of a person subject to an order or direction under section 84.1 to comply with the order or direction makes the person, on application to the Supreme Court by the director, liable to be committed for contempt as if in breach of an order or judgment of the Supreme Court.
 
-(3)
-Subsections (1) and (2) do not limit the conduct for which a finding of contempt may be made by the Supreme Court.
+(3) Subsections (1) and (2) do not limit the conduct for which a finding of contempt may be made by the Supreme Court.
 
 #### Immunity protection
 
-**84.3**
-(1) Subject to subsection (2), no legal proceeding for damages lies or may be commenced or maintained against the director, or a person acting on behalf of or under the direction of the director, because of anything done or omitted
+**84.3** (1) Subject to subsection (2), no legal proceeding for damages lies or may be commenced or maintained against the director, or a person acting on behalf of or under the direction of the director, because of anything done or omitted
 
 (a) in the performance or intended performance of any duty under this Act, or
 
 (b) in the exercise or intended exercise of any power under this Act.
 
-(2)
-Subsection (1) does not apply to a person referred to in that subsection in relation to anything done or omitted by that person in bad faith.
+(2) Subsection (1) does not apply to a person referred to in that subsection in relation to anything done or omitted by that person in bad faith.
 
 #### Entry and inspection powers
 
-**85**
-(1) For the purposes of ensuring compliance with this Act and the regulations, the director may do one or more of the following:
+**85** (1) For the purposes of ensuring compliance with this Act and the regulations, the director may do one or more of the following:
 
 (a) enter during regular working hours any place, including any means of conveyance or transport, where
 
@@ -2746,23 +2622,21 @@ Subsection (1) does not apply to a person referred to in that subsection in rela
 
 (f) require a person to produce, or to deliver to a place specified by the director, any records for inspection under paragraph (c).
 
-(2) Despite subsection (1), the director may enter a place occupied as a private residence only with the consent of the occupant or under the authority of a warrant issued under section 120.
+(2) Despite subsection (1), the director may enter a place occupied as a private residence only with the consent of the occupant or under the authority of a warrant issued under section 120.
 
 #### Power to reconsider
 
-**86**
-(1) Subject to subsection (2), the director may vary or cancel a determination.
+**86** (1) Subject to subsection (2), the director may vary or cancel a determination.
 
 (2) If a person appeals a determination that the director intends to vary or cancel under subsection (1), the director must vary or cancel the determination within 30 days of the date that a copy of the appeal request was received by the director.
 
 #### No jurisdiction to determine constitutional question
 
-**86.1**
-Nothing in this Act is to be construed as giving the director or any person acting for or on behalf of the director under this Act jurisdiction over constitutional questions relating to the [Canadian Charter of Rights and Freedoms](http://laws-lois.justice.gc.ca/eng/const/page-15.html#docCont).
+**86.1** Nothing in this Act is to be construed as giving the director or any person acting for or on behalf of the director under this Act jurisdiction over constitutional questions relating to the [Canadian Charter of Rights and Freedoms](http://laws-lois.justice.gc.ca/eng/const/page-15.html#docCont).
 
 #### Director without jurisdiction to apply the *Human Rights Code*
 
-**86.2**   (1) The director does not have jurisdiction to apply the [Human Rights Code](/civix/document/id/complete/statreg/96210_01).
+**86.2** (1) The director does not have jurisdiction to apply the [Human Rights Code](/civix/document/id/complete/statreg/96210_01).
 
 (2) Subsection (1) applies to all matters brought before, on or after the date that the subsection applies to the director.
 
@@ -2770,8 +2644,7 @@ Part 11 — Enforcement
 
 #### Lien for unpaid wages
 
-**87**
-(1) Despite any other Act, unpaid wages constitute a lien, charge and secured debt in favour of the director, dating from the time the wages were earned, against all the real and personal property of the employer or other person named in a determination, a settlement agreement or an order, including money due or accruing due to the employer or other person from any source.
+**87** (1) Despite any other Act, unpaid wages constitute a lien, charge and secured debt in favour of the director, dating from the time the wages were earned, against all the real and personal property of the employer or other person named in a determination, a settlement agreement or an order, including money due or accruing due to the employer or other person from any source.
 
 (1.1) If a talent agency named in a determination, a settlement agreement or an order has
 
@@ -2781,7 +2654,7 @@ Part 11 — Enforcement
 
 the wages, less any fees allowed under the regulations, constitute a lien, charge and secured debt in favour of the director, dating from the time the wages were received by the agency, against all the real and personal property of the agency, including money due or accruing due to the agency from any source.
 
-(2) Unpaid wages set out in a decision or order filed under section 30 of the *Industrial Relations Act*, R.S.B.C. 1979, c. 212, or under section 102 or 135 of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01) constitute a lien, charge and secured debt in favour of the persons named in the decision or order against all the real and personal property of the employer or other person named in the decision or order.
+(2) Unpaid wages set out in a decision or order filed under section 30 of the *Industrial Relations Act*, R.S.B.C. 1979, c. 212, or under section 102 or 135 of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01) constitute a lien, charge and secured debt in favour of the persons named in the decision or order against all the real and personal property of the employer or other person named in the decision or order.
 
 (3) Despite any other Act but subject to subsection (5), the amount of a lien, charge and secured debt referred to in subsections (1), (1.1) and (2) is payable and enforceable in priority over all liens, judgments, charges and security interests or any other claims or rights, including the following:
 
@@ -2791,17 +2664,17 @@ the wages, less any fees allowed under the regulations, constitute a lien, charg
 
 (c) any security interest within the meaning of the [Personal Property Security Act](/civix/document/id/complete/statreg/96359_01).
 
-(4) Subsection (3) (c) applies whether the lien, judgment, charge, security interest, claim or right was perfected within the meaning of the [Personal Property Security Act](/civix/document/id/complete/statreg/96359_01), or was created or made, before or after
+(4) Subsection (3) (c) applies whether the lien, judgment, charge, security interest, claim or right was perfected within the meaning of the [Personal Property Security Act](/civix/document/id/complete/statreg/96359_01), or was created or made, before or after
 
 (a) in the case of wages referred to in subsection (1) or (2), the date the wages were earned or the date a payment for the benefit of the employee became due, and
 
 (b) in the case of wages referred to in subsection (1.1), the date the wages were received by the talent agency.
 
-(5) The lien, charge and secured debt referred to in subsections (1), (1.1) and (2) has priority over a mortgage of, or debenture charging, land, that was registered in a land title office before registration against that land of a certificate of judgment obtained on the filing, under section 91, of a determination, a settlement agreement or an order of the tribunal, but only with respect to money advanced under the mortgage or debenture after the certificate of judgment was registered.
+(5) The lien, charge and secured debt referred to in subsections (1), (1.1) and (2) has priority over a mortgage of, or debenture charging, land, that was registered in a land title office before registration against that land of a certificate of judgment obtained on the filing, under section 91, of a determination, a settlement agreement or an order of the tribunal, but only with respect to money advanced under the mortgage or debenture after the certificate of judgment was registered.
 
 #### Payment of interest
 
-**88**   (1) If an employer fails to pay wages or another amount to an employee, the employer must pay interest at the prescribed rate on the wages or other amount from the earlier of
+**88** (1) If an employer fails to pay wages or another amount to an employee, the employer must pay interest at the prescribed rate on the wages or other amount from the earlier of
 
 (a) the date the employment terminates, and
 
@@ -2809,16 +2682,15 @@ the wages, less any fees allowed under the regulations, constitute a lien, charg
 
 to the date of payment.
 
-(2) No interest accumulates under subsection (1) from the date a determination is made under section 79 or a settlement agreement is made under section 78 requiring payment of the wages or other amount until 38 days after that date.
+(2) No interest accumulates under subsection (1) from the date a determination is made under section 79 or a settlement agreement is made under section 78 requiring payment of the wages or other amount until 38 days after that date.
 
 (3) Interest payable under subsection (1) is deemed to be wages and this Act applies to the recovery of those wages.
 
-(4)
-Subsection (1) applies whether or not the wages or other amount became payable before this section comes into force, but the date from which the interest is calculated must not be earlier than the date this section comes into force.
+(4) Subsection (1) applies whether or not the wages or other amount became payable before this section comes into force, but the date from which the interest is calculated must not be earlier than the date this section comes into force.
 
 (5) An amount collected under this Part, or deposited under section 112 or 113, earns interest at the prescribed rate, payable by the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01), from the date the amount is deposited in a savings institution to the date of payment to the person entitled.
 
-(6) Subsection (5) does not apply to any security provided or bond posted under section 100.
+(6) Subsection (5) does not apply to any security provided or bond posted under section 100.
 
 (7) If a talent agency that has received wages from an employer on behalf of an employee fails to pay those wages, less any fees allowed under the regulations, to the employee within the time required under the regulations,
 
@@ -2826,15 +2698,13 @@ Subsection (1) applies whether or not the wages or other amount became payable b
 
 (b) subsections (2) and (3) apply in respect of the interest.
 
-(8)
-Subsection (7) applies whether or not the wages were received by the talent agency before that subsection comes into force, but the date from which the interest is calculated must not be earlier than the date subsection (7) comes into force.
+(8) Subsection (7) applies whether or not the wages were received by the talent agency before that subsection comes into force, but the date from which the interest is calculated must not be earlier than the date subsection (7) comes into force.
 
 #### Demand on third party
 
-**89**
-(1) If the director has reason to believe that a person is or is likely to become indebted to another who is required to pay money under a determination, a settlement agreement or an order of the tribunal, the director may demand in writing that the person pay to the director, on account of the other's liability under the determination, settlement agreement or order, all or part of the money otherwise payable to the other person.
+**89** (1) If the director has reason to believe that a person is or is likely to become indebted to another who is required to pay money under a determination, a settlement agreement or an order of the tribunal, the director may demand in writing that the person pay to the director, on account of the other's liability under the determination, settlement agreement or order, all or part of the money otherwise payable to the other person.
 
-(2) A person on whom a demand is made under this section must, if indebted to the other person, pay to the director or to someone specified by the director the amount demanded, within 15 days after the later of
+(2) A person on whom a demand is made under this section must, if indebted to the other person, pay to the director or to someone specified by the director the amount demanded, within 15 days after the later of
 
 (a) the date the demand is served, and
 
@@ -2854,23 +2724,21 @@ Subsection (7) applies whether or not the wages were received by the talent agen
 
 #### Failure to comply with demand
 
-**90**
-(1) If a person on whom a demand is made under section 89 does not comply with the demand,
+**90** (1) If a person on whom a demand is made under section 89 does not comply with the demand,
 
 (a) the director may enforce recovery of the amount stated in the demand as if it were unpaid wages, and
 
 (b) this Act applies to the recovery of that amount.
 
-(2) If a person on whom a demand is made under section 89 denies indebtedness to anyone required to pay under a determination, a settlement agreement or an order of the tribunal, the director may require that person to produce information the director considers necessary to establish that there is no indebtedness.
+(2) If a person on whom a demand is made under section 89 denies indebtedness to anyone required to pay under a determination, a settlement agreement or an order of the tribunal, the director may require that person to produce information the director considers necessary to establish that there is no indebtedness.
 
 #### Determination or order may be filed and enforced as judgment
 
-**91**
-(1) The director may at any time file in a Supreme Court registry a determination, a settlement agreement or an order of the tribunal.
+**91** (1) The director may at any time file in a Supreme Court registry a determination, a settlement agreement or an order of the tribunal.
 
-(2) Unless varied, cancelled or suspended under section 86, 113, 115, 116 or 119 a filed determination is enforceable in the same manner as a judgment of the Supreme Court in favour of the director for the recovery of a debt in the amount stated in the determination.
+(2) Unless varied, cancelled or suspended under section 86, 113, 115, 116 or 119 a filed determination is enforceable in the same manner as a judgment of the Supreme Court in favour of the director for the recovery of a debt in the amount stated in the determination.
 
-(3) Unless varied or cancelled by the tribunal under section 116, a filed order of the tribunal is enforceable in the same manner as a judgment of the Supreme Court in favour of the director for the recovery of a debt in the amount stated in the order.
+(3) Unless varied or cancelled by the tribunal under section 116, a filed order of the tribunal is enforceable in the same manner as a judgment of the Supreme Court in favour of the director for the recovery of a debt in the amount stated in the order.
 
 (3.1) A settlement agreement filed under this section is enforceable in the same manner as a judgment of the Supreme Court in favour of the director for the recovery of a debt in the amount stated in the settlement agreement.
 
@@ -2878,8 +2746,7 @@ Subsection (7) applies whether or not the wages were received by the talent agen
 
 #### Seizure of assets
 
-**92**
-(1) The director may seize as much of the assets owned or possessed by a person who is required to pay under a determination, a settlement agreement or an order of the tribunal, or used in or incidental to that person's business, as is necessary to satisfy
+**92** (1) The director may seize as much of the assets owned or possessed by a person who is required to pay under a determination, a settlement agreement or an order of the tribunal, or used in or incidental to that person's business, as is necessary to satisfy
 
 (a) the amount stated in the determination, settlement agreement or order, and
 
@@ -2887,19 +2754,17 @@ Subsection (7) applies whether or not the wages were received by the talent agen
 
 (2) The director must safely keep the assets under seizure until the earlier of the following, as applicable:
 
-(a) the determination, settlement agreement or order of the tribunal is filed in court under section 91 and a writ of seizure and sale has been executed;
+(a) the determination, settlement agreement or order of the tribunal is filed in court under section 91 and a writ of seizure and sale has been executed;
 
-(b) in the case of a determination or an order of the tribunal, the determination or order is cancelled under section 86, 115, 116 or 119 (9).
+(b) in the case of a determination or an order of the tribunal, the determination or order is cancelled under section 86, 115, 116 or 119 (9).
 
 #### Release of assets
 
-**93**
-The director must release an asset seized under section 92 if satisfied that the asset is owned by someone other than a person required to pay under a determination, a settlement agreement or an order of the tribunal.
+**93** The director must release an asset seized under section 92 if satisfied that the asset is owned by someone other than a person required to pay under a determination, a settlement agreement or an order of the tribunal.
 
 #### Wrongful removal of seized assets
 
-**94**
-(1) A person must not remove, damage or dispose of assets seized under section 92 except in accordance with this Act, a writ of seizure and sale or a court order.
+**94** (1) A person must not remove, damage or dispose of assets seized under section 92 except in accordance with this Act, a writ of seizure and sale or a court order.
 
 (2) In addition to any other penalty, a person who contravenes subsection (1) is liable for the amount owed by the person required to pay under the determination, settlement agreement or order of the tribunal.
 
@@ -2907,8 +2772,7 @@ The director must release an asset seized under section 92 if satisfied that th
 
 #### Associated employers
 
-**95**
-If the director considers that businesses, trades or undertakings are carried on by or through more than one corporation, individual, firm, syndicate or association, or any combination of them under common control or direction,
+**95** If the director considers that businesses, trades or undertakings are carried on by or through more than one corporation, individual, firm, syndicate or association, or any combination of them under common control or direction,
 
 (a) the director may treat the corporations, individuals, firms, syndicates or associations, or any combination of them, as one employer for the purposes of this Act, and
 
@@ -2916,8 +2780,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 #### Corporate officer's liability for unpaid wages
 
-**96**
-(1) A person who was a director or officer of a corporation at the time wages of an employee of the corporation were earned or should have been paid is personally liable for up to 2 months' unpaid wages for each employee.
+**96** (1) A person who was a director or officer of a corporation at the time wages of an employee of the corporation were earned or should have been paid is personally liable for up to 2 months' unpaid wages for each employee.
 
 (2) Despite subsection (1), a person who was a director or an officer of a corporation is not personally liable for
 
@@ -2961,12 +2824,11 @@ If the director considers that businesses, trades or undertakings are carried on
 
 #### Sale of business
 
-**97**   If all or part of a business is disposed of, or the business continues to operate under a receiver or receiver-manager, the employment of an employee of the business is deemed, for the purposes of this Act, to be continuous and uninterrupted by the disposition or receivership, as applicable.
+**97** If all or part of a business is disposed of, or the business continues to operate under a receiver or receiver-manager, the employment of an employee of the business is deemed, for the purposes of this Act, to be continuous and uninterrupted by the disposition or receivership, as applicable.
 
 #### Monetary penalties
 
-**98**
-(1) In accordance with the regulations, a person in respect of whom the director makes a determination and imposes a requirement under section 79 is subject to a monetary penalty prescribed by the regulations.
+**98** (1) In accordance with the regulations, a person in respect of whom the director makes a determination and imposes a requirement under section 79 is subject to a monetary penalty prescribed by the regulations.
 
 (1.1) A penalty imposed under this section is in addition to and not instead of any requirement imposed under section 79.
 
@@ -2978,14 +2840,13 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (a) has been convicted of an offence under this Act, or
 
-(b) is also liable to pay a fine for an offence under section 125.
+(b) is also liable to pay a fine for an offence under section 125.
 
 (4) A penalty imposed under this Part is a debt due to the government and may be collected by the director in the same manner as wages.
 
 #### If money is paid to director
 
-**99**
-(1) Subject to section 78 (2), the director must pay to the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01) all money received by the director under this Act, including money to be held in trust for the persons named in a determination, a settlement agreement or an order of the tribunal.
+**99** (1) Subject to section 78 (2), the director must pay to the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01) all money received by the director under this Act, including money to be held in trust for the persons named in a determination, a settlement agreement or an order of the tribunal.
 
 (2) Money received by the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01) in respect of a determination, a settlement agreement or an order of the tribunal must be attributed
 
@@ -3013,7 +2874,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (ii) under the [Wills, Estates and Succession Act](/civix/document/id/complete/statreg/09013_01);
 
-(d) to a fund, insurer or other person to whom payment is to be made under section 26.
+(d) to a fund, insurer or other person to whom payment is to be made under section 26.
 
 (6) If there is not enough money to pay everyone entitled under a paragraph in subsection (5), the money available under that paragraph must be divided among them in proportion to the amount each of them is entitled to.
 
@@ -3023,8 +2884,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 #### Security to ensure compliance
 
-**100**
-(1) To ensure compliance with this Act or the regulations, the director may require an employer who has at any time contravened a requirement relating to the payment of wages under this Act or the former Act
+**100** (1) To ensure compliance with this Act or the regulations, the director may require an employer who has at any time contravened a requirement relating to the payment of wages under this Act or the former Act
 
 (a) to provide an irrevocable letter of credit or other security satisfactory to the director, or
 
@@ -3038,8 +2898,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 #### Publication of violators' names
 
-**101**
-(1) The director may compile information relating to contraventions of this Act or the regulations, including information identifying the persons who, according to a determination or an order of the tribunal, committed the contraventions.
+**101** (1) The director may compile information relating to contraventions of this Act or the regulations, including information identifying the persons who, according to a determination or an order of the tribunal, committed the contraventions.
 
 (2) Despite the [Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00), the director may
 
@@ -3049,7 +2908,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 #### Searching of records
 
-**101.1**   On the written request and payment of a prescribed fee by a person, the director may
+**101.1** On the written request and payment of a prescribed fee by a person, the director may
 
 (a) conduct a search of records maintained by the director for information, in respect of a person named in the request, related to contraventions of this Act or the regulations or complaints or investigations under this Act, and
 
@@ -3059,8 +2918,7 @@ Part 12 — Employment Standards Tribunal
 
 #### Employment Standards Tribunal continued
 
-**102**
-The Employment Standards Tribunal is continued consisting of
+**102** The Employment Standards Tribunal is continued consisting of
 
 (a) a member appointed by the Lieutenant Governor in Council as the chair after a merit-based process,
 
@@ -3070,8 +2928,7 @@ The Employment Standards Tribunal is continued consisting of
 
 #### Application of *Administrative Tribunals Act*
 
-**103**
-The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
+**103** The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
 
 (a) Part 1 *[Interpretation and Application]*;
 
@@ -3123,24 +2980,23 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 (o) section 59.2 *[reporting]*;
 
-(p) section 60 (1) (a), (b) and (g) to (i) and (2) *[power to make regulations]*;
+(p) section 60 (1) (a), (b) and (g) to (i) and (2) *[power to make regulations]*;
 
 (q) section 61 *[application of Freedom of Information and Protection of Privacy Act]*.
 
 #### Chair may delegate authority
 
-**104**   (1) The chair may
+**104** (1) The chair may
 
 (a) carry out any duty, power or function of the tribunal or a member, and
 
 (b) delegate to a member a function, duty or power of the chair.
 
-(2) While acting as chair under subsection (1) (b), a member has the power and authority of the chair.
+(2) While acting as chair under subsection (1) (b), a member has the power and authority of the chair.
 
 #### Employees
 
-**105**
-(1) Despite the [Public Service Act](/civix/document/id/complete/statreg/96385_01), the tribunal may employ a registrar and other employees it considers necessary for the purposes of this Act.
+**105** (1) Despite the [Public Service Act](/civix/document/id/complete/statreg/96385_01), the tribunal may employ a registrar and other employees it considers necessary for the purposes of this Act.
 
 (2) The registrar may be appointed under section 102 (b) as a member.
 
@@ -3148,7 +3004,7 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Organization of tribunal
 
-**106**   (1) The chair may establish one or more panels of the tribunal.
+**106** (1) The chair may establish one or more panels of the tribunal.
 
 (2) Two or more panels may proceed with separate matters at the same time.
 
@@ -3164,13 +3020,11 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 #### Repealed
 
-**107-108**
-[Repealed 2004-45-91.]
+**107-108** [Repealed 2004-45-91.]
 
 #### Other powers of tribunal
 
-**109**
-(1) In addition to its powers under Part 13, the tribunal may do one or more of the following:
+**109** (1) In addition to its powers under Part 13, the tribunal may do one or more of the following:
 
 (a) [Repealed 2002-42-58.]
 
@@ -3196,26 +3050,23 @@ The following provisions of the [Administrative Tribunals Act](/civix/document/i
 
 (h) order a person to produce, or to deliver to a place specified by the tribunal, any records for inspection under paragraph (e).
 
-(2) Despite subsection (1), the tribunal may enter a place occupied as a private residence only with the consent of the occupant or under the authority of a warrant issued under section 120.
+(2) Despite subsection (1), the tribunal may enter a place occupied as a private residence only with the consent of the occupant or under the authority of a warrant issued under section 120.
 
 #### Exclusive jurisdiction of tribunal
 
-**110**
-(1) The tribunal has exclusive jurisdiction to inquire into, hear and determine all those matters and questions of fact, law and discretion arising or required to be determined in an appeal or reconsideration under Parts 12 and 13 and to make any order permitted to be made.
+**110** (1) The tribunal has exclusive jurisdiction to inquire into, hear and determine all those matters and questions of fact, law and discretion arising or required to be determined in an appeal or reconsideration under Parts 12 and 13 and to make any order permitted to be made.
 
 (2) A decision or order of the tribunal on a matter in respect of which the tribunal has exclusive jurisdiction is final and conclusive and is not open to question or review in any court.
 
 #### Repealed
 
-**111**
-[Repealed 2004-45-91.]
+**111** [Repealed 2004-45-91.]
 
 Part 13 — Appeals
 
 #### Appeal of director's determination
 
-**112**
-(1) Subject to this section, a person served with a determination may appeal the determination to the tribunal on one or more of the following grounds:
+**112** (1) Subject to this section, a person served with a determination may appeal the determination to the tribunal on one or more of the following grounds:
 
 (a) the director erred in law;
 
@@ -3239,7 +3090,7 @@ Part 13 — Appeals
 
 (b) deliver a copy of the request under paragraph (a.1) (i) to the director.
 
-(3) The appeal period referred to in subsection (2) is the period that starts on the date the determination was served under section 122 and ends 30 days after that date.
+(3) The appeal period referred to in subsection (2) is the period that starts on the date the determination was served under section 122 and ends 30 days after that date.
 
 (3.1) If the determination in respect of which a person wishes to make an appeal includes a requirement that the person pay an amount of money to one or more employees, the person must deliver to the director a deposit equal to
 
@@ -3253,7 +3104,7 @@ Part 13 — Appeals
 
 (b) if the request for appeal is amended, must deliver a copy of the amended request to the director.
 
-(5) On receiving a copy of the request under subsection (2) (b) or amended request under subsection (4) (b), the director must provide the tribunal with the record that was before the director at the time the determination, or variation of it, was made, including any witness statement and document considered by the director.
+(5) On receiving a copy of the request under subsection (2) (b) or amended request under subsection (4) (b), the director must provide the tribunal with the record that was before the director at the time the determination, or variation of it, was made, including any witness statement and document considered by the director.
 
 (5.1) The director is a party to an appeal under this section.
 
@@ -3263,15 +3114,13 @@ Part 13 — Appeals
 
 #### Director's determination may be suspended
 
-**113**
-(1) A person who appeals a determination may request the tribunal to suspend the effect of the determination.
+**113** (1) A person who appeals a determination may request the tribunal to suspend the effect of the determination.
 
 (2) The tribunal may, if requested to do so under subsection (1), suspend a determination for the period and subject to the conditions it considers appropriate.
 
 #### After an appeal is requested
 
-**114**
-(1) At any time after an appeal is filed and without a hearing of any kind the tribunal may dismiss all or part of the appeal if the tribunal determines that any of the following apply:
+**114** (1) At any time after an appeal is filed and without a hearing of any kind the tribunal may dismiss all or part of the appeal if the tribunal determines that any of the following apply:
 
 (a) the appeal is not within the jurisdiction of the tribunal;
 
@@ -3301,8 +3150,7 @@ Part 13 — Appeals
 
 #### Tribunal's orders
 
-**115**
-(1) After considering whether the grounds for appeal have been met, the tribunal may, by order,
+**115** (1) After considering whether the grounds for appeal have been met, the tribunal may, by order,
 
 (a) confirm, vary or cancel the determination under appeal, or
 
@@ -3314,8 +3162,7 @@ Part 13 — Appeals
 
 #### Reconsideration of orders and decisions
 
-**116**
-(1) On application under subsection (2) or on its own motion, the tribunal may
+**116** (1) On application under subsection (2) or on its own motion, the tribunal may
 
 (a) reconsider any order or decision of the tribunal, and
 
@@ -3335,8 +3182,7 @@ Part 14 — General Provisions
 
 #### Director's power to delegate
 
-**117**
-(1) The director may delegate to any person any of the director's functions, duties or powers under this Act, except the power to delegate under this section.
+**117** (1) The director may delegate to any person any of the director's functions, duties or powers under this Act, except the power to delegate under this section.
 
 (2) and (3) [Repealed 2002-42-63.]
 
@@ -3358,13 +3204,11 @@ Part 14 — General Provisions
 
 #### Right to sue preserved
 
-**118**
-Subject to section 82, nothing in this Act or the regulations affects a person's right to commence and maintain an action that, but for this Act, the person would have had the right to commence and maintain.
+**118** Subject to section 82, nothing in this Act or the regulations affects a person's right to commence and maintain an action that, but for this Act, the person would have had the right to commence and maintain.
 
 #### Extraprovincial certificates
 
-**119**
-(1) If satisfied that reciprocal provisions will be made by another jurisdiction in or outside of Canada for enforcing determinations of the director, the Lieutenant Governor in Council may
+**119** (1) If satisfied that reciprocal provisions will be made by another jurisdiction in or outside of Canada for enforcing determinations of the director, the Lieutenant Governor in Council may
 
 (a) declare that jurisdiction to be a reciprocating jurisdiction, and
 
@@ -3390,24 +3234,21 @@ Subject to section 82, nothing in this Act or the regulations affects a person's
 
 (7) The Supreme Court Civil Rules apply to an appeal under subsection (6) to the extent they are consistent with this section.
 
-(8) The Supreme Court has the same power that the tribunal has under section 113 to suspend the determination on application.
+(8) The Supreme Court has the same power that the tribunal has under section 113 to suspend the determination on application.
 
 (9) After hearing the appeal, the Supreme Court may confirm, vary or cancel the determination under appeal or refer the matter back to the director.
 
 #### Warrant to carry out inspection powers
 
-**120**
-If satisfied by evidence given under oath or affirmation that there is reason to believe there are in a private residence records or other things that are relevant for the purposes of an investigation or appeal under this Act, a justice may issue a warrant authorizing the person named in the warrant to enter the private residence in accordance with the warrant in order to exercise the powers referred to in section 85 (1) (b) to (d) or 109 (1) (e) or (f).
+**120** If satisfied by evidence given under oath or affirmation that there is reason to believe there are in a private residence records or other things that are relevant for the purposes of an investigation or appeal under this Act, a justice may issue a warrant authorizing the person named in the warrant to enter the private residence in accordance with the warrant in order to exercise the powers referred to in section 85 (1) (b) to (d) or 109 (1) (e) or (f).
 
 #### Director cannot be required to give evidence in other proceedings
 
-**121**
-Except for a prosecution under this Act or an appeal to the Employment Standards Tribunal, the director or a delegate of the director must not be required by a court, board, tribunal or person to give evidence or produce records relating to information obtained for the purposes of this Act.
+**121** Except for a prosecution under this Act or an appeal to the Employment Standards Tribunal, the director or a delegate of the director must not be required by a court, board, tribunal or person to give evidence or produce records relating to information obtained for the purposes of this Act.
 
 #### Service of determinations, demands, notices and reports
 
-**122**
-(1) A determination or demand, a notice under section 30.1 (2) or a written report referred to in section 78.1 (1) that is required under this Act to be served on a person is deemed to have been served if it is
+**122** (1) A determination or demand, a notice under section 30.1 (2) or a written report referred to in section 78.1 (1) that is required under this Act to be served on a person is deemed to have been served if it is
 
 (a) sent by ordinary mail or registered mail to the person's last known address according to the records of the director,
 
@@ -3423,29 +3264,25 @@ Except for a prosecution under this Act or an appeal to the Employment Standards
 
 #### Irregularities
 
-**123**
-A technical irregularity does not invalidate a proceeding under this Act.
+**123** A technical irregularity does not invalidate a proceeding under this Act.
 
 #### Limitation period
 
-**124**
-No proceeding for an offence under this Act may be commenced in any court more than 2 years after the facts on which the proceeding is based first come to the director's knowledge.
+**124** No proceeding for an offence under this Act may be commenced in any court more than 2 years after the facts on which the proceeding is based first come to the director's knowledge.
 
 #### Offences
 
-**125**
-(1) A person who contravenes a requirement of Parts 2 to 8 commits an offence.
+**125** (1) A person who contravenes a requirement of Parts 2 to 8 commits an offence.
 
 (2) If a corporation commits an offence under this Act, an employee, officer, director or agent of the corporation who authorizes, permits or acquiesces in the commission of the offence commits an offence.
 
-(3)
-Subsection (2) applies whether or not the corporation is prosecuted for the offence.
+(3) Subsection (2) applies whether or not the corporation is prosecuted for the offence.
 
 (4) Section 5 of the [Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Act or the regulations.
 
 #### Evidence and burden of proof
 
-**126**   (1) The production of a cheque, bill of exchange or order to pay on which is marked "Pursuant to clearing rules, this item must not be cleared again unless certified", or other words signifying that payment was not made by a savings institution, is evidence that payment was not made.
+**126** (1) The production of a cheque, bill of exchange or order to pay on which is marked "Pursuant to clearing rules, this item must not be cleared again unless certified", or other words signifying that payment was not made by a savings institution, is evidence that payment was not made.
 
 (2) A copy of a document issued under this Act by the minister or the director, and certified by the director as a true copy, is, without proof of the director's appointment or signature,
 
@@ -3453,14 +3290,13 @@ Subsection (2) applies whether or not the corporation is prosecuted for the offe
 
 (b) evidence that the person issuing the document was authorized to do so.
 
-(3)
-Subsection (2) applies also in respect of a copy of a document issued under this Act by the tribunal and certified by the registrar of the tribunal as a true copy.
+(3) Subsection (2) applies also in respect of a copy of a document issued under this Act by the tribunal and certified by the registrar of the tribunal as a true copy.
 
 (4) The burden is on the employer to prove that,
 
-(a) in the case of an alleged contravention of section 9 (2) (a), an employee is 14 years of age or older,
+(a) in the case of an alleged contravention of section 9 (2) (a), an employee is 14 years of age or older,
 
-(b) in the case of an alleged contravention of section 9 (2) (b), an employee is 16 years of age or older,
+(b) in the case of an alleged contravention of section 9 (2) (b), an employee is 16 years of age or older,
 
 (b.1) in the case of an alleged contravention of section 9.1 (2), an employee has attained the prescribed age in respect of the applicable hazardous industry or hazardous work, or
 
@@ -3468,8 +3304,7 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 #### Power to make regulations
 
-**127**
-(1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
+**127** (1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
 
 (2) Without limiting subsection (1), the Lieutenant Governor in Council may make regulations as follows:
 
@@ -3479,7 +3314,7 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 (i) all or part of a regulation under this Act does not apply, or
 
-(ii) Parts 10, 11 and 13 of this Act do not apply in relation to the enforcement of all or part of a regulation under this Act and that if a dispute arises respecting the application, interpretation or operation of all or part of that regulation, the grievance procedure contained in the collective agreement or, if applicable, deemed to be contained in the collective agreement under section 84 (3) of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), applies for the purposes of resolving the dispute;
+(ii) Parts 10, 11 and 13 of this Act do not apply in relation to the enforcement of all or part of a regulation under this Act and that if a dispute arises respecting the application, interpretation or operation of all or part of that regulation, the grievance procedure contained in the collective agreement or, if applicable, deemed to be contained in the collective agreement under section 84 (3) of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), applies for the purposes of resolving the dispute;
 
 (b) establishing conditions of employment for employees or classes of employees, whether or not they have been excluded from a part of this Act;
 
@@ -3509,11 +3344,11 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 (g) for the purposes of section 16.1 (2), prescribing classes of employees and specifying the minimum wage, or a method for calculating the minimum wage, for a prescribed class of employees;
 
-(g.1) in relation to the adjustment under section 16.2 of a minimum wage referred to in section 16.1 (2),
+(g.1) in relation to the adjustment under section 16.2 of a minimum wage referred to in section 16.1 (2),
 
-(i) respecting the date each year, beginning on a specified date, the minimum wage is adjusted under section 16.2 (3), and
+(i) respecting the date each year, beginning on a specified date, the minimum wage is adjusted under section 16.2 (3), and
 
-(ii) respecting the rounding of the adjusted minimum wage under section 16.2 (3) (b);
+(ii) respecting the rounding of the adjusted minimum wage under section 16.2 (3) (b);
 
 (h) [Repealed 2002-42-64.]
 
@@ -3523,9 +3358,9 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 (k) respecting applications for variances or renewal of variances;
 
-(l) specifying requirements of the regulations contravention of which may be the subject of a complaint under section 74;
+(l) specifying requirements of the regulations contravention of which may be the subject of a complaint under section 74;
 
-(m) prescribing interest rates for the purposes of section 88 and providing for different rates for different purposes;
+(m) prescribing interest rates for the purposes of section 88 and providing for different rates for different purposes;
 
 (m.1) [Repealed 2019-27-35.]
 
@@ -3563,7 +3398,7 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 (i) restricting the number of leaves within a specified period of time to which an employee who is a reservist is entitled,
 
-(ii) prescribing circumstances for the purposes of subsection (2) (c) of that section and periods of time for the purposes of subsections (3), (4) (b) (iii) and (5) (b) (iii) of that section, and
+(ii) prescribing circumstances for the purposes of subsection (2) (c) of that section and periods of time for the purposes of subsections (3), (4) (b) (iii) and (5) (b) (iii) of that section, and
 
 (iii) respecting information to be provided for the purposes of subsection (8) of that section;
 
@@ -3587,17 +3422,14 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 (iv) providing for exceptions to subsection (2) of that section, and establishing limits or conditions for those exceptions;
 
-(v) prescribing methods of service for the purposes of section 122 (1) (d), including time frames within which documents sent, transmitted or delivered by a prescribed method of service are deemed to have been served, which may be different for different methods of service;
+(v) prescribing methods of service for the purposes of section 122 (1) (d), including time frames within which documents sent, transmitted or delivered by a prescribed method of service are deemed to have been served, which may be different for different methods of service;
 
 (w) respecting any matter for which regulations are contemplated by this Act.
 
-(3) Regulations made under subsection (2) (b.1) may be specific or general in their application and may provide differently for children of different age groups or different industries or classes of industries.
+(3) Regulations made under subsection (2) (b.1) may be specific or general in their application and may provide differently for children of different age groups or different industries or classes of industries.
 
-(4) Regulations made under subsection (2) (c) may delegate a matter to or confer a discretion on the director.
+(4) Regulations made under subsection (2) (c) may delegate a matter to or confer a discretion on the director.
 
 #### Repealed
 
-**128-129**   [Repealed 2019-27-37.]
-
-Copyright © King's Printer, Victoria, British
-Columbia, Canada
+**128-129** [Repealed 2019-27-37.]

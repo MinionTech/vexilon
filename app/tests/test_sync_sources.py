@@ -5,6 +5,7 @@ Issue #695: Automate web-sourced document ingestion, provenance tracking, and dr
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from unittest.mock import patch
 import urllib.error
@@ -14,6 +15,8 @@ from yaml.constructor import ConstructorError
 
 from scripts.sync_sources import (
     HTMLContentExtractor,
+    PartNotFoundError,
+    RegistryError,
     SelectorNotFoundError,
     SourceEntry,
     check_source_drift,
@@ -66,6 +69,40 @@ def test_sources_yaml_exists_and_valid():
     assert seen_statutes == set(statute_selectors)
 
 
+_PART_HEADING_LINE = re.compile(r"^(?:#{1,6}[ \t]+)?Part (\d+)(?:[ \t]+[—–-].*)?[ \t]*$")
+
+
+def test_committed_part_files_open_on_their_own_part():
+    """A part file's first part heading is that part, and it does not carry a sibling."""
+    entries = load_registry(SOURCES_YAML)
+    part_entries = [entry for entry in entries if re.search(r"_Part_\d+\.md$", entry.path)]
+    assert len(part_entries) == 42
+    url_counts: dict[str, int] = {}
+    for entry in part_entries:
+        url_counts[entry.url] = url_counts.get(entry.url, 0) + 1
+
+    for entry in part_entries:
+        match = re.search(r"_Part_(\d+)\.md$", entry.path)
+        assert match is not None
+        expected = str(int(match.group(1)))
+        if url_counts[entry.url] > 1:
+            assert entry.part == expected, entry.path
+        else:
+            assert entry.part is None, entry.path
+        text = (REPO_ROOT / entry.path).read_text(encoding="utf-8")
+        assert "Link to consolidated regulation (PDF)" not in text
+        assert not re.search(r"\[Contents\]\([^)]+\)\s*\|", text), entry.path
+        body = extract_substantive_body(text)
+        headings = [
+            heading.group(1)
+            for line in body.splitlines()
+            if (heading := _PART_HEADING_LINE.match(line))
+        ]
+        assert headings, entry.path
+        assert headings[0] == expected, (entry.path, headings[:4])
+        assert all(number == expected for number in headings), (entry.path, headings)
+
+
 def test_load_registry_rejects_duplicate_keys(tmp_path):
     """Regression: load_registry must raise ConstructorError on duplicate mapping keys.
 
@@ -86,6 +123,67 @@ def test_load_registry_rejects_duplicate_keys(tmp_path):
     )
     with pytest.raises(ConstructorError, match="duplicate key"):
         load_registry(bad_yaml)
+
+
+def _write_sources(tmp_path: Path, entries: list[dict[str, str]]) -> Path:
+    lines = ["sources:"]
+    for entry in entries:
+        lines.append(f"  - path: {entry['path']}")
+        lines.append(f"    url: {entry['url']}")
+        lines.append(f"    type: {entry.get('type', 'bclaws')}")
+        lines.append("    selector: '#contentsscroll'")
+        if "part" in entry:
+            lines.append(f"    part: '{entry['part']}'")
+        lines.append("    category: statutory")
+        if "content_hash" in entry:
+            lines.append(f"    content_hash: {entry['content_hash']}")
+    path = tmp_path / "sources.yaml"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def test_load_registry_requires_distinct_parts_for_a_shared_url(tmp_path):
+    """Two files on one BC Laws document must name different parts."""
+    shared = "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01"
+    ok = _write_sources(tmp_path, [
+        {"path": "app/data/02_statutory/Part_01.md", "url": shared, "part": "1", "content_hash": "a" * 64},
+        {"path": "app/data/02_statutory/Part_02.md", "url": shared, "part": "2", "content_hash": "b" * 64},
+    ])
+    loaded = load_registry(ok)
+    assert [entry.part for entry in loaded] == ["1", "2"]
+
+    same_part = _write_sources(tmp_path, [
+        {"path": "app/data/02_statutory/Part_01.md", "url": shared, "part": "1", "content_hash": "a" * 64},
+        {"path": "app/data/02_statutory/Part_02.md", "url": shared, "part": "1", "content_hash": "b" * 64},
+    ])
+    with pytest.raises(RegistryError, match="different part values"):
+        load_registry(same_part)
+
+    missing_part = _write_sources(tmp_path, [
+        {"path": "app/data/02_statutory/Part_01.md", "url": shared, "content_hash": "a" * 64},
+        {"path": "app/data/02_statutory/Part_02.md", "url": shared, "content_hash": "b" * 64},
+    ])
+    with pytest.raises(RegistryError, match="different part values"):
+        load_registry(missing_part)
+
+
+def test_load_registry_rejects_a_shared_content_hash(tmp_path):
+    """Two entries must never share a drift baseline."""
+    digest = "c" * 64
+    path = _write_sources(tmp_path, [
+        {
+            "path": "app/data/02_statutory/Part_04.md",
+            "url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_02",
+            "content_hash": digest,
+        },
+        {
+            "path": "app/data/02_statutory/Part_05.md",
+            "url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_03",
+            "content_hash": digest,
+        },
+    ])
+    with pytest.raises(RegistryError, match="content_hash"):
+        load_registry(path)
 
 
 def test_html_content_extractor_selector():
@@ -180,6 +278,103 @@ def test_clean_bclaws_content():
     assert "Section 1 (1) Definitions" in cleaned
 
 
+def test_clean_bclaws_content_strips_chrome_and_joins_block_text():
+    """King's Printer chrome is dropped, and text is not glued or split across blocks."""
+    raw_html = """
+    <div id="contentsscroll">
+      <div id="header"><table><tr>
+        <td>Copyright © King's Printer,<br />Victoria, British Columbia, Canada</td>
+        <td>
+          <a href="/standards/Licence.html"><strong>Licence</strong></a>
+          <strong></strong>
+          <a href="/standards/Disclaimer.html"><strong>Disclaimer</strong></a>
+        </td>
+      </tr></table></div>
+      <p><a href="/civix/document/id/complete/statreg/296_97_00_multi">View Complete Regulation</a></p>
+      <table><tr>
+        <td>B.C. Reg. 296/97<br /><span>Workers' Compensation Board</span></td>
+        <td>Deposited September 8, 1997</td>
+      </tr></table>
+      <h5><strong><a href="/civix/document/id/complete/statreg/296_97_pit">Link to Point in Time</a></strong></h5>
+      <h3>[RSBC 2019] CHAPTER
+								1</h3>
+      <p>The <strong>employer</strong> must pay.</p>
+    </div>
+    """
+    cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert "King's Printer" not in cleaned
+    assert "Licence" not in cleaned
+    assert "Disclaimer" not in cleaned
+    assert "View Complete" not in cleaned
+    assert "Point in Time" not in cleaned
+    assert "****" not in cleaned
+    assert "BoardDeposited" not in cleaned
+    assert "Workers' Compensation Board Deposited September 8, 1997" in cleaned
+    assert "CHAPTER 1" in cleaned
+    assert "CHAPTER\n" not in cleaned
+    assert "**employer**" in cleaned
+    assert "The **employer** must pay." in cleaned
+
+
+_BUNDLE_HTML = """
+<div id="contentsscroll">
+  <h5><a href="/civix/pdf">Link to consolidated regulation (PDF)</a></h5>
+  <p>Part 1 — Definitions</p>
+  <p>Section 1.1 defines a workplace.</p>
+  <p>Part 2 — Application</p>
+  <p>Section 2.1 applies to every workplace.</p>
+  <p>Part 3 — Rights and Responsibilities</p>
+  <p>Section 3.1 a worker may refuse unsafe work.</p>
+  <p>Part 33</p>
+  <p>Sections 33.1 to 33.52 are repealed.</p>
+  <p>Part 34 — Rope Access</p>
+  <p>Section 34.1 defines an anchor.</p>
+  <p>
+    <a href="/civix/document/id/complete/statreg/296_97_00">Contents</a> |
+    <a href="/civix/document/id/complete/statreg/296_97_01">Parts 1 to 3</a> |
+    <a href="/civix/document/id/complete/statreg/296_97_02">Part 4</a>
+  </p>
+</div>
+"""
+
+
+def test_clean_bclaws_content_slices_a_bundle_page_by_part():
+    """A shared BC Laws document keeps only the named part, and drops the nav rail."""
+    whole = clean_bclaws_content(_BUNDLE_HTML, selector="#contentsscroll")
+    assert "Section 1.1 defines a workplace." in whole
+    assert "Section 34.1 defines an anchor." in whole
+    assert "Link to consolidated regulation (PDF)" not in whole
+    assert "[Contents](" not in whole
+    assert " | " not in whole
+
+    part_2 = clean_bclaws_content(_BUNDLE_HTML, selector="#contentsscroll", part="2")
+    assert part_2.startswith("Part 2 — Application")
+    assert "Section 2.1 applies to every workplace." in part_2
+    assert "Section 1.1" not in part_2
+    assert "Section 3.1" not in part_2
+    assert "Part 1 —" not in part_2
+    assert "Part 3 —" not in part_2
+
+    part_1 = clean_bclaws_content(_BUNDLE_HTML, selector="#contentsscroll", part="1")
+    assert part_1.startswith("Part 1 — Definitions")
+    assert "Section 1.1 defines a workplace." in part_1
+    assert "Section 2.1" not in part_1
+    # Part 10 must not be selected by a prefix of Part 1.
+    assert "Part 33" not in part_1
+
+    part_33 = clean_bclaws_content(_BUNDLE_HTML, selector="#contentsscroll", part="33")
+    assert part_33.startswith("Part 33")
+    assert "Sections 33.1 to 33.52 are repealed." in part_33
+    assert "Part 34 —" not in part_33
+    assert "Section 34.1" not in part_33
+
+
+def test_clean_bclaws_content_raises_when_part_heading_is_missing():
+    """A missing part heading fails closed instead of keeping the rest of the bundle."""
+    with pytest.raises(PartNotFoundError, match="Part 9"):
+        clean_bclaws_content(_BUNDLE_HTML, selector="#contentsscroll", part="9")
+
+
 def test_extract_substantive_body_strips_provenance():
     """Verify extract_substantive_body strips provenance headers to make drift hash invariant to dates."""
     doc_with_header_v1 = (
@@ -220,6 +415,21 @@ def test_format_provenance_header():
     assert "**Source:** [BC Standards of Conduct](https://example.com/standards)  \n" in header
     assert "**Upstream Last Modified:** Wed, 21 Aug 2024 12:00:00 GMT  \n" in header
     assert "**Ingestion Date:** 2026-09-18  \n\n" in header
+
+
+def test_format_provenance_header_collapses_wrapped_title():
+    """A newline inside a BC Laws title must not split the provenance heading."""
+    header = format_provenance_header(
+        title="Table of Contents - Workers Compensation\n    Act",
+        url="https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_00",
+        upstream_last_modified="Fri, 25 Sep 2026 02:45:46 GMT",
+        ingestion_date="2026-09-25",
+    )
+    assert header.startswith("# Table of Contents - Workers Compensation Act\n\n")
+    assert (
+        "**Source:** [Table of Contents - Workers Compensation Act]"
+        "(https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_00)  \n"
+    ) in header
 
 
 @patch("scripts.sync_sources.fetch_upstream")
