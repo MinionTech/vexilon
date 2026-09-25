@@ -51,3 +51,19 @@ sources:
     category: statutory
     content_hash: 0c26917e003827cc2160599dc55b89b2b8732dc6d9779eba0c8a1da3a5beea41
     last_synced: "2026-09-18"
+
+  - path: app/data/02_statutory/BC_OHS_Regulation.md
+    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_00
+    type: bclaws
+    selector: "#contentsscroll"
+    category: statutory
+    content_hash: 637f6fe62ffc3bb99ee5d213beb801fe718f3643a2dc2ddd400fb54a83f6470f
+    last_synced: "2026-09-25"
+
+  - path: app/data/02_statutory/BC_Workers_Compensation_Act.md
+    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_00
+    type: bclaws
+    selector: "#contentsscroll"
+    category: statutory
+    content_hash: ad07ff787ac21c09886aa39686c7904a15606cade994d4e65a8a9064891bd5f3
+    last_synced: "2026-09-25"

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T21:25:58.303283+00:00",
+  "generated_at": "2026-09-25T02:47:35.448515+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
@@ -21,6 +21,10 @@
     "02_statutory/BC_Labour_Relations_Code.md": {
       "hash": "dfd271ae4a4566c908e846525be987938dbedb816455f030b793f2e87c8de13f",
       "size_bytes": 170143
+    },
+    "02_statutory/BC_OHS_Regulation.md": {
+      "hash": "210eeb72520e5bcddf50be21be2fa4439fefd74ec084d2ffe3088cfe48080959",
+      "size_bytes": 179776
     },
     "02_statutory/BC_OHS_Regulation_-_Introduction.md": {
       "hash": "5b5111b651d9c15dfe7f518172e53b889dee1b806299b18f1787e5da0b1a1d54",
@@ -161,6 +165,10 @@
     "02_statutory/BC_OHS_Regulation_-_Part_34.md": {
       "hash": "1b91e506fe64c98f6b8e37f67f2ec58ab621f9decdd7474fb21162d8ff1427f8",
       "size_bytes": 16181
+    },
+    "02_statutory/BC_Workers_Compensation_Act.md": {
+      "hash": "40b15acc07862f8f31306e0eba287fa5716f5bab00f073ec33585e8ba2b1cbcc",
+      "size_bytes": 42444
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Introduction.md": {
       "hash": "5c5e9ed3f69fedef78a7c4c4cccdca90729d5c3e905a79f18698fc8c8985391a",
