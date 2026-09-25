@@ -1,26 +1,30 @@
 {
-  "generated_at": "2026-09-25T02:47:35.448515+00:00",
+  "generated_at": "2026-09-25T05:46:11.615328+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
       "hash": "fa58d818e31e1541aacaab1bd164f6e53e4b938d95923106bf2ff4bb4ca12648",
       "size_bytes": 597844
     },
+    "01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md": {
+      "hash": "bc9703914ce1445e84b4d9d7e6d4318a2d0f96c6f31df80e63be27c1df18affb",
+      "size_bytes": 30059
+    },
     "01_primary/Gov_BC_Standards_of_Conduct.md": {
-      "hash": "decf3e1688a4409e9b6c5792dbcda485776eeb3b78c120ab86b74e31a354fec1",
-      "size_bytes": 29886
+      "hash": "af34d7c41fa49940c2f8fe86661f7416bdbfea95e3aae8c12f38d69c8ed06c28",
+      "size_bytes": 23120
     },
     "02_statutory/BC_Employment_Standards_Act.md": {
-      "hash": "ae43f3f5c9b1ec40ab4fdf752d91be6c921b4fdb2c86d513b5b61baf9d59c09c",
-      "size_bytes": 163078
+      "hash": "b57f6c63c86d9637701914c97455211110829ae9107ca3ea341079ef963dd272",
+      "size_bytes": 180391
     },
     "02_statutory/BC_Human_Rights_Code.md": {
-      "hash": "b422e829dc855b64d9814627de0e4eabb6bbec5aa6f4109116fcfe8239eae294",
-      "size_bytes": 51234
+      "hash": "f2593efbdbda3cf44c01f267d5b7c61a451daccfd49e9eafc6a0f507257af33a",
+      "size_bytes": 56625
     },
     "02_statutory/BC_Labour_Relations_Code.md": {
-      "hash": "dfd271ae4a4566c908e846525be987938dbedb816455f030b793f2e87c8de13f",
-      "size_bytes": 170143
+      "hash": "7ab0619e139835bcefb95adc9b845b778d773aa7d789f0c31cbfcc1a401a92e5",
+      "size_bytes": 183622
     },
     "02_statutory/BC_OHS_Regulation.md": {
       "hash": "210eeb72520e5bcddf50be21be2fa4439fefd74ec084d2ffe3088cfe48080959",
@@ -211,8 +215,8 @@
       "size_bytes": 84819
     },
     "03_resources/BC_Criminal_Notification_Procedures.md": {
-      "hash": "192f9affe107b3d1bc6688aea222c825cb2b52c6d5dcfdaae12415caf89e8b33",
-      "size_bytes": 2728
+      "hash": "3c33d45c0ab56fcfb10e5f26a2cc8d1ab8ba992131d7a440be97981571c7a005",
+      "size_bytes": 2865
     },
     "03_resources/BC_Social_Media_Guidance_for_Public_Service_Employees.md": {
       "hash": "f27116574c4e6eb56804176666af965b8ffe1b9e1641bce126bd543d5122fbfb",

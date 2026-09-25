@@ -6,64 +6,45 @@
 #     - path: Relative path to markdown document within repo (e.g. app/data/03_resources/doc.md)
 #       url: Canonical upstream URL
 #       type: Ingestion parser strategy (html_selector | bclaws)
-#       selector: CSS or container selector to isolate substantive content (e.g. '#body', '#civix-document')
+#       selector: CSS or container selector to isolate substantive content (e.g. '#body', '#civix-document');
+#                 a comma-separated list extracts each listed container in document order
 #       category: Document classification (primary | statutory | resources | jurisprudence)
 #       content_hash: SHA-256 hash of substantive body content (for drift baseline)
 #       last_synced: ISO date when the document was last synced
 
 sources:
-  - path: app/data/03_resources/BC_Criminal_Notification_Procedures.md
-    url: https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee
-    type: html_selector
-    selector: "#body"
-    category: resources
-    content_hash: 73fd01d02cae218b4c4a64d0085f251d4c501d1693d367514f51fc2ad51f44ce
-    last_synced: "2026-09-18"
-
-  - path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
-    url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct
-    type: html_selector
-    selector: "#body"
-    category: primary
-    content_hash: 5f1284df6e0dcc625ef6638ce514caf6bb63669c8609b32d7d0a45e30e9ef7e1
-    last_synced: "2026-09-18"
-
-  - path: app/data/02_statutory/BC_Labour_Relations_Code.md
-    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01
-    type: bclaws
-    selector: "#contentsscroll"
-    category: statutory
-    content_hash: f58315e75d7f36e174276203bcd48a37606afd3912c0bff5a3046281431d371b
-    last_synced: "2026-09-18"
-
-  - path: app/data/02_statutory/BC_Employment_Standards_Act.md
-    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01
-    type: bclaws
-    selector: "#contentsscroll"
-    category: statutory
-    content_hash: c0286b4a86efd585d03cdee54d5019690041cd38ffa07367843159824727a27b
-    last_synced: "2026-09-18"
-
-  - path: app/data/02_statutory/BC_Human_Rights_Code.md
-    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01
-    type: bclaws
-    selector: "#contentsscroll"
-    category: statutory
-    content_hash: 0c26917e003827cc2160599dc55b89b2b8732dc6d9779eba0c8a1da3a5beea41
-    last_synced: "2026-09-18"
-
-  - path: app/data/02_statutory/BC_OHS_Regulation.md
-    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_00
-    type: bclaws
-    selector: "#contentsscroll"
-    category: statutory
-    content_hash: 637f6fe62ffc3bb99ee5d213beb801fe718f3643a2dc2ddd400fb54a83f6470f
-    last_synced: "2026-09-25"
-
-  - path: app/data/02_statutory/BC_Workers_Compensation_Act.md
-    url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_00
-    type: bclaws
-    selector: "#contentsscroll"
-    category: statutory
-    content_hash: ad07ff787ac21c09886aa39686c7904a15606cade994d4e65a8a9064891bd5f3
-    last_synced: "2026-09-25"
+- path: app/data/03_resources/BC_Criminal_Notification_Procedures.md
+  url: https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee
+  type: html_selector
+  selector: '#body'
+  category: resources
+  content_hash: 9b47fe9d83c8089a13634fbc75767ba96571f585ad34dc96d7a54e2982ef2301
+  last_synced: '2026-09-25'
+- path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
+  url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct
+  type: html_selector
+  selector: '#body, #cmf-ui-supplementary-content'
+  category: primary
+  content_hash: 5d1d5fbb25b5213be6b64ead5d37f611cb8443483fe7d1c90ca5bd9b53c819f6
+  last_synced: '2026-09-25'
+- path: app/data/02_statutory/BC_Labour_Relations_Code.md
+  url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01
+  type: bclaws
+  selector: '#contentsscroll'
+  category: statutory
+  content_hash: 23eb262c8ed3f059603ebef6dcc3e0fa204c0e936f4327208d3b3b88de5540c7
+  last_synced: '2026-09-25'
+- path: app/data/02_statutory/BC_Employment_Standards_Act.md
+  url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01
+  type: bclaws
+  selector: '#contentsscroll'
+  category: statutory
+  content_hash: fa13054dd1e146eab9db4d3ed9220e20894cb68260be35442127c1606fce369a
+  last_synced: '2026-09-25'
+- path: app/data/02_statutory/BC_Human_Rights_Code.md
+  url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01
+  type: bclaws
+  selector: '#contentsscroll'
+  category: statutory
+  content_hash: 7d3eb410dd9eb8c9633d669a9723298d318689e6865bc482b68174d959efb6cd
+  last_synced: '2026-09-25'

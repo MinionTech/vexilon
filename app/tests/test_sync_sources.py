@@ -423,6 +423,79 @@ def test_html_content_extractor_multi_node_anchor_text():
     assert "here." in markdown
 
 
+def test_html_content_extractor_emphasis_inside_anchor_is_balanced():
+    """Regression: <a><em>..</em></a> emitted the emphasis markers outside the buffered link.
+
+    bclaws cross-references are <a href><em>Act name</em></a>; the old output was
+    ``**[Labour Relations Code](...)`` (two stray ``*`` before the link) and
+    ``****[Licence](...)`` for <a><strong>..</strong></a>.
+    """
+    raw_html = """
+    <html><body>
+    <div id="body">
+        <p>as defined in the <a href="/civix/lrc"><em>Labour Relations Code</em></a>;</p>
+        <p><a href="/standards/Licence.html"><strong>Licence</strong></a></p>
+        <p><strong><a href="/x">Bold link</a></strong> and <em>plain italic</em>.</p>
+    </div>
+    </body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "as defined in the [Labour Relations Code](/civix/lrc);" in markdown
+    assert "[Licence](/standards/Licence.html)" in markdown
+    assert "**[Bold link](/x)**" in markdown
+    assert "*[" not in markdown.replace("**[Bold link](/x)**", "")
+    assert "*plain italic*" in markdown
+    for line in markdown.splitlines():
+        assert line.count("*") % 2 == 0, line
+
+
+def test_extract_content_selector_list_keeps_sibling_containers():
+    """Regression: gov.bc.ca renders the page's Resources section in a sibling of #body.
+
+    A comma-separated selector list must extract every listed container in document
+    order, skip the chrome between them, and fail closed when any listed container
+    is absent.
+    """
+    raw_html = """
+    <html><body>
+      <nav>Site menu</nav>
+      <div id="body"><h2>Responsibilities</h2><p>Employees must comply.</p></div>
+      <div class="topicPageNav">Previous / Next</div>
+      <div id="cmf-ui-supplementary-content"><h2 class="banner">Resources</h2>
+        <ul><li><a href="https://example.com/hr09.pdf">HR policy 09</a></li></ul>
+      </div>
+      <footer>Copyright</footer>
+    </body></html>
+    """
+    _title, body = extract_content(raw_html, "html_selector", "#body, #cmf-ui-supplementary-content")
+    assert body.index("Employees must comply.") < body.index("## Resources")
+    assert "- [HR policy 09](https://example.com/hr09.pdf)" in body
+    assert "Previous / Next" not in body
+    assert "Site menu" not in body
+    assert "Copyright" not in body
+
+    nested_html = """
+    <html><body>
+      <div id="body"><p>Outer text.</p>
+        <div id="resources"><h2>Resources</h2><p>Nested once.</p></div>
+        <p>After nested.</p>
+      </div>
+      <footer>Copyright</footer>
+    </body></html>
+    """
+    _title, nested_body = extract_content(nested_html, "html_selector", "#body, #resources")
+    assert nested_body.count("Nested once.") == 1
+    assert nested_body.index("Outer text.") < nested_body.index("Nested once.") < nested_body.index("After nested.")
+    assert "Copyright" not in nested_body
+
+    without_resources = raw_html.replace('id="cmf-ui-supplementary-content"', 'id="gone"')
+    with pytest.raises(SelectorNotFoundError, match="#cmf-ui-supplementary-content"):
+        extract_content(without_resources, "html_selector", "#body, #cmf-ui-supplementary-content")
+
+
 def test_extract_substantive_body_returns_empty_string_on_empty_body():
     """Regression W2: extract_substantive_body must return '' when all lines are provenance header.
 
