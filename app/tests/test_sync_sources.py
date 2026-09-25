@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import patch
+import re
 import urllib.error
 
 import pytest
@@ -635,9 +636,15 @@ def test_core_policy_source_is_catalogued():
     assert entry.type == "html_selector"
     assert entry.selector == "#body"
     assert entry.category == "primary"
-    assert entry.last_synced == "2026-09-24"
 
     text = (REPO_ROOT / entry.path).read_text(encoding="utf-8")
+    ingestion_lines = [
+        line for line in text.splitlines() if line.startswith("**Ingestion Date:**")
+    ]
+    assert len(ingestion_lines) == 1
+    ingestion_date = ingestion_lines[0].removeprefix("**Ingestion Date:**").strip()
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", ingestion_date)
+    assert entry.last_synced == ingestion_date
     assert text.startswith("# ")
     assert "**Source:** [" in text
     assert CORE_POLICY_URL in text
