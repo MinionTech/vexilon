@@ -152,8 +152,10 @@ class HTMLContentExtractor(HTMLParser):
     def __init__(self, target_selector: str | None = None):
         super().__init__()
         self.target_selector = target_selector
+        # A comma-separated selector list extracts every listed container in document order.
+        self.selectors = [s.strip() for s in (target_selector or "").split(",") if s.strip()]
+        self.found_selectors: set[str] = set()
         self.inside_target = target_selector is None
-        self.selector_found = target_selector is None
         self.selector_depth = 0
         self.tag_stack: list[str] = []
         self.ignore_depth = 0
@@ -184,13 +186,16 @@ class HTMLContentExtractor(HTMLParser):
         if self.ignore_depth > 0:
             return
 
-        # Check selector entry condition
-        if not self.inside_target and self.target_selector:
-            if self._matches_selector(tag_lower, attr_dict):
-                self.inside_target = True
-                self.selector_found = True
-                self.selector_depth = 1
-                return
+        # A listed container nested inside an active one is recorded as found but
+        # not re-entered, so its content is emitted once as part of the outer container.
+        if self.target_selector:
+            matched = self._matches_selector(tag_lower, attr_dict)
+            if matched:
+                self.found_selectors.add(matched)
+                if not self.inside_target:
+                    self.inside_target = True
+                    self.selector_depth = 1
+                    return
 
         if self.inside_target and self.target_selector and self.selector_depth > 0:
             if tag_lower not in self.VOID_TAGS:
@@ -211,10 +216,12 @@ class HTMLContentExtractor(HTMLParser):
             self.tokens.append("\n- ")
         elif tag_lower in ("strong", "b"):
             self.is_bold = True
-            self.tokens.append("**")
+            if not self.current_link:
+                self.tokens.append("**")
         elif tag_lower in ("em", "i"):
             self.is_italic = True
-            self.tokens.append("*")
+            if not self.current_link:
+                self.tokens.append("*")
         elif tag_lower == "a":
             href = attr_dict.get("href", "")
             if href and not href.startswith("javascript:"):
@@ -259,10 +266,12 @@ class HTMLContentExtractor(HTMLParser):
             self.tokens.append("\n\n")
         elif tag_lower in ("strong", "b"):
             self.is_bold = False
-            self.tokens.append("**")
+            if not self.current_link:
+                self.tokens.append("**")
         elif tag_lower in ("em", "i"):
             self.is_italic = False
-            self.tokens.append("*")
+            if not self.current_link:
+                self.tokens.append("*")
         elif tag_lower == "a":
             if self.current_link and self.link_text_tokens:
                 anchor_text = "".join(self.link_text_tokens).strip()
@@ -292,18 +301,26 @@ class HTMLContentExtractor(HTMLParser):
 
         self.tokens.append(text)
 
-    def _matches_selector(self, tag: str, attrs: dict[str, str]) -> bool:
-        if not self.target_selector:
-            return False
-        selector = self.target_selector.strip()
-        if selector.startswith("#"):
-            target_id = selector[1:]
-            return attrs.get("id", "") == target_id
-        if selector.startswith("."):
-            target_class = selector[1:]
-            classes = attrs.get("class", "").split()
-            return target_class in classes
-        return tag == selector.lower()
+    @property
+    def selector_found(self) -> bool:
+        return all(s in self.found_selectors for s in self.selectors)
+
+    @property
+    def missing_selectors(self) -> list[str]:
+        return [s for s in self.selectors if s not in self.found_selectors]
+
+    def _matches_selector(self, tag: str, attrs: dict[str, str]) -> str | None:
+        """Return the listed selector this element matches, or None."""
+        for selector in self.selectors:
+            if selector.startswith("#"):
+                if attrs.get("id", "") == selector[1:]:
+                    return selector
+            elif selector.startswith("."):
+                if selector[1:] in attrs.get("class", "").split():
+                    return selector
+            elif tag == selector.lower():
+                return selector
+        return None
 
     def get_markdown(self) -> str:
         raw_text = "".join(self.tokens)
@@ -320,7 +337,7 @@ class HTMLContentExtractor(HTMLParser):
 def _require_selector(extractor: HTMLContentExtractor) -> None:
     """Refuse a whole-page extract when the configured container is missing."""
     if extractor.target_selector and not extractor.selector_found:
-        raise SelectorNotFoundError(extractor.target_selector)
+        raise SelectorNotFoundError(", ".join(extractor.missing_selectors))
 
 
 def clean_bclaws_content(raw_html: str, selector: str | None) -> str:
