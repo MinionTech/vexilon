@@ -418,6 +418,10 @@ def format_provenance_header(
     ingestion_date: str | None = None,
 ) -> str:
     """Formats canonical provenance metadata header."""
+    # BC Laws <title> text can contain a newline (for example "Workers Compensation\\n    Act").
+    # A wrapped heading stops extract_substantive_body early, so the registry hash no longer
+    # matches the file the sync just wrote.
+    title = " ".join(title.split())
     last_mod = upstream_last_modified or "Unknown"
     ingest = ingestion_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     return (

@@ -222,6 +222,21 @@ def test_format_provenance_header():
     assert "**Ingestion Date:** 2026-09-18  \n\n" in header
 
 
+def test_format_provenance_header_collapses_wrapped_title():
+    """A newline inside a BC Laws title must not split the provenance heading."""
+    header = format_provenance_header(
+        title="Table of Contents - Workers Compensation\n    Act",
+        url="https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_00",
+        upstream_last_modified="Fri, 25 Sep 2026 02:45:46 GMT",
+        ingestion_date="2026-09-25",
+    )
+    assert header.startswith("# Table of Contents - Workers Compensation Act\n\n")
+    assert (
+        "**Source:** [Table of Contents - Workers Compensation Act]"
+        "(https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_00)  \n"
+    ) in header
+
+
 @patch("scripts.sync_sources.fetch_upstream")
 def test_check_source_drift_match(mock_fetch):
     """Verify check_source_drift reports MATCH when upstream matches local substantive hash."""
