@@ -38,11 +38,21 @@ def test_sources_yaml_exists_and_valid():
     entries = load_registry(SOURCES_YAML)
     assert len(entries) >= 3, f"Expected at least 3 source entries, got {len(entries)}"
 
+    statute_selectors = {
+        "app/data/02_statutory/BC_Labour_Relations_Code.md": "#contentsscroll",
+        "app/data/02_statutory/BC_Employment_Standards_Act.md": "#contentsscroll",
+        "app/data/02_statutory/BC_Human_Rights_Code.md": "#contentsscroll",
+    }
+    seen_statutes: set[str] = set()
+
     for entry in entries:
         assert entry.path.startswith("app/data/"), f"Path must be in app/data/: {entry.path}"
         assert entry.url.startswith("http"), f"Invalid URL: {entry.url}"
         assert entry.type in ("html_selector", "bclaws"), f"Unknown type: {entry.type}"
         assert entry.category in ("primary", "statutory", "resources", "jurisprudence")
+        if entry.path in statute_selectors:
+            assert entry.selector == statute_selectors[entry.path], entry.path
+            seen_statutes.add(entry.path)
         # Ensure referenced file actually exists in repo
         target_file = REPO_ROOT / entry.path
         assert target_file.exists(), f"Target document does not exist: {target_file}"
@@ -52,6 +62,8 @@ def test_sources_yaml_exists_and_valid():
         assert entry.content_hash == compute_content_hash(substantive), (
             f"content_hash for {entry.path} does not match the committed file"
         )
+
+    assert seen_statutes == set(statute_selectors)
 
 
 def test_load_registry_rejects_duplicate_keys(tmp_path):
@@ -150,7 +162,7 @@ def test_html_content_extractor_void_tags_do_not_corrupt_selector_depth():
 def test_clean_bclaws_content():
     """Verify BCLaws specific cleaner removes script artifacts and watermarks."""
     raw_bclaws_html = """
-    <div id="civix-document">
+    <div id="contentsscroll">
         <script>
         function launchNewWindow(url) { window.open(url); }
         window.onload = function() { document.body.style.display = "block"; }
@@ -160,7 +172,7 @@ def test_clean_bclaws_content():
         <p>Source link: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01</p>
     </div>
     """
-    cleaned = clean_bclaws_content(raw_bclaws_html, selector="#civix-document")
+    cleaned = clean_bclaws_content(raw_bclaws_html, selector="#contentsscroll")
     assert "launchNewWindow" not in cleaned
     assert "window.onload" not in cleaned
     assert "https://www.bclaws.gov.bc.ca" not in cleaned
@@ -355,8 +367,8 @@ def test_clean_bclaws_url_regex_preserves_markdown_link_parens():
         "for full text."
     )
     result = clean_bclaws_content(
-        f"<div id='civix-document'>{content_with_link}</div>",
-        selector="#civix-document",
+        f"<div id='contentsscroll'>{content_with_link}</div>",
+        selector="#contentsscroll",
     )
     # The URL inside parens should be stripped, but the surrounding text preserved
     assert "See" in result
@@ -459,8 +471,8 @@ def test_format_drift_alert_markdown_includes_error_entries():
 def test_clean_bclaws_content_raises_when_selector_missing():
     """A missing container must not fall back to hashing the whole page."""
     raw_html = "<html><body><div id='toolBar'>Search Results</div><p>Copyright</p></body></html>"
-    with pytest.raises(SelectorNotFoundError, match="#civix-document"):
-        clean_bclaws_content(raw_html, selector="#civix-document")
+    with pytest.raises(SelectorNotFoundError, match="#contentsscroll"):
+        clean_bclaws_content(raw_html, selector="#contentsscroll")
 
 
 def test_bclaws_body_uses_validated_selector_not_whole_page():
@@ -540,7 +552,7 @@ def test_missing_selector_is_error_and_does_not_overwrite(mock_fetch, tmp_path):
         path="app/data/statute.md",
         url="https://example.com/statute",
         type="bclaws",
-        selector="#civix-document",
+        selector="#contentsscroll",
         content_hash="a" * 64,
     )
 
