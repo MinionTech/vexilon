@@ -180,6 +180,44 @@ def test_clean_bclaws_content():
     assert "Section 1 (1) Definitions" in cleaned
 
 
+def test_clean_bclaws_content_strips_chrome_and_joins_block_text():
+    """King's Printer chrome is dropped, and text is not glued or split across blocks."""
+    raw_html = """
+    <div id="contentsscroll">
+      <div id="header"><table><tr>
+        <td>Copyright © King's Printer,<br />Victoria, British Columbia, Canada</td>
+        <td>
+          <a href="/standards/Licence.html"><strong>Licence</strong></a>
+          <strong></strong>
+          <a href="/standards/Disclaimer.html"><strong>Disclaimer</strong></a>
+        </td>
+      </tr></table></div>
+      <p><a href="/civix/document/id/complete/statreg/296_97_00_multi">View Complete Regulation</a></p>
+      <table><tr>
+        <td>B.C. Reg. 296/97<br /><span>Workers' Compensation Board</span></td>
+        <td>Deposited September 8, 1997</td>
+      </tr></table>
+      <h5><strong><a href="/civix/document/id/complete/statreg/296_97_pit">Link to Point in Time</a></strong></h5>
+      <h3>[RSBC 2019] CHAPTER
+								1</h3>
+      <p>The <strong>employer</strong> must pay.</p>
+    </div>
+    """
+    cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert "King's Printer" not in cleaned
+    assert "Licence" not in cleaned
+    assert "Disclaimer" not in cleaned
+    assert "View Complete" not in cleaned
+    assert "Point in Time" not in cleaned
+    assert "****" not in cleaned
+    assert "BoardDeposited" not in cleaned
+    assert "Workers' Compensation Board Deposited September 8, 1997" in cleaned
+    assert "CHAPTER 1" in cleaned
+    assert "CHAPTER\n" not in cleaned
+    assert "**employer**" in cleaned
+    assert "The **employer** must pay." in cleaned
+
+
 def test_extract_substantive_body_strips_provenance():
     """Verify extract_substantive_body strips provenance headers to make drift hash invariant to dates."""
     doc_with_header_v1 = (

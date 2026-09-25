@@ -226,9 +226,18 @@ class HTMLContentExtractor(HTMLParser):
             href = attr_dict.get("href", "")
             if href and not href.startswith("javascript:"):
                 self.current_link = href
+        elif tag_lower in ("td", "th"):
+            # Table cells are separate blocks. Without a separator their text
+            # glues together ("Workers' Compensation BoardDeposited").
+            self._append_boundary_space()
 
         if tag_lower not in self.VOID_TAGS:
             self.tag_stack.append(tag_lower)
+
+    def _append_boundary_space(self) -> None:
+        if not self.tokens or self.tokens[-1].endswith((" ", "\n")):
+            return
+        self.tokens.append(" ")
 
 
     def handle_endtag(self, tag: str) -> None:
@@ -291,7 +300,8 @@ class HTMLContentExtractor(HTMLParser):
         if self.ignore_depth > 0 or not self.inside_target:
             return
 
-        text = data
+        # A newline inside one element ("CHAPTER\\n1") is a space, not a new paragraph.
+        text = re.sub(r"\s+", " ", data)
         if not text:
             return
 
@@ -357,8 +367,35 @@ def clean_bclaws_content(raw_html: str, selector: str | None) -> str:
     content = re.sub(r'https?://www\.bclaws\.gov\.bc\.ca/[^\s)\]>"]+', "", content)
     content = re.sub(r"function\s+launchNewWindow[\s\S]*?\}", "", content)
     content = re.sub(r"window\.onload\s*=[\s\S]*?\}", "", content)
+    content = _strip_bclaws_chrome(content)
     content = re.sub(r"\n{3,}", "\n\n", content)
     return content.strip()
+
+
+_KING_PRINTER_RE = re.compile(
+    r"Copyright © King's Printer,\s*Victoria,\s*British\s*Columbia,\s*Canada",
+    re.IGNORECASE,
+)
+_LICENCE_DISCLAIMER_RE = re.compile(
+    r"\[(?:Licence|Disclaimer)\]\([^)]*(?:Licence|Disclaimer)\.html\)",
+    re.IGNORECASE,
+)
+_VIEW_COMPLETE_RE = re.compile(r"\[View Complete [^\]]+\]\([^)]+\)")
+_POINT_IN_TIME_RE = re.compile(r"\[Link to Point in Time\]\([^)]+\)")
+# Opening and closing markers with nothing between them: **** or ** **.
+_EMPTY_BOLD_RE = re.compile(r"\*\*(?:\s*\*\*)+")
+_EMPTY_HEADING_RE = re.compile(r"(?m)^#{1,6}[ \t*]*$")
+
+
+def _strip_bclaws_chrome(content: str) -> str:
+    """Drop King's Printer chrome and empty bold markers from extracted statute text."""
+    content = _KING_PRINTER_RE.sub("", content)
+    content = _LICENCE_DISCLAIMER_RE.sub("", content)
+    content = _VIEW_COMPLETE_RE.sub("", content)
+    content = _POINT_IN_TIME_RE.sub("", content)
+    content = _EMPTY_BOLD_RE.sub("", content)
+    content = _EMPTY_HEADING_RE.sub("", content)
+    return content
 
 
 def extract_content(raw_html: str, doc_type: str, selector: str | None) -> tuple[str, str]:
