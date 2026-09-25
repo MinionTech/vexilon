@@ -351,3 +351,21 @@ Employees who are appointed as directors or officers of Crown corporations are n
 - Check with their supervisor or manager when they are uncertain about any aspect of this policy statement​
 
 ​
+
+## Resources
+
+- [Annual Review - Standards of Conduct and Oath of Employment: eLearning](https://learningcentre.gww.gov.bc.ca/learninghub/course/annual-review-of-the-standards-of-conduct-and-oath-of-employment/) (IDIR restricted)
+
+- [Human resources policy 09 – Standards of Conduct for BC Public Service employees (PDF 181KB)](https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/hr-policy-pdf-documents/09_standards_conduct_policy.pdf)
+
+- [Standards of Conduct Acknowledgement (PDF, 256KB)](https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/standards_conduct_acknowledgement.pdf)
+
+- [Procurement Practice Standard](https://intranet.fin.gov.bc.ca/service/procurement-practice-standard?check_logged_in=1)
+
+- [Standards of Conduct for Political Staff (PDF, 185KB)](https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/standards_of_conduct_political_staff.pdf)
+
+- [Political Staff Oath Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/66_2014)
+
+- [Accountability Framework for Human Resource Management](/gov/content/careers-myhr/managers-supervisors/employee-labour-relations/conditions-agreements/accountability-framework)
+
+- [Public Interest Disclosure Act (PIDA)](http://www.bclaws.ca/civix/document/id/complete/statreg/18022)

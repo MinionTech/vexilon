@@ -1,12 +1,12 @@
 # Employment Standards Act
 
 **Source:** [Employment Standards Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 03:38:24 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 04:09:39 GMT  
 **Ingestion Date:** 2026-09-25  
 
 Copyright © King's Printer,
-Victoria, British Columbia, Canada****[Licence](/standards/Licence.html)
-****[Disclaimer](/standards/Disclaimer.html)
+Victoria, British Columbia, Canada[Licence](/standards/Licence.html)
+[Disclaimer](/standards/Disclaimer.html)
 
 This Act is current to September 15, 2026
 
@@ -266,7 +266,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/41478612
 
 [86.1](#section86.1)[No jurisdiction to determine constitutional question](#section86.1)
 
-[86.2](#section86.2)**[Director without jurisdiction to apply the Human Rights Code](#section86.2)
+[86.2](#section86.2)[Director without jurisdiction to apply the Human Rights Code](#section86.2)
 
 [Part 11 — Enforcement](#part11)
 
@@ -306,7 +306,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/41478612
 
 [102](#section102)[Employment Standards Tribunal continued](#section102)
 
-[103](#section103)**[Application of Administrative Tribunals Act](#section103)
+[103](#section103)[Application of Administrative Tribunals Act](#section103)
 
 [104](#section104)[Chair may delegate authority](#section104)
 
@@ -368,7 +368,7 @@ Part 1 — Introductory Provisions
 
 "assignment of wages" includes a written authorization to pay all or part of an employee's wages to another person;
 
-"collective agreement" means the same as in the **[Fishing Collective Bargaining Act](/civix/document/id/complete/statreg/96150_01), the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01), or the **[Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01);
+"collective agreement" means the same as in the [Fishing Collective Bargaining Act](/civix/document/id/complete/statreg/96150_01), the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), or the [Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01);
 
 "conditions of employment" means all matters and circumstances that in any way affect the employment relationship of employers and employees;
 
@@ -382,7 +382,7 @@ Part 1 — Introductory Provisions
 
 "determination" means any decision made by the director under section 30 (2), 66, 68 (3), 73, 74 (5), 76 (2), (3) or (8), 79, 80 (3), 100 or 119;
 
-"director" means the Director of Employment Standards appointed under the **[Public Service Act](/civix/document/id/complete/statreg/96385_01) and, in relation to a function, duty or power that the director has under section 117 of this Act delegated to another person, "director" includes that other person;
+"director" means the Director of Employment Standards appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01) and, in relation to a function, duty or power that the director has under section 117 of this Act delegated to another person, "director" includes that other person;
 
 "domestic worker" means a person who is employed at an employer's private residence to provide cooking, cleaning, child care or other prescribed services;
 
@@ -406,7 +406,7 @@ Part 1 — Introductory Provisions
 
 "employment agency" means a person who, for a fee and for employers, recruits or offers to recruit employees, except employees
 
-(a) who are foreign nationals, as defined in the **[Temporary Foreign Worker Protection Act](/civix/document/id/complete/statreg/18045), and
+(a) who are foreign nationals, as defined in the [Temporary Foreign Worker Protection Act](/civix/document/id/complete/statreg/18045), and
 
 (b) to whom recruitment services, as defined in that Act, must be provided in accordance with that Act;
 
@@ -438,9 +438,9 @@ but does not include
 
 (b) any person who lives with an employee as a member of the employee's family;
 
-"insolvency Act" means the **[Bankruptcy and Insolvency Act](http://laws-lois.justice.gc.ca/eng/acts/B-3/) (Canada), the **[Companies' Creditors Arrangement Act](http://laws-lois.justice.gc.ca/eng/acts/C-36/) (Canada) or the **[Winding-up and Restructuring Act](http://laws-lois.justice.gc.ca/eng/acts/W-11/) (Canada);
+"insolvency Act" means the [Bankruptcy and Insolvency Act](http://laws-lois.justice.gc.ca/eng/acts/B-3/) (Canada), the [Companies' Creditors Arrangement Act](http://laws-lois.justice.gc.ca/eng/acts/C-36/) (Canada) or the [Winding-up and Restructuring Act](http://laws-lois.justice.gc.ca/eng/acts/W-11/) (Canada);
 
-"Labour Relations Board" means the board as defined in the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
+"Labour Relations Board" means the board as defined in the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
 
 "online platform worker" means a person who performs prescribed work that the person accepts through an online platform;
 
@@ -496,7 +496,7 @@ but does not include
 
 "time bank" means a time bank established under section 42 at the request of an employee;
 
-"trade union" means the same as in the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
+"trade union" means the same as in the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
 
 "tribunal" means the Employment Standards Tribunal;
 
@@ -668,11 +668,11 @@ section 68 *[rules about payments on termination]*.
 
 (b) a provision specified in subsection (6),
 
-the grievance procedure contained in the collective agreement or, if applicable, deemed to be contained in the collective agreement under section 84 (3) of the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01), applies for the purposes of resolving the dispute.
+the grievance procedure contained in the collective agreement or, if applicable, deemed to be contained in the collective agreement under section 84 (3) of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), applies for the purposes of resolving the dispute.
 
 (8) Despite subsection (6), if an arbitration board makes a decision on the merits of a matter in dispute referred to in subsection (7) and the decision is in respect of wages, the arbitration board may refer the decision to the director for the purpose of collecting the wages and, for that purpose, the director may collect the wages under sections 87 to 97 and 99 as if the decision of the arbitration board were an order of the tribunal.
 
-(9) In subsection (8), "arbitration board" has the same meaning as in Part 8 of the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01).
+(9) In subsection (8), "arbitration board" has the same meaning as in Part 8 of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01).
 
 #### Online platform workers
 
@@ -831,7 +831,7 @@ Part 3 — Wages, Special Clothing, Records and Gratuities
 #### Annual adjustment of minimum wage
 
 **16.2**
-(1) In this section, "consumer price index" means the annual average All-items Consumer Price Index for British Columbia, as published by Statistics Canada under the authority of the **[Statistics Act](http://laws-lois.justice.gc.ca/eng/acts/S-19/index.html) (Canada).
+(1) In this section, "consumer price index" means the annual average All-items Consumer Price Index for British Columbia, as published by Statistics Canada under the authority of the [Statistics Act](http://laws-lois.justice.gc.ca/eng/acts/S-19/index.html) (Canada).
 
 (2) Subject to this section, every year on June 1, beginning on June 1, 2024,
 
@@ -886,7 +886,7 @@ Subsection (1) does not apply to
 #### If employee cannot be located
 
 **19**
-(1) In this section, "administrator" has the same meaning as in the **[Unclaimed Property Act](/civix/document/id/complete/statreg/99048_01).
+(1) In this section, "administrator" has the same meaning as in the [Unclaimed Property Act](/civix/document/id/complete/statreg/99048_01).
 
 (1.1) If an employer cannot locate an employee to pay the employee's wages, the employer must pay the wages to the director within 60 days after the wages became payable.
 
@@ -896,7 +896,7 @@ Subsection (1) does not apply to
 
 (4) If the director cannot locate an employee after receiving the employee's wages under this section, the director must transfer the wages to the administrator in accordance with the transfer schedule set by the administrator.
 
-(5) Money transferred to the administrator under subsection (4) is deemed to be an unclaimed money deposit under the **[Unclaimed Property Act](/civix/document/id/complete/statreg/99048_01).
+(5) Money transferred to the administrator under subsection (4) is deemed to be an unclaimed money deposit under the [Unclaimed Property Act](/civix/document/id/complete/statreg/99048_01).
 
 #### How wages are paid
 
@@ -922,11 +922,11 @@ Subsection (1) does not apply to
 **22**
 (1) An employer must honour an employee's written assignment of wages
 
-(a) to a trade union in accordance with the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01),
+(a) to a trade union in accordance with the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01),
 
-(b) to a charitable or other organization, or a pension or superannuation or other plan, if the amounts assigned are deductible for income tax purposes under the **[Income Tax Act](http://laws-lois.justice.gc.ca/eng/acts/I-3.3/index.html) (Canada),
+(b) to a charitable or other organization, or a pension or superannuation or other plan, if the amounts assigned are deductible for income tax purposes under the [Income Tax Act](http://laws-lois.justice.gc.ca/eng/acts/I-3.3/index.html) (Canada),
 
-(c) to a person to whom the employee is required under a maintenance order, as defined in the **[Family Maintenance Enforcement Act](/civix/document/id/complete/statreg/96127_01), to pay maintenance, and
+(c) to a person to whom the employee is required under a maintenance order, as defined in the [Family Maintenance Enforcement Act](/civix/document/id/complete/statreg/96127_01), to pay maintenance, and
 
 (d) to an insurance company for insurance or medical or dental coverage.
 
@@ -1186,11 +1186,11 @@ An employer must ensure that an employee working a split shift completes the shi
 #### Minimum daily hours
 
 **34**
-(1) Subject to subsections (2) and (3), if as required by an employer an employee reports for work on any day, the employer must pay the employee for a minimum of 2 hours at the regular wage whether or not the employee starts work, unless the employee is unfit to work or fails to comply with Part 2 of the **[Workers Compensation Act](/civix/document/id/complete/statreg/19001_00), or a regulation under that Part.
+(1) Subject to subsections (2) and (3), if as required by an employer an employee reports for work on any day, the employer must pay the employee for a minimum of 2 hours at the regular wage whether or not the employee starts work, unless the employee is unfit to work or fails to comply with Part 2 of the [Workers Compensation Act](/civix/document/id/complete/statreg/19001_00), or a regulation under that Part.
 
 (2) Whether or not the employee starts work, the employer under subsection (1) must pay the employee for a minimum of 4 hours at the employee's regular wage if the employer had previously scheduled the employee to work for more than 8 hours that day, unless
 
-(a) the employee is unfit to work or fails to comply with Part 2 of the **[Workers Compensation Act](/civix/document/id/complete/statreg/19001_00), or a regulation under that Part, or
+(a) the employee is unfit to work or fails to comply with Part 2 of the [Workers Compensation Act](/civix/document/id/complete/statreg/19001_00), or a regulation under that Part, or
 
 (b) the work is suspended for reasons completely beyond the employer's control, including unsuitable weather conditions.
 
@@ -1432,7 +1432,7 @@ Part 6 — Leaves and Jury Duty
 
 (b) a nurse practitioner;
 
-(c) a person who is authorized to practise a designated health profession, within the meaning of the **[Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043), that is prescribed for the purposes of this definition.
+(c) a person who is authorized to practise a designated health profession, within the meaning of the [Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043), that is prescribed for the purposes of this definition.
 
 (2) After the prescribed number of consecutive days, if any, of employment with an employer, an employee who, due to serious personal illness or injury, is unable to work for at least one week is entitled to up to 27 weeks of unpaid leave in any period of 52 weeks.
 
@@ -1515,9 +1515,9 @@ days workedis the number of days the employee worked or earned wages within tha
 
 (a) a medical practitioner;
 
-(b) a person who is authorized under the **[Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043) to practise the designated health profession of nursing;
+(b) a person who is authorized under the [Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043) to practise the designated health profession of nursing;
 
-(c) a person who is authorized to practise a designated health profession, within the meaning of the **[Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043), that is prescribed for the purposes of this definition;
+(c) a person who is authorized to practise a designated health profession, within the meaning of the [Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043), that is prescribed for the purposes of this definition;
 
 (d) a person who is authorized, in another jurisdiction, to practise a health profession that is equivalent to a designated health profession that may be practised by a person referred to in paragraph (a), (b) or (c);
 
@@ -1700,7 +1700,7 @@ An employee is entitled to up to 5 days of unpaid leave during each employment 
 
 (i) an order of the provincial health officer,
 
-(ii) an order made under the **[Quarantine Act](http://laws-lois.justice.gc.ca/eng/acts/Q-1.1/index.html) (Canada),
+(ii) an order made under the [Quarantine Act](http://laws-lois.justice.gc.ca/eng/acts/Q-1.1/index.html) (Canada),
 
 (iii) guidelines of the British Columbia Centre for Disease Control, or
 
@@ -1756,9 +1756,9 @@ hours workedis the number of hours the employee worked or earned wages within t
 **52.2**
 (1) In this section:
 
-"Canadian Forces" has the same meaning as in section 14 of the **[National Defence Act](http://laws.justice.gc.ca/eng/acts/N-5/index.html) (Canada);
+"Canadian Forces" has the same meaning as in section 14 of the [National Defence Act](http://laws.justice.gc.ca/eng/acts/N-5/index.html) (Canada);
 
-"reservist" means a member of the reserve force, as defined in section 2 (1) of the **[National Defence Act](http://laws.justice.gc.ca/eng/acts/N-5/index.html) (Canada).
+"reservist" means a member of the reserve force, as defined in section 2 (1) of the [National Defence Act](http://laws.justice.gc.ca/eng/acts/N-5/index.html) (Canada).
 
 (2) Subject to the regulations, an employee who is a reservist and who requests leave under this section is entitled to unpaid leave, for the period described in subsection (3), if
 
@@ -1812,7 +1812,7 @@ hours workedis the number of hours the employee worked or earned wages within t
 
 "child" means a person under 19 years of age;
 
-"crime" means an offence under the **[Criminal Code](http://laws-lois.justice.gc.ca/eng/acts/C-46/) other than an offence prescribed by the regulations made under section 209.4 (f) of the **[Canada Labour Code](http://laws-lois.justice.gc.ca/eng/acts/L-2/index.html).
+"crime" means an offence under the [Criminal Code](http://laws-lois.justice.gc.ca/eng/acts/C-46/) other than an offence prescribed by the regulations made under section 209.4 (f) of the [Canada Labour Code](http://laws-lois.justice.gc.ca/eng/acts/L-2/index.html).
 
 (2) If a child of an employee disappears and it is probable, in the circumstances, that the child's disappearance is a result of a crime, and the employee requests leave under this section, the employee is entitled to unpaid leave for a period of up to 52 weeks.
 
@@ -2187,7 +2187,7 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 (c) employed for specific work to be completed in a period of up to 12 months,
 
-(d) employed under an employment contract that is impossible to perform due to an unforeseeable event or circumstance other than receivership, action under section 427 of the **[Bank Act](http://laws-lois.justice.gc.ca/eng/acts/B-1.01/index.html) (Canada) or a proceeding under an insolvency Act,
+(d) employed under an employment contract that is impossible to perform due to an unforeseeable event or circumstance other than receivership, action under section 427 of the [Bank Act](http://laws-lois.justice.gc.ca/eng/acts/B-1.01/index.html) (Canada) or a proceeding under an insolvency Act,
 
 (e) employed at one or more construction sites by an employer whose principal business is construction, or
 
@@ -2203,7 +2203,7 @@ In this Part, "week of layoff" means a week in which an employee earns less than
 
 (a) a teacher employed by a board of school trustees,
 
-(a.1) a teacher who is employed with or who has a service contract with a francophone education authority as defined in the **[School Act](/civix/document/id/complete/statreg/96412_00), or
+(a.1) a teacher who is employed with or who has a service contract with a francophone education authority as defined in the [School Act](/civix/document/id/complete/statreg/96412_00), or
 
 (b) an employee covered by a collective agreement who
 
@@ -2384,7 +2384,7 @@ Subsection (3) applies to an employee whose employment is terminated following a
 (b) the director considers the disclosure is in the public interest.
 
 (2)
-Subsection (1) applies despite any provision of the **[Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00) other than section 44 (2) and (3) of that Act.
+Subsection (1) applies despite any provision of the [Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00) other than section 44 (2) and (3) of that Act.
 
 #### Review and investigation of complaints
 
@@ -2758,11 +2758,11 @@ Subsection (1) does not apply to a person referred to in that subsection in rela
 #### No jurisdiction to determine constitutional question
 
 **86.1**
-Nothing in this Act is to be construed as giving the director or any person acting for or on behalf of the director under this Act jurisdiction over constitutional questions relating to the **[Canadian Charter of Rights and Freedoms](http://laws-lois.justice.gc.ca/eng/const/page-15.html#docCont).
+Nothing in this Act is to be construed as giving the director or any person acting for or on behalf of the director under this Act jurisdiction over constitutional questions relating to the [Canadian Charter of Rights and Freedoms](http://laws-lois.justice.gc.ca/eng/const/page-15.html#docCont).
 
 #### Director without jurisdiction to apply the *Human Rights Code*
 
-**86.2**   (1) The director does not have jurisdiction to apply the **[Human Rights Code](/civix/document/id/complete/statreg/96210_01).
+**86.2**   (1) The director does not have jurisdiction to apply the [Human Rights Code](/civix/document/id/complete/statreg/96210_01).
 
 (2) Subsection (1) applies to all matters brought before, on or after the date that the subsection applies to the director.
 
@@ -2781,7 +2781,7 @@ Part 11 — Enforcement
 
 the wages, less any fees allowed under the regulations, constitute a lien, charge and secured debt in favour of the director, dating from the time the wages were received by the agency, against all the real and personal property of the agency, including money due or accruing due to the agency from any source.
 
-(2) Unpaid wages set out in a decision or order filed under section 30 of the *Industrial Relations Act*, R.S.B.C. 1979, c. 212, or under section 102 or 135 of the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01) constitute a lien, charge and secured debt in favour of the persons named in the decision or order against all the real and personal property of the employer or other person named in the decision or order.
+(2) Unpaid wages set out in a decision or order filed under section 30 of the *Industrial Relations Act*, R.S.B.C. 1979, c. 212, or under section 102 or 135 of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01) constitute a lien, charge and secured debt in favour of the persons named in the decision or order against all the real and personal property of the employer or other person named in the decision or order.
 
 (3) Despite any other Act but subject to subsection (5), the amount of a lien, charge and secured debt referred to in subsections (1), (1.1) and (2) is payable and enforceable in priority over all liens, judgments, charges and security interests or any other claims or rights, including the following:
 
@@ -2789,9 +2789,9 @@ the wages, less any fees allowed under the regulations, constitute a lien, charg
 
 (b) any claim or right arising through contract, account receivable, insurance claim or sale of goods;
 
-(c) any security interest within the meaning of the **[Personal Property Security Act](/civix/document/id/complete/statreg/96359_01).
+(c) any security interest within the meaning of the [Personal Property Security Act](/civix/document/id/complete/statreg/96359_01).
 
-(4) Subsection (3) (c) applies whether the lien, judgment, charge, security interest, claim or right was perfected within the meaning of the **[Personal Property Security Act](/civix/document/id/complete/statreg/96359_01), or was created or made, before or after
+(4) Subsection (3) (c) applies whether the lien, judgment, charge, security interest, claim or right was perfected within the meaning of the [Personal Property Security Act](/civix/document/id/complete/statreg/96359_01), or was created or made, before or after
 
 (a) in the case of wages referred to in subsection (1) or (2), the date the wages were earned or the date a payment for the benefit of the employee became due, and
 
@@ -2816,7 +2816,7 @@ to the date of payment.
 (4)
 Subsection (1) applies whether or not the wages or other amount became payable before this section comes into force, but the date from which the interest is calculated must not be earlier than the date this section comes into force.
 
-(5) An amount collected under this Part, or deposited under section 112 or 113, earns interest at the prescribed rate, payable by the minister charged with the administration of the **[Financial Administration Act](/civix/document/id/complete/statreg/96138_01), from the date the amount is deposited in a savings institution to the date of payment to the person entitled.
+(5) An amount collected under this Part, or deposited under section 112 or 113, earns interest at the prescribed rate, payable by the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01), from the date the amount is deposited in a savings institution to the date of payment to the person entitled.
 
 (6) Subsection (5) does not apply to any security provided or bond posted under section 100.
 
@@ -2925,7 +2925,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (i) is in receivership, or
 
-(ii) is subject to action under section 427 of the **[Bank Act](http://laws-lois.justice.gc.ca/eng/acts/B-1.01/index.html) (Canada) or to a proceeding under an insolvency Act,
+(ii) is subject to action under section 427 of the [Bank Act](http://laws-lois.justice.gc.ca/eng/acts/B-1.01/index.html) (Canada) or to a proceeding under an insolvency Act,
 
 (b) [Repealed 2019-27-30.]
 
@@ -2957,7 +2957,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (e) any officer of the corporation, whether or not the officer is also a director of the corporation, who performs a policy-making function in respect of the corporation and who has the capacity to influence the direction of the corporation, regardless of the title by which that person is designated;
 
-"corporation" means a corporation as defined in the **[Business Corporations Act](/civix/document/id/complete/statreg/02057_00), and includes a corporation that, under section 95 of this Act, the director treats as one employer.
+"corporation" means a corporation as defined in the [Business Corporations Act](/civix/document/id/complete/statreg/02057_00), and includes a corporation that, under section 95 of this Act, the director treats as one employer.
 
 #### Sale of business
 
@@ -2985,9 +2985,9 @@ If the director considers that businesses, trades or undertakings are carried on
 #### If money is paid to director
 
 **99**
-(1) Subject to section 78 (2), the director must pay to the minister charged with the administration of the **[Financial Administration Act](/civix/document/id/complete/statreg/96138_01) all money received by the director under this Act, including money to be held in trust for the persons named in a determination, a settlement agreement or an order of the tribunal.
+(1) Subject to section 78 (2), the director must pay to the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01) all money received by the director under this Act, including money to be held in trust for the persons named in a determination, a settlement agreement or an order of the tribunal.
 
-(2) Money received by the minister charged with the administration of the **[Financial Administration Act](/civix/document/id/complete/statreg/96138_01) in respect of a determination, a settlement agreement or an order of the tribunal must be attributed
+(2) Money received by the minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01) in respect of a determination, a settlement agreement or an order of the tribunal must be attributed
 
 (a) first, to any wages required to be paid by the determination, settlement agreement or order,
 
@@ -2997,7 +2997,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (d) last, to any penalties required to be paid by the determination or order.
 
-(3) The minister charged with the administration of the **[Financial Administration Act](/civix/document/id/complete/statreg/96138_01) must pay, according to the direction of the director, to the persons named in a determination, a settlement agreement or an order of the tribunal, money received in trust for those persons.
+(3) The minister charged with the administration of the [Financial Administration Act](/civix/document/id/complete/statreg/96138_01) must pay, according to the direction of the director, to the persons named in a determination, a settlement agreement or an order of the tribunal, money received in trust for those persons.
 
 (4) Money attributed to wages under subsection (2) must be attributed proportionally among the employees or former employees named in the determination, settlement agreement or order according to the amount owing as shown on the determination, settlement agreement or order.
 
@@ -3011,7 +3011,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (i) to the employee's estate, or
 
-(ii) under the **[Wills, Estates and Succession Act](/civix/document/id/complete/statreg/09013_01);
+(ii) under the [Wills, Estates and Succession Act](/civix/document/id/complete/statreg/09013_01);
 
 (d) to a fund, insurer or other person to whom payment is to be made under section 26.
 
@@ -3028,7 +3028,7 @@ If the director considers that businesses, trades or undertakings are carried on
 
 (a) to provide an irrevocable letter of credit or other security satisfactory to the director, or
 
-(b) to post a bond under the **[Bonding Act](/civix/document/id/complete/statreg/96030_01).
+(b) to post a bond under the [Bonding Act](/civix/document/id/complete/statreg/96030_01).
 
 (2) Subsection (1) applies whether or not
 
@@ -3041,7 +3041,7 @@ If the director considers that businesses, trades or undertakings are carried on
 **101**
 (1) The director may compile information relating to contraventions of this Act or the regulations, including information identifying the persons who, according to a determination or an order of the tribunal, committed the contraventions.
 
-(2) Despite the **[Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00), the director may
+(2) Despite the [Freedom of Information and Protection of Privacy Act](/civix/document/id/complete/statreg/96165_00), the director may
 
 (a) publish information compiled under subsection (1), and
 
@@ -3071,7 +3071,7 @@ The Employment Standards Tribunal is continued consisting of
 #### Application of *Administrative Tribunals Act*
 
 **103**
-The following provisions of the **[Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
+The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
 
 (a) Part 1 *[Interpretation and Application]*;
 
@@ -3140,11 +3140,11 @@ The following provisions of the **[Administrative Tribunals Act](/civix/document
 #### Employees
 
 **105**
-(1) Despite the **[Public Service Act](/civix/document/id/complete/statreg/96385_01), the tribunal may employ a registrar and other employees it considers necessary for the purposes of this Act.
+(1) Despite the [Public Service Act](/civix/document/id/complete/statreg/96385_01), the tribunal may employ a registrar and other employees it considers necessary for the purposes of this Act.
 
 (2) The registrar may be appointed under section 102 (b) as a member.
 
-(3) The **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01), the **[Public Service Act](/civix/document/id/complete/statreg/96385_01) and the **[Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01) do not apply to the tribunal's employees.
+(3) The [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), the [Public Service Act](/civix/document/id/complete/statreg/96385_01) and the [Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01) do not apply to the tribunal's employees.
 
 #### Organization of tribunal
 
@@ -3441,7 +3441,7 @@ No proceeding for an offence under this Act may be commenced in any court more t
 (3)
 Subsection (2) applies whether or not the corporation is prosecuted for the offence.
 
-(4) Section 5 of the **[Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Act or the regulations.
+(4) Section 5 of the [Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Act or the regulations.
 
 #### Evidence and burden of proof
 
@@ -3469,7 +3469,7 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 #### Power to make regulations
 
 **127**
-(1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the **[Interpretation Act](/civix/document/id/complete/statreg/96238_01).
+(1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
 
 (2) Without limiting subsection (1), the Lieutenant Governor in Council may make regulations as follows:
 
@@ -3479,7 +3479,7 @@ Subsection (2) applies also in respect of a copy of a document issued under this
 
 (i) all or part of a regulation under this Act does not apply, or
 
-(ii) Parts 10, 11 and 13 of this Act do not apply in relation to the enforcement of all or part of a regulation under this Act and that if a dispute arises respecting the application, interpretation or operation of all or part of that regulation, the grievance procedure contained in the collective agreement or, if applicable, deemed to be contained in the collective agreement under section 84 (3) of the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01), applies for the purposes of resolving the dispute;
+(ii) Parts 10, 11 and 13 of this Act do not apply in relation to the enforcement of all or part of a regulation under this Act and that if a dispute arises respecting the application, interpretation or operation of all or part of that regulation, the grievance procedure contained in the collective agreement or, if applicable, deemed to be contained in the collective agreement under section 84 (3) of the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01), applies for the purposes of resolving the dispute;
 
 (b) establishing conditions of employment for employees or classes of employees, whether or not they have been excluded from a part of this Act;
 

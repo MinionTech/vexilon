@@ -1,12 +1,12 @@
 # Human Rights Code
 
 **Source:** [Human Rights Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 03:38:24 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 04:09:39 GMT  
 **Ingestion Date:** 2026-09-25  
 
 Copyright © King's Printer,
-Victoria, British Columbia, Canada****[Licence](/standards/Licence.html)
-****[Disclaimer](/standards/Disclaimer.html)
+Victoria, British Columbia, Canada[Licence](/standards/Licence.html)
+[Disclaimer](/standards/Disclaimer.html)
 
 This Act is current to September 15, 2026
 
@@ -80,7 +80,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 [31.1](#section31.1)[Repealed](#section31.1)
 
-[32](#section32)**[Application of Administrative Tribunals Act to tribunal](#section32)
+[32](#section32)[Application of Administrative Tribunals Act to tribunal](#section32)
 
 [33](#section33)[Staff of the tribunal](#section33)
 
@@ -164,7 +164,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 [47.24](#section47.24)[Special reports of commissioner](#section47.24)
 
-[48](#section48)**[Offence Act](#section48)
+[48](#section48)[Offence Act](#section48)
 
 [49](#section49)[Power to make regulations](#section49)
 
@@ -180,7 +180,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 "chair" means the member designated under section 31 as the chair of the tribunal;
 
-"collective agreement" means a collective agreement as defined in the **[Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
+"collective agreement" means a collective agreement as defined in the [Labour Relations Code](/civix/document/id/complete/statreg/96244_01);
 
 "commissioner" means the Human Rights Commissioner appointed under section 47.01;
 
@@ -196,7 +196,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 "employment agency" includes a person who undertakes, with or without compensation, to procure employees for employers or to procure employment for persons;
 
-"Indigenous", in relation to a person, means Indigenous within the meaning of "Indigenous peoples" as defined in the **[Declaration on the Rights of Indigenous Peoples Act](/civix/document/id/complete/statreg/19044);
+"Indigenous", in relation to a person, means Indigenous within the meaning of "Indigenous peoples" as defined in the [Declaration on the Rights of Indigenous Peoples Act](/civix/document/id/complete/statreg/19044);
 
 "intervenor" means the commissioner entitled, or other person allowed, under section 22.1 to intervene in a complaint;
 
@@ -584,7 +584,7 @@ The British Columbia Human Rights Tribunal is continued consisting of the follow
 #### Application of *Administrative Tribunals Act* to tribunal
 
 **32**
-The following provisions of the **[Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
+The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the tribunal:
 
 (a) Part 1 *[Interpretation and Application]*;
 
@@ -630,11 +630,11 @@ The following provisions of the **[Administrative Tribunals Act](/civix/document
 
 #### Staff of the tribunal
 
-**33**   (1) Employees necessary to carry out the powers and duties of the tribunal may be appointed under the **[Public Service Act](/civix/document/id/complete/statreg/96385_01).
+**33**   (1) Employees necessary to carry out the powers and duties of the tribunal may be appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01).
 
 (2) The tribunal may engage or retain consultants or specialists that the tribunal considers necessary to carry out the powers and duties of the tribunal and may determine their remuneration.
 
-(3) The **[Public Service Act](/civix/document/id/complete/statreg/96385_01) does not apply to the retention, remuneration or engagement of consultants or specialists under subsection (2).
+(3) The [Public Service Act](/civix/document/id/complete/statreg/96385_01) does not apply to the retention, remuneration or engagement of consultants or specialists under subsection (2).
 
 #### Repealed
 
@@ -849,7 +849,7 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 
 (b) to be reimbursed for reasonable travel and out-of-pocket expenses personally incurred in exercising the powers and performing the duties of the office.
 
-(2) The public service plan as defined in section 1 (1) of the **[Public Sector Pension Plans Act](/civix/document/id/complete/statreg/00_99044_01) applies to the commissioner.
+(2) The public service plan as defined in section 1 (1) of the [Public Sector Pension Plans Act](/civix/document/id/complete/statreg/00_99044_01) applies to the commissioner.
 
 #### Oath of commissioner
 
@@ -858,11 +858,11 @@ Despite the fact that a period prescribed under section 49 (2) (b) has expired a
 #### Staff of commissioner
 
 **47.06**
-(1) The commissioner may appoint, in accordance with the **[Public Service Act](/civix/document/id/complete/statreg/96385_01), employees necessary to enable the commissioner to exercise the powers and perform the duties of the office.
+(1) The commissioner may appoint, in accordance with the [Public Service Act](/civix/document/id/complete/statreg/96385_01), employees necessary to enable the commissioner to exercise the powers and perform the duties of the office.
 
 (2) The commissioner may engage or retain consultants or specialists the commissioner considers necessary to exercise the powers and perform the duties of the office and may determine their remuneration and other terms and conditions of their engagement or retainers.
 
-(3) The **[Public Service Act](/civix/document/id/complete/statreg/96385_01) does not apply in respect of a person engaged or retained under subsection (2) of this section.
+(3) The [Public Service Act](/civix/document/id/complete/statreg/96385_01) does not apply in respect of a person engaged or retained under subsection (2) of this section.
 
 #### Delegation by commissioner
 
@@ -1084,11 +1084,11 @@ A person must not evict, discharge, suspend, expel, intimidate, coerce, impose a
 #### *Offence Act*
 
 **48**
-Section 5 of the **[Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Code or the regulations.
+Section 5 of the [Offence Act](/civix/document/id/complete/statreg/96338_01) does not apply to this Code or the regulations.
 
 #### Power to make regulations
 
-**49**   (1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the **[Interpretation Act](/civix/document/id/complete/statreg/96238_01).
+**49**   (1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
 
 (2) Without limiting subsection (1), the Lieutenant Governor in Council may make regulations as follows:
 

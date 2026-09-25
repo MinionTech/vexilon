@@ -1,12 +1,12 @@
 # Labour Relations Code
 
 **Source:** [Labour Relations Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 03:38:24 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 04:09:38 GMT  
 **Ingestion Date:** 2026-09-25  
 
 Copyright © King's Printer,
-Victoria, British Columbia, Canada****[Licence](/standards/Licence.html)
-****[Disclaimer](/standards/Disclaimer.html)
+Victoria, British Columbia, Canada[Licence](/standards/Licence.html)
+[Disclaimer](/standards/Disclaimer.html)
 
 This Act is current to September 15, 2026
 
@@ -310,7 +310,7 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/76470131
 
 [115](#section115)[Labour Relations Board](#section115)
 
-[115.1](#section115.1)**[Application of Administrative Tribunals Act](#section115.1)
+[115.1](#section115.1)[Application of Administrative Tribunals Act](#section115.1)
 
 [116](#section116)[Divisions and officers of the Labour Relations Board](#section116)
 
@@ -468,7 +468,7 @@ Part 1 — Introductory Provisions
 
 "party" means a person bound by a collective agreement or involved in a dispute;
 
-"person" includes an employee, employer, employers' organization, trade union and council of trade unions, but does not include, except for the purposes set out in subsection (3), a person in respect of whom collective bargaining is regulated by the **[Canada Labour Code](http://laws-lois.justice.gc.ca/eng/acts/L-2/index.html);
+"person" includes an employee, employer, employers' organization, trade union and council of trade unions, but does not include, except for the purposes set out in subsection (3), a person in respect of whom collective bargaining is regulated by the [Canada Labour Code](http://laws-lois.justice.gc.ca/eng/acts/L-2/index.html);
 
 "picket" or "picketing" means attending at or near a person's place of business, operations or employment for the purpose of persuading or attempting to persuade anyone not to
 
@@ -506,7 +506,7 @@ and "to strike" has a similar meaning;
 
 (c) a lockout.
 
-(3) For the purposes of paragraph (b) (ii) of the definition of "strike" in subsection (1), the definitions in subsection (1) are to be read as though the definition of "person" did not exclude a person in respect of whom collective bargaining is regulated by the **[Canada Labour Code](http://laws-lois.justice.gc.ca/eng/acts/L-2/index.html).
+(3) For the purposes of paragraph (b) (ii) of the definition of "strike" in subsection (1), the definitions in subsection (1) are to be read as though the definition of "person" did not exclude a person in respect of whom collective bargaining is regulated by the [Canada Labour Code](http://laws-lois.justice.gc.ca/eng/acts/L-2/index.html).
 
 #### Duties under this Code
 
@@ -775,7 +775,7 @@ Until this authority is revoked by me in writing, I authorize you to deduct from
 
 (b) objects to the paying of dues or other assessments to trade unions generally
 
-the board may order that the provisions of a collective agreement of the type referred to in section 15 do not apply to the employee and that the employee is not required to join a trade union, to be or continue to be a member of a trade union, or to pay any dues, fees or assessments to the trade union, if amounts equal to any initiation fees, dues or other assessments are paid by the employee to or are remitted by the employer to a charitable organization registered as a charitable organization in Canada under Part I of the **[Income Tax Act](http://laws-lois.justice.gc.ca/eng/acts/I-3.3/index.html) (Canada) that may be designated by the board.
+the board may order that the provisions of a collective agreement of the type referred to in section 15 do not apply to the employee and that the employee is not required to join a trade union, to be or continue to be a member of a trade union, or to pay any dues, fees or assessments to the trade union, if amounts equal to any initiation fees, dues or other assessments are paid by the employee to or are remitted by the employer to a charitable organization registered as a charitable organization in Canada under Part I of the [Income Tax Act](http://laws-lois.justice.gc.ca/eng/acts/I-3.3/index.html) (Canada) that may be designated by the board.
 
 (2) Despite any other provision of this Code, a person exempted under subsection (1) is not entitled to participate in a vote conducted by a trade union or in a vote held for the purposes of this Code.
 
@@ -986,7 +986,7 @@ An organization or association of employees
 
 (a) the formation, administration, management or policy of which is, in the board's opinion, dominated or influenced by an employer or a person acting on the employer's behalf, or
 
-(b) that discriminates against a person contrary to the **[Human Rights Code](/civix/document/id/complete/statreg/96210_01),
+(b) that discriminates against a person contrary to the [Human Rights Code](/civix/document/id/complete/statreg/96210_01),
 
 must not be certified for the employees, and an agreement entered into between that organization or association of employees and the employer is deemed not to be a collective agreement.
 
@@ -1076,7 +1076,7 @@ Division 3 — Successor Rights and Obligations
 
 (f) services prescribed under section 159 (2) (f);
 
-"non-clinical services" means services, other than medical, diagnostic or therapeutic services, provided by a licensee within the meaning of the **[Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043) to a person who is currently admitted to a bed in an inpatient unit in an acute care hospital.
+"non-clinical services" means services, other than medical, diagnostic or therapeutic services, provided by a licensee within the meaning of the [Health Professions and Occupations Act](/civix/document/id/complete/statreg/22043) to a person who is currently admitted to a bed in an inpatient unit in an acute care hospital.
 
 (1) If a business or a part of it is sold, leased, transferred or otherwise disposed of, the purchaser, lessee or transferee is bound by all proceedings under this Code before the date of the disposition and the proceedings must continue as if no change had occurred.
 
@@ -1156,7 +1156,7 @@ Division 4 — Voting
 
 (2) If a trade union coordinates collective bargaining on behalf of more than one bargaining unit, the results of any vote conducted by the trade union of a particular bargaining unit must not be counted until all bargaining units engaged in the bargaining have voted.
 
-(3) If a vote is conducted by mail, then for the purposes of this Code, the vote is deemed to have been held on the day that ballot papers are left with a post office as defined by the **[Canada Post Corporation Act](http://laws-lois.justice.gc.ca/eng/acts/C-10/index.html) for transmission to the persons who are to vote or, if the ballot papers are left for that purpose with the post office on different days, on the last of those days.
+(3) If a vote is conducted by mail, then for the purposes of this Code, the vote is deemed to have been held on the day that ballot papers are left with a post office as defined by the [Canada Post Corporation Act](http://laws-lois.justice.gc.ca/eng/acts/C-10/index.html) for transmission to the persons who are to vote or, if the ballot papers are left for that purpose with the post office on different days, on the last of those days.
 
 Division 5 — Councils of Trade Unions
 
@@ -1199,7 +1199,7 @@ and must make any other examination of records, inquiry or findings including th
 #### Bargaining council
 
 **41.1**
-(1) In this section, "CLRA" means the Construction Labour Relations Association of B.C., a society under the **[Societies Act](/civix/document/id/complete/statreg/15018_01).
+(1) In this section, "CLRA" means the Construction Labour Relations Association of B.C., a society under the [Societies Act](/civix/document/id/complete/statreg/15018_01).
 
 (2) The bargaining council established under section 55.18, as that section read before its repeal by the *Skills Development and Labour Statutes Amendment Act, 2001*, is continued, is deemed to be a council of trade unions established under section 41 and is authorized to bargain on behalf of its constituent unions with the CLRA.
 
@@ -1437,7 +1437,7 @@ On the request of either party, the parties must meet at least once every 2 mon
 
 (2.5) If, after mediation, the parties have agreed to an adjustment plan, it is enforceable as if it were part of the collective agreement between the employer and the trade union.
 
-(3) Subsections (1), (2) and (2.5) do not apply to the termination of the employment of employees exempted by section 65 of the **[Employment Standards Act](/civix/document/id/complete/statreg/96113_01) from the application of section 64 of that Act.
+(3) Subsections (1), (2) and (2.5) do not apply to the termination of the employment of employees exempted by section 65 of the [Employment Standards Act](/civix/document/id/complete/statreg/96113_01) from the application of section 64 of that Act.
 
 Division 3 — First Collective Agreement
 
@@ -1936,7 +1936,7 @@ In this Part:
 
 "issue" means, in respect of an award, to make and publish the award to the parties to the arbitration;
 
-"settlement officer" means an employee appointed under the **[Public Service Act](/civix/document/id/complete/statreg/96385_01) who is appointed as a settlement officer by the director.
+"settlement officer" means an employee appointed under the [Public Service Act](/civix/document/id/complete/statreg/96385_01) who is appointed as a settlement officer by the director.
 
 #### Purpose of Part
 
@@ -2136,7 +2136,7 @@ An arbitration board must, within 10 days of issuing an award, file a copy of it
 #### Act not to apply
 
 **97**
-The **[Arbitration Act](/civix/document/id/complete/statreg/20002) does not apply to an arbitration under this Code.
+The [Arbitration Act](/civix/document/id/complete/statreg/20002) does not apply to an arbitration under this Code.
 
 #### Reference to Labour Relations Board
 
@@ -2366,7 +2366,7 @@ Part 9 — Labour Relations Board
 #### Application of *Administrative Tribunals Act*
 
 **115.1**
-The following provisions of the **[Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the board:
+The following provisions of the [Administrative Tribunals Act](/civix/document/id/complete/statreg/04045_01) apply to the board:
 
 (a) Part 1 *[Interpretation]*;
 
@@ -2470,9 +2470,9 @@ The chair may establish a panel to which the board or another panel may refer a 
 #### Employees of the board
 
 **122**
-(1) The board may, despite the **[Public Service Act](/civix/document/id/complete/statreg/96385_01), employ a secretary and other officers and employees it considers necessary for the purposes of this Code, and may determine their duties, conditions of employment and remuneration.
+(1) The board may, despite the [Public Service Act](/civix/document/id/complete/statreg/96385_01), employ a secretary and other officers and employees it considers necessary for the purposes of this Code, and may determine their duties, conditions of employment and remuneration.
 
-(2) This Code and the **[Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01) do not apply to the members of the board or the secretary, or the officers and employees of the board.
+(2) This Code and the [Public Service Labour Relations Act](/civix/document/id/complete/statreg/96388_01) do not apply to the members of the board or the secretary, or the officers and employees of the board.
 
 (3) The chair must designate an employee employed under subsection (1) as the information officer to advise the public with respect to this Code and its application to labour relations in British Columbia.
 
@@ -2786,7 +2786,7 @@ Part 10 — Miscellaneous
 #### Powers of minister
 
 **144**
-For the purpose of obtaining information to which the minister is entitled under this Code, the minister or a person designated by the minister has the powers, privileges and protection of a commission under sections 22 (1), 23 (a), (b) and (d) and 32 of the **[Public Inquiry Act](/civix/document/id/complete/statreg/07009_01).
+For the purpose of obtaining information to which the minister is entitled under this Code, the minister or a person designated by the minister has the powers, privileges and protection of a commission under sections 22 (1), 23 (a), (b) and (d) and 32 of the [Public Inquiry Act](/civix/document/id/complete/statreg/07009_01).
 
 #### Power to enter and inspect
 
@@ -2981,7 +2981,7 @@ A person who refuses or neglects to observe or carry out an order made under thi
 #### Lieutenant Governor in Council's power to make regulations
 
 **159**
-(1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the **[Interpretation Act](/civix/document/id/complete/statreg/96238_01).
+(1) The Lieutenant Governor in Council may make regulations referred to in section 41 of the [Interpretation Act](/civix/document/id/complete/statreg/96238_01).
 
 (2) Without limiting subsection (1), the Lieutenant Governor in Council may make regulations as follows:
 

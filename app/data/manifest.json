@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T03:38:24.961415+00:00",
+  "generated_at": "2026-09-25T04:09:39.686188+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
@@ -11,20 +11,20 @@
       "size_bytes": 29886
     },
     "01_primary/Gov_BC_Standards_of_Conduct.md": {
-      "hash": "51cad0aac58ad94c3bfad8c201414a20be032ea050513121ef124467d9ae6d8e",
-      "size_bytes": 21722
+      "hash": "af34d7c41fa49940c2f8fe86661f7416bdbfea95e3aae8c12f38d69c8ed06c28",
+      "size_bytes": 23120
     },
     "02_statutory/BC_Employment_Standards_Act.md": {
-      "hash": "5bba2358d5c7677f3b3731c98f457f40d43f8848380a5eb67bf6c09369765edf",
-      "size_bytes": 180509
+      "hash": "b57f6c63c86d9637701914c97455211110829ae9107ca3ea341079ef963dd272",
+      "size_bytes": 180391
     },
     "02_statutory/BC_Human_Rights_Code.md": {
-      "hash": "6c168fd579ba4d9962a0778a504b9c14243ec2ae99683844f8340a9c03d73296",
-      "size_bytes": 56657
+      "hash": "f2593efbdbda3cf44c01f267d5b7c61a451daccfd49e9eafc6a0f507257af33a",
+      "size_bytes": 56625
     },
     "02_statutory/BC_Labour_Relations_Code.md": {
-      "hash": "3a07c84ab78a48430948560df36f74041cc71290f3f04bd02f18b693520ace80",
-      "size_bytes": 183662
+      "hash": "7ab0619e139835bcefb95adc9b845b778d773aa7d789f0c31cbfcc1a401a92e5",
+      "size_bytes": 183622
     },
     "02_statutory/BC_OHS_Regulation_-_Introduction.md": {
       "hash": "5b5111b651d9c15dfe7f518172e53b889dee1b806299b18f1787e5da0b1a1d54",
