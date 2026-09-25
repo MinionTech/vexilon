@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_04)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:22 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:31 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -1825,5 +1825,3 @@ the payments may be made to the person that the Board considers best qualified i
 **238** (1) Subject to subsection (2), a regulation of the Board under a compensation provision must specify the date on which the regulation is to come into force, which date must be at least 90 days after its deposit under the [Regulations Act](/civix/document/id/complete/statreg/96402_01).
 
 (2) The Board may specify a date that is less than 90 days after the date of deposit as the effective date of a regulation made under section 138 (1) in relation to an occupational disease that is an infection caused by a communicable viral pathogen.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | [Part 1](/civix/document/id/complete/statreg/19001_01) | [Part 2](/civix/document/id/complete/statreg/19001_02) | [Part 3](/civix/document/id/complete/statreg/19001_03) | Part 4 | [Part 5](/civix/document/id/complete/statreg/19001_05) | [Part 6](/civix/document/id/complete/statreg/19001_06) | [Part 7](/civix/document/id/complete/statreg/19001_07) | [Part 8](/civix/document/id/complete/statreg/19001_08) | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**

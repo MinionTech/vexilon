@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_05)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:22 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:31 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -579,5 +579,3 @@ the notice constitutes an assessment under this Part, and the employer must, wit
 (D) is a receiver, receiver manager or creditor who participates in the management of the judgment debtor or exercises control over any of its property, rights and interests primarily for the purposes of enforcing a debt obligation of the judgment debtor.
 
 (2) In the circumstances described in subsection (1), the Supreme Court, on an application made on behalf of the Board, without the commencement of an action, may make an order restraining one or more persons described in subsection (1) (c) from carrying on an industry, or an activity in an industry, within the scope of the compensation provisions until the amount due on the execution, all the assessments made by the Board and the costs of the application are paid.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | [Part 1](/civix/document/id/complete/statreg/19001_01) | [Part 2](/civix/document/id/complete/statreg/19001_02) | [Part 3](/civix/document/id/complete/statreg/19001_03) | [Part 4](/civix/document/id/complete/statreg/19001_04) | Part 5 | [Part 6](/civix/document/id/complete/statreg/19001_06) | [Part 7](/civix/document/id/complete/statreg/19001_07) | [Part 8](/civix/document/id/complete/statreg/19001_08) | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**

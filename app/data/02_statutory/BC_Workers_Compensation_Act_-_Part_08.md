@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_08)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:23 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:31 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -595,5 +595,3 @@ Division 7 — Fair Practices Commissioner
 (a) provide a copy of the report to the minister, and
 
 (b) publish the report on a publicly accessible website.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | [Part 1](/civix/document/id/complete/statreg/19001_01) | [Part 2](/civix/document/id/complete/statreg/19001_02) | [Part 3](/civix/document/id/complete/statreg/19001_03) | [Part 4](/civix/document/id/complete/statreg/19001_04) | [Part 5](/civix/document/id/complete/statreg/19001_05) | [Part 6](/civix/document/id/complete/statreg/19001_06) | [Part 7](/civix/document/id/complete/statreg/19001_07) | Part 8 | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**

@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_03)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:22 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:31 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -239,5 +239,3 @@ the Board may pay the compensation provided under the compensation provisions un
 (ii) that would have been considered by the Board for that purpose if the worker had elected to claim compensation.
 
 (2) Costs may be awarded to and collected by the Board in an action taken by the Board under this Division even if a salaried employee of the Board acts as solicitor or counsel for the Board.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | [Part 1](/civix/document/id/complete/statreg/19001_01) | [Part 2](/civix/document/id/complete/statreg/19001_02) | Part 3 | [Part 4](/civix/document/id/complete/statreg/19001_04) | [Part 5](/civix/document/id/complete/statreg/19001_05) | [Part 6](/civix/document/id/complete/statreg/19001_06) | [Part 7](/civix/document/id/complete/statreg/19001_07) | [Part 8](/civix/document/id/complete/statreg/19001_08) | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**

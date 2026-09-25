@@ -1,37 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:20 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:28 GMT  
 **Ingestion Date:** 2026-09-25  
-
-B.C. Reg. 296/97
-Workers' Compensation Board Deposited September 8, 1997
-effective April 15, 1998
-
-**This consolidation is current to September 22, 2026.
-See “Amendments Not in Force” and the
-[Cumulative B.C. Regulations Bulletin 2026](http://www.bclaws.ca/civix/document/id/regulationbulletin/regulationbulletin/2026cumulati) for
-amendments effective after September 22, 2026.**
-
-##### **[Link to consolidated regulation (PDF)](/civix/content/crbc/crbc/901199259/19001/296_97_multi_dir/?xsl=/templates/browse.xsl)**
-
-## Workers Compensation Act
-
-## Occupational Health and Safety Regulation
-
-[Last amended April 1, 2026 by B.C. Reg. 229/2025]
-
-Part 25 — Camps
-
-Note:
-
-**The Health Authorities administer the Industrial Camps Regulation.**
-
-If Board officers, in the course of their duties, find conditions in camps which may be of concern under the Industrial Camps Regulation, the matter will be referred to the attention of the appropriate officials.
-
-Queries with regard to the administration of the Industrial Camps Regulation should be directed to the officials responsible for its administration.
-
-[am. B.C. Reg. 222/2021, App. C, s. 3.]
 
 Part 26 — Forestry Operations and Similar Activities
 
@@ -2380,5 +2351,3 @@ Carriages with variable dropline speeds must have a special signal for the speed
 13 Swing to operator's right Swing right
 
 14 Hold haulback and go ahead on mainline Tightline
-
-**[Contents](/civix/document/id/complete/statreg/296_97_00) | [Parts 1 to 3](/civix/document/id/complete/statreg/296_97_01) | [Part 4](/civix/document/id/complete/statreg/296_97_02) | [Part 5](/civix/document/id/complete/statreg/296_97_03) | [Part 6](/civix/document/id/complete/statreg/296_97_04) | [Part 7](/civix/document/id/complete/statreg/296_97_05) | [Part 8](/civix/document/id/complete/statreg/296_97_06) | [Part 9](/civix/document/id/complete/statreg/296_97_07) | [Parts 10 to 11](/civix/document/id/complete/statreg/296_97_08) | [Part 12](/civix/document/id/complete/statreg/296_97_09) | [Part 13](/civix/document/id/complete/statreg/296_97_10) | [Part 14](/civix/document/id/complete/statreg/296_97_11) | [Part 15](/civix/document/id/complete/statreg/296_97_12) | [Part 16](/civix/document/id/complete/statreg/296_97_13) | [Parts 17 to 18](/civix/document/id/complete/statreg/296_97_14) | [Part 19](/civix/document/id/complete/statreg/296_97_15) | [Part 20](/civix/document/id/complete/statreg/296_97_16) | [Part 21](/civix/document/id/complete/statreg/296_97_17) | [Part 22](/civix/document/id/complete/statreg/296_97_18) | [Part 23](/civix/document/id/complete/statreg/296_97_19) | [Part 24](/civix/document/id/complete/statreg/296_97_20) | Parts 25 to 26 | [Part 27](/civix/document/id/complete/statreg/296_97_22) | [Part 28](/civix/document/id/complete/statreg/296_97_23) | [Parts 29 to 34](/civix/document/id/complete/statreg/296_97_24) | [Schedules](/civix/document/id/complete/statreg/296_97_25)**

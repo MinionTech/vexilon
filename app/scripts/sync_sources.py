@@ -55,6 +55,8 @@ class SourceEntry:
     url: str
     type: str
     selector: str | None = None
+    # When set, keep only this part (from its heading through the line before the next part).
+    part: str | None = None
     category: str = "general"
     content_hash: str | None = None
     last_synced: str | None = None
@@ -84,6 +86,22 @@ class SelectorNotFoundError(Exception):
             super().__init__(f"Selector not found in upstream HTML: {self.selector}")
         else:
             super().__init__("Source is missing its selector")
+
+
+class PartNotFoundError(Exception):
+    """The registry named a part whose heading is not in the extracted page.
+
+    Writing the rest of the page would put a sibling part in this file, and the
+    bot would cite the wrong document. Fail closed and leave the file untouched.
+    """
+
+    def __init__(self, part: str) -> None:
+        self.part = part
+        super().__init__(f"Part heading not found in upstream document: Part {part}")
+
+
+class RegistryError(Exception):
+    """sources.yaml breaks a cross-entry constraint."""
 
 
 class _StrictSafeLoader(yaml.SafeLoader):
@@ -350,7 +368,7 @@ def _require_selector(extractor: HTMLContentExtractor) -> None:
         raise SelectorNotFoundError(", ".join(extractor.missing_selectors))
 
 
-def clean_bclaws_content(raw_html: str, selector: str | None) -> str:
+def clean_bclaws_content(raw_html: str, selector: str | None, part: str | None = None) -> str:
     """Specialized cleaner for BC Laws statutory documents.
 
     ``selector`` is the registry value already chosen for this entry. There is
@@ -369,7 +387,10 @@ def clean_bclaws_content(raw_html: str, selector: str | None) -> str:
     content = re.sub(r"window\.onload\s*=[\s\S]*?\}", "", content)
     content = _strip_bclaws_chrome(content)
     content = re.sub(r"\n{3,}", "\n\n", content)
-    return content.strip()
+    content = content.strip()
+    if part:
+        content = slice_bclaws_part(content, part)
+    return content
 
 
 _KING_PRINTER_RE = re.compile(
@@ -382,23 +403,70 @@ _LICENCE_DISCLAIMER_RE = re.compile(
 )
 _VIEW_COMPLETE_RE = re.compile(r"\[View Complete [^\]]+\]\([^)]+\)")
 _POINT_IN_TIME_RE = re.compile(r"\[Link to Point in Time\]\([^)]+\)")
+_CONSOLIDATED_PDF_RE = re.compile(
+    r"(?m)^.*\[Link to consolidated regulation \(PDF\)\]\([^)]+\).*$"
+)
+# Foot nav: "[Contents](...) | [Parts 1 to 3](...) | ...", optional bold or heading marks.
+_NAV_RAIL_RE = re.compile(
+    r"(?m)^[ \t]*(?:#{1,6}[ \t]*)?\**[ \t]*\[Contents\]\([^)]+\)[ \t]*\|.*$"
+)
 # Opening and closing markers with nothing between them: **** or ** **.
 _EMPTY_BOLD_RE = re.compile(r"\*\*(?:\s*\*\*)+")
 _EMPTY_HEADING_RE = re.compile(r"(?m)^#{1,6}[ \t*]*$")
+# "Part 2 — Application" or a bare "Part 33". Optional markdown heading marks.
+_PART_HEADING_RE = re.compile(
+    r"^(?:#{1,6}[ \t]+)?Part (?P<num>\d+)(?:[ \t]+[—–-].*)?[ \t]*$"
+)
 
 
 def _strip_bclaws_chrome(content: str) -> str:
-    """Drop King's Printer chrome and empty bold markers from extracted statute text."""
+    """Drop King's Printer chrome, nav rails, and empty bold markers from statute text."""
     content = _KING_PRINTER_RE.sub("", content)
     content = _LICENCE_DISCLAIMER_RE.sub("", content)
     content = _VIEW_COMPLETE_RE.sub("", content)
     content = _POINT_IN_TIME_RE.sub("", content)
+    content = _CONSOLIDATED_PDF_RE.sub("", content)
+    content = _NAV_RAIL_RE.sub("", content)
     content = _EMPTY_BOLD_RE.sub("", content)
     content = _EMPTY_HEADING_RE.sub("", content)
     return content
 
 
-def extract_content(raw_html: str, doc_type: str, selector: str | None) -> tuple[str, str]:
+def slice_bclaws_part(content: str, part: str) -> str:
+    """Keep the text from this part's heading up to the next part heading.
+
+    BC Laws publishes several parts in one HTML document. Without this cut, every
+    file for that URL receives the whole bundle and the bot cites the wrong part.
+    """
+    number = str(part).strip()
+    if not re.fullmatch(r"\d+", number):
+        raise PartNotFoundError(part)
+    lines = content.splitlines()
+    start: int | None = None
+    for index, line in enumerate(lines):
+        match = _PART_HEADING_RE.match(line)
+        if match and match.group("num") == number:
+            start = index
+            break
+    if start is None:
+        raise PartNotFoundError(number)
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        if _PART_HEADING_RE.match(lines[index]):
+            end = index
+            break
+    sliced = "\n".join(lines[start:end]).strip()
+    if not sliced:
+        raise PartNotFoundError(number)
+    return sliced
+
+
+def extract_content(
+    raw_html: str,
+    doc_type: str,
+    selector: str | None,
+    part: str | None = None,
+) -> tuple[str, str]:
     """Extracts (title, substantive_markdown_body) from raw HTML."""
     if doc_type == "bclaws":
         # One resolved selector for the guard and the body. Do not substitute a
@@ -410,8 +478,10 @@ def extract_content(raw_html: str, doc_type: str, selector: str | None) -> tuple
         extractor.feed(raw_html)
         _require_selector(extractor)
         title = extractor.extracted_title or "BC Statute"
-        body = clean_bclaws_content(raw_html, selector=resolved_selector)
+        body = clean_bclaws_content(raw_html, selector=resolved_selector, part=part)
     else:
+        if part:
+            raise PartNotFoundError(part)
         extractor = HTMLContentExtractor(target_selector=selector or "#body")
         extractor.feed(raw_html)
         _require_selector(extractor)
@@ -505,18 +575,50 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
     raw_data = SimpleYamlLoader.load(config_path.read_text(encoding="utf-8"))
     entries: list[SourceEntry] = []
     for s in raw_data.get("sources", []):
+        raw_part = s.get("part")
+        if raw_part is None or (isinstance(raw_part, str) and not raw_part.strip()):
+            part = None
+        else:
+            part = str(raw_part).strip()
         entries.append(
             SourceEntry(
                 path=s["path"],
                 url=s["url"],
                 type=s.get("type", "html_selector"),
                 selector=s.get("selector"),
+                part=part,
                 category=s.get("category", "general"),
                 content_hash=s.get("content_hash"),
                 last_synced=s.get("last_synced"),
             )
         )
+    _validate_registry(entries)
     return entries
+
+
+def _validate_registry(entries: list[SourceEntry]) -> None:
+    """Reject shared URLs that do not name distinct parts, and shared baselines.
+
+    Two catalogue entries on one BC Laws document must say which part each file
+    keeps. A repeated content_hash means two files were given the same body, so
+    a drift check cannot tell them apart.
+    """
+    parts_by_url: dict[str, list[str | None]] = {}
+    paths_by_hash: dict[str, list[str]] = {}
+    for entry in entries:
+        parts_by_url.setdefault(entry.url, []).append(entry.part)
+        if entry.content_hash:
+            paths_by_hash.setdefault(entry.content_hash, []).append(entry.path)
+    for url, parts in parts_by_url.items():
+        if len(parts) > 1 and len(set(parts)) != len(parts):
+            raise RegistryError(
+                f"Entries that share {url} must have different part values, got {parts}"
+            )
+    for digest, paths in paths_by_hash.items():
+        if len(paths) > 1:
+            raise RegistryError(
+                f"content_hash {digest} is shared by {paths}"
+            )
 
 
 def leading_comment_block(text: str) -> str:
@@ -546,9 +648,13 @@ def leading_comment_block(text: str) -> str:
 def save_registry(config_path: Path, entries: list[SourceEntry]) -> None:
     """Saves updated entries back to sources.yaml, preserving the leading comment block."""
     existing = config_path.read_text(encoding="utf-8") if config_path.exists() else ""
+    _validate_registry(entries)
     header = leading_comment_block(existing)
     data = {
-        "sources": [asdict(e) for e in entries]
+        "sources": [
+            {key: value for key, value in asdict(entry).items() if value is not None}
+            for entry in entries
+        ]
     }
     body = SimpleYamlLoader.dump(data)
     if not body.endswith("\n"):
@@ -578,7 +684,9 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
 
     try:
         raw_html, headers = fetch_upstream(source.url)
-        title, upstream_body = extract_content(raw_html, source.type, source.selector)
+        title, upstream_body = extract_content(
+            raw_html, source.type, source.selector, source.part
+        )
         upstream_substantive = extract_substantive_body(upstream_body)
         if not upstream_substantive:
             return DriftResult(
@@ -650,7 +758,7 @@ def sync_source(
     target_path = repo_root / source.path
     try:
         raw_html, headers = fetch_upstream(source.url)
-        title, body = extract_content(raw_html, source.type, source.selector)
+        title, body = extract_content(raw_html, source.type, source.selector, source.part)
         upstream_last_modified = headers.get("last-modified")
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 

@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_06)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:23 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:31 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -263,5 +263,3 @@ Part 6 — Review of Board Decisions
 **276** (1) The commencement of a review under this Part does not relieve an employer from paying an amount in respect of a matter that is the subject of the review.
 
 (2) If the decision on a review under this Part requires the refund of an amount to an employer, interest calculated in accordance with the policies of the board of directors must be paid to the employer on that refunded amount.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | [Part 1](/civix/document/id/complete/statreg/19001_01) | [Part 2](/civix/document/id/complete/statreg/19001_02) | [Part 3](/civix/document/id/complete/statreg/19001_03) | [Part 4](/civix/document/id/complete/statreg/19001_04) | [Part 5](/civix/document/id/complete/statreg/19001_05) | Part 6 | [Part 7](/civix/document/id/complete/statreg/19001_07) | [Part 8](/civix/document/id/complete/statreg/19001_08) | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**

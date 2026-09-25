@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:22 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:30 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -455,5 +455,3 @@ Division 4 — Liability of Employers in Industries Not Within the Scope of Comp
 (2) Contributory negligence on the part of a worker is not a bar to recovery by the worker or by any person entitled to damages under the [Family Compensation Act](/civix/document/id/complete/statreg/96126_01) in an action for the recovery of damages for an injury sustained by or causing the death of the worker while in the service of that worker's employer for which the employer would otherwise have been liable.
 
 (3) Contributory negligence on the part of the worker must be taken into account in assessing the damages in an action.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | Part 1 | [Part 2](/civix/document/id/complete/statreg/19001_02) | [Part 3](/civix/document/id/complete/statreg/19001_03) | [Part 4](/civix/document/id/complete/statreg/19001_04) | [Part 5](/civix/document/id/complete/statreg/19001_05) | [Part 6](/civix/document/id/complete/statreg/19001_06) | [Part 7](/civix/document/id/complete/statreg/19001_07) | [Part 8](/civix/document/id/complete/statreg/19001_08) | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**

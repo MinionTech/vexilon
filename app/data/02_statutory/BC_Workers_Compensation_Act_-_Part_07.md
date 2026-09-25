@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_07)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:31:23 GMT  
+**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:31 GMT  
 **Ingestion Date:** 2026-09-25  
 
 This Act is current to September 15, 2026
@@ -795,5 +795,3 @@ the court or a party to the action may request the appeal tribunal to make a det
 (c) prescribing the circumstances under which the appeal tribunal may order the Board to reimburse the expenses incurred by a party to an appeal under this Part;
 
 (d) prescribing qualifications of health professionals for purposes of section 301 *[health professional assistance to appeal tribunal]*.
-
-**[Contents](/civix/document/id/complete/statreg/19001_00) | [Part 1](/civix/document/id/complete/statreg/19001_01) | [Part 2](/civix/document/id/complete/statreg/19001_02) | [Part 3](/civix/document/id/complete/statreg/19001_03) | [Part 4](/civix/document/id/complete/statreg/19001_04) | [Part 5](/civix/document/id/complete/statreg/19001_05) | [Part 6](/civix/document/id/complete/statreg/19001_06) | Part 7 | [Part 8](/civix/document/id/complete/statreg/19001_08) | [Schedules](/civix/document/id/complete/statreg/19001_09) | [Revision Schedules](/civix/document/id/complete/statreg/19001_10) | [Consumer Price Index Adjustments](/civix/document/id/complete/statreg/19001_11)**
