@@ -273,7 +273,7 @@ Limited, reasonable use of social media during work hours is permitted as long a
 
 Employees should talk to their supervisors who will provide direction about what is appropriate. Also be conscious of how your behaviour is perceived by others. For example, checking mobile devices in meetings can be seen as disrespectful to those who are speaking, and overuse of social media on your computer may be seen as misuse of work time. It's important for the public, and our colleagues, to have trust and confidence in the public service.
 
-In addition to the misuse of work time, using social media in the workplace can also be a problem if your personal interests conflict with your BC Public Service duties. For example, if the social media activities you do at work or
+In addition to the misuse of work time, using social media in the workplace can also be a problem if your personal interests conflict with your BC Public Service duties. For example, if the social media activities you do at work or on work equipment contribute toward you earning money elsewhere (for example, online marketing for your private business), that’s a violation of the Standards of Conduct.
 
 ## Cyber Safety, discrimination, bullying and harassment
 
