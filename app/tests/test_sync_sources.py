@@ -13,6 +13,7 @@ import urllib.error
 import pytest
 from yaml.constructor import ConstructorError
 
+from scripts import sync_sources
 from scripts.sync_sources import (
     HTMLContentExtractor,
     PartNotFoundError,
@@ -871,3 +872,52 @@ def test_empty_upstream_body_is_error_not_drift(mock_fetch, tmp_path):
     assert result.status == "ERROR"
     assert "no substantive" in (result.error or "")
     assert "Body text that must stay." in target.read_text(encoding="utf-8")
+
+
+@patch("scripts.sync_sources.generate_manifest")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_with_filter_keeps_every_registry_entry(mock_fetch, mock_manifest, tmp_path, monkeypatch):
+    """Regression: --sync --filter must update only matched entries and save the full registry."""
+    names = ("alpha", "beta", "gamma")
+    urls = [f"https://example.com/doc-{name}" for name in names]
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Registry header\n"
+        "\n"
+        "sources:\n"
+        + "".join(
+            f"  - path: app/data/{name}.md\n"
+            f"    url: {url}\n"
+            "    type: html_selector\n"
+            "    selector: '#body'\n"
+            "    category: primary\n"
+            f"    content_hash: {digit * 64}\n"
+            "    last_synced: '2000-01-01'\n"
+            for name, url, digit in zip(names, urls, "abc")
+        ),
+        encoding="utf-8",
+    )
+    before = load_registry(config)
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Beta</h1><p>Fresh beta text.</p></div></body></html>",
+        {},
+    )
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync", "--filter", "doc-beta"],
+    )
+
+    assert sync_sources.main() == 0
+
+    mock_fetch.assert_called_once_with(urls[1])
+    mock_manifest.assert_called_once()
+    after = load_registry(config)
+    assert [entry.path for entry in after] == [entry.path for entry in before]
+    assert after[0] == before[0]
+    assert after[2] == before[2]
+    assert after[1].content_hash != before[1].content_hash
+    assert after[1].last_synced != before[1].last_synced
+    assert after[1].url == before[1].url
+    assert after[1].selector == before[1].selector
+    assert config.read_text(encoding="utf-8").startswith("# Registry header\n")
