@@ -360,3 +360,10 @@ sources:
   category: statutory
   content_hash: 208d6fe1b1d19a3a2b55cf4ea541347949be1587d8f87d559730f8e2937900d8
   last_synced: '2026-09-25'
+- path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Schedules.md
+  url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_09
+  type: bclaws
+  selector: '#contentsscroll'
+  category: statutory
+  content_hash: ed93b81a7bdbb5d9a2b8295cb7fae78dd670640cba9e42e8d72ead99462daf17
+  last_synced: '2026-09-26'
