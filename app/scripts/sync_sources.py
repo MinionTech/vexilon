@@ -340,6 +340,27 @@ class HTMLContentExtractor(HTMLParser):
             return
         self.tokens.append(" ")
 
+    def _append_closing_marker(self, marker: str) -> None:
+        """Close emphasis; in a table cell, move trailing whitespace outside the marker.
+
+        A cell is joined onto one line, so ``<strong>Label:<br></strong>Text``
+        would become ``**Label: **Text``. Markdown does not close emphasis after
+        whitespace, so the marker must come first: ``**Label:** Text``.
+        """
+        if not any(t.cell_tokens is self.tokens for t in self.tables):
+            self.tokens.append(marker)
+            return
+        trailing = ""
+        while self.tokens and not self.tokens[-1].strip():
+            trailing = self.tokens.pop() + trailing
+        if self.tokens:
+            kept = self.tokens[-1].rstrip()
+            trailing = self.tokens[-1][len(kept):] + trailing
+            self.tokens[-1] = kept
+        self.tokens.append(marker)
+        if trailing:
+            self.tokens.append(trailing)
+
     def _in_data_table(self) -> bool:
         return bool(self.tables) and self.tables[-1].is_data
 
@@ -450,11 +471,11 @@ class HTMLContentExtractor(HTMLParser):
         elif tag_lower in ("strong", "b"):
             self.is_bold = False
             if not self.current_link:
-                self.tokens.append("**")
+                self._append_closing_marker("**")
         elif tag_lower in ("em", "i"):
             self.is_italic = False
             if not self.current_link:
-                self.tokens.append("*")
+                self._append_closing_marker("*")
         elif tag_lower == "a":
             if self.current_link and self.link_text_tokens:
                 anchor_text = "".join(self.link_text_tokens).strip()

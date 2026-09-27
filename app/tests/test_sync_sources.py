@@ -361,6 +361,17 @@ def test_markdown_table_escapes_pipe_inside_cell():
     ]
 
 
+def test_markdown_table_cell_closes_emphasis_before_a_line_break():
+    """``**Label: **Text`` is not valid emphasis; the space must follow the marker."""
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Signal</td><td>Meaning</td></tr>
+        <tr><td colspan="2"><strong>b) Slow Signals:<br /></strong>Any regular signal.</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines()[-1] == "| **b) Slow Signals:** Any regular signal. | |"
+
+
 def test_markdown_table_colspan_leaves_spanned_cells_empty():
     """A spanned value is written once; the columns after it stay aligned."""
     markdown = _extract_body("""
