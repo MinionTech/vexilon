@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_15)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:26 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:41 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -331,14 +331,12 @@ Minimum Separation Distance to be Maintained from Energized High Voltage Electri
 
 Table 19-1A
 
-**Column 1
-VoltageColumn 2Minimum approach distance when working close to exposed electrical equipment or conductorsPhase to phaseMetresFeet
-
-Over 750 V to 75 kV 3 10
-
-Over 75 kV to 250 kV 4.5 15
-
-Over 250 kV to 550 kV 6 20
+| **Column 1 Voltage** | Column 2Minimum approach distance when working close to exposed electrical equipment or conductors | |
+| --- | --- | --- |
+| Phase to phase | Metres | Feet |
+| Over 750 V to 75 kV | 3 | 10 |
+| Over 75 kV to 250 kV | 4.5 | 15 |
+| Over 250 kV to 550 kV | 6 | 20 |
 
 [en. B.C. Reg. 312/2010, App. M, s. 3; am. B.C. Reg. 223/2022, s. 6.]
 
@@ -356,13 +354,12 @@ Over 250 kV to 550 kV 6 20
 
 Table 19-1B
 
-Column 1VoltageColumn 2Minimum clearance distance when passing under exposed electrical equipment or conductorsPhase to phaseMetresFeet
-
-Over 750 V to 75 kV 2 6.5
-
-Over 75 kV to 250 kV 3 10
-
-Over 250 kV to 550 kV 4 13
+| Column 1Voltage | Column 2Minimum clearance distance when passing under exposed electrical equipment or conductors | |
+| --- | --- | --- |
+| Phase to phase | Metres | Feet |
+| Over 750 V to 75 kV | 2 | 6.5 |
+| Over 75 kV to 250 kV | 3 | 10 |
+| Over 250 kV to 550 kV | 4 | 13 |
 
 [en. B.C. Reg. 312/2010, App. M, s. 3.]
 
@@ -420,13 +417,12 @@ Over 250 kV to 550 kV 4 13
 
 Table 19-2: Adjusted limits of approach
 
-VoltageMinimum distancePhase to phaseMetresFeet
-
-Over 750 V to 20 kV 0.9 3
-
-Over 20 kV to 30 kV 1.2 4
-
-Over 30 kV to 75 kV 1.5 5
+| Voltage | Minimum distance | |
+| --- | --- | --- |
+| Phase to phase | Metres | Feet |
+| Over 750 V to 20 kV | 0.9 | 3 |
+| Over 20 kV to 30 kV | 1.2 | 4 |
+| Over 30 kV to 75 kV | 1.5 | 5 |
 
 #### Emergency work
 
@@ -514,25 +510,15 @@ Tree Pruning and Falling near Energized Conductors
 
 Table 19-3: Limits of approach for utility arborists
 
-Voltage rangeA. Insulated tool limit
-for certified utility
-arboristsB. Work limit for
-certified utility
-arboristsC. Work limit for
-apprentice utility
-arboristsPhase to phaseMetres** Feet **Metres** Feet **Metres** Feet
-
-Over 750 V to 20 kV 0.3 1 0.9 3 3 10
-
-Over 20 kV to 30 kV 0.5 1.5 1.2 4 3 10
-
-Over 30 kV to 75 kV 0.9 3 1.5 5 3 10
-
-Over 75 kV to 250 kV 2.1 7 3 10 4.5 15
-
-Over 250 kV to 325 kV 2.6 8.5 4.5 15 6 20
-
-Over 325 kV to 550 kV 3.7 12 6 20 6 20
+| Voltage range | A. Insulated tool limit for certified utility arborists | | B. Work limit for certified utility arborists | | C. Work limit for apprentice utility arborists | |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Phase to phase** | **Metres** | Feet | **Metres** | Feet | **Metres** | Feet |
+| Over 750 V to 20 kV | 0.3 | 1 | 0.9 | 3 | 3 | 10 |
+| Over 20 kV to 30 kV | 0.5 | 1.5 | 1.2 | 4 | 3 | 10 |
+| Over 30 kV to 75 kV | 0.9 | 3 | 1.5 | 5 | 3 | 10 |
+| Over 75 kV to 250 kV | 2.1 | 7 | 3 | 10 | 4.5 | 15 |
+| Over 250 kV to 325 kV | 2.6 | 8.5 | 4.5 | 15 | 6 | 20 |
+| Over 325 kV to 550 kV | 3.7 | 12 | 6 | 20 | 6 | 20 |
 
 [am. B.C. Reg. 312/2012, App. G, s. 1.]
 
@@ -604,15 +590,12 @@ Over 325 kV to 550 kV 3.7 12 6 20 6 20
 
 Table 19-4
 
-Column 1
-**Voltage** Column 2
-**Minimum clearance distance from overhead conductor when crossing the neutral conductorPhase to phaseMetresFeet**
-
-Over 750 V to 20 kV 0.60 2.0
-
-Over 20 kV to 30 kV 0.75 2.5
-
-Over 30 kV to 75 kV 0.90 3.0
+| Column 1 **Voltage** | Column 2 **Minimum clearance distance from overhead conductor when crossing the neutral conductor** | |
+| --- | --- | --- |
+| **Phase to phase** | **Metres** | **Feet** |
+| Over 750 V to 20 kV | 0.60 | 2.0 |
+| Over 20 kV to 30 kV | 0.75 | 2.5 |
+| Over 30 kV to 75 kV | 0.90 | 3.0 |
 
 [en. B.C. Reg. 312/2012, App. G, s. 2.]
 

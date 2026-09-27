@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:22 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:33 GMT  
+**Ingestion Date:** 2026-09-27  
 
 Part 3 — Rights and Responsibilities
 
@@ -686,317 +686,50 @@ Division 2 — Minimum Requirements
 
 **Table 3-1Minimum Requirements — Class 1 Workplaces**
 
-Item Column 1
-**Workers present** Column 2
-**Low hazard rating** Column 3
-**Moderate hazard
-rating** Column 4
-**High hazard rating**
-
-1 2 — 9 • Personal first aid kit • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant
-
-2 10 — 19 • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• 2 basic first aid attendants
-
-3 20 — 49 • Basic first aid kit
-• Basic first aid attendant • Intermediate first aid kit
-• Dressing station
-• Intermediate first aid attendant • Intermediate first aid kit
-• Dressing station
-• Basic first aid attendant
-• Intermediate first aid attendant
-
-4 50 — 99 • Intermediate first aid kit
-• Basic first aid attendant
-• Intermediate first aid attendant • Intermediate first aid kit
-• Dressing station
-• Basic first aid attendant
-• Intermediate first aid attendant • Intermediate first aid kit
-• First aid room
-• 2 intermediate first aid attendants
-
-5 100 — 199 • Intermediate first aid kit
-• Dressing station
-• Basic first aid attendant
-• Intermediate first aid attendant • Intermediate first aid kit
-• First aid room
-• 2 intermediate first aid attendants • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant
-• Advanced first aid attendant
-
-6 200 — 499 • Intermediate first aid kit
-• First aid room
-• 2 intermediate first aid attendants • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants
-
-7 500 or more • Intermediate first aid kit
-• First aid room
-• 3 intermediate first aid attendants • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants
-• 2 advanced first aid attendants
+| Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
+| --- | --- | --- | --- | --- |
+| 1 | 2 — 9 | • Personal first aid kit | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant |
+| 2 | 10 — 19 | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • 2 basic first aid attendants |
+| 3 | 20 — 49 | • Basic first aid kit • Basic first aid attendant | • Intermediate first aid kit • Dressing station • Intermediate first aid attendant | • Intermediate first aid kit • Dressing station • Basic first aid attendant • Intermediate first aid attendant |
+| 4 | 50 — 99 | • Intermediate first aid kit • Basic first aid attendant • Intermediate first aid attendant | • Intermediate first aid kit • Dressing station • Basic first aid attendant • Intermediate first aid attendant | • Intermediate first aid kit • First aid room • 2 intermediate first aid attendants |
+| 5 | 100 — 199 | • Intermediate first aid kit • Dressing station • Basic first aid attendant • Intermediate first aid attendant | • Intermediate first aid kit • First aid room • 2 intermediate first aid attendants | • Advanced first aid kit • First aid room • Intermediate first aid attendant • Advanced first aid attendant |
+| 6 | 200 — 499 | • Intermediate first aid kit • First aid room • 2 intermediate first aid attendants | • Advanced first aid kit • First aid room • Intermediate first aid attendant • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 advanced first aid attendants |
+| 7 | 500 or more | • Intermediate first aid kit • First aid room • 3 intermediate first aid attendants | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants • 2 advanced first aid attendants |
 
 **Table 3-2Minimum Requirements — Class 2 Workplaces**
 
-Item Column 1
-**Workers present** Column 2
-**Low hazard rating** Column 3
-**Moderate hazard
-rating** Column 4
-**High hazard rating**
-
-1 2 — 5 • Personal first aid kit • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant
-
-2 6 — 9 • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant • Intermediate first aid kit
-• Intermediate first aid attendant (transport)
-• Emergency transportation for one injured worker
-
-3 10 — 19 • Basic first aid kit
-• Basic first aid attendant • Intermediate first aid kit
-• Intermediate first aid attendant (transport)
-• Emergency transportation for one injured worker • Advanced first aid kit
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker
-
-4 20 — 49 • Basic first aid kit
-• Basic first aid attendant • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker
-
-5 50 — 99 • Intermediate first aid kit
-• Basic first aid attendant (transport)
-• Intermediate first aid attendant (transport)
-• Emergency transportation for one injured worker • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for 2 injured workers
-
-6 100 — 199 • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for 2 injured workers • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers
-
-7 200 — 499 • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers
-
-8 500 or more • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants (transport)
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers
+| Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
+| --- | --- | --- | --- | --- |
+| 1 | 2 — 5 | • Personal first aid kit | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant |
+| 2 | 6 — 9 | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant | • Intermediate first aid kit • Intermediate first aid attendant (transport) • Emergency transportation for one injured worker |
+| 3 | 10 — 19 | • Basic first aid kit • Basic first aid attendant | • Intermediate first aid kit • Intermediate first aid attendant (transport) • Emergency transportation for one injured worker | • Advanced first aid kit • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker |
+| 4 | 20 — 49 | • Basic first aid kit • Basic first aid attendant | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker |
+| 5 | 50 — 99 | • Intermediate first aid kit • Basic first aid attendant (transport) • Intermediate first aid attendant (transport) • Emergency transportation for one injured worker | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for 2 injured workers |
+| 6 | 100 — 199 | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
+| 7 | 200 — 499 | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • 2 advanced first aid attendants • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
+| 8 | 500 or more | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
 
 **Table 3-3Minimum Requirements — Class 3 Workplaces**
 
-Item Column 1
-**Workers present** Column 2
-**Low hazard rating** Column 3
-**Moderate hazard
-rating** Column 4
-**High hazard rating**
-
-1 2 — 9 • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant (transport) • Intermediate first aid kit
-• Intermediate first aid attendant (transport)
-
-2 10 — 19 • Basic first aid kit
-• Basic first aid attendant (transport) • Intermediate first aid kit
-• Intermediate first aid attendant (transport) • Advanced first aid kit
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-
-3 20 — 49 • Basic first aid kit
-• Basic first aid attendant (transport) • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-
-4 50 — 99 • Intermediate first aid kit
-• Basic first aid attendant (transport)
-• Intermediate first aid attendant (transport) • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-
-5 100 — 199 • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants
-
-6 200 — 499 • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• 2 advanced first aid attendants
-
-7 500 or more • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants (transport)
-• Advanced first aid attendant • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• 2 advanced first aid attendants • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants (transport)
-• 2 advanced first aid attendants
+| Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
+| --- | --- | --- | --- | --- |
+| 1 | 2 — 9 | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant (transport) | • Intermediate first aid kit • Intermediate first aid attendant (transport) |
+| 2 | 10 — 19 | • Basic first aid kit • Basic first aid attendant (transport) | • Intermediate first aid kit • Intermediate first aid attendant (transport) | • Advanced first aid kit • Basic first aid attendant (transport) • Advanced first aid attendant |
+| 3 | 20 — 49 | • Basic first aid kit • Basic first aid attendant (transport) | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant |
+| 4 | 50 — 99 | • Intermediate first aid kit • Basic first aid attendant (transport) • Intermediate first aid attendant (transport) | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant |
+| 5 | 100 — 199 | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 advanced first aid attendants |
+| 6 | 200 — 499 | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 advanced first aid attendants | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants |
+| 7 | 500 or more | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • 2 advanced first aid attendants |
 
 **Table 3-4Minimum Requirements — Class 4 Workplaces**
 
-Item Column 1
-**Workers present** Column 2
-**Low hazard rating** Column 3
-**Moderate hazard
-rating** Column 4
-**High hazard rating**
-
-1 2 — 5 • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant (transport) • Intermediate first aid kit
-• Intermediate first aid attendant (transport)
-
-2 6 — 9 • Basic first aid kit
-• Basic first aid attendant • Basic first aid kit
-• Basic first aid attendant (transport) • Intermediate first aid kit
-• Intermediate first aid attendant (transport)
-• Emergency transportation for one injured worker
-
-3 10 — 19 • Basic first aid kit
-• Basic first aid attendant (transport) • Intermediate first aid kit
-• Intermediate first aid attendant (transport)
-• Emergency transportation for one injured worker • Advanced first aid kit
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker
-
-4 20 — 49 • Basic first aid kit
-• Basic first aid attendant (transport) • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker
-
-5 50 — 99 • Intermediate first aid kit
-• Basic first aid attendant (transport)
-• Intermediate first aid attendant (transport)
-• Emergency transportation for one injured worker • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for 2 injured workers
-
-6 100 — 199 • Advanced first aid kit
-• Dressing station
-• Basic first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for 2 injured workers • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers
-
-7 200 — 499 • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers
-
-8 500 or more • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants (transport)
-• Advanced first aid attendant
-• Emergency transportation for one injured worker • Advanced first aid kit
-• First aid room
-• Intermediate first aid attendant (transport)
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers • Advanced first aid kit
-• First aid room
-• 2 intermediate first aid attendants (transport)
-• 2 advanced first aid attendants
-• Emergency transportation for 2 injured workers
+| Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
+| --- | --- | --- | --- | --- |
+| 1 | 2 — 5 | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant (transport) | • Intermediate first aid kit • Intermediate first aid attendant (transport) |
+| 2 | 6 — 9 | • Basic first aid kit • Basic first aid attendant | • Basic first aid kit • Basic first aid attendant (transport) | • Intermediate first aid kit • Intermediate first aid attendant (transport) • Emergency transportation for one injured worker |
+| 3 | 10 — 19 | • Basic first aid kit • Basic first aid attendant (transport) | • Intermediate first aid kit • Intermediate first aid attendant (transport) • Emergency transportation for one injured worker | • Advanced first aid kit • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker |
+| 4 | 20 — 49 | • Basic first aid kit • Basic first aid attendant (transport) | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker |
+| 5 | 50 — 99 | • Intermediate first aid kit • Basic first aid attendant (transport) • Intermediate first aid attendant (transport) • Emergency transportation for one injured worker | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for 2 injured workers |
+| 6 | 100 — 199 | • Advanced first aid kit • Dressing station • Basic first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
+| 7 | 200 — 499 | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • 2 advanced first aid attendants • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
+| 8 | 500 or more | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |

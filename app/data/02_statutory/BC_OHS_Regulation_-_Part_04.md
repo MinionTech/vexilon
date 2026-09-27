@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_02)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:23 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:34 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -979,28 +979,18 @@ Illumination
 
 Table 4-1: Illumination levels for task categories
 
-Task categoryExamples1Minimum2 illumination
-level in lux
-
-1. Simple orientation for short temporary visits Inactive storage, waiting areas, VDT screens, log loading and unloading. 50
-
-2. Working spaces where visual tasks are only occasionally performed Stairways, freight elevators, truck loading, active bulk storage. 100
-
-3. Visual tasks of high contrast or large size Bakery mixing rooms, hospital central (clean) linen rooms, locker rooms, reading good quality text, casual reading, simple assembly, hand or simple spray painting, rough lumber grading, rough woodworking and benchwork. 200
-
-4. Visual tasks of medium contrast or small size Hair styling shops, kitchens, vehicle repair garages, sawmill filing room (work areas), reading poor quality text, prolonged or critical reading, medium bench or machine work, mail sorting, fine hand painting and finishing, fine woodworking and finishing. 500
-
-5. Visual tasks of low contrast or very small size Difficult assembly tasks, difficult inspections, weaving, clothing alteration, finished lumber grading. 1 000
-
-6. Visual tasks of low contrast and very small size over a prolonged period Very difficult assembly tasks, sewing, fine bench or machine work, extra-fine hand painting and finishing. 2 000
-
-7. Very prolonged and exacting visual tasks Exacting assembly or inspection, extra fine bench or machine work, precision manual arc-welding. 5 000
-
-8. Very special visual tasks of extremely low contrast and small size Very detailed cloth product inspection and examination. 10 000
-
-**Note 1:** Further guidance in determining task categories that apply to specific work areas and activities is contained in the IES Handbook. This publication also provides information on acceptable measures to control brightness, reflectance and glare.
-
-**Note 2:** The lux is the metric unit of light measurement, and replaces the footcandle (fc), which was the traditional imperial unit of measurement. One lux equals about one tenth of a footcandle. For example, the minimum illumination in footcandles for task category number 4, which is common in the office environment, is about 50 footcandles.
+| Task category | Examples1 | Minimum2 illumination level in lux |
+| --- | --- | --- |
+| 1. Simple orientation for short temporary visits | Inactive storage, waiting areas, VDT screens, log loading and unloading. | 50 |
+| 2. Working spaces where visual tasks are only occasionally performed | Stairways, freight elevators, truck loading, active bulk storage. | 100 |
+| 3. Visual tasks of high contrast or large size | Bakery mixing rooms, hospital central (clean) linen rooms, locker rooms, reading good quality text, casual reading, simple assembly, hand or simple spray painting, rough lumber grading, rough woodworking and benchwork. | 200 |
+| 4. Visual tasks of medium contrast or small size | Hair styling shops, kitchens, vehicle repair garages, sawmill filing room (work areas), reading poor quality text, prolonged or critical reading, medium bench or machine work, mail sorting, fine hand painting and finishing, fine woodworking and finishing. | 500 |
+| 5. Visual tasks of low contrast or very small size | Difficult assembly tasks, difficult inspections, weaving, clothing alteration, finished lumber grading. | 1 000 |
+| 6. Visual tasks of low contrast and very small size over a prolonged period | Very difficult assembly tasks, sewing, fine bench or machine work, extra-fine hand painting and finishing. | 2 000 |
+| 7. Very prolonged and exacting visual tasks | Exacting assembly or inspection, extra fine bench or machine work, precision manual arc-welding. | 5 000 |
+| 8. Very special visual tasks of extremely low contrast and small size | Very detailed cloth product inspection and examination. | 10 000 |
+| **Note 1:** Further guidance in determining task categories that apply to specific work areas and activities is contained in the IES Handbook. This publication also provides information on acceptable measures to control brightness, reflectance and glare. | | |
+| **Note 2:** The lux is the metric unit of light measurement, and replaces the footcandle (fc), which was the traditional imperial unit of measurement. One lux equals about one tenth of a footcandle. For example, the minimum illumination in footcandles for task category number 4, which is common in the office environment, is about 50 footcandles. | | |
 
 #### Means of illumination
 

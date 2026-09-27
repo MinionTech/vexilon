@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_16)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:26 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:42 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -1307,13 +1307,9 @@ Excavations
 
 **20.85** (1) Trench support structures, other than those designed by a professional engineer, must comply with Table 20-1 for the following relevant soil conditions:
 
-**Soil typeDescription of soil**
-
-A
-B
-C hard and solid
-likely to crack or crumble
-soft, sandy, filled or loose
+| **Soil type** | **Description of soil** |
+| --- | --- |
+| A B C | hard and solid likely to crack or crumble soft, sandy, filled or loose |
 
 (2) If Table 20-1 is to be used for a combination of supporting and sloping, the selection of shoring elements must be based on the overall depth of the excavation and the arrangement must conform to Figure 20-3.
 
@@ -1321,15 +1317,9 @@ soft, sandy, filled or loose
 
 (4) The minimum number of cross braces at each cross bracing location is determined by the trench depth as follows:
 
-**Depth at locationNumber of braces**
-
-up to 2.4 m (8 ft)
-2.4 m to 3.7 m (8 ft to 12 ft)
-3.7 m to 4.6 m (12 ft to 15 ft)
-4.6 m to 6 m (15 ft to 20 ft) 2
-3
-4
-5
+| **Depth at location** | **Number of braces** |
+| --- | --- |
+| up to 2.4 m (8 ft) 2.4 m to 3.7 m (8 ft to 12 ft) 3.7 m to 4.6 m (12 ft to 15 ft) 4.6 m to 6 m (15 ft to 20 ft) | 2 3 4 5 |
 
 (5) At each cross bracing location the cross braces must be less than 1.2 m (4 ft) apart, and the uppermost cross brace must be within 60 cm (2 ft) of ground level.
 
@@ -1406,94 +1396,43 @@ up to 2.4 m (8 ft)
 Table 20-1: Trench support structures
 Size and spacing of members[1](#footnote__1) (metric figures)
 
-UprightsWalersCross Braces
-
-Trench depth
-(metres) Minimum
-dimensions
-(millimetres)[2](#footnote__2) Maximum
-spacing
-(metres) Minimum
-dimensions
-(millimetres)[2](#footnote__2) Maximum
-vertical
-spacing
-(metres) Width of trench
-(metres) Maximum spacing (metres)
-
-Up to 1.8 1.8-3.7 Vertical Horizontal
-
-Minimum dimensions
-(millimetres)[2](#footnote__2)
-
-*Type A: Hard and solid soil*
-
-1.2-3[3](#footnote__3) 38 x 235 1.8 89 x 140 1.2 89 x 89 140 x 140 1.2 1.8
-
-3-4.6 38 x 235 1.2 140 x 140 1.2 89 x 140 140 x 191 1.2 1.8
-
-4.6-6 38 x 235 Close tight 140 x 140 1.2 140 x 191 191 x 191 1.2 1.8
-
-*Type B: Soil likely to crack or crumble*
-
-1.2-3[3](#footnote__3) 38 x 235 1.2 89 x 140 1.2 89 x 140 140 x 140 1.2 1.8
-
-3-4.6 38 x 235 0.9 140 x 191 1.2 140 x 140 140 x 191 1.2 1.8
-
-4.6-6 38 x 235 Close tight 140 x 191 1.2 140 x 191 191 x 191 1.2 1.8
-
-*Type C: Soft, sandy, filled or loose soil*
-
-1.2-3[3](#footnote__3) 38 x 235 Close tight 140 x 191 1.2 140 x 140 140 x 191 1.2 1.8
-
-3-4.6 38 x 235 Close tight 191 x 191 1.2 140 x 191 191 x 191 1.2 1.8
-
-4.6-6 38 x 235 Close tight 191 x 241 1.2 140 x 191 191 x 241 1.2 1.8
+| Uprights | | | Walers | | Cross Braces | | | |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Trench depth (metres) | Minimum dimensions (millimetres)[2](#footnote__2) | Maximum spacing (metres) | Minimum dimensions (millimetres)[2](#footnote__2) | Maximum vertical spacing (metres) | Width of trench (metres) | | Maximum spacing (metres) | |
+| | | | | | Up to 1.8 | 1.8-3.7 | Vertical | Horizontal |
+| | | | | | Minimum dimensions (millimetres)[2](#footnote__2) | | | |
+| *Type A: Hard and solid soil* | | | | | | | | |
+| 1.2-3[3](#footnote__3) | 38 x 235 | 1.8 | 89 x 140 | 1.2 | 89 x 89 | 140 x 140 | 1.2 | 1.8 |
+| 3-4.6 | 38 x 235 | 1.2 | 140 x 140 | 1.2 | 89 x 140 | 140 x 191 | 1.2 | 1.8 |
+| 4.6-6 | 38 x 235 | Close tight | 140 x 140 | 1.2 | 140 x 191 | 191 x 191 | 1.2 | 1.8 |
+| *Type B: Soil likely to crack or crumble* | | | | | | | | |
+| 1.2-3[3](#footnote__3) | 38 x 235 | 1.2 | 89 x 140 | 1.2 | 89 x 140 | 140 x 140 | 1.2 | 1.8 |
+| 3-4.6 | 38 x 235 | 0.9 | 140 x 191 | 1.2 | 140 x 140 | 140 x 191 | 1.2 | 1.8 |
+| 4.6-6 | 38 x 235 | Close tight | 140 x 191 | 1.2 | 140 x 191 | 191 x 191 | 1.2 | 1.8 |
+| *Type C: Soft, sandy, filled or loose soil* | | | | | | | | |
+| 1.2-3[3](#footnote__3) | 38 x 235 | Close tight | 140 x 191 | 1.2 | 140 x 140 | 140 x 191 | 1.2 | 1.8 |
+| 3-4.6 | 38 x 235 | Close tight | 191 x 191 | 1.2 | 140 x 191 | 191 x 191 | 1.2 | 1.8 |
+| 4.6-6 | 38 x 235 | Close tight | 191 x 241 | 1.2 | 140 x 191 | 191 x 241 | 1.2 | 1.8 |
 
 Size and spacing of members[1](#footnote__1) (imperial figures)
 
-**UprightsWalersCross Braces**
-
-Trench depth
-(feet) Minimum dimensions
-(inches)[2](#footnote__2) Maximum spacing
-(feet) Minimum
-dimensions
-(inches)[2](#footnote__2) Maximum
-vertical
-spacing
-(feet) Width of trench
-(feet) Maximum spacing
-(feet)
-
-Up to 6 6-12 Vertical Horizontal
-
-Minimum dimensions
-(inches)[2](#footnote__2)
-
-*Type A: Hard and solid soil*
-
-4-10[3](#footnote__3) 2 x 10 6 4 x 6[4](#footnote__4) 4 4 x 4 6 x 6 4 6
-
-10-15 2 x 10 4 6 x 6 4 4 x 6 6 x 8 4 6
-
-15-20 2 x 10 Close tight 6 x 6 4 6 x 8 8 x 8 4 6
-
-*Type B: Soil likely to crack or crumble*
-
-4-10[3](#footnote__3) 2 x 10 4 4 x 6 4 4 x 6 6 x 6 4 6
-
-10-15 2 x 10 3 6 x 8 4 6 x 6 6 x 8 4 6
-
-15-20 2 x 10 Close tight 6 x 8 4 6 x 8 8 x 8 4 6
-
-*Type C: Soft, sandy, filled or loose soil*
-
-4-10[3](#footnote__3) 2 x 10 Close tight 6 x 8 4 6 x 6 6 x 8 4 6
-
-10-15 2 x 10 Close tight 8 x 8 4 6 x 8 8 x 8 4 6
-
-15-20 2 x 10 Close tight 8 x 10 4 6 x 8 8 x 10 4 6
+| **Uprights** | | | **Walers** | | **Cross Braces** | | | |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Trench depth (feet) | Minimum dimensions (inches)[2](#footnote__2) | Maximum spacing (feet) | Minimum dimensions (inches)[2](#footnote__2) | Maximum vertical spacing (feet) | Width of trench (feet) | | Maximum spacing (feet) | |
+| | | | | | Up to 6 | 6-12 | Vertical | Horizontal |
+| | | | | | Minimum dimensions (inches)[2](#footnote__2) | | | |
+| *Type A: Hard and solid soil* | | | | | | | | |
+| 4-10[3](#footnote__3) | 2 x 10 | 6 | 4 x 6[4](#footnote__4) | 4 | 4 x 4 | 6 x 6 | 4 | 6 |
+| 10-15 | 2 x 10 | 4 | 6 x 6 | 4 | 4 x 6 | 6 x 8 | 4 | 6 |
+| 15-20 | 2 x 10 | Close tight | 6 x 6 | 4 | 6 x 8 | 8 x 8 | 4 | 6 |
+| *Type B: Soil likely to crack or crumble* | | | | | | | | |
+| 4-10[3](#footnote__3) | 2 x 10 | 4 | 4 x 6 | 4 | 4 x 6 | 6 x 6 | 4 | 6 |
+| 10-15 | 2 x 10 | 3 | 6 x 8 | 4 | 6 x 6 | 6 x 8 | 4 | 6 |
+| 15-20 | 2 x 10 | Close tight | 6 x 8 | 4 | 6 x 8 | 8 x 8 | 4 | 6 |
+| *Type C: Soft, sandy, filled or loose soil* | | | | | | | | |
+| 4-10[3](#footnote__3) | 2 x 10 | Close tight | 6 x 8 | 4 | 6 x 6 | 6 x 8 | 4 | 6 |
+| 10-15 | 2 x 10 | Close tight | 8 x 8 | 4 | 6 x 8 | 8 x 8 | 4 | 6 |
+| 15-20 | 2 x 10 | Close tight | 8 x 10 | 4 | 6 x 8 | 8 x 10 | 4 | 6 |
 
 1 The dimensions shown are minimum and must be increased if necessary to meet job conditions.
 
@@ -1511,16 +1450,13 @@ Case 2 (trench or bulk excavation) — maximum height of vertical portion, shown
 
 For Case 2 (trench or bulk excavation) the maximum permissible slope of the excavated face BC for the corresponding height of the lower vertical cut AB is as follows:
 
-Height of line ABMaximum slope of line BC
-(in hard and solid soil)centimetresfeet
-
-up to 30 up to 1 1 horizontal (H) to 1 vertical (V)
-
-30 to 60 1 to 2 3H to 2V
-
-60 to 90 2 to 3 2H to 1V
-
-90 to 120 3 to 4 3H to 1V
+| Height of line AB | | Maximum slope of line BC (in hard and solid soil) |
+| --- | --- | --- |
+| centimetres | feet | |
+| up to 30 | up to 1 | 1 horizontal (H) to 1 vertical (V) |
+| 30 to 60 | 1 to 2 | 3H to 2V |
+| 60 to 90 | 2 to 3 | 2H to 1V |
+| 90 to 120 | 3 to 4 | 3H to 1V |
 
 **Figure 20-2: Benching in lieu of shoringFigure 20-3: Combined supporting and sloping**
 

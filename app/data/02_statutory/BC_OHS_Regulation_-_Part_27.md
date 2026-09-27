@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_22)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:28 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:46 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -247,19 +247,15 @@ Saws and Knives
 
 Table 27-1: Circular saw crack limits
 
-Saw diameterMaximum length of crackMillimetresInchesMillimetresInches
-
-up to 300 up to 12 13 1/2
-
-300 to 610 12 to 24 25 1
-
-610 to 915 24 to 36 38 1 1/2
-
-915 to 1 220 36 to 48 50 2
-
-1 220 to 1 525 48 to 60 64 2 1/2
-
-over 1 525 over 60 76 3
+| Saw diameter | | Maximum length of crack | |
+| --- | --- | --- | --- |
+| Millimetres | Inches | Millimetres | Inches |
+| up to 300 | up to 12 | 13 | 1/2 |
+| 300 to 610 | 12 to 24 | 25 | 1 |
+| 610 to 915 | 24 to 36 | 38 | 1 1/2 |
+| 915 to 1 220 | 36 to 48 | 50 | 2 |
+| 1 220 to 1 525 | 48 to 60 | 64 | 2 1/2 |
+| over 1 525 | over 60 | 76 | 3 |
 
 #### Cracks in band saws
 
@@ -271,13 +267,12 @@ over 1 525 over 60 76 3
 
 Table 27-2: Band saw crack limits
 
-Band saw widthMaximum length of crackMillimetresInchesMillimetresInches
-
-up to 125 up to 5 1/10 of saw width 1/10 of saw width
-
-125 to 300 5 to 12 13 1/2
-
-over 300 over 12 19 3/4
+| Band saw width | | Maximum length of crack | |
+| --- | --- | --- | --- |
+| Millimetres | Inches | Millimetres | Inches |
+| up to 125 | up to 5 | 1/10 of saw width | 1/10 of saw width |
+| 125 to 300 | 5 to 12 | 13 | 1/2 |
+| over 300 | over 12 | 19 | 3/4 |
 
 #### Band saw wheel wear limits
 

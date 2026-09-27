@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_19)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:27 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:44 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -203,41 +203,23 @@ General Requirements
 
 Table 23-1: Minimum requirements for firefighting equipment
 
-Work activityNumber of
-extinguishers requiredType of extinguisher
-
-Heavy hauler 1 20-BC
-
-Hot oiler 2 20-BC
-
-Seismic shot hole drill 2 20-BC
-
-Drilling rig 4 40-BC
-
-Service rig 4 40-BC
-
-Battery operator 1 20-BC
-
-Fluid hauler 1 40-BC
-
-Service truck of 1 tonne capacity or more 1 20-BC
-
-Any other commercial vehicle 1 5-BC
-
-Any vehicle carrying explosives 2 4-A:40-B:C
-
-Welder 1 10-BC
-
-Well testing 2 10-BC
-
-1 fracturing tank 1 Twin agent unit
-
-2, 3 or 4 fracturing tanks 1 Continuous foam unit with 100 barrel water truck
-
-5 or more fracturing tanks or greater than
-40% methanol water fracturing The fire hazard must be evaluated in accordance with current industry standards,
-and firefighting equipment and personnel must be provided as determined
-necessary by the evaluation.
+| Work activity | Number of extinguishers required | Type of extinguisher |
+| --- | --- | --- |
+| Heavy hauler | 1 | 20-BC |
+| Hot oiler | 2 | 20-BC |
+| Seismic shot hole drill | 2 | 20-BC |
+| Drilling rig | 4 | 40-BC |
+| Service rig | 4 | 40-BC |
+| Battery operator | 1 | 20-BC |
+| Fluid hauler | 1 | 40-BC |
+| Service truck of 1 tonne capacity or more | 1 | 20-BC |
+| Any other commercial vehicle | 1 | 5-BC |
+| Any vehicle carrying explosives | 2 | 4-A:40-B:C |
+| Welder | 1 | 10-BC |
+| Well testing | 2 | 10-BC |
+| 1 fracturing tank | 1 | Twin agent unit |
+| 2, 3 or 4 fracturing tanks | 1 | Continuous foam unit with 100 barrel water truck |
+| 5 or more fracturing tanks or greater than 40% methanol water fracturing | The fire hazard must be evaluated in accordance with current industry standards, and firefighting equipment and personnel must be provided as determined necessary by the evaluation. | |
 
 [am. B.C. Reg. 207/2021, App. A, s. 74.]
 
@@ -943,7 +925,7 @@ Drill Stem Testing, Swabbing, Cementing, Well Servicing and Stimulation
 
 (iv) the method of determining how frequently a type of part is to be replaced, including the basis for replacement;
 
-(b) preparing, updating and making readily available at the worksite an up­to­date document, relating to the inspections and testing referred to in paragraph (a), that identifies each part that has been inspected and tested, and sets out, for that part,
+(b) preparing, updating and making readily available at the worksite an up-to-date document, relating to the inspections and testing referred to in paragraph (a), that identifies each part that has been inspected and tested, and sets out, for that part,
 
 (i) the inspection and testing procedures followed,
 

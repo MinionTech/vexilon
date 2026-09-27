@@ -1,10 +1,10 @@
 # Employment Standards Act
 
 **Source:** [Employment Standards Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:21 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:31 GMT  
+**Ingestion Date:** 2026-09-27  
 
-This Act is current to September 15, 2026
+This Act is current to September 22, 2026
 
 See the [Tables of Legislative Changes](/civix/content/complete/statreg/414786120/96113/tlc96113_f/?xsl=/templates/browse.xsl) for this Act’s legislative history, including any changes not in force.
 
@@ -558,37 +558,25 @@ but does not include
 
 (2) If a collective agreement contains any provisions respecting a matter set out in column 1 of the following table, and the provisions, when considered together, meet or exceed the requirements, when considered together, of the Part or section of this Act specified opposite the matter in column 2 of the table, those provisions of the collective agreement replace the requirements of that Part or section of the Act in respect of employees covered by the collective agreement:
 
-**Column 1
-MatterColumn 2
-Part or Section**
-
-Special clothing Section 25 (1) or (2)
-
-Hours of work or overtime Part 4
-
-Statutory holidays Part 5
-
-Annual vacation or vacation pay Part 7
-
-Seniority retention, recall, termination of employment or layoff Section 63
+| **Column 1 Matter** | **Column 2 Part or Section** |
+| --- | --- |
+| Special clothing | Section 25 (1) or (2) |
+| Hours of work or overtime | Part 4 |
+| Statutory holidays | Part 5 |
+| Annual vacation or vacation pay | Part 7 |
+| Seniority retention, recall, termination of employment or layoff | Section 63 |
 
 (2.1) Despite subsection (2), any provisions of a collective agreement respecting statutory holidays only replace the requirements of Part 5 of this Act as that Part applies to statutory holidays other than the National Day for Truth and Reconciliation.
 
 (3) If a collective agreement contains no provisions respecting a matter set out in column 1 of the following table, or contains any provisions respecting a matter set out in column 1 that, when considered together, do not meet or exceed the requirements, when considered together, of the Part or section of this Act specified opposite the matter in column 2 of the table, that Part or section of the Act is deemed to be incorporated in the collective agreement as part of its terms:
 
-**Column 1
-MatterColumn 2
-Part or Section**
-
-Special clothing Section 25 (1) or (2)
-
-Hours of work or overtime Part 4, except section 37
-
-Statutory holidays Part 5
-
-Annual vacation or vacation pay Part 7
-
-Seniority retention, recall, termination of employment or layoff Section 63
+| **Column 1 Matter** | **Column 2 Part or Section** |
+| --- | --- |
+| Special clothing | Section 25 (1) or (2) |
+| Hours of work or overtime | Part 4, except section 37 |
+| Statutory holidays | Part 5 |
+| Annual vacation or vacation pay | Part 7 |
+| Seniority retention, recall, termination of employment or layoff | Section 63 |
 
 (4) and (5) [Repealed 2019-27-3.]
 

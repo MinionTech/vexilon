@@ -2,7 +2,7 @@
 
 **Source:** [Standards of Conduct for BC Public Service employees - Province of British Columbia](https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct)  
 **Upstream Last Modified:** Unknown  
-**Ingestion Date:** 2026-09-25  
+**Ingestion Date:** 2026-09-27  
 
 ## On this page
 

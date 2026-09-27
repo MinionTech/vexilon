@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_12)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:25 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:39 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -63,33 +63,21 @@ General Requirements
 
 Table 15-1: Minimum design factors for rigging
 
-ItemComponentMinimum design factor
-
-1 Nylon fibre rope sling 5
-
-2 Polyester rope sling 5
-
-3 Polypropylene rope sling 5
-
-4 Alloy steel chain sling 4
-
-5 Wire rope sling 5
-
-6 Metal mesh sling 5
-
-7 Synthetic web sling 5
-
-8 Synthetic roundsling 5
-
-9 Chain fittings 4
-
-10 Wire rope sling fittings 5
-
-11 Other fittings as specified by manufacturer
-
-12 Non-rotating wire rope as specified by manufacturer but not less than 5
-
-13 Conventional wire rope 5
+| Item | Component | Minimum design factor |
+| --- | --- | --- |
+| 1 | Nylon fibre rope sling | 5 |
+| 2 | Polyester rope sling | 5 |
+| 3 | Polypropylene rope sling | 5 |
+| 4 | Alloy steel chain sling | 4 |
+| 5 | Wire rope sling | 5 |
+| 6 | Metal mesh sling | 5 |
+| 7 | Synthetic web sling | 5 |
+| 8 | Synthetic roundsling | 5 |
+| 9 | Chain fittings | 4 |
+| 10 | Wire rope sling fittings | 5 |
+| 11 | Other fittings | as specified by manufacturer |
+| 12 | Non-rotating wire rope | as specified by manufacturer but not less than 5 |
+| 13 | Conventional wire rope | 5 |
 
 (2) The design factors specified by subsection (1) may be reduced for a dedicated rigging assembly designed and certified by a professional engineer for a specific lift, but the dedicated assembly must be re-rated according to the requirements of subsection (1) for continued use.
 
@@ -225,41 +213,25 @@ ItemComponentMinimum design factor
 
 Table 15-2: Installation and use of wire rope clips
 
-Diameter of ropeNumber of
-clipsSpacing between clips
-(centre to centre)Torquemillimetres** inches **millimetres** inches **newton metres** foot pounds
-
-**6** 1/4 2 **38** 1 1/2 **20** 15
-
-**8** 5/16 2 **51** 2 **41** 30
-
-**10** 3/8 2 **57** 2 1/4 **61** 45
-
-**11** 7/16 2 **64** 2 1/2 **88** 65
-
-**13** 1/2 3 **76** 3 **88** 65
-
-**16** 5/8 3 **102** 4 **129** 95
-
-**19** 3/4 4 **114** 4 1/2 **176** 130
-
-**22** 7/8 4 **133** 5 1/4 **305** 225
-
-**25** 1 4 **152** 6 **305** 225
-
-**29** 1 1/8 5 **178** 7 **305** 225
-
-**32** 1 1/4 5 **203** 8 **488** 360
-
-**38** 1 1/2 6 **229** 9 **488** 360
-
-**44** 1 3/4 7 **267** 10 1/2 **630** 465
-
-**51** 2 8 **305** 12 **881** 650
-
-**54** 2 1/8 8 **330** 13 **881** 650
-
-**57** 2 1/4 8 **356** 14 **881** 650
+| Diameter of rope | | Number of clips | Spacing between clips (centre to centre) | | Torque | |
+| --- | --- | --- | --- | --- | --- | --- |
+| **millimetres** | inches | | **millimetres** | inches | **newton metres** | foot pounds |
+| **6** | 1/4 | 2 | **38** | 1 1/2 | **20** | 15 |
+| **8** | 5/16 | 2 | **51** | 2 | **41** | 30 |
+| **10** | 3/8 | 2 | **57** | 2 1/4 | **61** | 45 |
+| **11** | 7/16 | 2 | **64** | 2 1/2 | **88** | 65 |
+| **13** | 1/2 | 3 | **76** | 3 | **88** | 65 |
+| **16** | 5/8 | 3 | **102** | 4 | **129** | 95 |
+| **19** | 3/4 | 4 | **114** | 4 1/2 | **176** | 130 |
+| **22** | 7/8 | 4 | **133** | 5 1/4 | **305** | 225 |
+| **25** | 1 | 4 | **152** | 6 | **305** | 225 |
+| **29** | 1 1/8 | 5 | **178** | 7 | **305** | 225 |
+| **32** | 1 1/4 | 5 | **203** | 8 | **488** | 360 |
+| **38** | 1 1/2 | 6 | **229** | 9 | **488** | 360 |
+| **44** | 1 3/4 | 7 | **267** | 10 1/2 | **630** | 465 |
+| **51** | 2 | 8 | **305** | 12 | **881** | 650 |
+| **54** | 2 1/8 | 8 | **330** | 13 | **881** | 650 |
+| **57** | 2 1/4 | 8 | **356** | 14 | **881** | 650 |
 
 #### Restriction on fold back eyes
 
@@ -363,16 +335,12 @@ Slings
 
 Table 15-3: WLL reductions for slings at an angle
 
-Angle between the sling leg and verticalReduce WLL to
-
-up to 30° 90%
-
-over 30° up to 45° 70%
-
-over 45° up to 60° 50%
-
-over 60° not permitted unless part of
-an engineered lift
+| Angle between the sling leg and vertical | Reduce WLL to |
+| --- | --- |
+| up to 30° | 90% |
+| over 30° up to 45° | 70% |
+| over 45° up to 60° | 50% |
+| over 60° | not permitted unless part of an engineered lift |
 
 #### Repealed
 
@@ -470,32 +438,24 @@ Alloy Steel Chain Slings
 
 Table 15-4: Allowable chain wear
 
-Chain sizeMinimum allowable chain size at
-any point of linkmillimetres** inches **millimetres** inches
-
-**6.3** 1/4 **5.9** 15/64
-
-**10** 3/8 **8** 19/64
-
-**13** 1/2 **10** 25/64
-
-**16** 5/8 **12** 31/64
-
-**19** 3/4 **15** 19/32
-
-**22** 7/8 **18** 45/64
-
-**25** 1 **21** 13/16
-
-**29** 1 1/8 **23** 29/32
-
-**32** 1 1/4 **25** 1
-
-**35** 1 3/8 **28** 1 3/32
-
-**38** 1 1/2 **30** 1 3/16
-
-**44** 1 3/4 **36** 1 13/32
+| Chain size | | Minimum allowable chain size at any point of link | |
+| --- | --- | --- | --- |
+| **millimetres** | inches | **millimetres** | inches |
+| **6.3** | 1/4 | **5.9** | 15/64 |
+| **10** | 3/8 | **8** | 19/64 |
+| **13** | 1/2 | **10** | 25/64 |
+| | | | |
+| **16** | 5/8 | **12** | 31/64 |
+| **19** | 3/4 | **15** | 19/32 |
+| **22** | 7/8 | **18** | 45/64 |
+| | | | |
+| **25** | 1 | **21** | 13/16 |
+| **29** | 1 1/8 | **23** | 29/32 |
+| **32** | 1 1/4 | **25** | 1 |
+| | | | |
+| **35** | 1 3/8 | **28** | 1 3/32 |
+| **38** | 1 1/2 | **30** | 1 3/16 |
+| **44** | 1 3/4 | **36** | 1 13/32 |
 
 #### Periodic inspection
 

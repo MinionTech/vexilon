@@ -1,10 +1,10 @@
 # Human Rights Code
 
 **Source:** [Human Rights Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:22 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:31 GMT  
+**Ingestion Date:** 2026-09-27  
 
-This Act is current to September 15, 2026
+This Act is current to September 22, 2026
 
 See the [Tables of Legislative Changes](/civix/content/complete/statreg/712470149/96210/tlc96210_f/?xsl=/templates/browse.xsl) for this Act’s legislative history, including any changes not in force.
 
