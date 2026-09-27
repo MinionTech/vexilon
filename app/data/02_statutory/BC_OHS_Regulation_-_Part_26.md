@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 02:39:44 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:13 GMT  
 **Ingestion Date:** 2026-09-27  
 
 Part 26 — Forestry Operations and Similar Activities
@@ -2215,7 +2215,19 @@ Table 26-6: Requirements for radio controlled carriages
 | 1 LONG — pause — 1 SHORT | START ENGINE |
 | Carriages with variable dropline speeds must have a special signal for the speed changes. These signals must be different from standard yarding signals. | |
 
-**Table 26-7: Hand signalsA — Cable loggingTable 26-7 (continued): Hand signalsA — Cable loggingTable 26-7 (continued): Hand signalsB — SkiddingTable 26-8: Voice commands for grapple yarders**
+**Table 26-7: Hand signals
+
+A — Cable logging
+
+Table 26-7 (continued): Hand signals
+
+A — Cable logging
+
+Table 26-7 (continued): Hand signals
+
+B — Skidding
+
+Table 26-8: Voice commands for grapple yarders**
 
 [en. B.C. Reg. 20/2008, App. A, s. 56; am. B.C. Reg. 14/2019, App. F, s. 4.]
 

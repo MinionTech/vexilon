@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_13)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:40 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:07 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -951,7 +951,9 @@ HEAVY DUTY BACKSTOPS FOR LOGS AND ROCKS**
 (2) Backstops manufactured prior to September 1, 2021 are exempt from subsection (1) (a) but not from any other part of this standard.
 
 **Figure 1
-Mainframe-mounted Heavy Duty BackstopFigure 2
+Mainframe-mounted Heavy Duty Backstop
+
+Figure 2
 Boom-mounted Heavy Duty Backstop**
 
 Schedule 16-B

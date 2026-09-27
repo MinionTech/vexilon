@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_12)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:39 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:07 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -175,7 +175,13 @@ Table 15-1: Minimum design factors for rigging
 
 **15.20** If hand signals are used between a signaller and the operator of a crane or hoist to control hoisting operations, the signals shown in Figure 15-1 must be used.
 
-**Figure 15-1: Standard hand signals for controlling crane operations-crawler, locomotive and truck cranesFigure 15-1 (continued): Standard hand signals for controlling crane operations-crawler, locomotive and truck cranesFigure 15-1 (continued): Standard hand signals for controlling crane operations-crawler, locomotive and truck cranesFigure 15-1 (continued): Standard hand signals for controlling crane operations-overhead and gantry cranes**
+**Figure 15-1: Standard hand signals for controlling crane operations-crawler, locomotive and truck cranes
+
+Figure 15-1 (continued): Standard hand signals for controlling crane operations-crawler, locomotive and truck cranes
+
+Figure 15-1 (continued): Standard hand signals for controlling crane operations-crawler, locomotive and truck cranes
+
+Figure 15-1 (continued): Standard hand signals for controlling crane operations-overhead and gantry cranes**
 
 #### Termination efficiencies
 

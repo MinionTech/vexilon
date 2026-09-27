@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_15)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:41 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:09 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -331,7 +331,7 @@ Minimum Separation Distance to be Maintained from Energized High Voltage Electri
 
 Table 19-1A
 
-| **Column 1 Voltage** | Column 2Minimum approach distance when working close to exposed electrical equipment or conductors | |
+| **Column 1 Voltage** | Column 2 Minimum approach distance when working close to exposed electrical equipment or conductors | |
 | --- | --- | --- |
 | Phase to phase | Metres | Feet |
 | Over 750 V to 75 kV | 3 | 10 |
@@ -354,7 +354,7 @@ Table 19-1A
 
 Table 19-1B
 
-| Column 1Voltage | Column 2Minimum clearance distance when passing under exposed electrical equipment or conductors | |
+| Column 1 Voltage | Column 2 Minimum clearance distance when passing under exposed electrical equipment or conductors | |
 | --- | --- | --- |
 | Phase to phase | Metres | Feet |
 | Over 750 V to 75 kV | 2 | 6.5 |

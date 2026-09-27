@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:33 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:00 GMT  
 **Ingestion Date:** 2026-09-27  
 
 Part 3 — Rights and Responsibilities
@@ -684,7 +684,9 @@ Division 2 — Minimum Requirements
 
 (iv) allow adequate space for the first aid attendant to safely provide first aid to injured workers.
 
-**Table 3-1Minimum Requirements — Class 1 Workplaces**
+**Table 3-1
+
+Minimum Requirements — Class 1 Workplaces**
 
 | Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
 | --- | --- | --- | --- | --- |
@@ -696,7 +698,9 @@ Division 2 — Minimum Requirements
 | 6 | 200 — 499 | • Intermediate first aid kit • First aid room • 2 intermediate first aid attendants | • Advanced first aid kit • First aid room • Intermediate first aid attendant • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 advanced first aid attendants |
 | 7 | 500 or more | • Intermediate first aid kit • First aid room • 3 intermediate first aid attendants | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants • 2 advanced first aid attendants |
 
-**Table 3-2Minimum Requirements — Class 2 Workplaces**
+**Table 3-2
+
+Minimum Requirements — Class 2 Workplaces**
 
 | Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
 | --- | --- | --- | --- | --- |
@@ -709,7 +713,9 @@ Division 2 — Minimum Requirements
 | 7 | 200 — 499 | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • 2 advanced first aid attendants • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
 | 8 | 500 or more | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • Advanced first aid attendant • Emergency transportation for one injured worker | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • 2 advanced first aid attendants • Emergency transportation for 2 injured workers |
 
-**Table 3-3Minimum Requirements — Class 3 Workplaces**
+**Table 3-3
+
+Minimum Requirements — Class 3 Workplaces**
 
 | Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
 | --- | --- | --- | --- | --- |
@@ -721,7 +727,9 @@ Division 2 — Minimum Requirements
 | 6 | 200 — 499 | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • 2 advanced first aid attendants | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants |
 | 7 | 500 or more | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • Advanced first aid attendant | • Advanced first aid kit • First aid room • Intermediate first aid attendant (transport) • 2 advanced first aid attendants | • Advanced first aid kit • First aid room • 2 intermediate first aid attendants (transport) • 2 advanced first aid attendants |
 
-**Table 3-4Minimum Requirements — Class 4 Workplaces**
+**Table 3-4
+
+Minimum Requirements — Class 4 Workplaces**
 
 | Item | Column 1 **Workers present** | Column 2 **Low hazard rating** | Column 3 **Moderate hazard rating** | Column 4 **High hazard rating** |
 | --- | --- | --- | --- | --- |
