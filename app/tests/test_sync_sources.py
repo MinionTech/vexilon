@@ -641,6 +641,52 @@ def test_extract_substantive_body_strips_provenance():
     assert "## Substantive Section\n\nImportant legal text here." in body_1
 
 
+def test_content_hash_ignores_bclaws_currency_date_line():
+    """A date-only bump of the BC Laws currency line is not drift. Other text is."""
+    statute = "Section 1 applies to a worker."
+    amended = "Section 1 applies to a dependent."
+    for opening in ("This Act is current to", "This regulation is current to"):
+        earlier = f"{opening} September 15, 2026\n\n{statute}\n"
+        later = f"{opening} September 22, 2026\n\n{statute}\n"
+        changed = f"{opening} September 22, 2026\n\n{amended}\n"
+        assert compute_content_hash(earlier) == compute_content_hash(later)
+        assert compute_content_hash(later) != compute_content_hash(changed)
+        assert opening in later
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_keeps_bclaws_currency_line_and_hash_ignores_its_date(mock_fetch, tmp_path):
+    """The currency line is written into the markdown. Only its date is outside the hash."""
+    mock_fetch.return_value = (
+        """
+        <html><body><div id="contentsscroll">
+          <h1>Example Act</h1>
+          <p>This Act is current to September 22, 2026</p>
+          <p>Section 1 applies.</p>
+        </div></body></html>
+        """,
+        {"last-modified": "Sun, 27 Sep 2026 00:00:00 GMT"},
+    )
+    entry = SourceEntry(
+        path="app/data/example_act.md",
+        url="https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/example",
+        type="bclaws",
+        selector="#contentsscroll",
+        category="statutory",
+    )
+    success, digest = sync_source(entry, tmp_path, dry_run=False)
+    assert success is True
+    written = (tmp_path / entry.path).read_text(encoding="utf-8")
+    assert "This Act is current to September 22, 2026" in written
+    bumped = written.replace("September 22, 2026", "September 15, 2026")
+    assert compute_content_hash(extract_substantive_body(written)) == compute_content_hash(
+        extract_substantive_body(bumped)
+    )
+    assert digest == compute_content_hash(extract_substantive_body(written))
+    amended = written.replace("Section 1 applies.", "Section 1 does not apply.")
+    assert digest != compute_content_hash(extract_substantive_body(amended))
+
+
 def test_format_provenance_header():
     """Verify provenance header structure satisfies Issue #695 format."""
     header = format_provenance_header(

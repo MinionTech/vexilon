@@ -830,9 +830,31 @@ def extract_substantive_body(markdown_text: str) -> str:
     return substantive
 
 
+# BC Laws stamps a currency date on its own line ("This Act is current to …"
+# or "This regulation is current to …"). That date moves on a schedule that
+# is not a change to the statute, so a date-only bump must not open a drift
+# issue. The line stays in the synced markdown; only the hash omits it.
+_BCLAWS_CURRENCY_LINE_RE = re.compile(
+    r"^(?:This Act is current to|This regulation is current to)\b"
+)
+
+
+def _omit_bclaws_currency_lines(text: str) -> str:
+    """Drop BC Laws currency-stamp lines before the drift hash is computed."""
+    return "\n".join(
+        line
+        for line in text.splitlines()
+        if not _BCLAWS_CURRENCY_LINE_RE.match(line.strip())
+    )
+
+
 def compute_content_hash(text: str) -> str:
-    """Compute SHA-256 hash of normalized text."""
-    normalized = re.sub(r"\s+", " ", text).strip()
+    """Compute SHA-256 hash of normalized text.
+
+    Lines that start with "This Act is current to" or "This regulation is
+    current to" are omitted. Any other text remains in the hash.
+    """
+    normalized = re.sub(r"\s+", " ", _omit_bclaws_currency_lines(text)).strip()
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
