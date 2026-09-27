@@ -2,6 +2,15 @@
 # .github/scripts/probe_health.sh <space_id> [timeout_seconds]
 # Read-only health probe for a Hugging Face Space: never deploys, restarts, or pushes.
 # Usage: ./.github/scripts/probe_health.sh bcgeu/navigator-test 300
+#
+# Worst case for the workflow call (timeout 300), every request using its full ceiling:
+#   metadata: 4 * PROBE_CURL_MAX_TIME + (1 + 2 + 4) = 127
+#   wake-up:  PROBE_CURL_MAX_TIME = 30
+#   deploy:   timeout + VERIFY_API_MAX_TIME = 300 + 60 = 360
+#   smoke:    VERIFY_SMOKE_BUDGET = 150
+#   health:   3 * PROBE_CURL_MAX_TIME + 2 * HEALTH_RETRY_INTERVAL = 150
+#   total:    817 seconds, under the 900-second step timeout
+# worst_case_seconds=817
 
 set -euo pipefail
 
@@ -9,6 +18,12 @@ SPACE_ID=${1:-}
 TIMEOUT_SECONDS=${2:-300}
 # The only Spaces hardware tier with no hourly price.
 FREE_HARDWARE="cpu-basic"
+METADATA_ATTEMPTS=4
+METADATA_RETRY_DELAYS=(1 2 4)
+PROBE_CURL_MAX_TIME=${PROBE_CURL_MAX_TIME:-30}
+HEALTH_ATTEMPTS=3
+HEALTH_RETRY_INTERVAL=${HEALTH_RETRY_INTERVAL:-30}
+VERIFY_SMOKE_BUDGET="${VERIFY_SMOKE_BUDGET:-150}"
 
 if [ -z "$SPACE_ID" ]; then
     echo "Error: SPACE_ID argument missing."
@@ -19,7 +34,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPACE_URL="https://$(echo "$SPACE_ID" | tr '[:upper:]' '[:lower:]' | tr '/' '-').hf.space"
 
 echo "[probe] Reading runtime for Hugging Face Space: $SPACE_ID"
-SPACE_JSON=$(curl -sS --fail-with-body --max-time 30 --retry 3 --retry-all-errors "https://huggingface.co/api/spaces/$SPACE_ID")
+SPACE_JSON=""
+metadata_ok=0
+for attempt in $(seq 1 "$METADATA_ATTEMPTS"); do
+    curl_exit=0
+    SPACE_JSON=$(curl -sS --fail-with-body --max-time "$PROBE_CURL_MAX_TIME" "https://huggingface.co/api/spaces/$SPACE_ID") || curl_exit=$?
+    if [ "$curl_exit" -eq 0 ]; then
+        metadata_ok=1
+        break
+    fi
+    echo "[probe] Space metadata request failed (curl exit code: $curl_exit)."
+    if [ "$attempt" -lt "$METADATA_ATTEMPTS" ]; then
+        delay="${METADATA_RETRY_DELAYS[$((attempt - 1))]}"
+        echo "[probe] Retrying metadata in ${delay}s..."
+        sleep "$delay"
+    fi
+done
+if [ "$metadata_ok" -ne 1 ]; then
+    echo "❌ Error: could not read runtime for $SPACE_ID."
+    exit 1
+fi
 # Paid unless every reported hardware value (current and requested) is free; a pending upgrade counts as paid.
 RUNTIME=$(echo "$SPACE_JSON" | python3 -c "
 import sys, json
@@ -53,20 +87,18 @@ fi
 if [ "$ASLEEP" == "true" ]; then
     echo "[probe] $SPACE_ID is asleep on free hardware '$HARDWARE'. Sending a wake-up request..."
     WAKE_EXIT=0
-    curl -s -o /dev/null --max-time 30 "$SPACE_URL/api/health" || WAKE_EXIT=$?
+    curl -s -o /dev/null --max-time "$PROBE_CURL_MAX_TIME" "$SPACE_URL/api/health" || WAKE_EXIT=$?
     echo "[probe] Wake-up request sent (curl exit code: $WAKE_EXIT). Waiting for the Space to start..."
 fi
 
+export VERIFY_SMOKE_BUDGET
 bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_ID" "$TIMEOUT_SECONDS"
 
 # Each attempt is a fresh request with a fresh body, so one network blip does not raise an issue.
-HEALTH_ATTEMPTS=3
-HEALTH_RETRY_INTERVAL=30
-
 for i in $(seq 1 "$HEALTH_ATTEMPTS"); do
     echo "[probe] Checking $SPACE_URL/api/health for HTTP 200 and \"status\": \"ok\" (Attempt $i/$HEALTH_ATTEMPTS)..."
     CURL_EXIT=0
-    RESPONSE=$(curl -sS --max-time 30 -w $'\n%{http_code}' "$SPACE_URL/api/health") || CURL_EXIT=$?
+    RESPONSE=$(curl -sS --max-time "$PROBE_CURL_MAX_TIME" -w $'\n%{http_code}' "$SPACE_URL/api/health") || CURL_EXIT=$?
     if [ $CURL_EXIT -ne 0 ]; then
         echo "[probe] Attempt $i failed: /api/health request failed (curl exit code: $CURL_EXIT)."
     else

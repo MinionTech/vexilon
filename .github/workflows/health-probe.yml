@@ -11,6 +11,7 @@ jobs:
   probe:
     name: Probe ${{ matrix.env }}
     runs-on: ubuntu-24.04
+    # Above the 15-minute probe step so a failed probe still reaches the notifier.
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -37,7 +38,7 @@ jobs:
           persist-credentials: false
 
       - name: Probe Space Health
-        # Above the probe's ~13-minute worst case, below the job timeout so the notifier step still runs.
+        # Script worst case is 817s (see probe_health.sh). Step timeout stays 15 minutes.
         timeout-minutes: 15
         env:
           SPACE_ID: ${{ matrix.space }}
