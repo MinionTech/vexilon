@@ -105,6 +105,7 @@ RETRY_INTERVAL=10
 CURL_EXIT=0
 HEALTH_JSON=""
 SMOKE_DEADLINE=""
+SMOKE_STOP=""
 if [ -n "$VERIFY_SMOKE_BUDGET" ]; then
   SMOKE_DEADLINE=$(( $(date +%s) + VERIFY_SMOKE_BUDGET ))
 fi
@@ -115,7 +116,7 @@ for i in $(seq 1 $MAX_RETRIES); do
     remaining=$((SMOKE_DEADLINE - $(date +%s)))
     if [ "$remaining" -le 0 ]; then
       echo "[verify] Smoke-test budget of ${VERIFY_SMOKE_BUDGET}s exhausted."
-      CURL_EXIT=28
+      SMOKE_STOP=budget-exhausted
       break
     fi
     if [ "$remaining" -lt "$this_max" ]; then
@@ -136,6 +137,7 @@ for i in $(seq 1 $MAX_RETRIES); do
     remaining=$((SMOKE_DEADLINE - $(date +%s)))
     if [ "$remaining" -le 0 ]; then
       echo "[verify] Smoke-test budget of ${VERIFY_SMOKE_BUDGET}s exhausted."
+      SMOKE_STOP=budget-exhausted
       break
     fi
     if [ "$remaining" -lt "$sleep_for" ]; then
@@ -148,7 +150,12 @@ for i in $(seq 1 $MAX_RETRIES); do
 done
 
 if [ $CURL_EXIT -ne 0 ] || [ -z "$HEALTH_JSON" ]; then
-  echo "❌ Error: Functional smoke test failed. Could not query /api/health after $MAX_RETRIES attempts. curl returned: $CURL_EXIT. Response: $HEALTH_JSON"
+  # A budget stop before any curl, or after an empty 200, has no failed curl exit to report.
+  smoke_report=$CURL_EXIT
+  if [ -n "$SMOKE_STOP" ] && [ "$CURL_EXIT" -eq 0 ]; then
+    smoke_report=$SMOKE_STOP
+  fi
+  echo "❌ Error: Functional smoke test failed. Could not query /api/health after $MAX_RETRIES attempts. curl returned: $smoke_report. Response: $HEALTH_JSON"
   exit 1
 fi
 

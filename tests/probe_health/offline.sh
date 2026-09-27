@@ -173,6 +173,8 @@ SPECS = {
     "free-sleeping": ("SLEEPING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "ok"),
     "free-retry-ok": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "timeout-then-ok"),
     "free-three-fail": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "fail-three"),
+    "smoke-empty": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "ok"),
+    "smoke-exit-7": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "ok"),
 }
 
 def spaces_body(stage, hardware, gc):
@@ -221,6 +223,13 @@ if "huggingface.co/api/spaces/" in url:
     emit("spaces", spaces_body(stage, hardware, gc), "200", 0)
 if url.endswith("/api/health") and output is not None:
     emit("wake", "", "200", 0)
+if url.endswith("/api/health") and fail_with_body and scenario == "smoke-empty":
+    if max_time is not None:
+        time.sleep(float(max_time))
+    emit("smoke", "", "200", 0)
+if url.endswith("/api/health") and fail_with_body and scenario == "smoke-exit-7":
+    log("smoke", 7)
+    sys.exit(7)
 if url.endswith("/api/health") and fail_with_body:
     emit("smoke", '{"status":"ok"}', "200", 0)
 if url.endswith("/api/health") and write_out is not None:
@@ -264,9 +273,13 @@ run_case() {
     fi
     local health_count
     health_count="$(grep -c '/api/health' "$log" || true)"
-    if [ "$expect_health" = "yes" ] && [ "$health_count" -eq 0 ]; then
-        cat "$out"
-        fail "$name: expected /api/health, log was empty of it"
+    if [ "$expect_health" = "yes" ]; then
+        local strict_count
+        strict_count="$(grep -c $'^strict\t' "$log" || true)"
+        if [ "$strict_count" -eq 0 ]; then
+            cat "$log"
+            fail "$name: expected a strict /api/health check"
+        fi
     fi
     if [ "$expect_health" = "no" ] && [ "$health_count" -ne 0 ]; then
         cat "$log"
@@ -293,7 +306,8 @@ run_case "free, RUNNING, HTTP 503" free-503 5 1 yes
 run_case "free, RUNNING, status degraded" free-degraded 5 1 yes
 run_case "free, RUNNING, non-JSON body" free-nonjson 5 1 yes
 run_case "free, RUNTIME_ERROR" free-runtime-error 5 1 no
-run_case "free, SLEEPING, never reaches RUNNING" free-sleeping 2 1 yes 1
+# Wake-up only. expect_health=yes requires a strict line; this case checks that below.
+run_case "free, SLEEPING, never reaches RUNNING" free-sleeping 2 1 wake 1
 wake_count="$(grep -c $'^wake\t' "$CASE_LOG" || true)"
 strict_count="$(grep -c $'^strict\t' "$CASE_LOG" || true)"
 if [ "$wake_count" -ne 1 ] || [ "$strict_count" -ne 0 ]; then
@@ -360,5 +374,46 @@ if grep -Ev $'\tmax=[0-9]+(\.[0-9]+)?\texit=' "$hung_log" >/dev/null; then
     fail "hung path issued a curl without --max-time"
 fi
 pass "hung request finished in ${hung_elapsed}s (ceiling ${hung_ceiling}s, slack 15s)"
+
+run_verify_budget() {
+    local name="$1"
+    local scenario="$2"
+    local budget="$3"
+    local expect_report="$4"
+    local work out
+    work="$(mktemp -d)"
+    out="$work/out.txt"
+    set +e
+    SCENARIO="$scenario" \
+        CURL_LOG="$work/curl.log" \
+        CURL_STATE="$work/state.json" \
+        PATH="/tmp/bin:${PATH}" \
+        VERIFY_SMOKE_BUDGET="$budget" \
+        VERIFY_POLL_INTERVAL=0 \
+        bash "$VERIFY" "bcgeu/navigator-test" 5 >"$out" 2>&1
+    local rc=$?
+    set -e
+    if [ "$rc" -eq 0 ]; then
+        cat "$out"
+        fail "$name: verify succeeded"
+    fi
+    if ! grep -F "curl returned: ${expect_report}." "$out" >/dev/null; then
+        cat "$out"
+        fail "$name: missing curl returned: ${expect_report}"
+    fi
+    if [ "$expect_report" != "28" ] && grep -F "curl returned: 28." "$out" >/dev/null; then
+        cat "$out"
+        fail "$name: invented curl exit 28"
+    fi
+    if [ "$expect_report" != "0" ] && grep -F "curl returned: 0." "$out" >/dev/null; then
+        cat "$out"
+        fail "$name: reported curl exit 0 for a failed smoke check"
+    fi
+    pass "$name"
+}
+
+run_verify_budget "smoke budget exhausted before a curl" smoke-exit-7 0 budget-exhausted
+run_verify_budget "smoke budget keeps the last real curl exit" smoke-exit-7 1 7
+run_verify_budget "empty 200 at the smoke budget does not report curl exit 0" smoke-empty 1 budget-exhausted
 
 echo "All offline probe cases passed."
