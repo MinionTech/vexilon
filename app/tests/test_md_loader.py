@@ -20,8 +20,7 @@ def test_load_md_chunks_basic(tmp_path, monkeypatch):
         assert "text" in chunk
         # app title-cases source names from filenames
         assert chunk["source"] == "test"
-        # Currently, Markdown loader defaults to page 1 for all chunks.
-        assert chunk["page"] == 1
+        assert "page" not in chunk
         assert "chunk_index" in chunk
 
 def test_load_md_chunks_skips_empty_files(tmp_path):

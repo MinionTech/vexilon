@@ -639,8 +639,13 @@ async def get_rag_context(message: str, history: list[dict]) -> tuple[list[str],
                     seen.add(c["text"])
                     unique_snippets.append(c)
                     source = c.get("source", "Unknown")
-                    page = c.get("page", "?")
-                    context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
+                    page = c.get("page")
+                    if page is not None:
+                        context_parts.append(
+                            f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}"
+                        )
+                    else:
+                        context_parts.append(f"<<< SOURCE: {source} >>>\n{c['text']}")
 
         sources_found = set(c.get("source", "Unknown") for c in unique_snippets)
         step.output = f"Retrieved {len(unique_snippets)} matching excerpts from {len(sources_found)} reference documents."
