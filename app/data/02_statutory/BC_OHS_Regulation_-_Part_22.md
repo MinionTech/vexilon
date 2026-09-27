@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_18)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:10 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 03:06:05 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -1239,9 +1239,9 @@ Waste Dumps and Spoil Areas
 
 (b) all affected workers must be instructed in appropriate safe work procedures.
 
-**Figure 22-1: Standard hand signals for controlling mobile equipment movement
+**Figure 22-1: Standard hand signals for controlling mobile equipment movement**
 
-Figure 22-1 (continued): Standard hand signals for controlling mobile equipment movement**
+**Figure 22-1 (continued): Standard hand signals for controlling mobile equipment movement**
 
 Raises
 

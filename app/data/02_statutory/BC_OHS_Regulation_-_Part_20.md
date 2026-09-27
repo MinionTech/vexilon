@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_16)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:09 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 03:06:03 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -1458,9 +1458,9 @@ For Case 2 (trench or bulk excavation) the maximum permissible slope of the exca
 | 60 to 90 | 2 to 3 | 2H to 1V |
 | 90 to 120 | 3 to 4 | 3H to 1V |
 
-**Figure 20-2: Benching in lieu of shoring
+**Figure 20-2: Benching in lieu of shoring**
 
-Figure 20-3: Combined supporting and sloping**
+**Figure 20-3: Combined supporting and sloping**
 
 Shoring must be adequate for excavation depth H.
 
