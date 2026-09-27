@@ -33,18 +33,34 @@ def test_resolve_pdf_path_same_directory(tmp_path):
 
 def test_resolve_pdf_path_public_docs_exact(tmp_path, monkeypatch):
     """If the PDF exists in public/docs with the exact stem, return it."""
-    md_file = tmp_path / "BCGEU_19th_Main_Agreement.md"
+    md_file = tmp_path / "BCGEU_20th_Main_Agreement.md"
     md_file.touch()
-    
+
     public_docs_dir = tmp_path / "public" / "docs"
     public_docs_dir.mkdir(parents=True)
     monkeypatch.setattr(app, "PUBLIC_DOCS_DIR", public_docs_dir)
-    
-    pdf_file = public_docs_dir / "BCGEU_19th_Main_Agreement.pdf"
+
+    pdf_file = public_docs_dir / "BCGEU_20th_Main_Agreement.pdf"
     pdf_file.touch()
-    
+
     resolved = app.resolve_pdf_path(md_file)
     assert resolved == pdf_file
+
+
+def test_resolve_pdf_path_does_not_cross_version_pdf(tmp_path, monkeypatch):
+    """A markdown stem must not resolve to a different agreement version's PDF."""
+    md_file = tmp_path / "BCGEU_20th_Main_Agreement.md"
+    md_file.touch()
+
+    public_docs_dir = tmp_path / "public" / "docs"
+    public_docs_dir.mkdir(parents=True)
+    monkeypatch.setattr(app, "PUBLIC_DOCS_DIR", public_docs_dir)
+
+    other_pdf = public_docs_dir / "BCGEU_19th_Main_Agreement.pdf"
+    other_pdf.touch()
+
+    resolved = app.resolve_pdf_path(md_file)
+    assert resolved == md_file
 
 def test_resolve_pdf_path_public_docs_prefix(tmp_path, monkeypatch):
     """If a multi-part file exists, it should match the consolidated PDF in public/docs based on the prefix."""

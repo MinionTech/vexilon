@@ -119,14 +119,27 @@ def test_md_toc_blocks_skipped(tmp_path, monkeypatch):
     assert "Actual policy text" in full_text
     assert ".........." not in full_text
 
-def test_load_md_chunks_one_based_metadata(tmp_path):
-    """Metadata must have page=1 for MD (current baseline)."""
+def test_load_md_chunks_omits_page_without_matching_pdf(tmp_path):
+    """Without a same-stem PDF, chunks must not carry PDF page numbers."""
     md_file = tmp_path / "test.md"
     md_file.write_text("Some text.")
-    
+
     chunks = indexing.load_md_chunks(md_file)
-    assert chunks[0]["page"] == 1
+    assert "page" not in chunks[0]
     assert chunks[0]["source"] == "test"
+
+
+def test_load_md_chunks_20th_includes_draft_eoe_tag(tmp_path, monkeypatch):
+    """20th main agreement chunks must surface DRAFT / E&OE in retrieved text."""
+    monkeypatch.setattr(indexing, "CHUNK_SIZE", 50)
+    monkeypatch.setattr(indexing, "CHUNK_OVERLAP", 0)
+
+    md_file = tmp_path / "BCGEU_20th_Main_Agreement.md"
+    md_file.write_text("# ARTICLE 1\nSample clause text for retrieval.")
+
+    chunks = indexing.load_md_chunks(md_file)
+    assert chunks
+    assert indexing._DRAFT_EOE_CHUNK_LABEL in chunks[0]["text"]
 
 def test_load_md_chunks_skips_whitespace_only(tmp_path):
     """MD loader should return empty list for whitespace files."""

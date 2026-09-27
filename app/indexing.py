@@ -154,7 +154,26 @@ def _is_toc_or_index_page(page_text: str) -> bool:
         return True
     return False
 
-def chunk_text(full_text: str, token_data: list[tuple[int, int, int, str]], source_name: str, path: str = "") -> list[dict]:
+_DRAFT_20TH_AGREEMENT_STEM = "BCGEU_20th_Main_Agreement"
+_DRAFT_EOE_CHUNK_LABEL = "DRAFT consolidation — E&OE"
+
+
+def _chunk_text_prefix(source_name: str, header: str, path: str) -> str:
+    path_norm = path.replace("\\", "/").lower()
+    cite = f"[{source_name} - {header}] " if header else f"[{source_name}] "
+    if _DRAFT_20TH_AGREEMENT_STEM.lower() in path_norm or path_norm.endswith(
+        f"{_DRAFT_20TH_AGREEMENT_STEM.lower()}.md"
+    ):
+        return f"[{_DRAFT_EOE_CHUNK_LABEL}] {cite}"
+    return cite
+
+
+def chunk_text(
+    full_text: str,
+    token_data: list[tuple[int, int, int | None, str]],
+    source_name: str,
+    path: str = "",
+) -> list[dict]:
     chunks = []
     if not token_data:
         return chunks
@@ -165,16 +184,18 @@ def chunk_text(full_text: str, token_data: list[tuple[int, int, int, str]], sour
         end = min(start + CHUNK_SIZE, len(token_data))
         char_start, _, page_num, header = token_data[start]
         _, char_end, _, _ = token_data[end - 1]
-        prefix = f"[{source_name} - {header}] " if header else f"[{source_name}] "
-        chunk_text_str = prefix + full_text[char_start:char_end]
-        chunks.append({
+        line_prefix = _chunk_text_prefix(source_name, header, path)
+        chunk_text_str = line_prefix + full_text[char_start:char_end]
+        chunk: dict[str, Any] = {
             "text": chunk_text_str,
-            "page": page_num,
             "source": source_name,
             "header": header,
             "chunk_index": idx,
             "path": path,
-        })
+        }
+        if page_num is not None:
+            chunk["page"] = page_num
+        chunks.append(chunk)
         idx += 1
         start += step
     return chunks
@@ -208,15 +229,19 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     lines = content.split("\n")
     
     pdf_path = _resolve_pdf_path(md_path)
-    pdf_pages = []
-    if pdf_path.exists() and pdf_path.suffix.lower() == ".pdf":
+    pdf_pages: list[str] = []
+    same_stem_pdf = (
+        pdf_path.suffix.lower() == ".pdf"
+        and pdf_path.exists()
+        and pdf_path.stem == md_path.stem
+    )
+    if same_stem_pdf:
         try:
             with fitz.open(str(pdf_path)) as doc:
                 for page in doc:
-                    pdf_pages.append(page.get_text().replace('\n', ' '))
+                    pdf_pages.append(page.get_text().replace("\n", " "))
         except Exception as e:
             logger.warning(f"Could not read PDF for {md_path.name}: {e}")
-            pass
             
     
     sections = []
@@ -253,7 +278,7 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         if stripped.startswith("#"):
             current_header = stripped.lstrip("#").strip().upper()
         
-        page_num = 1
+        page_num: int | None = None
         if pdf_pages and stripped:
             if len(stripped) > 20:
                 found = False
@@ -267,8 +292,8 @@ def load_md_chunks(md_path: Path) -> list[dict]:
                     page_num = current_pdf_page + 1
             else:
                 page_num = current_pdf_page + 1
-        else:
-            page_num = current_pdf_page + 1 if pdf_pages else 1
+        elif pdf_pages:
+            page_num = current_pdf_page + 1
 
         # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
         # This replaces the legacy try-except/char-length fallback blocks.
@@ -355,7 +380,7 @@ def embed_texts(texts: list[str]) -> "np.ndarray":
 def get_document_tier_weight(source_name: str, path: str = "") -> float:
     """
     Determine the retrieval boost weight for a document based on its tier.
-    - Tier 1: 19th Main Agreement & Standards of Conduct (default 1.2)
+    - Tier 1: 20th Main Agreement & Standards of Conduct (default 1.2)
     - Tier 3: Statutory and general secondary resources (default 0.8)
     - Tier 2: Core agreements, jurisprudence, forms, etc. (default 1.0)
     """
@@ -365,17 +390,17 @@ def get_document_tier_weight(source_name: str, path: str = "") -> float:
 
     # Tier 1 checks:
     # 1. Gov BC Standards of Conduct (either via relative path or source name)
-    # 2. BCGEU 19th Main Agreement (either via relative path or source name)
+    # 2. BCGEU 20th Main Agreement (either via relative path or source name)
     is_standards_of_conduct = (
         "standards_of_conduct" in path_lower 
         or "standards of conduct" in source_lower
     )
-    is_19th_agreement = (
-        "19th_main_agreement" in path_lower 
-        or "19th main agreement" in source_lower
+    is_main_agreement = (
+        "20th_main_agreement" in path_lower
+        or "20th main agreement" in source_lower
     )
 
-    if is_standards_of_conduct or is_19th_agreement:
+    if is_standards_of_conduct or is_main_agreement:
         return TIER1_BOOST
 
     # Tier 3 checks:
