@@ -645,13 +645,26 @@ def test_content_hash_ignores_bclaws_currency_date_line():
     """A date-only bump of the BC Laws currency line is not drift. Other text is."""
     statute = "Section 1 applies to a worker."
     amended = "Section 1 applies to a dependent."
-    for opening in ("This Act is current to", "This regulation is current to"):
+    openings = (
+        "This Act is current to",
+        "This regulation is current to",
+        "This consolidation is current to",
+        "**This consolidation is current to",
+    )
+    for opening in openings:
         earlier = f"{opening} September 15, 2026\n\n{statute}\n"
         later = f"{opening} September 22, 2026\n\n{statute}\n"
         changed = f"{opening} September 22, 2026\n\n{amended}\n"
         assert compute_content_hash(earlier) == compute_content_hash(later)
         assert compute_content_hash(later) != compute_content_hash(changed)
-        assert opening in later
+
+    charge = (
+        "minimize the potential for an electrical charge or current to "
+        "unintentionally reach an explosive\n"
+    )
+    assert compute_content_hash(charge) != compute_content_hash(
+        charge.replace("unintentionally", "intentionally")
+    )
 
 
 @patch("scripts.sync_sources.fetch_upstream")
