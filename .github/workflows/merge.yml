@@ -96,7 +96,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "Golden Question Failure: Agreement Navigator (AgNav)"
-          labels: "critical,deployment,prod"
+          labels: "critical,deployment,test"
 
       - name: Notify Owners on Failure
         if: failure() && steps.golden.outcome != 'failure' && steps.golden.outcome != 'cancelled'
@@ -161,3 +161,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "PROD Deployment Failure: Agreement Navigator (AgNav)"
           labels: "critical,deployment,prod"
+
+  notify-cancelled:
+    name: Notify on Timeout or Cancellation
+    needs: [deploy-test, deploy-prod]
+    if: always() && contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Notify on timeout or cancellation
+        uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
+          labels: "failure,deployment"
