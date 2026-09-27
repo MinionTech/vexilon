@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_04)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:35 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:38 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -2261,7 +2261,7 @@ Toxic Process Gases
 
 (a) meets the HPR Health Hazard Class — Acute Toxicity, Categories 1, 2 and 3 or the categories set out in the following table:
 
-| **HPR Health Hazard Classes** | **Hazard Categories** | | | | | | |
+| **HPR Health Hazard**<br>**Classes** | **Hazard Categories** | | | | | | |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Skin corrosion / irritation | | 1A | 1B | 1C | 2 | | |
 | Serious eye damage / irritation | 1 | | | | | 2A | 2B |
@@ -2269,7 +2269,7 @@ Toxic Process Gases
 | Mutagenicity | | 1A | 1B | | 2 | | |
 | Carcinogenicity | | 1A | 1B | | 2 | | |
 | Reproductive toxicity | | 1A | 1B | | 2 | | |
-| Specific organ toxicity (repeated exposure) | 1 | | | | 2 | | |
+| Specific organ toxicity<br>(repeated exposure) | 1 | | | | 2 | | |
 
 , and
 

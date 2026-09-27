@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_09)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 03:31:57 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:57 GMT  
 **Ingestion Date:** 2026-09-27  
 
 This Act is current to September 22, 2026
@@ -22,7 +22,7 @@ Schedule 1
 
 Presumption of Occupational Disease Related to Specific Process or Industry
 
-| Item | Column 1 **Description of Disease** | Column 2 **Description of Process or Industry** |
+| Item | Column 1<br>**Description of Disease** | Column 2<br>**Description of Process or Industry** |
 | --- | --- | --- |
 | 1 | Poisoning by: | |
 | | (1) Lead | Where there is exposure to lead or lead compounds. |
@@ -40,9 +40,9 @@ Presumption of Occupational Disease Related to Specific Process or Industry
 | | (13) Other toxic substances | Where there is exposure to such toxic gases, vapours, mists, fumes or dusts. |
 | 2 | Infection caused by: | |
 | | (1) Psittacosis virus | Where there is established contact with ornithosis-infected avian species or material. |
-| | (2) Salmonella organisms, Staphylococcus aureus, or Hepatitis B virus | Where close and frequent contact with a source or sources of the infection has been established and the employment necessitates (a) the treatment, nursing or examination of or interviews with patients or ill persons, (b) the analysis or testing of body tissues or fluids, or (c) research into salmonellae, pathogenic staphylococci or Hepatitis B virus. |
+| | (2) Salmonella organisms, Staphylococcus aureus, or Hepatitis B virus | Where close and frequent contact with a source or sources of the infection has been established and the employment necessitates<br>(a) the treatment, nursing or examination of or interviews with patients or ill persons, (b) the analysis or testing of body tissues or fluids, or (c) research into salmonellae, pathogenic staphylococci or Hepatitis B virus. |
 | | (3) Brucella organisms, including Undulant fever | Where there is contact with animals, animal carcasses or animal by-products. |
-| | (4) Tubercle bacillus | Where close and frequent contact with a source or sources of tuberculous infection has been established and the employment necessitates (a) the treatment, nursing or examination of patients or ill persons, (b) the analysis or testing of body tissues or fluids, or (c) research into tuberculosis by a worker who, (i) when first engaged, or after an absence from employment of the types mentioned in these regulations for a period of more than one year, when re-engaged in such employment was free from evidence of tuberculosis, and (ii) continued to be free from evidence of tuberculosis for 6 months after being so employed, except in the case of primary tuberculosis as proven by a negative tuberculin test at the time of employment. In the case of a worker previously compensated for tuberculosis, any subsequent tuberculosis after the disease has become inactive and has remained inactive for a period of 3 years or more is not to be considered to have occurred as a result of the original disability, unless the worker is still engaged in employment listed above or the Board is satisfied that the subsequent tuberculosis is the direct result of the tuberculosis for which the worker has been compensated. |
+| | (4) Tubercle bacillus | Where close and frequent contact with a source or sources of tuberculous infection has been established and the employment necessitates<br>(a) the treatment, nursing or examination of patients or ill persons, (b) the analysis or testing of body tissues or fluids, or (c) research into tuberculosis by a worker who, (i) when first engaged, or after an absence from employment of the types mentioned in these regulations for a period of more than one year, when re-engaged in such employment was free from evidence of tuberculosis, and (ii) continued to be free from evidence of tuberculosis for 6 months after being so employed, except in the case of primary tuberculosis as proven by a negative tuberculin test at the time of employment. In the case of a worker previously compensated for tuberculosis, any subsequent tuberculosis after the disease has become inactive and has remained inactive for a period of 3 years or more is not to be considered to have occurred as a result of the original disability, unless the worker is still engaged in employment listed above or the Board is satisfied that the subsequent tuberculosis is the direct result of the tuberculosis for which the worker has been compensated. |
 | 3 | Pneumoconiosis: | |
 | | (1) Silicosis | Where there is exposure to airborne silica dust, including in metalliferous mining and coal mining. |
 | | (2) Asbestosis | Where there is exposure to airborne asbestos dust. |
@@ -52,27 +52,27 @@ Presumption of Occupational Disease Related to Specific Process or Industry
 | 6 | Cancer: | |
 | | (1) Primary carcinoma of the lung when associated with asbestosis | Where there is exposure to airborne asbestos dust. |
 | | (2) Primary carcinoma of the lung when associated with bilateral diffuse pleural thickening over 2 mm thick | Where there is exposure to airborne asbestos dust and the worker has not previously had collagen disease, chronic uremia, drug-induced fibrosis, tuberculosis or other infection or trauma capable of causing pleural thickening. |
-| | (3) Primary carcinoma of the lung | Where there is exposure to airborne asbestos dust for a period of 10 years or more of employment in one or more of the following industries: (a) asbestos mining; (b) insulation or filter material production; (c) construction, where there is disturbance of asbestos-containing materials; (d) plumbing or electrical work; (e) pulp mill work; (f) shipyard work; (g) longshoring. |
+| | (3) Primary carcinoma of the lung | Where there is exposure to airborne asbestos dust for a period of 10 years or more of employment in one or more of the following industries:<br>(a) asbestos mining; (b) insulation or filter material production; (c) construction, where there is disturbance of asbestos-containing materials; (d) plumbing or electrical work; (e) pulp mill work; (f) shipyard work; (g) longshoring. |
 | | (4) Mesothelioma, whether pleural or peritoneal | Where there is exposure to airborne asbestos dust. |
 | | (5) Carcinoma, associated with asbestosis, of the larynx or pharynx | Where there is exposure to airborne asbestos dust. |
 | | (6) Gastrointestinal cancer, including all primary cancers associated with the esophagus, stomach, small bowel, colon and rectum excluding the anus, and without regard to the site of the cancer in the gastrointestinal tract or the histological structure of the cancer | Where there is exposure to asbestos dust if, during the period between the first exposure to asbestos dust and the diagnosis of gastrointestinal cancer, there has been a period of, or periods adding up to, 20 years of continuous exposure to asbestos dust and such exposure represents or is a manifestation of the major component of the occupational activity in which the exposure occurred. |
-| | (7) Primary cancer of the lung | Where there is prolonged exposure to any of the following: (a) aerosols and gases containing arsenic, chromium, nickel or their compounds; (b) bis(chloromethyl) ether; (c) the dust of uranium, or radon gas and its decay products; (d) particulate polycyclic aromatic hydrocarbons. |
+| | (7) Primary cancer of the lung | Where there is prolonged exposure to any of the following:<br>(a) aerosols and gases containing arsenic, chromium, nickel or their compounds; (b) bis(chloromethyl) ether; (c) the dust of uranium, or radon gas and its decay products; (d) particulate polycyclic aromatic hydrocarbons. |
 | | (8) Leukemia or pre-leukemia | Where there is prolonged exposure to benzene or to ionizing radiation. |
-| | (9) Primary cancer of the skin | Where there is (a) prolonged contact with coal tar products, arsenic or cutting oils, or (b) prolonged exposure to solar ultraviolet light. |
+| | (9) Primary cancer of the skin | Where there is<br>(a) prolonged contact with coal tar products, arsenic or cutting oils, or (b) prolonged exposure to solar ultraviolet light. |
 | | (10) Primary cancer of the epithelial lining of the urinary bladder, ureter or renal pelvis | Where there is prolonged exposure to beta-naphthylamine, benzidine or 4-nitrodiphenyl. |
-| | (11) Primary cancer of the mucous lining of the nose or nasal sinuses | Where there is prolonged exposure to (a) dusts, fumes or mists containing nickel, or (b) the dusts of hard woods. |
+| | (11) Primary cancer of the mucous lining of the nose or nasal sinuses | Where there is prolonged exposure to<br>(a) dusts, fumes or mists containing nickel, or (b) the dusts of hard woods. |
 | | (12) Angiosarcoma of the liver | Where there is exposure to vinyl chloride monomer. |
-| 7 | Asthma | Where there is exposure to any of the following: (a) western red cedar dust; (b) isocyanate vapours or gases; (c) the dusts, fumes or vapours of other chemicals or organic material known to cause asthma. |
+| 7 | Asthma | Where there is exposure to any of the following:<br>(a) western red cedar dust; (b) isocyanate vapours or gases; (c) the dusts, fumes or vapours of other chemicals or organic material known to cause asthma. |
 | 8 | Extrinsic allergic alveolitis, including farmers' lung and mushroom workers' lung | Where there is repeated exposure to respirable organic dusts. |
-| 9 | Acute upper respiratory inflammation, acute pharyngitis, acute laryngitis, acute tracheitis, acute bronchitis, acute pneumonitis or acute pulmonary edema, excluding any allergic reaction, reaction to environmental tobacco smoke or effect of an infection | Where (a) there is exposure to a high concentration of fumes, vapours, gases, mists or dusts of substances that have irritating or inflammatory properties, and (b) the respiratory symptoms occur within 48 hours of the exposure or, if there is exposure to nitrogen dioxide or phosgene, within 72 hours of the exposure. |
+| 9 | Acute upper respiratory inflammation, acute pharyngitis, acute laryngitis, acute tracheitis, acute bronchitis, acute pneumonitis or acute pulmonary edema, excluding any allergic reaction, reaction to environmental tobacco smoke or effect of an infection | Where<br>(a) there is exposure to a high concentration of fumes, vapours, gases, mists or dusts of substances that have irritating or inflammatory properties, and (b) the respiratory symptoms occur within 48 hours of the exposure or, if there is exposure to nitrogen dioxide or phosgene, within 72 hours of the exposure. |
 | 10 | Metal fume fever | Where there is exposure to the fumes of zinc or other metals. |
 | 11 | Fluorosis | Where there is exposure to high concentrations of fluorine or fluorine compounds, whether in gaseous or particulate form. |
 | 12 | Neurosensory hearing loss | Where there is prolonged exposure to excessive noise levels. |
 | 13 | Bursitis: | |
-| | (1) Knee bursitis (inflammation of the prepatellar, suprapatellar or superficial infrapatellar bursa) | Where (a) there is repeated jarring impact against the involved bursa, or (b) there are significant periods of kneeling on the involved bursa. |
+| | (1) Knee bursitis (inflammation of the prepatellar, suprapatellar or superficial infrapatellar bursa) | Where<br>(a) there is repeated jarring impact against the involved bursa, or (b) there are significant periods of kneeling on the involved bursa. |
 | | (2) Shoulder bursitis (inflammation of the subacromial or subdeltoid bursa) | Where there is frequently repeated or sustained abduction or flexion of the shoulder joint greater than 60° and where such activity represents a significant component of the employment. |
 | 14 | Tendinopathy: | |
-| | (1) Hand-wrist tendinopathy | Where there is use of the affected tendon or tendons to perform a task or series of tasks that involve any 2 of the following and where such activity represents a significant component of the employment: (a) frequently repeated motions or muscle contractions that place strain on the affected tendon or tendons; (b) significant flexion, extension, ulnar deviation or radial deviation of the affected hand or wrist; (c) forceful exertion of the muscles used in handling or moving tools or other objects with the affected hand or wrist. |
+| | (1) Hand-wrist tendinopathy | Where there is use of the affected tendon or tendons to perform a task or series of tasks that involve any 2 of the following and where such activity represents a significant component of the employment:<br>(a) frequently repeated motions or muscle contractions that place strain on the affected tendon or tendons; (b) significant flexion, extension, ulnar deviation or radial deviation of the affected hand or wrist; (c) forceful exertion of the muscles used in handling or moving tools or other objects with the affected hand or wrist. |
 | | (2) Shoulder tendinopathy | Where there is frequently repeated or sustained abduction or flexion of the shoulder joint greater than 60° and where such activity represents a significant component of the employment. |
 | 15 | Decompression sickness | Where there is exposure to increased air pressure. |
 | 16 | Contact dermatitis | Where there is excessive exposure to irritants, allergens or sensitizers ordinarily causative of dermatitis. |
@@ -83,9 +83,9 @@ Presumption of Occupational Disease Related to Specific Process or Industry
 | | (a) conjunctivitis or keratitis | Where there is exposure to ultraviolet light. |
 | | (b) cataract or other thermal damage to the eye | Where there is excessive exposure to infrared, microwave or laser radiation. |
 | 19 | Erosion of incisor teeth | Where there is exposure to acid fumes or mist. |
-| 20 | Infection that is | Where (a) there is a risk of exposure to a source or sources of infection significantly greater than that to the public at large, (b) the risk of exposure occurs during the applicable notice or emergency under column 1, and (c) the risk of exposure occurs within the geographical area of the applicable notice or emergency under column 1. |
+| 20 | Infection that is | Where<br>(a) there is a risk of exposure to a source or sources of infection significantly greater than that to the public at large,<br>(b) the risk of exposure occurs during the applicable notice or emergency under column 1, and<br>(c) the risk of exposure occurs within the geographical area of the applicable notice or emergency under column 1. |
 | | (1) caused by communicable viral pathogens, and | |
-| | (2) the subject of one or more of the following: (a) notice given under section 52 (2) of the *Public Health Act*; (b) a state of emergency declared under section 9 (1) of the *Emergency Program Act*; (c) a state of local emergency declared under section 12 (1) of the *Emergency Program Act*; (d) an emergency declared under section 173 of the *Vancouver Charter*. | |
+| | (2) the subject of one or more of the following:<br>(a) notice given under section 52 (2) of the *Public Health Act*;<br>(b) a state of emergency declared under section 9 (1) of the *Emergency Program Act*;<br>(c) a state of local emergency declared under section 12 (1) of the *Emergency Program Act*;<br>(d) an emergency declared under section 173 of the *Vancouver Charter*. | |
 
 Schedule 2
 
@@ -123,7 +123,7 @@ Non-Traumatic Hearing Loss
 
 **TABLE**
 
-| Item | Column 1 **Range of Hearing Loss (decibels)** | Column 2 **Percentage of Disability for Ear Most Affected** | Column 3 **Percentage of Disability for Ear Least Affected** |
+| Item | Column 1<br>**Range of Hearing Loss (decibels)** | Column 2<br>**Percentage of Disability for Ear Most Affected** | Column 3<br>**Percentage of Disability for Ear Least Affected** |
 | --- | --- | --- | --- |
 | 1 | 0-34 | 0 | 0 |
 | 2 | 35-39 | 0.3 | 1.5 |

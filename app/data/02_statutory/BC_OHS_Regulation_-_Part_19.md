@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_15)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 02:52:09 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:44 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -331,7 +331,7 @@ Minimum Separation Distance to be Maintained from Energized High Voltage Electri
 
 Table 19-1A
 
-| **Column 1 Voltage** | Column 2 Minimum approach distance when working close to exposed electrical equipment or conductors | |
+| **Column 1**<br>**Voltage** | Column 2<br>Minimum approach distance when working close to exposed electrical equipment or conductors | |
 | --- | --- | --- |
 | Phase to phase | Metres | Feet |
 | Over 750 V to 75 kV | 3 | 10 |
@@ -354,7 +354,7 @@ Table 19-1A
 
 Table 19-1B
 
-| Column 1 Voltage | Column 2 Minimum clearance distance when passing under exposed electrical equipment or conductors | |
+| Column 1<br>Voltage | Column 2<br>Minimum clearance distance when passing under exposed electrical equipment or conductors | |
 | --- | --- | --- |
 | Phase to phase | Metres | Feet |
 | Over 750 V to 75 kV | 2 | 6.5 |
@@ -510,7 +510,7 @@ Tree Pruning and Falling near Energized Conductors
 
 Table 19-3: Limits of approach for utility arborists
 
-| Voltage range | A. Insulated tool limit for certified utility arborists | | B. Work limit for certified utility arborists | | C. Work limit for apprentice utility arborists | |
+| Voltage range | A. Insulated tool limit<br>for certified utility<br>arborists | | B. Work limit for<br>certified utility<br>arborists | | C. Work limit for<br>apprentice utility<br>arborists | |
 | --- | --- | --- | --- | --- | --- | --- |
 | **Phase to phase** | **Metres** | Feet | **Metres** | Feet | **Metres** | Feet |
 | Over 750 V to 20 kV | 0.3 | 1 | 0.9 | 3 | 3 | 10 |
@@ -590,7 +590,7 @@ Table 19-3: Limits of approach for utility arborists
 
 Table 19-4
 
-| Column 1 **Voltage** | Column 2 **Minimum clearance distance from overhead conductor when crossing the neutral conductor** | |
+| Column 1<br>**Voltage** | Column 2<br>**Minimum clearance distance from overhead conductor when crossing the neutral conductor** | |
 | --- | --- | --- |
 | **Phase to phase** | **Metres** | **Feet** |
 | Over 750 V to 20 kV | 0.60 | 2.0 |

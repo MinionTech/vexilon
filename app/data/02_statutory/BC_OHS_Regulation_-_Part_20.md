@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_16)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 03:06:03 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:45 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -1309,7 +1309,9 @@ Excavations
 
 | **Soil type** | **Description of soil** |
 | --- | --- |
-| A B C | hard and solid likely to crack or crumble soft, sandy, filled or loose |
+| A | hard and solid |
+| B | likely to crack or crumble |
+| C | soft, sandy, filled or loose |
 
 (2) If Table 20-1 is to be used for a combination of supporting and sloping, the selection of shoring elements must be based on the overall depth of the excavation and the arrangement must conform to Figure 20-3.
 
@@ -1319,7 +1321,10 @@ Excavations
 
 | **Depth at location** | **Number of braces** |
 | --- | --- |
-| up to 2.4 m (8 ft) 2.4 m to 3.7 m (8 ft to 12 ft) 3.7 m to 4.6 m (12 ft to 15 ft) 4.6 m to 6 m (15 ft to 20 ft) | 2 3 4 5 |
+| up to 2.4 m (8 ft) | 2 |
+| 2.4 m to 3.7 m (8 ft to 12 ft) | 3 |
+| 3.7 m to 4.6 m (12 ft to 15 ft) | 4 |
+| 4.6 m to 6 m (15 ft to 20 ft) | 5 |
 
 (5) At each cross bracing location the cross braces must be less than 1.2 m (4 ft) apart, and the uppermost cross brace must be within 60 cm (2 ft) of ground level.
 
@@ -1398,9 +1403,9 @@ Size and spacing of members[1](#footnote__1) (metric figures)
 
 | Uprights | | | Walers | | Cross Braces | | | |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Trench depth (metres) | Minimum dimensions (millimetres)[2](#footnote__2) | Maximum spacing (metres) | Minimum dimensions (millimetres)[2](#footnote__2) | Maximum vertical spacing (metres) | Width of trench (metres) | | Maximum spacing (metres) | |
+| Trench depth<br>(metres) | Minimum<br>dimensions<br>(millimetres)[2](#footnote__2) | Maximum<br>spacing<br>(metres) | Minimum<br>dimensions<br>(millimetres)[2](#footnote__2) | Maximum<br>vertical<br>spacing<br>(metres) | Width of trench<br>(metres) | | Maximum spacing (metres) | |
 | | | | | | Up to 1.8 | 1.8-3.7 | Vertical | Horizontal |
-| | | | | | Minimum dimensions (millimetres)[2](#footnote__2) | | | |
+| | | | | | Minimum dimensions<br>(millimetres)[2](#footnote__2) | | | |
 | *Type A: Hard and solid soil* | | | | | | | | |
 | 1.2-3[3](#footnote__3) | 38 x 235 | 1.8 | 89 x 140 | 1.2 | 89 x 89 | 140 x 140 | 1.2 | 1.8 |
 | 3-4.6 | 38 x 235 | 1.2 | 140 x 140 | 1.2 | 89 x 140 | 140 x 191 | 1.2 | 1.8 |
@@ -1418,9 +1423,9 @@ Size and spacing of members[1](#footnote__1) (imperial figures)
 
 | **Uprights** | | | **Walers** | | **Cross Braces** | | | |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Trench depth (feet) | Minimum dimensions (inches)[2](#footnote__2) | Maximum spacing (feet) | Minimum dimensions (inches)[2](#footnote__2) | Maximum vertical spacing (feet) | Width of trench (feet) | | Maximum spacing (feet) | |
+| Trench depth<br>(feet) | Minimum dimensions<br>(inches)[2](#footnote__2) | Maximum spacing<br>(feet) | Minimum<br>dimensions<br>(inches)[2](#footnote__2) | Maximum<br>vertical<br>spacing<br>(feet) | Width of trench<br>(feet) | | Maximum spacing<br>(feet) | |
 | | | | | | Up to 6 | 6-12 | Vertical | Horizontal |
-| | | | | | Minimum dimensions (inches)[2](#footnote__2) | | | |
+| | | | | | Minimum dimensions<br>(inches)[2](#footnote__2) | | | |
 | *Type A: Hard and solid soil* | | | | | | | | |
 | 4-10[3](#footnote__3) | 2 x 10 | 6 | 4 x 6[4](#footnote__4) | 4 | 4 x 4 | 6 x 6 | 4 | 6 |
 | 10-15 | 2 x 10 | 4 | 6 x 6 | 4 | 4 x 6 | 6 x 8 | 4 | 6 |
@@ -1450,7 +1455,7 @@ Case 2 (trench or bulk excavation) — maximum height of vertical portion, shown
 
 For Case 2 (trench or bulk excavation) the maximum permissible slope of the excavated face BC for the corresponding height of the lower vertical cut AB is as follows:
 
-| Height of line AB | | Maximum slope of line BC (in hard and solid soil) |
+| Height of line AB | | Maximum slope of line BC<br>(in hard and solid soil) |
 | --- | --- | --- |
 | centimetres | feet | |
 | up to 30 | up to 1 | 1 horizontal (H) to 1 vertical (V) |

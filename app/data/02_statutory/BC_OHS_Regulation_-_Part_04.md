@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_02)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:34 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:36 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -979,7 +979,7 @@ Illumination
 
 Table 4-1: Illumination levels for task categories
 
-| Task category | Examples1 | Minimum2 illumination level in lux |
+| Task category | Examples1 | Minimum2 illumination<br>level in lux |
 | --- | --- | --- |
 | 1. Simple orientation for short temporary visits | Inactive storage, waiting areas, VDT screens, log loading and unloading. | 50 |
 | 2. Working spaces where visual tasks are only occasionally performed | Stairways, freight elevators, truck loading, active bulk storage. | 100 |

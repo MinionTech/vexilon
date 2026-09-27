@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_12)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 03:06:01 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:42 GMT  
 **Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
@@ -219,7 +219,7 @@ Table 15-1: Minimum design factors for rigging
 
 Table 15-2: Installation and use of wire rope clips
 
-| Diameter of rope | | Number of clips | Spacing between clips (centre to centre) | | Torque | |
+| Diameter of rope | | Number of<br>clips | Spacing between clips<br>(centre to centre) | | Torque | |
 | --- | --- | --- | --- | --- | --- | --- |
 | **millimetres** | inches | | **millimetres** | inches | **newton metres** | foot pounds |
 | **6** | 1/4 | 2 | **38** | 1 1/2 | **20** | 15 |
@@ -346,7 +346,7 @@ Table 15-3: WLL reductions for slings at an angle
 | up to 30° | 90% |
 | over 30° up to 45° | 70% |
 | over 45° up to 60° | 50% |
-| over 60° | not permitted unless part of an engineered lift |
+| over 60° | not permitted unless part of<br>an engineered lift |
 
 #### Repealed
 
@@ -444,7 +444,7 @@ Alloy Steel Chain Slings
 
 Table 15-4: Allowable chain wear
 
-| Chain size | | Minimum allowable chain size at any point of link | |
+| Chain size | | Minimum allowable chain size at<br>any point of link | |
 | --- | --- | --- | --- |
 | **millimetres** | inches | **millimetres** | inches |
 | **6.3** | 1/4 | **5.9** | 15/64 |
