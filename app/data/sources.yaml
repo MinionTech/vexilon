@@ -240,7 +240,7 @@ sources:
   selector: '#contentsscroll'
   part: '26'
   category: statutory
-  content_hash: bad9d3d85273d3a6d8bf5d9be5312e3e0c9048ba4952704869c2ae9d4d53bed3
+  content_hash: 342a28450581edb50f21a85eafd883c1d7f381c92d0a1919c95dddd644cb8dec
   last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_27.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_22

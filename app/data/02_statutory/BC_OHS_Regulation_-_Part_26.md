@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:46 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 02:39:44 GMT  
 **Ingestion Date:** 2026-09-27  
 
 Part 26 — Forestry Operations and Similar Activities
@@ -2140,7 +2140,7 @@ Table 26-4: Audible signals for slackline logging
 | Several SHORT | SLACK SKYLINE |
 | 3 SHORT — pause — several SHORT | SLACK SKIDDING LINE |
 | 2 SHORT — pause — several SHORT | SLACK HAULBACK |
-| **b) Slow Signals: **Any regular signal preceded by a LONG whistle is a slow signal. Any signal that the Engineer is not sure of is a "STOP" signal | |
+| **b) Slow Signals:** Any regular signal preceded by a LONG whistle is a slow signal. Any signal that the Engineer is not sure of is a "STOP" signal | |
 | **c) Miscellaneous Signals:** | |
 | 3 SHORT — when carriage is going back | HOLD SKIDDING LINE TIGHT AND KEEP ON COMING BACK UNTIL 'STOP' SIGNAL IS RECEIVED |
 | 2 SHORT — when carriage is going back | HOLD SKIDDING LINE TIGHT, START LOWERING SKYLINE, KEEP ON COMING BACK |
@@ -2174,7 +2174,7 @@ Table 26-5: Audible signals for mechanical slack pulling and drop line carriages
 | 3 SHORT — pause — 1 SHORT — pause — several SHORTS | SLACK STRAWLINE |
 | 1 SHORT — pause — several SHORTS | SLACK SLACKPULLER |
 | 3 SHORT — pause — 2 SHORT (line is wrapped around skyline) | TIGHTLINE |
-| **b) Slow Signals: **Any regular signal preceded by a LONG whistle is a slow signal. Any signal the machine operator is not sure of is a "STOP" signal | |
+| **b) Slow Signals:** Any regular signal preceded by a LONG whistle is a slow signal. Any signal the machine operator is not sure of is a "STOP" signal | |
 | **c) Miscellaneous Signals:** | |
 | **When carriage is going ahead to landing** | |
 | 2 SHORT | STOP CARRIAGE AND PULL LOGS UP CLOSER TO CARRIAGE |
