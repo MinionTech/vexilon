@@ -47,14 +47,23 @@ def test_questions_cite_20th_main_agreement_headings():
 def test_merge_blocks_prod_and_opens_a_github_issue():
     merge = MERGE.read_text(encoding="utf-8")
     pr = PR.read_text(encoding="utf-8")
-    golden = merge.split("  golden-questions:", 1)[1].split("  deploy-prod:", 1)[0]
-    assert "needs: [deploy-test]" in golden
-    assert "golden_questions.sh bcgeu/navigator-test" in golden
-    assert "bcgov/actions/workflow-notifier@" in golden
-    assert "secrets.GITHUB_TOKEN" in golden
-    assert "Golden Question Failure: Agreement Navigator (AgNav)" in golden
-    assert "HF_TOKEN" not in golden
-    assert "needs: [deploy-test, golden-questions]" in merge
+    deploy_test = merge.split("  deploy-test:", 1)[1].split("  deploy-prod:", 1)[0]
+    assert deploy_test.count("group: huggingface-test-space") == 1
+    assert "cancel-in-progress: false" in deploy_test
+    assert deploy_test.index("group: huggingface-test-space") < deploy_test.index(
+        "golden_questions.sh bcgeu/navigator-test"
+    )
+    assert "timeout-minutes: 40" in deploy_test
+    assert "timeout-minutes: 15" in deploy_test
+    assert "steps.golden.outcome == 'failure'" in deploy_test
+    assert "Golden Question Failure: Agreement Navigator (AgNav)" in deploy_test
+    assert "bcgov/actions/workflow-notifier@" in deploy_test
+    assert "secrets.GITHUB_TOKEN" in deploy_test
+    assert "  golden-questions:" not in merge
+    assert "needs: [deploy-test]" in merge.split("  deploy-prod:", 1)[1]
+    assert "needs: [deploy-test, golden-questions]" not in merge
+    assert "huggingface-prod-space" in merge
+    assert merge.count("cancel-in-progress: false") == 2
     lowered = merge.lower()
     assert "slack" not in lowered
     assert "smtp" not in lowered

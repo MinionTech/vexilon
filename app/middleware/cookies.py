@@ -62,12 +62,13 @@ health_route = APIRoute(
 )
 
 def _answer_failed(text: str) -> bool:
-    stripped = text.strip()
-    if not stripped:
+    if not text or not text.strip():
         return True
-    if stripped in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE):
-        return True
-    return stripped.startswith("⚠️ API error:")
+    # Same markers as trigger_verification_task: a sentinel after real tokens still fails.
+    return any(
+        marker in text
+        for marker in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
+    )
 
 async def post_golden_question(request: Request):
     """Answer one Lookup question. The promotion gate checks the citation."""
@@ -84,7 +85,6 @@ async def post_golden_question(request: Request):
     from core.security import _rate_limiter, sanitize_input
     from services.llm import (
         _ensure_startup,
-        build_reference_links,
         get_rag_context,
         rag_review_stream,
     )
@@ -100,7 +100,7 @@ async def post_golden_question(request: Request):
 
     try:
         await _ensure_startup()
-        queries, context, snippets = await get_rag_context(sanitized, [])
+        queries, context, _snippets = await get_rag_context(sanitized, [])
         accumulated = ""
         async for chunk in rag_review_stream(
             sanitized,
@@ -113,9 +113,6 @@ async def post_golden_question(request: Request):
                 accumulated += chunk
         if _answer_failed(accumulated):
             raise HTTPException(status_code=503, detail="answer failed")
-        ref_links = build_reference_links(snippets)
-        if ref_links:
-            accumulated += "\n\n### 📄 Reference Documents\n" + "\n".join(ref_links)
     except HTTPException:
         raise
     except Exception as exc:

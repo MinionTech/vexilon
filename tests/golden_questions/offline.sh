@@ -44,21 +44,28 @@ if worst != documented:
 if worst >= 900:
     raise SystemExit(f"worst case {worst}s is not under 900")
 
-golden = merge.split("  golden-questions:", 1)[1].split("  deploy-prod:", 1)[0]
-if "needs: [deploy-test]" not in golden:
-    raise SystemExit("golden job does not need deploy-test")
-if "golden_questions.sh bcgeu/navigator-test" not in golden:
-    raise SystemExit("golden job does not ask TEST")
-if "bcgov/actions/workflow-notifier@" not in golden or "secrets.GITHUB_TOKEN" not in golden:
+deploy_test = merge.split("  deploy-test:", 1)[1].split("  deploy-prod:", 1)[0]
+if deploy_test.count("group: huggingface-test-space") != 1:
+    raise SystemExit("TEST space lock is not a single group on deploy-test")
+if "cancel-in-progress: false" not in deploy_test:
+    raise SystemExit("TEST promotion cancels an in-progress run")
+if deploy_test.index("group: huggingface-test-space") > deploy_test.index("golden_questions.sh bcgeu/navigator-test"):
+    raise SystemExit("golden questions run outside the TEST space lock")
+if "timeout-minutes: 15" not in deploy_test or "timeout-minutes: 40" not in deploy_test:
+    raise SystemExit("question step timeout must stay 15 and the deploy-test job 40")
+if "steps.golden.outcome == 'failure'" not in deploy_test:
+    raise SystemExit("golden failure does not have its own notifier")
+if "bcgov/actions/workflow-notifier@" not in deploy_test or "secrets.GITHUB_TOKEN" not in deploy_test:
     raise SystemExit("golden failure does not use workflow-notifier")
-if "Golden Question Failure: Agreement Navigator (AgNav)" not in golden:
+if "Golden Question Failure: Agreement Navigator (AgNav)" not in deploy_test:
     raise SystemExit("golden failure title changed")
-if "timeout-minutes: 15" not in golden or "timeout-minutes: 20" not in golden:
-    raise SystemExit("golden step timeout must stay 15 and job timeout 20")
-if "HF_TOKEN" in golden:
-    raise SystemExit("golden job uses HF_TOKEN")
-if "needs: [deploy-test, golden-questions]" not in merge:
-    raise SystemExit("prod does not need the golden-question gate")
+if "  golden-questions:" in merge:
+    raise SystemExit("golden questions are a separate job, so the TEST lock is released first")
+prod = merge.split("  deploy-prod:", 1)[1]
+if "needs: [deploy-test]" not in prod or "golden-questions" in prod.split("steps:", 1)[0]:
+    raise SystemExit("prod does not wait on the deploy-test job that runs the gate")
+if "cancel-in-progress: false" not in prod:
+    raise SystemExit("PROD promotion cancels an in-progress run")
 lowered = merge.lower()
 for banned in ("slack", "smtp", "mailto:"):
     if banned in lowered:

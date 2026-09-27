@@ -4,7 +4,7 @@ import json
 
 from fastapi import FastAPI, HTTPException, Request
 
-from core.config import HIGH_TRAFFIC_MESSAGE
+from core.config import GENERIC_ERROR_MESSAGE, HIGH_TRAFFIC_MESSAGE
 from middleware.cookies import post_golden_question, register_routes_and_middleware
 import services.llm as llm
 
@@ -33,9 +33,8 @@ def _patch_pipeline(monkeypatch, stream):
         assert history == []
         return ["q"], "context", [{"source": "BCGEU 20th Main Agreement", "text": "clause"}]
 
-    def fake_links(snippets):
-        assert snippets[0]["source"] == "BCGEU 20th Main Agreement"
-        return ["- [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.pdf)"]
+    def fake_links(*args, **kwargs):
+        raise AssertionError("reference links were added to the scored answer")
 
     def live_client(*args, **kwargs):
         raise AssertionError("live model client was called")
@@ -68,23 +67,28 @@ async def test_golden_question_returns_lookup_answer(monkeypatch):
     _patch_pipeline(monkeypatch, fake_stream)
     body = json.dumps({"question": "Who bears the burden?"}).encode()
     result = await post_golden_question(_request(body))
-    answer = result["answer"]
-    assert "[BCGEU 20th Main Agreement - 10.1 Burden of Proof]" in answer
-    assert "/public/docs/BCGEU_20th_Main_Agreement.pdf" in answer
+    assert result["answer"] == "[BCGEU 20th Main Agreement - 10.1 Burden of Proof]"
 
 
 async def test_golden_question_model_error_is_503(monkeypatch):
-    async def fake_stream(message, history, persona, context=None, queries=None):
-        yield HIGH_TRAFFIC_MESSAGE
-
-    _patch_pipeline(monkeypatch, fake_stream)
+    markers = (
+        HIGH_TRAFFIC_MESSAGE,
+        GENERIC_ERROR_MESSAGE,
+        "⚠️ API error: boom",
+    )
     body = json.dumps({"question": "Who bears the burden?"}).encode()
-    try:
-        await post_golden_question(_request(body))
-    except HTTPException as exc:
-        assert exc.status_code == 503
-    else:
-        raise AssertionError("model error was returned as an answer")
+    for marker in markers:
+        async def fake_stream(message, history, persona, context=None, queries=None, marker=marker):
+            yield "[BCGEU 20th Main Agreement - 10.1 Burden of Proof] "
+            yield marker
+
+        _patch_pipeline(monkeypatch, fake_stream)
+        try:
+            await post_golden_question(_request(body))
+        except HTTPException as exc:
+            assert exc.status_code == 503
+        else:
+            raise AssertionError(f"marker after answer text was returned: {marker}")
 
 
 async def test_golden_question_rejects_empty_and_rate_limit(monkeypatch):
