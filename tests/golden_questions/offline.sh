@@ -44,13 +44,12 @@ if worst != documented:
 if worst >= 900:
     raise SystemExit(f"worst case {worst}s is not under 900")
 
-deploy_test = merge.split("  deploy-test:", 1)[1].split("  deploy-prod:", 1)[0]
-if deploy_test.count("group: huggingface-test-space") != 1:
-    raise SystemExit("TEST space lock is not a single group on deploy-test")
-if "cancel-in-progress: false" not in deploy_test:
+header, jobs = merge.split("jobs:", 1)
+deploy_test = jobs.split("  deploy-test:", 1)[1].split("  deploy-prod:", 1)[0]
+if header.count("group: huggingface-test-space") != 1 or "group: huggingface-test-space" in jobs:
+    raise SystemExit("TEST space lock is not a single workflow-level group")
+if "cancel-in-progress: false" not in header:
     raise SystemExit("TEST promotion cancels an in-progress run")
-if deploy_test.index("group: huggingface-test-space") > deploy_test.index("golden_questions.sh bcgeu/navigator-test"):
-    raise SystemExit("golden questions run outside the TEST space lock")
 if "timeout-minutes: 15" not in deploy_test or "timeout-minutes: 40" not in deploy_test:
     raise SystemExit("question step timeout must stay 15 and the deploy-test job 40")
 if "steps.golden.outcome == 'failure'" not in deploy_test:

@@ -47,12 +47,11 @@ def test_questions_cite_20th_main_agreement_headings():
 def test_merge_blocks_prod_and_opens_a_github_issue():
     merge = MERGE.read_text(encoding="utf-8")
     pr = PR.read_text(encoding="utf-8")
-    deploy_test = merge.split("  deploy-test:", 1)[1].split("  deploy-prod:", 1)[0]
-    assert deploy_test.count("group: huggingface-test-space") == 1
-    assert "cancel-in-progress: false" in deploy_test
-    assert deploy_test.index("group: huggingface-test-space") < deploy_test.index(
-        "golden_questions.sh bcgeu/navigator-test"
-    )
+    header, jobs = merge.split("jobs:", 1)
+    deploy_test = jobs.split("  deploy-test:", 1)[1].split("  deploy-prod:", 1)[0]
+    assert header.count("group: huggingface-test-space") == 1
+    assert "cancel-in-progress: false" in header
+    assert "group: huggingface-test-space" not in jobs
     assert "timeout-minutes: 40" in deploy_test
     assert "timeout-minutes: 15" in deploy_test
     assert "steps.golden.outcome == 'failure'" in deploy_test

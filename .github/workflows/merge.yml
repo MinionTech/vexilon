@@ -12,6 +12,11 @@ on:
 
 permissions: {}
 
+# Held through deploy-prod. A later run waits, so the gate scores the image this run deployed.
+concurrency:
+  group: huggingface-test-space
+  cancel-in-progress: false
+
 jobs:
   analysis:
     name: Analysis
@@ -24,11 +29,6 @@ jobs:
     name: Deploy to HF TEST
     runs-on: ubuntu-latest
     environment: test
-    # Held from deploy through the golden-question step. A later workflow waits
-    # until this job finishes, so the gate scores the image this job deployed.
-    concurrency:
-      group: huggingface-test-space
-      cancel-in-progress: false
     # 20-minute deploy step, 15-minute question step, then the notifier.
     timeout-minutes: 40
     permissions:
