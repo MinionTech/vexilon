@@ -148,6 +148,10 @@ class SimpleYamlLoader:
         return yaml.safe_dump(data, sort_keys=False)
 
 
+class _OpeningMarker(str):
+    """An emphasis marker that opens a span, so cell text can keep whitespace outside it."""
+
+
 @dataclass
 class _TableState:
     """One open ``<table>``. Only data tables collect rows; layout tables stay inline text."""
@@ -159,6 +163,31 @@ class _TableState:
     row: list[tuple[str, int, int]] | None = None
     cell_span: tuple[int, int] | None = None
     cell_tokens: list[str] | None = None
+
+
+def _lead_space_outside_openers(tokens: list[str]) -> list[str]:
+    """Move whitespace that follows an opening marker to before it.
+
+    ``<strong> Description</strong>`` would give ``** Description**``; Markdown
+    does not open emphasis before whitespace, so it must be `` **Description**``.
+    """
+    out: list[str] = []
+    waiting: list[str] = []
+    for token in tokens:
+        if isinstance(token, _OpeningMarker):
+            waiting.append(token)
+            continue
+        if waiting:
+            text = token.lstrip()
+            out.append(token[: len(token) - len(text)])
+            if not text:
+                continue
+            out.extend(waiting)
+            waiting = []
+            token = text
+        out.append(token)
+    out.extend(waiting)
+    return out
 
 
 def _span(value: str | None, limit: int) -> int:
@@ -318,11 +347,11 @@ class HTMLContentExtractor(HTMLParser):
         elif tag_lower in ("strong", "b"):
             self.is_bold = True
             if not self.current_link:
-                self.tokens.append("**")
+                self.tokens.append(_OpeningMarker("**"))
         elif tag_lower in ("em", "i"):
             self.is_italic = True
             if not self.current_link:
-                self.tokens.append("*")
+                self.tokens.append(_OpeningMarker("*"))
         elif tag_lower == "a":
             href = attr_dict.get("href", "")
             if href and not href.startswith("javascript:"):
@@ -353,7 +382,7 @@ class HTMLContentExtractor(HTMLParser):
         trailing = ""
         while self.tokens and not self.tokens[-1].strip():
             trailing = self.tokens.pop() + trailing
-        if self.tokens:
+        if self.tokens and self.tokens[-1] != self.tokens[-1].rstrip():
             kept = self.tokens[-1].rstrip()
             trailing = self.tokens[-1][len(kept):] + trailing
             self.tokens[-1] = kept
@@ -394,7 +423,8 @@ class HTMLContentExtractor(HTMLParser):
         state = self.tables[-1]
         if state.cell_tokens is None or state.cell_span is None or state.row is None:
             return
-        text = re.sub(r"\s+", " ", "".join(state.cell_tokens)).strip().replace("|", r"\|")
+        text = re.sub(r"\s+", " ", "".join(_lead_space_outside_openers(state.cell_tokens)))
+        text = text.strip().replace("|", r"\|")
         state.row.append((text, *state.cell_span))
         state.cell_tokens = None
         state.cell_span = None

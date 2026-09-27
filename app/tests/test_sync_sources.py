@@ -372,6 +372,18 @@ def test_markdown_table_cell_closes_emphasis_before_a_line_break():
     assert markdown.splitlines()[-1] == "| **b) Slow Signals:** Any regular signal. | |"
 
 
+def test_markdown_table_cell_opens_emphasis_after_leading_space():
+    """``** Description**`` is not valid emphasis; the space must precede the marker."""
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Item</td><td>Column 1<br /><strong> Description of
+          Disease</strong></td></tr>
+        <tr><td>1</td><td>Poisoning by lead</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines()[0] == "| Item | Column 1 **Description of Disease** |"
+
+
 def test_clean_bclaws_content_keeps_space_between_adjacent_bold_runs():
     """``** **`` between two bold runs is not empty bold; the words must stay apart."""
     raw_html = """
