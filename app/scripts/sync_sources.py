@@ -148,10 +148,86 @@ class SimpleYamlLoader:
         return yaml.safe_dump(data, sort_keys=False)
 
 
+@dataclass
+class _TableState:
+    """One open ``<table>``. Only data tables collect rows; layout tables stay inline text."""
+
+    is_data: bool
+    outer_tokens: list[str]
+    outside_tokens: list[str]
+    rows: list[list[tuple[str, int, int]]]
+    row: list[tuple[str, int, int]] | None = None
+    cell_span: tuple[int, int] | None = None
+    cell_tokens: list[str] | None = None
+
+
+def _span(value: str | None, limit: int) -> int:
+    """Parse a colspan/rowspan value; missing, zero, or malformed values count as 1."""
+    try:
+        return min(max(int((value or "").strip()), 1), limit)
+    except ValueError:
+        return 1
+
+
+def _render_markdown_table(rows: list[list[tuple[str, int, int]]]) -> str:
+    """Render collected rows as a Markdown pipe table. The first row is the header.
+
+    Spans: a spanned value is written once, in its first (top-left) cell; the
+    other cells the span covers are left empty. Later values stay in their own
+    columns, and no text is duplicated.
+    """
+    grid: list[list[str]] = []
+    # column -> rows still covered by a rowspan from an earlier row
+    pending: dict[int, int] = {}
+    for cells in rows:
+        out: list[str] = []
+        col = 0
+
+        def skip_covered() -> None:
+            nonlocal col
+            while pending.get(col, 0) > 0:
+                pending[col] -= 1
+                out.append("")
+                col += 1
+
+        for text, colspan, rowspan in cells:
+            skip_covered()
+            for offset in range(colspan):
+                out.append(text if offset == 0 else "")
+                if rowspan > 1:
+                    pending[col + offset] = rowspan - 1
+            col += colspan
+        last_covered = max((c for c, n in pending.items() if n > 0 and c >= col), default=-1)
+        while col <= last_covered:
+            if pending.get(col, 0) > 0:
+                pending[col] -= 1
+            out.append("")
+            col += 1
+        grid.append(out)
+
+    if not any(cell for row in grid for cell in row):
+        return ""
+    width = max(len(row) for row in grid)
+    lines = []
+    for index, row in enumerate(grid):
+        padded = row + [""] * (width - len(row))
+        lines.append("| " + " | ".join(padded) + " |")
+        if index == 0:
+            lines.append("| " + " | ".join(["---"] * width) + " |")
+    return "\n".join(lines)
+
+
 class HTMLContentExtractor(HTMLParser):
     """
     Robust HTML to Markdown content extractor.
     Strips scripts, styles, layout navigation, and extracts targeted containers.
+
+    Tables: a ``<table>`` whose ``border`` attribute is present and not ``0`` is
+    a data table and becomes a Markdown pipe table. BC Laws marks every grid
+    table this way; its chrome, deposit line, formulas, "where" definitions, and
+    contents list use ``border="0"`` or none. Those layout tables keep the
+    flowing-text output (one paragraph per row). A table nested inside a data
+    table is flattened into its enclosing cell, because Markdown has no nested tables.
     """
 
     IGNORABLE_TAGS = {
@@ -187,6 +263,7 @@ class HTMLContentExtractor(HTMLParser):
         self.is_bold = False
         self.is_italic = False
         self.link_text_tokens: list[str] = []
+        self.tables: list[_TableState] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag_lower = tag.lower()
@@ -222,8 +299,14 @@ class HTMLContentExtractor(HTMLParser):
         if not self.inside_target:
             return
 
+        if tag_lower == "table":
+            self._open_table(attr_dict)
+        elif tag_lower == "tr" and self._in_data_table():
+            self._open_row()
+        elif tag_lower in ("td", "th") and self._in_data_table():
+            self._open_cell(attr_dict)
         # Heading tags
-        if re.match(r"^h[1-6]$", tag_lower):
+        elif re.match(r"^h[1-6]$", tag_lower):
             self.heading_level = int(tag_lower[1])
             self.tokens.append(f"\n\n{'#' * self.heading_level} ")
         elif tag_lower in self.BLOCK_TAGS:
@@ -257,6 +340,72 @@ class HTMLContentExtractor(HTMLParser):
             return
         self.tokens.append(" ")
 
+    def _in_data_table(self) -> bool:
+        return bool(self.tables) and self.tables[-1].is_data
+
+    def _open_table(self, attrs: dict[str, str]) -> None:
+        border = attrs.get("border")
+        is_data = (
+            border is not None
+            and border.strip() != "0"
+            and not any(t.is_data for t in self.tables)
+        )
+        state = _TableState(is_data=is_data, outer_tokens=self.tokens, outside_tokens=[], rows=[])
+        self.tables.append(state)
+        if is_data:
+            self.tokens = state.outside_tokens
+
+    def _open_row(self) -> None:
+        self._close_row()
+        self.tables[-1].row = []
+
+    def _open_cell(self, attrs: dict[str, str]) -> None:
+        state = self.tables[-1]
+        self._close_cell()
+        if state.row is None:
+            state.row = []
+        # HTML caps colspan at 1000 and rowspan at 65534.
+        state.cell_span = (_span(attrs.get("colspan"), 1000), _span(attrs.get("rowspan"), 65534))
+        state.cell_tokens = []
+        self.tokens = state.cell_tokens
+
+    def _close_cell(self) -> None:
+        state = self.tables[-1]
+        if state.cell_tokens is None or state.cell_span is None or state.row is None:
+            return
+        text = re.sub(r"\s+", " ", "".join(state.cell_tokens)).strip().replace("|", r"\|")
+        state.row.append((text, *state.cell_span))
+        state.cell_tokens = None
+        state.cell_span = None
+        self.tokens = state.outside_tokens
+
+    def _close_row(self) -> None:
+        state = self.tables[-1]
+        self._close_cell()
+        if state.row:
+            state.rows.append(state.row)
+        state.row = None
+
+    def _close_table(self) -> None:
+        if not self.tables:
+            return
+        if not self.tables[-1].is_data:
+            self.tables.pop()
+            return
+        self._close_row()
+        state = self.tables.pop()
+        self.tokens = state.outer_tokens
+        outside = "".join(state.outside_tokens).strip()
+        if outside:
+            self.tokens.extend(["\n\n", outside, "\n\n"])
+        rendered = _render_markdown_table(state.rows)
+        if rendered:
+            self.tokens.extend(["\n\n", rendered, "\n\n"])
+
+    def _close_open_tables(self) -> None:
+        while self.tables:
+            self._close_table()
+
 
     def handle_endtag(self, tag: str) -> None:
         tag_lower = tag.lower()
@@ -279,6 +428,7 @@ class HTMLContentExtractor(HTMLParser):
         if self.inside_target and self.target_selector and self.selector_depth > 0:
             self.selector_depth -= 1
             if self.selector_depth == 0:
+                self._close_open_tables()
                 self.inside_target = False
                 return
 
@@ -286,7 +436,13 @@ class HTMLContentExtractor(HTMLParser):
         if not self.inside_target:
             return
 
-        if re.match(r"^h[1-6]$", tag_lower):
+        if tag_lower == "table":
+            self._close_table()
+        elif tag_lower == "tr" and self._in_data_table():
+            self._close_row()
+        elif tag_lower in ("td", "th") and self._in_data_table():
+            self._close_cell()
+        elif re.match(r"^h[1-6]$", tag_lower):
             self.heading_level = 0
             self.tokens.append("\n\n")
         elif tag_lower in self.BLOCK_TAGS:
@@ -351,6 +507,7 @@ class HTMLContentExtractor(HTMLParser):
         return None
 
     def get_markdown(self) -> str:
+        self._close_open_tables()
         raw_text = "".join(self.tokens)
         # Clean extra spaces & lines
         lines = []

@@ -317,6 +317,108 @@ def test_clean_bclaws_content_strips_chrome_and_joins_block_text():
     assert "The **employer** must pay." in cleaned
 
 
+def _extract_body(inner_html: str) -> str:
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(f'<div id="body">{inner_html}</div>')
+    return extractor.get_markdown()
+
+
+def test_bordered_table_becomes_markdown_pipe_table():
+    """Each row keeps its columns, so a reader can tell which value is which ear."""
+    markdown = _extract_body("""
+      <p>TABLE</p>
+      <table border="1">
+        <tr><td>Item</td><td>Range of Hearing Loss<br />
+          (decibels)</td><td>Percentage for Ear Most Affected</td></tr>
+        <tbody>
+          <tr><td>1</td><td>0-34</td><td>0</td></tr>
+          <tr><td>2</td><td>35-39</td><td>0.3</td></tr>
+        </tbody>
+      </table>
+      <p>After the table.</p>
+    """)
+    assert markdown == (
+        "TABLE\n\n"
+        "| Item | Range of Hearing Loss (decibels) | Percentage for Ear Most Affected |\n"
+        "| --- | --- | --- |\n"
+        "| 1 | 0-34 | 0 |\n"
+        "| 2 | 35-39 | 0.3 |\n\n"
+        "After the table."
+    )
+
+
+def test_markdown_table_escapes_pipe_inside_cell():
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><th>Signal</th><th>Meaning</th></tr>
+        <tr><td>1 | 2 whistles</td><td>STOP</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines() == [
+        "| Signal | Meaning |",
+        "| --- | --- |",
+        r"| 1 \| 2 whistles | STOP |",
+    ]
+
+
+def test_markdown_table_colspan_leaves_spanned_cells_empty():
+    """A spanned value is written once; the columns after it stay aligned."""
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Respirator type</td><td>Form</td><td>Protection factor</td></tr>
+        <tr><td colspan="3">Air purifying</td></tr>
+        <tr><td colspan="2">Half facepiece</td><td>10</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines() == [
+        "| Respirator type | Form | Protection factor |",
+        "| --- | --- | --- |",
+        "| Air purifying | | |",
+        "| Half facepiece | | 10 |",
+    ]
+
+
+def test_markdown_table_rowspan_leaves_covered_cells_empty():
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Disease</td><td>Process</td></tr>
+        <tr><td rowspan="2">Poisoning by lead</td><td>Smelting</td></tr>
+        <tr><td>Soldering</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines() == [
+        "| Disease | Process |",
+        "| --- | --- |",
+        "| Poisoning by lead | Smelting |",
+        "| | Soldering |",
+    ]
+
+
+def test_table_nested_in_a_data_cell_is_flattened_into_that_cell():
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Depth</td><td>Note</td></tr>
+        <tr><td>1.2 m</td><td>See footnote
+          <table border="0" class="fn"><tr><td>1</td><td>Minimum only.</td></tr></table>
+        </td></tr>
+      </table>
+    """)
+    assert markdown.splitlines() == [
+        "| Depth | Note |",
+        "| --- | --- |",
+        "| 1.2 m | See footnote 1 Minimum only. |",
+    ]
+
+
+def test_borderless_layout_table_stays_flowing_text():
+    markdown = _extract_body("""
+      <table border="0"><tr><td>amount paid ÷ days worked</td></tr></table>
+      <table><tr><td>where</td><td>amount paid</td><td>is the amount paid</td></tr></table>
+    """)
+    assert "|" not in markdown
+    assert markdown == "amount paid ÷ days worked\n\nwhere amount paid is the amount paid"
+
+
 _BUNDLE_HTML = """
 <div id="contentsscroll">
   <h5><a href="/civix/pdf">Link to consolidated regulation (PDF)</a></h5>
