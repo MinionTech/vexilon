@@ -52,14 +52,22 @@ if "cancel-in-progress: false" not in header:
     raise SystemExit("TEST promotion cancels an in-progress run")
 if "timeout-minutes: 15" not in deploy_test or "timeout-minutes: 40" not in deploy_test:
     raise SystemExit("question step timeout must stay 15 and the deploy-test job 40")
-if "steps.golden.outcome == 'failure'" not in deploy_test:
+if "steps.golden.outcome == 'failure'" not in deploy_test or "golden_questions.sh bcgeu/navigator-test" not in deploy_test:
     raise SystemExit("golden failure does not have its own notifier")
+if "run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test" not in deploy_test:
+    raise SystemExit("deploy-test does not run golden_questions.sh bcgeu/navigator-test")
+if "secrets.GOLDEN_QUESTION_TOKEN" not in deploy_test:
+    raise SystemExit("merge workflow does not send secrets.GOLDEN_QUESTION_TOKEN")
+if "X-Golden-Question-Token" not in gate:
+    raise SystemExit("gate does not send X-Golden-Question-Token")
+if re.search(r'GOLDEN_QUESTION_TOKEN\s*=\s*["\']', gate + merge):
+    raise SystemExit("a token value is committed")
 if "bcgov/actions/workflow-notifier@" not in deploy_test or "secrets.GITHUB_TOKEN" not in deploy_test:
     raise SystemExit("golden failure does not use workflow-notifier")
 if "Golden Question Failure: Agreement Navigator (AgNav)" not in deploy_test:
     raise SystemExit("golden failure title changed")
 if "  golden-questions:" in merge:
-    raise SystemExit("golden questions are a separate job, so the TEST lock is released first")
+    raise SystemExit("golden questions must run inside deploy-test, not a separate job")
 prod = merge.split("  deploy-prod:", 1)[1]
 if "needs: [deploy-test]" not in prod or "golden-questions" in prod.split("steps:", 1)[0]:
     raise SystemExit("prod does not wait on the deploy-test job that runs the gate")
@@ -108,6 +116,7 @@ url = None
 max_time = None
 output = None
 data_path = None
+headers = []
 i = 0
 no_arg = {"-s", "-S", "-sS", "--silent", "--show-error", "--location"}
 takes_arg = {
@@ -127,6 +136,8 @@ while i < len(args):
             output = value
         elif arg in ("--data-binary", "--data"):
             data_path = value[1:] if value.startswith("@") else None
+        elif arg in ("-H", "--header"):
+            headers.append(value)
         i += 2
         continue
     if arg.startswith("-"):
@@ -159,6 +170,16 @@ def log(exit_code, status):
     shown = "" if max_time is None else str(max_time)
     with open(log_path, "a") as handle:
         handle.write(f"{url}\tmax={shown}\tstatus={status}\texit={exit_code}\n")
+
+expected = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
+supplied = ""
+for header in headers:
+    name, _, value = header.partition(":")
+    if name.lower() == "x-golden-question-token":
+        supplied = value.strip()
+if not expected or supplied != expected:
+    sys.stderr.write("fake curl: golden token header missing\n")
+    sys.exit(2)
 
 if not data_path:
     sys.stderr.write("fake curl: missing body\n")
@@ -206,6 +227,9 @@ emit(good(), 200, 0)
 PY
 chmod +x /tmp/bin/curl
 
+question_count="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["questions"]))' "$QUESTIONS")"
+GATE_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+
 run_case() {
     local name="$1"
     local scenario="$2"
@@ -223,6 +247,7 @@ run_case() {
         QUESTIONS_FILE="$QUESTIONS" \
         PATH="/tmp/bin:${PATH}" \
         GOLDEN_RETRY_DELAY=0 \
+        GOLDEN_QUESTION_TOKEN="$GATE_TOKEN" \
         bash "$WRAPPER" "bcgeu/navigator-test" >"$out" 2>&1
     local rc=$?
     set -e
@@ -242,10 +267,38 @@ run_case() {
         cat "$log"
         fail "$name: a curl ran without --max-time"
     fi
+    if grep -F "$GATE_TOKEN" "$out" "$log" >/dev/null; then
+        fail "$name: token leaked into output"
+    fi
     pass "$name"
 }
 
-question_count="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["questions"]))' "$QUESTIONS")"
+unset_work="$(mktemp -d)"
+: >"$unset_work/curl.log"
+set +e
+SCENARIO=pass \
+    CURL_LOG="$unset_work/curl.log" \
+    CURL_STATE="$unset_work/state.json" \
+    QUESTIONS_FILE="$QUESTIONS" \
+    PATH="/tmp/bin:${PATH}" \
+    GOLDEN_RETRY_DELAY=0 \
+    env -u GOLDEN_QUESTION_TOKEN \
+    bash "$WRAPPER" "bcgeu/navigator-test" >"$unset_work/out.txt" 2>&1
+unset_rc=$?
+set -e
+if [ "$unset_rc" -ne 1 ]; then
+    cat "$unset_work/out.txt"
+    fail "unset token: exit $unset_rc, expected 1"
+fi
+if [ -s "$unset_work/curl.log" ]; then
+    cat "$unset_work/curl.log"
+    fail "unset token still called curl"
+fi
+if ! grep -F "GOLDEN_QUESTION_TOKEN is unset" "$unset_work/out.txt" >/dev/null; then
+    cat "$unset_work/out.txt"
+    fail "unset token did not say the env var is unset"
+fi
+pass "unset token does not call curl"
 
 run_case "pass" pass 0 "$question_count"
 run_case "missing locator" missing-locator 1 1

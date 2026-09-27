@@ -103,8 +103,16 @@ def _budget() -> tuple[int, int, int]:
     return attempts, max_time, delay
 
 
+def _gate_token() -> str:
+    token = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
+    if not token.strip() or "\r" in token or "\n" in token:
+        raise ValueError("GOLDEN_QUESTION_TOKEN is unset")
+    return token
+
+
 def post_with_curl(url: str, question: str, max_time: int) -> tuple[int, int, str]:
     """POST one question via curl. Returns (curl_exit, http_status, body)."""
+    token = _gate_token()
     with tempfile.TemporaryDirectory() as tmp:
         payload_path = Path(tmp) / "payload.json"
         body_path = Path(tmp) / "body.json"
@@ -119,6 +127,8 @@ def post_with_curl(url: str, question: str, max_time: int) -> tuple[int, int, st
                 "Content-Type: application/json",
                 "-H",
                 "Accept: application/json",
+                "-H",
+                f"X-Golden-Question-Token: {token}",
                 "-o",
                 str(body_path),
                 "-w",

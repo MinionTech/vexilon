@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import secrets
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
@@ -55,6 +56,10 @@ def test_merge_blocks_prod_and_opens_a_github_issue():
     assert "timeout-minutes: 40" in deploy_test
     assert "timeout-minutes: 15" in deploy_test
     assert "steps.golden.outcome == 'failure'" in deploy_test
+    assert "run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test" in deploy_test
+    assert "secrets.GOLDEN_QUESTION_TOKEN" in deploy_test
+    assert 'GOLDEN_QUESTION_TOKEN: "' not in merge
+    assert "GOLDEN_QUESTION_TOKEN: '" not in merge
     assert "Golden Question Failure: Agreement Navigator (AgNav)" in deploy_test
     assert "bcgov/actions/workflow-notifier@" in deploy_test
     assert "secrets.GITHUB_TOKEN" in deploy_test
@@ -129,3 +134,38 @@ def test_gate_pass_fail_and_retry_with_fake_responder(monkeypatch):
 
     assert gate.run("bcgeu/navigator-test", post=down_post) == 1
     assert down["n"] == 2
+
+
+def test_curl_sends_the_token_header_and_refuses_when_unset(monkeypatch):
+    gate = _gate()
+    monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
+    try:
+        gate.post_with_curl("https://example.test/api/golden-question", "q", 1)
+    except ValueError as exc:
+        assert str(exc) == "GOLDEN_QUESTION_TOKEN is unset"
+    else:
+        raise AssertionError("curl ran without a token")
+
+    token = secrets.token_hex(16)
+    monkeypatch.setenv("GOLDEN_QUESTION_TOKEN", token)
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(args, **kwargs):
+        captured["args"] = args
+        body_path = args[args.index("-o") + 1]
+        Path(body_path).write_text('{"answer":"x"}', encoding="utf-8")
+
+        class Result:
+            returncode = 0
+            stdout = "200"
+            stderr = ""
+
+        return Result()
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+    exit_code, status, body = gate.post_with_curl(
+        "https://example.test/api/golden-question", "q", 5
+    )
+    assert (exit_code, status, body) == (0, 200, '{"answer":"x"}')
+    assert f"X-Golden-Question-Token: {token}" in captured["args"]
+    assert token not in body

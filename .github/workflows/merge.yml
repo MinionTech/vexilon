@@ -86,6 +86,8 @@ jobs:
         id: golden
         # Script worst case is 765s (see golden_questions.py). Step timeout stays 15 minutes.
         timeout-minutes: 15
+        env:
+          GOLDEN_QUESTION_TOKEN: ${{ secrets.GOLDEN_QUESTION_TOKEN }}
         run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test
 
       - name: Notify Owners on Golden Question Failure
