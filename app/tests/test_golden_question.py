@@ -196,7 +196,7 @@ async def test_golden_question_rejects_anonymous_before_the_body(monkeypatch, ca
         raise AssertionError("wrong token was accepted")
     assert wrong_seen["read"] is False
 
-    for value in (None, " ", "\n", "\r"):
+    for value in (None, " ", " x", "x ", " x ", "\n", "\r"):
         if value is None:
             monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
         else:

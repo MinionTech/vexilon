@@ -183,6 +183,9 @@ for header in headers:
     if from_file:
         saw_header_file = True
         path = header[1:]
+        if not os.path.exists(path):
+            sys.stderr.write("fake curl: header file is missing\n")
+            sys.exit(2)
         mode = os.stat(path).st_mode & 0o777
         if mode != 0o600:
             sys.stderr.write("fake curl: header file is not mode 0600\n")
@@ -246,6 +249,29 @@ if scenario == "http-400" and question == order[0]:
 emit(good(), 200, 0)
 PY
 chmod +x /tmp/bin/curl
+
+missing_work="$(mktemp -d)"
+set +e
+env -u GOLDEN_QUESTION_TOKEN \
+    CURL_LOG="$missing_work/curl.log" \
+    CURL_STATE="$missing_work/state.json" \
+    /tmp/bin/curl -sS -H "@$missing_work/no-such-header" --data-binary @/dev/null https://example.invalid \
+    >"$missing_work/out.txt" 2>"$missing_work/err.txt"
+missing_rc=$?
+set -e
+if [ "$missing_rc" -ne 2 ]; then
+    cat "$missing_work/err.txt"
+    fail "missing header file: exit $missing_rc, expected 2"
+fi
+if ! grep -F "fake curl: header file is missing" "$missing_work/err.txt" >/dev/null; then
+    cat "$missing_work/err.txt"
+    fail "missing header file did not say the file is missing"
+fi
+if grep -F "FileNotFoundError" "$missing_work/err.txt" >/dev/null; then
+    cat "$missing_work/err.txt"
+    fail "missing header file raised FileNotFoundError"
+fi
+pass "missing header file exits 2"
 
 question_count="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["questions"]))' "$QUESTIONS")"
 GATE_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"

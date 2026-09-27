@@ -105,7 +105,7 @@ def _budget() -> tuple[int, int, int]:
 
 def _gate_token() -> str:
     token = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
-    if not token.strip() or "\r" in token or "\n" in token:
+    if not token.strip() or token != token.strip() or "\r" in token or "\n" in token:
         raise ValueError("GOLDEN_QUESTION_TOKEN is unset or invalid")
     return token
 

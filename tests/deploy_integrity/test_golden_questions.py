@@ -140,7 +140,7 @@ def test_gate_pass_fail_and_retry_with_fake_responder(monkeypatch):
 
 def test_curl_sends_the_token_header_and_refuses_when_unset(monkeypatch):
     gate = _gate()
-    rejected = (None, " ", "\n", "\r", "bad\r\n")
+    rejected = (None, " ", " x", "x ", " x ", "\n", "\r", "bad\r\n")
     for value in rejected:
         if value is None:
             monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
