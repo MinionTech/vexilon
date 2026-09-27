@@ -37,6 +37,8 @@ jobs:
           persist-credentials: false
 
       - name: Probe Space Health
+        # Below the job timeout so a stalled request still leaves time for the notifier step.
+        timeout-minutes: 10
         env:
           SPACE_ID: ${{ matrix.space }}
         run: ./.github/scripts/probe_health.sh "$SPACE_ID" 300
