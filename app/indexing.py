@@ -189,6 +189,10 @@ def _resolve_pdf_path(md_path: Path) -> Path:
     exact_pdf = public_docs / f"{md_path.stem}.pdf"
     if exact_pdf.exists():
         return exact_pdf
+    if md_path.stem == "BCGEU_20th_Main_Agreement":
+        legacy_pdf = public_docs / "BCGEU_19th_Main_Agreement.pdf"
+        if legacy_pdf.exists():
+            return legacy_pdf
     if "_-_" in md_path.stem:
         base_stem = md_path.stem.split("_-_")[0]
         prefix_pdf = public_docs / f"{base_stem}.pdf"
@@ -355,7 +359,7 @@ def embed_texts(texts: list[str]) -> "np.ndarray":
 def get_document_tier_weight(source_name: str, path: str = "") -> float:
     """
     Determine the retrieval boost weight for a document based on its tier.
-    - Tier 1: 19th Main Agreement & Standards of Conduct (default 1.2)
+    - Tier 1: 20th Main Agreement & Standards of Conduct (default 1.2)
     - Tier 3: Statutory and general secondary resources (default 0.8)
     - Tier 2: Core agreements, jurisprudence, forms, etc. (default 1.0)
     """
@@ -365,17 +369,17 @@ def get_document_tier_weight(source_name: str, path: str = "") -> float:
 
     # Tier 1 checks:
     # 1. Gov BC Standards of Conduct (either via relative path or source name)
-    # 2. BCGEU 19th Main Agreement (either via relative path or source name)
+    # 2. BCGEU 20th Main Agreement (either via relative path or source name)
     is_standards_of_conduct = (
         "standards_of_conduct" in path_lower 
         or "standards of conduct" in source_lower
     )
-    is_19th_agreement = (
-        "19th_main_agreement" in path_lower 
-        or "19th main agreement" in source_lower
+    is_main_agreement = (
+        "20th_main_agreement" in path_lower
+        or "20th main agreement" in source_lower
     )
 
-    if is_standards_of_conduct or is_19th_agreement:
+    if is_standards_of_conduct or is_main_agreement:
         return TIER1_BOOST
 
     # Tier 3 checks:

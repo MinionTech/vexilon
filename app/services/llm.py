@@ -763,6 +763,11 @@ def resolve_pdf_path(md_path: Path) -> Path:
     if exact_pdf.exists():
         return exact_pdf
 
+    if md_path.stem == "BCGEU_20th_Main_Agreement":
+        legacy_pdf = effective_docs_dir / "BCGEU_19th_Main_Agreement.pdf"
+        if legacy_pdf.exists():
+            return legacy_pdf
+
     for found_pdf in effective_docs_dir.rglob(f"{md_path.stem}.pdf"):
         if found_pdf.is_file():
             return found_pdf

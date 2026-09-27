@@ -33,7 +33,7 @@ def test_resolve_pdf_path_same_directory(tmp_path):
 
 def test_resolve_pdf_path_public_docs_exact(tmp_path, monkeypatch):
     """If the PDF exists in public/docs with the exact stem, return it."""
-    md_file = tmp_path / "BCGEU_19th_Main_Agreement.md"
+    md_file = tmp_path / "BCGEU_20th_Main_Agreement.md"
     md_file.touch()
     
     public_docs_dir = tmp_path / "public" / "docs"

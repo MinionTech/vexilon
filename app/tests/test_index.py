@@ -106,14 +106,14 @@ def test_search_index_finds_most_similar(monkeypatch):
 def test_get_document_tier_weight():
     """Verify that get_document_tier_weight returns correct weights for all tiers."""
     # Tier 1 documents
-    assert indexing.get_document_tier_weight("BCGEU 19th Main Agreement", "01_primary/BCGEU_19th_Main_Agreement.md") == 1.2
+    assert indexing.get_document_tier_weight("BCGEU 20th Main Agreement", "01_primary/BCGEU_20th_Main_Agreement.md") == 1.2
     assert indexing.get_document_tier_weight("Gov BC Standards of Conduct", "01_primary/Gov_BC_Standards_of_Conduct.md") == 1.2
     
     # Matching by source name only or path only (robustness checks)
     assert indexing.get_document_tier_weight("Gov BC Standards of Conduct", "") == 1.2
     assert indexing.get_document_tier_weight("", "01_primary/Gov_BC_Standards_of_Conduct.md") == 1.2
-    assert indexing.get_document_tier_weight("BCGEU 19th Main Agreement", "") == 1.2
-    assert indexing.get_document_tier_weight("", "01_primary/BCGEU_19th_Main_Agreement.md") == 1.2
+    assert indexing.get_document_tier_weight("BCGEU 20th Main Agreement", "") == 1.2
+    assert indexing.get_document_tier_weight("", "01_primary/BCGEU_20th_Main_Agreement.md") == 1.2
     
     # Tier 2 documents (unmodified)
     assert indexing.get_document_tier_weight("Nexus Test and Off-Duty Conduct", "04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.md") == 1.0
@@ -127,10 +127,10 @@ def test_get_document_tier_weight():
 
 
 def test_search_index_boosts_tier_1_documents(monkeypatch):
-    """search_index should boost a Tier 1 document (BCGEU 19th Main Agreement) to rank above a slightly closer Tier 3 document."""
+    """search_index should boost a Tier 1 document (BCGEU 20th Main Agreement) to rank above a slightly closer Tier 3 document."""
     # 2 chunks: 
     # chunk 0: Tier 3 document (OHS Regulation)
-    # chunk 1: Tier 1 document (19th Agreement)
+    # chunk 1: Tier 1 document (20th Agreement)
     chunks = [
         {
             "text": "OHS regulation chunk",
@@ -140,10 +140,10 @@ def test_search_index_boosts_tier_1_documents(monkeypatch):
             "chunk_index": 0
         },
         {
-            "text": "19th main agreement chunk",
+            "text": "20th main agreement chunk",
             "page": 5,
-            "source": "BCGEU 19th Main Agreement",
-            "path": "01_primary/BCGEU_19th_Main_Agreement.md",
+            "source": "BCGEU 20th Main Agreement",
+            "path": "01_primary/BCGEU_20th_Main_Agreement.md",
             "chunk_index": 1
         }
     ]
