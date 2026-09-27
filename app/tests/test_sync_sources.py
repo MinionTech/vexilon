@@ -372,6 +372,21 @@ def test_markdown_table_cell_closes_emphasis_before_a_line_break():
     assert markdown.splitlines()[-1] == "| **b) Slow Signals:** Any regular signal. | |"
 
 
+def test_clean_bclaws_content_keeps_space_between_adjacent_bold_runs():
+    """``** **`` between two bold runs is not empty bold; the words must stay apart."""
+    raw_html = """
+    <div id="contentsscroll">
+      <table border="1">
+        <tr><td><strong><strong>Column 2</strong><br /><strong>Minimum distance</strong></strong></td></tr>
+        <tr><td>3 m</td></tr>
+      </table>
+    </div>
+    """
+    cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert "2Minimum" not in cleaned
+    assert cleaned.splitlines()[0] == "| Column 2 Minimum distance |"
+
+
 def test_markdown_table_colspan_leaves_spanned_cells_empty():
     """A spanned value is written once; the columns after it stay aligned."""
     markdown = _extract_body("""

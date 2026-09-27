@@ -605,7 +605,8 @@ def _strip_bclaws_chrome(content: str) -> str:
     content = _POINT_IN_TIME_RE.sub("", content)
     content = _CONSOLIDATED_PDF_RE.sub("", content)
     content = _NAV_RAIL_RE.sub("", content)
-    content = _EMPTY_BOLD_RE.sub("", content)
+    # "** **" is also a closing marker followed by an opening one; keep the space between the words.
+    content = _EMPTY_BOLD_RE.sub(lambda m: m.group(0).replace("*", ""), content)
     content = _EMPTY_HEADING_RE.sub("", content)
     return content
 
