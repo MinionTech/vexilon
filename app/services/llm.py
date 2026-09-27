@@ -639,8 +639,13 @@ async def get_rag_context(message: str, history: list[dict]) -> tuple[list[str],
                     seen.add(c["text"])
                     unique_snippets.append(c)
                     source = c.get("source", "Unknown")
-                    page = c.get("page", "?")
-                    context_parts.append(f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}")
+                    page = c.get("page")
+                    if page is not None:
+                        context_parts.append(
+                            f"<<< SOURCE: {source} | Page: {page} >>>\n{c['text']}"
+                        )
+                    else:
+                        context_parts.append(f"<<< SOURCE: {source} >>>\n{c['text']}")
 
         sources_found = set(c.get("source", "Unknown") for c in unique_snippets)
         step.output = f"Retrieved {len(unique_snippets)} matching excerpts from {len(sources_found)} reference documents."
@@ -762,11 +767,6 @@ def resolve_pdf_path(md_path: Path) -> Path:
     exact_pdf = effective_docs_dir / f"{md_path.stem}.pdf"
     if exact_pdf.exists():
         return exact_pdf
-
-    if md_path.stem == "BCGEU_20th_Main_Agreement":
-        legacy_pdf = effective_docs_dir / "BCGEU_19th_Main_Agreement.pdf"
-        if legacy_pdf.exists():
-            return legacy_pdf
 
     for found_pdf in effective_docs_dir.rglob(f"{md_path.stem}.pdf"):
         if found_pdf.is_file():
