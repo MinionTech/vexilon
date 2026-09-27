@@ -339,7 +339,7 @@ def test_bordered_table_becomes_markdown_pipe_table():
     """)
     assert markdown == (
         "TABLE\n\n"
-        "| Item | Range of Hearing Loss (decibels) | Percentage for Ear Most Affected |\n"
+        "| Item | Range of Hearing Loss<br>(decibels) | Percentage for Ear Most Affected |\n"
         "| --- | --- | --- |\n"
         "| 1 | 0-34 | 0 |\n"
         "| 2 | 35-39 | 0.3 |\n\n"
@@ -369,7 +369,10 @@ def test_markdown_table_cell_closes_emphasis_before_a_line_break():
         <tr><td colspan="2"><strong>b) Slow Signals:<br /></strong>Any regular signal.</td></tr>
       </table>
     """)
-    assert markdown.splitlines()[-1] == "| **b) Slow Signals:** Any regular signal. | |"
+    assert markdown.splitlines()[-2:] == [
+        "| **b) Slow Signals:** | |",
+        "| Any regular signal. | |",
+    ]
 
 
 def test_markdown_table_cell_opens_emphasis_after_leading_space():
@@ -381,7 +384,7 @@ def test_markdown_table_cell_opens_emphasis_after_leading_space():
         <tr><td>1</td><td>Poisoning by lead</td></tr>
       </table>
     """)
-    assert markdown.splitlines()[0] == "| Item | Column 1 **Description of Disease** |"
+    assert markdown.splitlines()[0] == "| Item | Column 1<br>**Description of Disease** |"
 
 
 def test_clean_bclaws_content_keeps_space_between_adjacent_bold_runs():
@@ -389,7 +392,7 @@ def test_clean_bclaws_content_keeps_space_between_adjacent_bold_runs():
     raw_html = """
     <div id="contentsscroll">
       <table border="1">
-        <tr><td><strong><strong>Column 2</strong><br /><strong>Minimum distance</strong></strong></td></tr>
+        <tr><td><strong><strong>Column 2</strong> <strong>Minimum distance</strong></strong></td></tr>
         <tr><td>3 m</td></tr>
       </table>
     </div>
@@ -407,6 +410,90 @@ def test_clean_bclaws_content_keeps_bold_balanced_per_paragraph():
     """
     cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
     assert cleaned == "**Table 3-1**\n\n**Minimum Requirements**"
+
+
+def test_br_packed_row_splits_into_paired_rows_table_26_2():
+    """OHS Table 26-2 packs three signals into one row; each count must stay with its command."""
+    raw_html = """
+    <div id="contentsscroll">
+      <table align="center" cellSpacing="0" cellPadding="3" border="1" class="tablestyle2">
+        <caption><p>Table 26-2: Audible signals for vehicle operations</p></caption>
+        <tbody><tr><td colname="c1" width="300">1 whistle<br /> 2 whistles<br /> 3 whistles</td>
+        <td colname="c2" width="300">STOP<br /> BACK UP<br /> GO AHEAD</td></tr></tbody>
+      </table>
+    </div>
+    """
+    cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert cleaned.splitlines() == [
+        "Table 26-2: Audible signals for vehicle operations",
+        "",
+        "| 1 whistle | STOP |",
+        "| --- | --- |",
+        "| 2 whistles | BACK UP |",
+        "| 3 whistles | GO AHEAD |",
+    ]
+
+
+def test_br_packed_row_splits_part_20_soil_table_and_keeps_its_header():
+    raw_html = """
+    <div id="contentsscroll">
+      <table align="center" cellSpacing="0" cellPadding="3" border="1" class="tablestyle2"><tbody>
+        <tr><td colname="c1" align="center"><strong>Soil type</strong></td>
+        <td colname="c2" align="center">Column 2<br /><strong>Description of soil</strong></td></tr>
+        <tr><td colname="c1" align="center">A<br />B<br />C</td>
+        <td colname="c2">hard and solid<br />likely to crack or crumble<br />soft, sandy, filled or loose</td></tr>
+      </tbody></table>
+    </div>
+    """
+    cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert cleaned.splitlines() == [
+        "| **Soil type** | Column 2<br>**Description of soil** |",
+        "| --- | --- |",
+        "| A | hard and solid |",
+        "| B | likely to crack or crumble |",
+        "| C | soft, sandy, filled or loose |",
+    ]
+
+
+def test_br_segments_that_do_not_pair_stay_in_one_cell_joined_by_br():
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Workers</td><td>Requirements</td></tr>
+        <tr><td>2 — 9</td><td>• Basic first aid kit<br />• Basic first aid attendant</td></tr>
+        <tr><td>10<br />or more</td><td>• Kit<br />• Room<br />• Attendant</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines()[2:] == [
+        "| 2 — 9 | • Basic first aid kit<br>• Basic first aid attendant |",
+        "| 10<br>or more | • Kit<br>• Room<br>• Attendant |",
+    ]
+
+
+def test_br_packed_row_closes_and_reopens_emphasis_per_row():
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Signal</td><td>Meaning</td></tr>
+        <tr><td><strong>1 SHORT<br />2 SHORT</strong></td><td>STOP<br />GO</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines()[2:] == [
+        "| **1 SHORT** | STOP |",
+        "| **2 SHORT** | GO |",
+    ]
+
+
+def test_br_packed_row_under_a_rowspan_is_not_split():
+    markdown = _extract_body("""
+      <table border="1">
+        <tr><td>Group</td><td>Signal</td><td>Meaning</td></tr>
+        <tr><td rowspan="2">Logging</td><td>1 SHORT</td><td>STOP</td></tr>
+        <tr><td>2 SHORT<br />3 SHORT</td><td>GO<br />BACK</td></tr>
+      </table>
+    """)
+    assert markdown.splitlines()[2:] == [
+        "| Logging | 1 SHORT | STOP |",
+        "| | 2 SHORT<br>3 SHORT | GO<br>BACK |",
+    ]
 
 
 def test_markdown_table_colspan_leaves_spanned_cells_empty():

@@ -152,6 +152,18 @@ class _OpeningMarker(str):
     """An emphasis marker that opens a span, so cell text can keep whitespace outside it."""
 
 
+class _ClosingMarker(str):
+    """An emphasis marker that closes a span."""
+
+
+class _LineBreak(str):
+    """A ``<br>``. Inside a table cell it separates the cell's segments."""
+
+
+# A cell is (segments split at <br>, colspan, rowspan).
+_Cell = tuple[list[str], int, int]
+
+
 @dataclass
 class _TableState:
     """One open ``<table>``. Only data tables collect rows; layout tables stay inline text."""
@@ -159,8 +171,8 @@ class _TableState:
     is_data: bool
     outer_tokens: list[str]
     outside_tokens: list[str]
-    rows: list[list[tuple[str, int, int]]]
-    row: list[tuple[str, int, int]] | None = None
+    rows: list[list[_Cell]]
+    row: list[_Cell] | None = None
     cell_span: tuple[int, int] | None = None
     cell_tokens: list[str] | None = None
 
@@ -190,6 +202,40 @@ def _lead_space_outside_openers(tokens: list[str]) -> list[str]:
     return out
 
 
+def _cell_segments(tokens: list[str]) -> list[str]:
+    """Split a cell's tokens at each ``<br>`` into one-line Markdown segments.
+
+    Emphasis still open at a break is closed there and reopened in the next
+    segment, so each segment is valid on its own. Empty segments are dropped.
+    """
+    parts: list[list[str]] = []
+    current: list[str] = []
+    open_markers: list[str] = []
+    for token in tokens:
+        if isinstance(token, _LineBreak):
+            while current and not current[-1].strip():
+                current.pop()
+            if current and not isinstance(current[-1], (_OpeningMarker, _ClosingMarker)):
+                current[-1] = current[-1].rstrip()
+            current.extend(_ClosingMarker(m) for m in reversed(open_markers))
+            parts.append(current)
+            current = [_OpeningMarker(m) for m in open_markers]
+            continue
+        if isinstance(token, _OpeningMarker):
+            open_markers.append(str(token))
+        elif isinstance(token, _ClosingMarker) and str(token) in open_markers:
+            del open_markers[len(open_markers) - 1 - open_markers[::-1].index(str(token))]
+        current.append(token)
+    parts.append(current)
+
+    segments = []
+    for part in parts:
+        text = re.sub(r"\s+", " ", "".join(_lead_space_outside_openers(part))).strip()
+        if text.replace("*", "").strip():
+            segments.append(text.replace("|", r"\|"))
+    return segments
+
+
 def _span(value: str | None, limit: int) -> int:
     """Parse a colspan/rowspan value; missing, zero, or malformed values count as 1."""
     try:
@@ -198,7 +244,33 @@ def _span(value: str | None, limit: int) -> int:
         return 1
 
 
-def _render_markdown_table(rows: list[list[tuple[str, int, int]]]) -> str:
+def _expand_br_rows(
+    cells: list[_Cell], covered: bool, is_header: bool
+) -> list[list[tuple[str, int, int]]]:
+    """Turn one ``<tr>`` into Markdown rows.
+
+    Sources pack several rows into one ``<tr>`` with ``<br>`` between values
+    ("1 whistle<br>2 whistles" next to "STOP<br>BACK UP"). When every non-empty
+    cell has the same number of segments n > 1, emit n rows and pair segment i
+    across cells. Otherwise keep one row and join each cell's segments with
+    ``<br>``.
+
+    Not split: the header row of a multi-row table ("Column 1<br>Matter" is one
+    label; splitting would turn the label into a data row), and rows that start
+    or sit under a rowspan, because the span would then cover the wrong rows.
+    """
+    counts = {len(segments) for segments, _, _ in cells if segments}
+    lines = counts.pop() if len(counts) == 1 else 1
+    splittable = not is_header and not covered and all(rowspan == 1 for _, _, rowspan in cells)
+    if lines > 1 and splittable:
+        return [
+            [(segments[i] if segments else "", colspan, 1) for segments, colspan, _ in cells]
+            for i in range(lines)
+        ]
+    return [[("<br>".join(segments), colspan, rowspan) for segments, colspan, rowspan in cells]]
+
+
+def _render_markdown_table(rows: list[list[_Cell]]) -> str:
     """Render collected rows as a Markdown pipe table. The first row is the header.
 
     Spans: a spanned value is written once, in its first (top-left) cell; the
@@ -208,31 +280,11 @@ def _render_markdown_table(rows: list[list[tuple[str, int, int]]]) -> str:
     grid: list[list[str]] = []
     # column -> rows still covered by a rowspan from an earlier row
     pending: dict[int, int] = {}
-    for cells in rows:
-        out: list[str] = []
-        col = 0
-
-        def skip_covered() -> None:
-            nonlocal col
-            while pending.get(col, 0) > 0:
-                pending[col] -= 1
-                out.append("")
-                col += 1
-
-        for text, colspan, rowspan in cells:
-            skip_covered()
-            for offset in range(colspan):
-                out.append(text if offset == 0 else "")
-                if rowspan > 1:
-                    pending[col + offset] = rowspan - 1
-            col += colspan
-        last_covered = max((c for c, n in pending.items() if n > 0 and c >= col), default=-1)
-        while col <= last_covered:
-            if pending.get(col, 0) > 0:
-                pending[col] -= 1
-            out.append("")
-            col += 1
-        grid.append(out)
+    for index, row in enumerate(rows):
+        covered = any(n > 0 for n in pending.values())
+        is_header = index == 0 and len(rows) > 1
+        for cells in _expand_br_rows(row, covered=covered, is_header=is_header):
+            grid.append(_layout_row(cells, pending))
 
     if not any(cell for row in grid for cell in row):
         return ""
@@ -246,6 +298,34 @@ def _render_markdown_table(rows: list[list[tuple[str, int, int]]]) -> str:
     return "\n".join(lines)
 
 
+def _layout_row(cells: list[tuple[str, int, int]], pending: dict[int, int]) -> list[str]:
+    """Place one row's cells into columns, skipping columns covered by earlier rowspans."""
+    out: list[str] = []
+    col = 0
+
+    def skip_covered() -> None:
+        nonlocal col
+        while pending.get(col, 0) > 0:
+            pending[col] -= 1
+            out.append("")
+            col += 1
+
+    for text, colspan, rowspan in cells:
+        skip_covered()
+        for offset in range(colspan):
+            out.append(text if offset == 0 else "")
+            if rowspan > 1:
+                pending[col + offset] = rowspan - 1
+        col += colspan
+    last_covered = max((c for c, n in pending.items() if n > 0 and c >= col), default=-1)
+    while col <= last_covered:
+        if pending.get(col, 0) > 0:
+            pending[col] -= 1
+        out.append("")
+        col += 1
+    return out
+
+
 class HTMLContentExtractor(HTMLParser):
     """
     Robust HTML to Markdown content extractor.
@@ -257,6 +337,8 @@ class HTMLContentExtractor(HTMLParser):
     contents list use ``border="0"`` or none. Those layout tables keep the
     flowing-text output (one paragraph per row). A table nested inside a data
     table is flattened into its enclosing cell, because Markdown has no nested tables.
+    ``<br>`` inside a data cell either splits the row (see ``_expand_br_rows``)
+    or stays as ``<br>`` in the cell; other whitespace in a cell becomes one space.
     """
 
     IGNORABLE_TAGS = {
@@ -341,7 +423,7 @@ class HTMLContentExtractor(HTMLParser):
         elif tag_lower in self.BLOCK_TAGS:
             self.tokens.append("\n\n")
         elif tag_lower == "br":
-            self.tokens.append("\n")
+            self.tokens.append(_LineBreak("\n"))
         elif tag_lower == "li":
             self.tokens.append("\n- ")
         elif tag_lower in ("strong", "b"):
@@ -377,18 +459,18 @@ class HTMLContentExtractor(HTMLParser):
         whitespace, so the marker must come first: ``**Label:** Text``.
         """
         if not any(t.cell_tokens is self.tokens for t in self.tables):
-            self.tokens.append(marker)
+            self.tokens.append(_ClosingMarker(marker))
             return
-        trailing = ""
+        # Popped last-first; line-break tokens are kept whole so cells still split on them.
+        trailing: list[str] = []
         while self.tokens and not self.tokens[-1].strip():
-            trailing = self.tokens.pop() + trailing
+            trailing.append(self.tokens.pop())
         if self.tokens and self.tokens[-1] != self.tokens[-1].rstrip():
             kept = self.tokens[-1].rstrip()
-            trailing = self.tokens[-1][len(kept):] + trailing
+            trailing.append(self.tokens[-1][len(kept):])
             self.tokens[-1] = kept
-        self.tokens.append(marker)
-        if trailing:
-            self.tokens.append(trailing)
+        self.tokens.append(_ClosingMarker(marker))
+        self.tokens.extend(reversed(trailing))
 
     def _in_data_table(self) -> bool:
         return bool(self.tables) and self.tables[-1].is_data
@@ -423,9 +505,7 @@ class HTMLContentExtractor(HTMLParser):
         state = self.tables[-1]
         if state.cell_tokens is None or state.cell_span is None or state.row is None:
             return
-        text = re.sub(r"\s+", " ", "".join(_lead_space_outside_openers(state.cell_tokens)))
-        text = text.strip().replace("|", r"\|")
-        state.row.append((text, *state.cell_span))
+        state.row.append((_cell_segments(state.cell_tokens), *state.cell_span))
         state.cell_tokens = None
         state.cell_span = None
         self.tokens = state.outside_tokens
