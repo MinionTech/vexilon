@@ -20,18 +20,27 @@ SPACE_URL="https://$(echo "$SPACE_ID" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
 
 echo "[probe] Reading runtime for Hugging Face Space: $SPACE_ID"
 SPACE_JSON=$(curl -sS --fail-with-body --max-time 30 --retry 3 --retry-all-errors "https://huggingface.co/api/spaces/$SPACE_ID")
+# Paid unless every reported hardware value (current and requested) is free; a pending upgrade counts as paid.
 RUNTIME=$(echo "$SPACE_JSON" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('runtime') or {}
 h = r.get('hardware') or {}
-print(str(r.get('stage') or 'UNKNOWN').upper(), h.get('current') or h.get('requested') or 'unknown', r.get('gcTimeout') or 'none')
-")
-read -r STAGE HARDWARE SLEEP_TIMEOUT <<< "$RUNTIME"
-echo "[probe] stage=$STAGE hardware=$HARDWARE sleep_timeout_seconds=$SLEEP_TIMEOUT"
+current, requested = h.get('current') or 'none', h.get('requested') or 'none'
+paid = {current, requested} - {'none'} != {sys.argv[1]}
+print(str(r.get('stage') or 'UNKNOWN').upper(), current + '/' + requested, str(paid).lower(), r.get('gcTimeout') or 'none')
+" "$FREE_HARDWARE")
+read -r STAGE HARDWARE PAID SLEEP_TIMEOUT <<< "$RUNTIME"
+echo "[probe] stage=$STAGE hardware(current/requested)=$HARDWARE paid=$PAID sleep_timeout_seconds=$SLEEP_TIMEOUT"
+
+# HF reports an idle Space as SLEEPING (free hardware) or STOPPED (paid hardware with a sleep time).
+ASLEEP=false
+case "$STAGE" in
+    SLEEPING|STOPPED) ASLEEP=true ;;
+esac
 
 # A request to a paid Space wakes it (if asleep) or resets its sleep timer (if awake), which bills hardware time.
-if [ "$HARDWARE" != "$FREE_HARDWARE" ]; then
-    if [ "$STAGE" == "SLEEPING" ]; then
+if [ "$PAID" == "true" ]; then
+    if [ "$ASLEEP" == "true" ]; then
         echo "✅ $SPACE_ID is asleep on paid hardware '$HARDWARE'. Treating as healthy without calling /api/health."
         exit 0
     fi
@@ -41,7 +50,7 @@ if [ "$HARDWARE" != "$FREE_HARDWARE" ]; then
     fi
 fi
 
-if [ "$STAGE" == "SLEEPING" ]; then
+if [ "$ASLEEP" == "true" ]; then
     echo "[probe] $SPACE_ID is asleep on free hardware '$HARDWARE'. Sending a wake-up request..."
     WAKE_EXIT=0
     curl -s -o /dev/null --max-time 30 "$SPACE_URL/api/health" || WAKE_EXIT=$?
