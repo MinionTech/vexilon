@@ -59,21 +59,31 @@ fi
 
 bash "$SCRIPT_DIR/verify_deployment.sh" "$SPACE_ID" "$TIMEOUT_SECONDS"
 
-echo "[probe] Checking $SPACE_URL/api/health for HTTP 200 and \"status\": \"ok\"..."
-CURL_EXIT=0
-RESPONSE=$(curl -sS --max-time 30 -w $'\n%{http_code}' "$SPACE_URL/api/health") || CURL_EXIT=$?
-if [ $CURL_EXIT -ne 0 ]; then
-    echo "❌ Error: /api/health request failed (curl exit code: $CURL_EXIT)."
-    exit 1
-fi
+# Each attempt is a fresh request with a fresh body, so one network blip does not raise an issue.
+HEALTH_ATTEMPTS=3
+HEALTH_RETRY_INTERVAL=30
 
-HTTP_STATUS="${RESPONSE##*$'\n'}"
-BODY="${RESPONSE%$'\n'*}"
-HEALTH_STATUS=$(echo "$BODY" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('status', '') if isinstance(d, dict) else '')" 2>/dev/null || echo "")
+for i in $(seq 1 "$HEALTH_ATTEMPTS"); do
+    echo "[probe] Checking $SPACE_URL/api/health for HTTP 200 and \"status\": \"ok\" (Attempt $i/$HEALTH_ATTEMPTS)..."
+    CURL_EXIT=0
+    RESPONSE=$(curl -sS --max-time 30 -w $'\n%{http_code}' "$SPACE_URL/api/health") || CURL_EXIT=$?
+    if [ $CURL_EXIT -ne 0 ]; then
+        echo "[probe] Attempt $i failed: /api/health request failed (curl exit code: $CURL_EXIT)."
+    else
+        HTTP_STATUS="${RESPONSE##*$'\n'}"
+        BODY="${RESPONSE%$'\n'*}"
+        HEALTH_STATUS=$(echo "$BODY" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('status', '') if isinstance(d, dict) else '')" 2>/dev/null || echo "")
+        if [ "$HTTP_STATUS" == "200" ] && [ "$HEALTH_STATUS" == "ok" ]; then
+            echo "✅ $SPACE_ID is healthy. HTTP $HTTP_STATUS, body: $BODY"
+            exit 0
+        fi
+        echo "[probe] Attempt $i failed: HTTP $HTTP_STATUS, body: $BODY"
+    fi
+    if [ "$i" -lt "$HEALTH_ATTEMPTS" ]; then
+        echo "[probe] Retrying in $HEALTH_RETRY_INTERVAL seconds..."
+        sleep "$HEALTH_RETRY_INTERVAL"
+    fi
+done
 
-if [ "$HTTP_STATUS" != "200" ] || [ "$HEALTH_STATUS" != "ok" ]; then
-    echo "❌ Error: $SPACE_ID is unhealthy. HTTP $HTTP_STATUS, body: $BODY"
-    exit 1
-fi
-
-echo "✅ $SPACE_ID is healthy. HTTP $HTTP_STATUS, body: $BODY"
+echo "❌ Error: $SPACE_ID is unhealthy. /api/health failed $HEALTH_ATTEMPTS attempts."
+exit 1

@@ -11,7 +11,7 @@ jobs:
   probe:
     name: Probe ${{ matrix.env }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -37,8 +37,8 @@ jobs:
           persist-credentials: false
 
       - name: Probe Space Health
-        # Below the job timeout so a stalled request still leaves time for the notifier step.
-        timeout-minutes: 10
+        # Above the probe's ~13-minute worst case, below the job timeout so the notifier step still runs.
+        timeout-minutes: 15
         env:
           SPACE_ID: ${{ matrix.space }}
         run: ./.github/scripts/probe_health.sh "$SPACE_ID" 300
