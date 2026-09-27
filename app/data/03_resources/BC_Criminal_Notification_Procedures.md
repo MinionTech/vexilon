@@ -2,7 +2,7 @@
 
 **Source:** [Criminal notification procedures - Province of British Columbia](https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee)  
 **Upstream Last Modified:** Unknown  
-**Ingestion Date:** 2026-09-25  
+**Ingestion Date:** 2026-09-27  
 
 ## On this page
 

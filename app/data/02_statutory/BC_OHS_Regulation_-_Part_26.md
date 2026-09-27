@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:28 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:49 GMT  
+**Ingestion Date:** 2026-09-27  
 
 Part 26 — Forestry Operations and Similar Activities
 
@@ -1591,16 +1591,12 @@ Hauling
 
 (b) conform to the following specifications.
 
-Bunk widthStake cable
-minimum diameter
-
-< 2.6 m (8 ft 6 in) 22 mm (7/8 in)
-
-≥ 2.6 m (8 ft 6 in) and ≤ 2.9 m (9 ft 6 in) 25 mm (1 in)
-
-> 2.9 m (9 ft 6 in) and ≤ 3.7 m (12 ft) 29 mm (1 1/8 in)
-
-> 3.7 m (12 ft) 32 mm (1 1/4 in)
+| Bunk width | Stake cable<br>minimum diameter |
+| --- | --- |
+| < 2.6 m (8 ft 6 in) | 22 mm (7/8 in) |
+| ≥ 2.6 m (8 ft 6 in) and ≤ 2.9 m (9 ft 6 in) | 25 mm (1 in) |
+| > 2.9 m (9 ft 6 in) and ≤ 3.7 m (12 ft) | 29 mm (1 1/8 in) |
+| > 3.7 m (12 ft) | 32 mm (1 1/4 in) |
 
 (8) Stake and bunk assemblies must be inspected daily, and must not be used if they show signs of excessive wear.
 
@@ -2092,262 +2088,167 @@ Water Operations
 
 Table 26-1: Audible call signals
 
-7 LONG whistles ACCIDENT
-
-1 LONG whistle, continued until emergent condition has ceased to exist EMERGENCY HAZARD CONDITION
-
-1 LONG — several SHORT whistles, repeated FIRE
-
-1 LONG whistle (*also used by the equipment operator to indicate a delay and must also be given before the equipment is again operated) STARTING WHISTLE
-
-4 LONG whistles CALLING SUPERVISOR
-
-3 LONG whistles CALLING HOOKER
-
-3 LONG — several SHORT whistles CALLING HOOKING CREW
-
-2 LONG — 1 SHORT whistles CALLING SECOND RIGGER
-
-2 LONG — several SHORT whistles CALLING SECOND RIGGER AND BACK RIGGERS
-
-1 SHORT — 1 LONG whistle CALLING FOR WATER BAG
-
-* When an operating delay has occurred and the equipment is ready to re-operate, the signal immediately following the "one LONG" re-start signal must be the repeat instruction signal.
+| 7 LONG whistles | ACCIDENT |
+| --- | --- |
+| 1 LONG whistle, continued until emergent condition has ceased to exist | EMERGENCY HAZARD CONDITION |
+| 1 LONG — several SHORT whistles, repeated | FIRE |
+| 1 LONG whistle (*also used by the equipment operator to indicate a delay and must also be given before the equipment is again operated) | STARTING WHISTLE |
+| 4 LONG whistles | CALLING SUPERVISOR |
+| 3 LONG whistles | CALLING HOOKER |
+| 3 LONG — several SHORT whistles | CALLING HOOKING CREW |
+| 2 LONG — 1 SHORT whistles | CALLING SECOND RIGGER |
+| 2 LONG — several SHORT whistles | CALLING SECOND RIGGER AND BACK RIGGERS |
+| 1 SHORT — 1 LONG whistle | CALLING FOR WATER BAG |
+| * When an operating delay has occurred and the equipment is ready to re-operate, the signal immediately following the "one LONG" re-start signal must be the repeat instruction signal. | |
 
 Table 26-2: Audible signals for vehicle operations
 
-1 whistle
-2 whistles
-3 whistles STOP
-BACK UP
-GO AHEAD
+| 1 whistle | STOP |
+| --- | --- |
+| 2 whistles | BACK UP |
+| 3 whistles | GO AHEAD |
 
 Table 26-3: Audible signals for high lead logging
 
-3 SHORT AHEAD* ON MAINLINE
-
-3 SHORT — pause — 1 SHORT AHEAD ON STRAWLINE
-
-2 SHORT — pause — 2 SHORT BACK* ON HAULBACK
-
-2 SHORT — pause — series of SHORTS SLACK HAULBACK
-
-Series of SHORTS SLACK MAINLINE
-
-1 LONG (precedes any signal for slow operation) SLOW
-
-1 SHORT STOP ALL LINES
-
-3 SHORT — pause — 2 SHORT TIGHTLINE
-
-2 SHORT SLACK HAULBACK AND MAINLINE SIMULTANEOUSLY
-
-3 SHORT — 1 SHORT WHEN BUTT RIGGING AT TREE SEND OUT STRAWLINE ON HAULBACK
-
-3 SHORT — pause — 1 SHORT — pause — 1 SHORT for each extension WHEN BUTT RIGGING AT TREE SEND OUT STRAWLINE EXTENSIONS
-
-2 SHORT — followed by a number of LONGS indicates the number of chokers required WHEN BUTT RIGGING IS AT TREE SEND OUT CHOKERS
-
-2 LONG WHEN BUTT RIGGING IS AT TREE PUT ON/TAKE OFF SCAB BLOCK
-
-5 SHORT WHEN BUTT RIGGING IS AT TREE INSPECT THE RIGGING
-
-2 SHORT — pause — 2 SHORT — pause — 2 SHORT — pause — 1 SHORT TIGHTEN GUYLINE
-
-2 SHORT — pause — 2 SHORT — pause — 2 SHORT SLACK GUYLINE
-
-* "AHEAD" means haulage line moves toward machine
-* "BACK" means haulage line moves away from machine
+| 3 SHORT | AHEAD* ON MAINLINE |
+| --- | --- |
+| 3 SHORT — pause — 1 SHORT | AHEAD ON STRAWLINE |
+| 2 SHORT — pause — 2 SHORT | BACK* ON HAULBACK |
+| 2 SHORT — pause — series of SHORTS | SLACK HAULBACK |
+| Series of SHORTS | SLACK MAINLINE |
+| 1 LONG (precedes any signal for slow operation) | SLOW |
+| 1 SHORT | STOP ALL LINES |
+| 3 SHORT — pause — 2 SHORT | TIGHTLINE |
+| 2 SHORT | SLACK HAULBACK AND MAINLINE SIMULTANEOUSLY |
+| 3 SHORT — 1 SHORT | WHEN BUTT RIGGING AT TREE SEND OUT STRAWLINE ON HAULBACK |
+| 3 SHORT — pause — 1 SHORT — pause — 1 SHORT for each extension | WHEN BUTT RIGGING AT TREE SEND OUT STRAWLINE EXTENSIONS |
+| 2 SHORT — followed by a number of LONGS indicates the number of chokers required | WHEN BUTT RIGGING IS AT TREE SEND OUT CHOKERS |
+| 2 LONG | WHEN BUTT RIGGING IS AT TREE PUT ON/TAKE OFF SCAB BLOCK |
+| 5 SHORT | WHEN BUTT RIGGING IS AT TREE INSPECT THE RIGGING |
+| 2 SHORT — pause — 2 SHORT — pause — 2 SHORT — pause — 1 SHORT | TIGHTEN GUYLINE |
+| 2 SHORT — pause — 2 SHORT — pause — 2 SHORT | SLACK GUYLINE |
+| * "AHEAD" means haulage line moves toward machine | |
+| * "BACK" means haulage line moves away from machine | |
 
 Table 26-4: Audible signals for slackline logging
 
-**a) Regular Signals:**
-
-1 SHORT — pause — 2 SHORT AHEAD ON SKYLINE
-
-3 SHORT AHEAD ON SKIDDING LINE
-
-2 SHORT — pause — 2 SHORT COME BACK ON HAULBACK
-
-3 SHORT — pause — 1 SHORT AHEAD ON STRAWLINE
-
-3 SHORT — pause — 2 SHORT TIGHTLINE
-
-1 SHORT STOP
-
-Several SHORT SLACK SKYLINE
-
-3 SHORT — pause — several SHORT SLACK SKIDDING LINE
-
-2 SHORT — pause — several SHORT SLACK HAULBACK
-
-**b) Slow Signals:
-**Any regular signal preceded by a LONG whistle is a slow signal. Any signal that the Engineer is not sure of is a "STOP" signal
-
-**c) Miscellaneous Signals:**
-
-3 SHORT — when carriage is going back HOLD SKIDDING LINE TIGHT AND KEEP ON COMING BACK UNTIL 'STOP' SIGNAL IS RECEIVED
-
-2 SHORT — when carriage is going back HOLD SKIDDING LINE TIGHT, START LOWERING SKYLINE, KEEP ON COMING BACK
-
-A REPEAT — 2 SHORT SLACK SKYLINE FASTER
-
-2 SHORT — when carriage is going ahead PICK UP ON SKYLINE
-
-TIGHTLINE SIGNAL (3 SHORT — pause — 2 SHORT) when carriage is going ahead SKIDDING LINE IS WRAPPED AROUND SKYLINE
-
-When carriage is going back and "STOP" signal (one SHORT) comes in — Engineer stops carriage and starts lowering skyline. If a slack skidding line signal (three SHORT — pause — several SHORT) comes in while lowering the skyline, it means slack skidding and skyline at same time so that chokers come straight down.
-
-**d) Signals to Chaser When Carriage is at Landing**
-
-3 SHORT — pause — 1 SHORT SEND BACK STRAWLINE ON HAULBACK
-
-3 SHORT — pause — 1 SHORT followed by a number of evenly spaced SHORTS SEND BACK THAT NUMBER OF COILS OF STRAWLINE
-
-3 SHORT — pause — 1 SHORT — pause — 2 SHORT SEND BACK END OF STRAWLINE HOOKED INTO CHOKER BELL FOR A DEAD LINE
-
-2 SHORT — pause — a number of evenly spaced LONGS SEND BACK THAT NUMBER OF CHOKERS
-
-5 SHORT INSPECT BUTT RIGGING
+| **a) Regular Signals:** | |
+| --- | --- |
+| 1 SHORT — pause — 2 SHORT | AHEAD ON SKYLINE |
+| 3 SHORT | AHEAD ON SKIDDING LINE |
+| 2 SHORT — pause — 2 SHORT | COME BACK ON HAULBACK |
+| 3 SHORT — pause — 1 SHORT | AHEAD ON STRAWLINE |
+| 3 SHORT — pause — 2 SHORT | TIGHTLINE |
+| 1 SHORT | STOP |
+| Several SHORT | SLACK SKYLINE |
+| 3 SHORT — pause — several SHORT | SLACK SKIDDING LINE |
+| 2 SHORT — pause — several SHORT | SLACK HAULBACK |
+| **b) Slow Signals:** | |
+| Any regular signal preceded by a LONG whistle is a slow signal. Any signal that the Engineer is not sure of is a "STOP" signal | |
+| **c) Miscellaneous Signals:** | |
+| 3 SHORT — when carriage is going back | HOLD SKIDDING LINE TIGHT AND KEEP ON COMING BACK UNTIL 'STOP' SIGNAL IS RECEIVED |
+| 2 SHORT — when carriage is going back | HOLD SKIDDING LINE TIGHT, START LOWERING SKYLINE, KEEP ON COMING BACK |
+| A REPEAT — 2 SHORT | SLACK SKYLINE FASTER |
+| 2 SHORT — when carriage is going ahead | PICK UP ON SKYLINE |
+| TIGHTLINE SIGNAL (3 SHORT — pause — 2 SHORT) when carriage is going ahead | SKIDDING LINE IS WRAPPED AROUND SKYLINE |
+| When carriage is going back and "STOP" signal (one SHORT) comes in — Engineer stops carriage and starts lowering skyline. If a slack skidding line signal (three SHORT — pause — several SHORT) comes in while lowering the skyline, it means slack skidding and skyline at same time so that chokers come straight down. | |
+| **d) Signals to Chaser When Carriage is at Landing** | |
+| 3 SHORT — pause — 1 SHORT | SEND BACK STRAWLINE ON HAULBACK |
+| 3 SHORT — pause — 1 SHORT followed by a number of evenly spaced SHORTS | SEND BACK THAT NUMBER OF COILS OF STRAWLINE |
+| 3 SHORT — pause — 1 SHORT — pause — 2 SHORT | SEND BACK END OF STRAWLINE HOOKED INTO CHOKER BELL FOR A DEAD LINE |
+| 2 SHORT — pause — a number of evenly spaced LONGS | SEND BACK THAT NUMBER OF CHOKERS |
+| 5 SHORT | INSPECT BUTT RIGGING |
 
 Table 26-5: Audible signals for mechanical slack pulling and drop line carriages on skyline yarders or running skyline yarders (as applicable)
 
-**a) Regular Signals:**
-
-1 SHORT — pause — 2 SHORT PICK UP SKYLINE
-
-1 SHORT — pause — 2 SHORT — pause — several SHORTS SLACK SKYLINE
-
-2 SHORT — pause — 2 SHORT COME BACK ON HAULBACK
-
-1 SHORT — (when carriage is stopped by hooker then the machine operator automatically lowers chokers to ground by winding in slackpuller and paying out skidding line) STOP ALL MOVING LINES
-
-1 SHORT STOP PULLING SLACK
-
-5 SHORT PULL SLACK AGAIN
-
-1 SHORT — etc. STOP PULLING SLACK
-
-2 SHORT (this means HOLD haulback — slack the slackpuller — wind in skidding line) PULL LOGS TO CARRIAGE
-
-3 SHORT (this means wind in skidding line and slackpuller and pay out haulback) AHEAD ON SKIDDING LINE
-(use interlock if available)
-
-2 SHORT — pause — several SHORTS SLACK HAULBACK
-
-3 SHORT — pause — several SHORTS SLACK SKIDDING LINE
-
-3 SHORT — pause — 1 SHORT AHEAD ON STRAWLINE
-
-3 SHORT — pause — 1 SHORT — pause — several SHORTS SLACK STRAWLINE
-
-1 SHORT — pause — several SHORTS SLACK SLACKPULLER
-
-3 SHORT — pause — 2 SHORT (line is wrapped around skyline) TIGHTLINE
-
-**b) Slow Signals:
-**Any regular signal preceded by a LONG whistle is a slow signal. Any signal the machine operator is not sure of is a "STOP" signal
-
-**c) Miscellaneous Signals:When carriage is going ahead to landing**
-
-2 SHORT STOP CARRIAGE AND PULL LOGS UP CLOSER TO CARRIAGE
-
-Several quick SHORTS PICK UP SLACKPULLER FASTER
-
-1 SHORT — pause — 2 SHORT PICK UP SKYLINE
-
-**Signals to chaser when carriage is at landing**
-
-5 SHORT INSPECT THE RIGGING
-
-2 SHORT — pause — 1 LONG for each choker SEND BACK THAT NUMBER OF CHOKERS
-
-3 SHORT — pause — 1 SHORT SEND OUT STRAWLINE ON HAULBACK
-
-3 SHORT — pause — 1 SHORT — pause — 1 SHORT for each extension SEND STRAWLINE EXTENSIONS (NOT COILS) ON HOOK
-
-1 LONG — pause — 2 SHORT — pause — 2 SHORT SEND PREARRANGED MISCELLANEOUS RIGGING TO BACK-END ON HOOK (E.G. STRAWLINE COILS)
+| **a) Regular Signals:** | |
+| --- | --- |
+| 1 SHORT — pause — 2 SHORT | PICK UP SKYLINE |
+| 1 SHORT — pause — 2 SHORT — pause — several SHORTS | SLACK SKYLINE |
+| 2 SHORT — pause — 2 SHORT | COME BACK ON HAULBACK |
+| 1 SHORT — (when carriage is stopped by hooker then the machine operator automatically lowers chokers to ground by winding in slackpuller and paying out skidding line) | STOP ALL MOVING LINES |
+| 1 SHORT | STOP PULLING SLACK |
+| 5 SHORT | PULL SLACK AGAIN |
+| 1 SHORT — etc. | STOP PULLING SLACK |
+| 2 SHORT (this means HOLD haulback — slack the slackpuller — wind in skidding line) | PULL LOGS TO CARRIAGE |
+| 3 SHORT (this means wind in skidding line and slackpuller and pay out haulback) | AHEAD ON SKIDDING LINE<br>(use interlock if available) |
+| 2 SHORT — pause — several SHORTS | SLACK HAULBACK |
+| 3 SHORT — pause — several SHORTS | SLACK SKIDDING LINE |
+| 3 SHORT — pause — 1 SHORT | AHEAD ON STRAWLINE |
+| 3 SHORT — pause — 1 SHORT — pause — several SHORTS | SLACK STRAWLINE |
+| 1 SHORT — pause — several SHORTS | SLACK SLACKPULLER |
+| 3 SHORT — pause — 2 SHORT (line is wrapped around skyline) | TIGHTLINE |
+| **b) Slow Signals:** | |
+| Any regular signal preceded by a LONG whistle is a slow signal. Any signal the machine operator is not sure of is a "STOP" signal | |
+| **c) Miscellaneous Signals:** | |
+| **When carriage is going ahead to landing** | |
+| 2 SHORT | STOP CARRIAGE AND PULL LOGS UP CLOSER TO CARRIAGE |
+| Several quick SHORTS | PICK UP SLACKPULLER FASTER |
+| 1 SHORT — pause — 2 SHORT | PICK UP SKYLINE |
+| **Signals to chaser when carriage is at landing** | |
+| 5 SHORT | INSPECT THE RIGGING |
+| 2 SHORT — pause — 1 LONG for each choker | SEND BACK THAT NUMBER OF CHOKERS |
+| 3 SHORT — pause — 1 SHORT | SEND OUT STRAWLINE ON HAULBACK |
+| 3 SHORT — pause — 1 SHORT — pause — 1 SHORT for each extension | SEND STRAWLINE EXTENSIONS (NOT COILS) ON HOOK |
+| 1 LONG — pause — 2 SHORT — pause — 2 SHORT | SEND PREARRANGED MISCELLANEOUS RIGGING TO BACK-END ON HOOK (E.G. STRAWLINE COILS) |
 
 Table 26-6: Requirements for radio controlled carriages
 
-• These carriages are fitted with and controlled by an onboard computerized radio control system. This radio system is operated independently through a transmitter separated from that of the yarder.
+| • These carriages are fitted with and controlled by an onboard computerized radio control system. This radio system is operated independently through a transmitter separated from that of the yarder. | |
+| --- | --- |
+| • The yarding and carriage frequencies must be separate, registered and coordinated through the WCB co-ordination system to ensure that one does not interfere with the other or with another operation. Contact the WCB for more information. | |
+| • An audible signal must be sounded at the carriage and not at the yarder. This signal must have a tone different from that of the yarder signal. | |
+| • Standard skyline signals will apply at the yarder. | |
+| **a) Audible radio signals for hydraulic accumulator or motor driven slack pulling and dropline carriages with or without skyline lock** | |
+| 2 SHORT | LOCK SKYLINE CLAMP |
+| 5 SHORT | SLACK THE DROPLINE |
+| 1 SHORT | STOP PULLING SLACK |
+| 5 SHORT, etc. | PULL SLACK AGAIN |
+| 2 SHORT — pause — 1 LONG | UNLOCK SKYLINE CLAMP |
+| **If fitted with engine controls** | |
+| 1 SHORT — pause — 1 LONG | STOP ENGINE |
+| 1 LONG — pause — 1 SHORT | START ENGINE |
+| Carriages with variable dropline speeds must have a special signal for the speed changes. These signals must be different from standard yarding signals. | |
+| **b) Audible radio signals for radio-controlled motorized self-contained yarding carriages with or without skyline locks** | |
+| 2 SHORT | LOCK SKYLINE CLAMP |
+| 5 SHORT | SLACK THE DROPLINE |
+| 1 SHORT | STOP THE DROPLINE |
+| 3 SHORT | PICK UP THE DROPLINE |
+| 2 SHORT — pause — 1 LONG | UNLOCK SKYLINE CLAMP |
+| **If fitted with engine controls** | |
+| 1 SHORT — pause — 1 LONG | STOP ENGINE |
+| 1 LONG — pause — 1 SHORT | START ENGINE |
+| Carriages with variable dropline speeds must have a special signal for the speed changes. These signals must be different from standard yarding signals. | |
 
-• The yarding and carriage frequencies must be separate, registered and coordinated through the WCB co-ordination system to ensure that one does not interfere with the other or with another operation. Contact the WCB for more information.
+**Table 26-7: Hand signals**
 
-• An audible signal must be sounded at the carriage and not at the yarder. This signal must have a tone different from that of the yarder signal.
+**A — Cable logging**
 
-• Standard skyline signals will apply at the yarder.
+**Table 26-7 (continued): Hand signals**
 
-**a) Audible radio signals for hydraulic accumulator or motor driven slack pulling and dropline carriages with or without skyline lock**
+**A — Cable logging**
 
-2 SHORT LOCK SKYLINE CLAMP
+**Table 26-7 (continued): Hand signals**
 
-5 SHORT SLACK THE DROPLINE
+**B — Skidding**
 
-1 SHORT STOP PULLING SLACK
-
-5 SHORT, etc. PULL SLACK AGAIN
-
-2 SHORT — pause — 1 LONG UNLOCK SKYLINE CLAMP
-
-**If fitted with engine controls**
-
-1 SHORT — pause — 1 LONG STOP ENGINE
-
-1 LONG — pause — 1 SHORT START ENGINE
-
-Carriages with variable dropline speeds must have a special signal for the speed changes. These signals must be different from standard yarding signals.
-
-**b) Audible radio signals for radio-controlled motorized self-contained yarding carriages with or without skyline locks**
-
-2 SHORT LOCK SKYLINE CLAMP
-
-5 SHORT SLACK THE DROPLINE
-
-1 SHORT STOP THE DROPLINE
-
-3 SHORT PICK UP THE DROPLINE
-
-2 SHORT — pause — 1 LONG UNLOCK SKYLINE CLAMP
-
-**If fitted with engine controls**
-
-1 SHORT — pause — 1 LONG STOP ENGINE
-
-1 LONG — pause — 1 SHORT START ENGINE
-
-Carriages with variable dropline speeds must have a special signal for the speed changes. These signals must be different from standard yarding signals.
-
-**Table 26-7: Hand signalsA — Cable loggingTable 26-7 (continued): Hand signalsA — Cable loggingTable 26-7 (continued): Hand signalsB — SkiddingTable 26-8: Voice commands for grapple yarders**
+**Table 26-8: Voice commands for grapple yarders**
 
 [en. B.C. Reg. 20/2008, App. A, s. 56; am. B.C. Reg. 14/2019, App. F, s. 4.]
 
-**ItemTo instruct operator to:Signaller says:**
-
-1 Grapple log and go ahead Take it
-
-2 Close grapple but not go ahead Close
-
-3 Stop rigging Stop
-
-4 Open grapple Open
-
-5 Move empty grapple ahead Ahead
-
-6 Move empty grapple back Back
-
-7 Go ahead on strawline Ahead on the strawline
-
-8 Slack mainline Mainline
-
-9 Slack haulback Haulback
-
-10 Lower grapple Down
-
-11 Slack strawline Slack strawline
-
-12 Swing to operator's left Swing left
-
-13 Swing to operator's right Swing right
-
-14 Hold haulback and go ahead on mainline Tightline
+| **Item** | **To instruct operator to:** | **Signaller says:** |
+| --- | --- | --- |
+| 1 | Grapple log and go ahead | Take it |
+| 2 | Close grapple but not go ahead | Close |
+| 3 | Stop rigging | Stop |
+| 4 | Open grapple | Open |
+| 5 | Move empty grapple ahead | Ahead |
+| 6 | Move empty grapple back | Back |
+| 7 | Go ahead on strawline | Ahead on the strawline |
+| 8 | Slack mainline | Mainline |
+| 9 | Slack haulback | Haulback |
+| 10 | Lower grapple | Down |
+| 11 | Slack strawline | Slack strawline |
+| 12 | Swing to operator's left | Swing left |
+| 13 | Swing to operator's right | Swing right |
+| 14 | Hold haulback and go ahead on mainline | Tightline |

@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_03)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:23 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:37 GMT  
+**Ingestion Date:** 2026-09-27  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -743,15 +743,12 @@ Controlling Exposure
 
 **5.50** (1) If the work period is more than 8 hours in a 24 hour day, the 8-hour TWA limit must be reduced by multiplying the TWA limit by the following factors:
 
-FactorLength of work period (in hours)
-
-0.7 more than 8, but not more than 10
-
-0.5 more than 10, but not more than 12
-
-0.25 more than 12, but not more than 16
-
-0.1 more than 16
+| Factor | Length of work period (in hours) |
+| --- | --- |
+| 0.7 | more than 8, but not more than 10 |
+| 0.5 | more than 10, but not more than 12 |
+| 0.25 | more than 12, but not more than 16 |
+| 0.1 | more than 16 |
 
 (2) Repealed. [B.C. Reg. 188/2011, App. L, s. 1.]
 
@@ -963,23 +960,10 @@ Ventilation
 
 Table 5-1: Recirculation of discharged air
 
-Recirculation permitted without written approval A nuisance particulate with an 8-hour TWA limit of at least 10 mg/m3, provided that its concentration in the discharged air is less than 10% of the TWA limit.
-
-Asbestos fibre or other particulate, except a biological contaminant, provided that it is exhausted from a portable vacuum cleaner or bench-top containment unit, fitted with an effective HEPA filter.
-
-A welding fume, (including its components identified under section 5.57 (1)) exhausted from a portable welding fume extractor fitted with an air cleaner, provided that its concentration in the discharged air is less than 10% of the applicable exposure limit.
-
-A biological contaminant discharged from a biological safety cabinet that is installed and operated in accordance with the requirements in Part 30 (Laboratories).
-
-Non-allergenic softwood dust, provided that its concentration in the discharged air is less than 10% of the 8-hour TWA limit.
-
-Recirculation only with written approval by the Board Allergenic wood dust.
-
-Non-allergenic hardwood dust.
-
-Any contaminant not otherwise listed in this Table.
-
-No recirculation permitted A substance identified under section 5.57 (1), unless otherwise identified in this Table.
+| Recirculation permitted without written approval | A nuisance particulate with an 8-hour TWA limit of at least 10 mg/m3, provided that its concentration in the discharged air is less than 10% of the TWA limit.<br>Asbestos fibre or other particulate, except a biological contaminant, provided that it is exhausted from a portable vacuum cleaner or bench-top containment unit, fitted with an effective HEPA filter.<br>A welding fume, (including its components identified under section 5.57 (1)) exhausted from a portable welding fume extractor fitted with an air cleaner, provided that its concentration in the discharged air is less than 10% of the applicable exposure limit.<br>A biological contaminant discharged from a biological safety cabinet that is installed and operated in accordance with the requirements in Part 30 (Laboratories).<br>Non-allergenic softwood dust, provided that its concentration in the discharged air is less than 10% of the 8-hour TWA limit. |
+| --- | --- |
+| Recirculation only with written approval by the Board | Allergenic wood dust.<br>Non-allergenic hardwood dust.<br>Any contaminant not otherwise listed in this Table. |
+| No recirculation permitted | A substance identified under section 5.57 (1), unless otherwise identified in this Table. |
 
 [am. B.C. Reg. 315/2003, App. A, s. 11.]
 
@@ -1167,50 +1151,22 @@ Emergency Washing Facilities
 
 Table 5-2: Risk assessment
 
-Risk LevelDescription of the workplaceExamples
-
-High risk Workplaces at which corrosive chemicals or other materials are used in a manner, concentration and quantity which present a risk of irreversible tissue damage to the eyes or skin, or of serious illness resulting from rapid absorption of a toxic substance through the eyes or skin, or where the work activity presents a risk of ignition of the clothing. Maintenance of ammonia refrigeration equipment or chlorine bleaching or disinfection equipment, handling corrosive materials such as corrosive cleaning products or chemical reagents where there is a high risk of skin or eye contact, filling chemical storage batteries. The following Health Hazard Classes and Categories in the HPR are included:
-(a) skin corrosion (1A), (1B), (1C);
-(b) serious eye damage (1).
-
-Moderate risk Workplaces at which chemicals or other materials are used in a manner, concentration and quantity which present a risk of irritation or other reversible harm to the eyes or skin, or of illness resulting from absorption of a toxic substance through the eyes or skin. Spraying automotive paints and finishes, operating solvent degreasing equipment, handling irritant materials such as cleaning products or chemical reagents where there is a moderate risk of skin or eye contact, handling dry-cleaning solvents and spotting agents. The following Health Hazard Classes and Categories in the HPR are included:
-(a) eye irritation (2A), (2B);
-(b) skin irritation (2).
-
-Low risk Workplaces at which chemicals or other materials are used in a manner and quantity which present a risk of mild eye or skin irritation. Using detergents, silicone-based mold-release agents, some hair-dressing solutions, rosin-cored solders, welding and grinding, working in dusty areas.
+| Risk Level | Description of the workplace | Examples |
+| --- | --- | --- |
+| High risk | Workplaces at which corrosive chemicals or other materials are used in a manner, concentration and quantity which present a risk of irreversible tissue damage to the eyes or skin, or of serious illness resulting from rapid absorption of a toxic substance through the eyes or skin, or where the work activity presents a risk of ignition of the clothing. | Maintenance of ammonia refrigeration equipment or chlorine bleaching or disinfection equipment, handling corrosive materials such as corrosive cleaning products or chemical reagents where there is a high risk of skin or eye contact, filling chemical storage batteries. The following Health Hazard Classes and Categories in the HPR are included:<br>(a) skin corrosion (1A), (1B), (1C);<br>(b) serious eye damage (1). |
+| Moderate risk | Workplaces at which chemicals or other materials are used in a manner, concentration and quantity which present a risk of irritation or other reversible harm to the eyes or skin, or of illness resulting from absorption of a toxic substance through the eyes or skin. | Spraying automotive paints and finishes, operating solvent degreasing equipment, handling irritant materials such as cleaning products or chemical reagents where there is a moderate risk of skin or eye contact, handling dry-cleaning solvents and spotting agents. The following Health Hazard Classes and Categories in the HPR are included:<br>(a) eye irritation (2A), (2B);<br>(b) skin irritation (2). |
+| Low risk | Workplaces at which chemicals or other materials are used in a manner and quantity which present a risk of mild eye or skin irritation. | Using detergents, silicone-based mold-release agents, some hair-dressing solutions, rosin-cored solders, welding and grinding, working in dusty areas. |
 
 [am. B.C. Reg. 30/2015, s. 27.]
 
 Table 5-3: Provision and location of emergency washing equipment
 
-High riskModerate riskLow riskEye**
-
-Equipment
-
-Tempered, continuous flow eyewash facility with a minimum duration of 15 minutes (or more if required by the nature of the material).
-
-Tempered, continuous flow eyewash facility with a minimum duration of 15 minutes.
-
-Effective means to flush the eyes.
-
-Location Within 5 seconds walking distance of the hazard area, but no further than 6 m (20 ft). For high risk corrosive gases such as ammonia or chlorine, the facilities must not be located in the gas storage or use area, but rather, adjacent to it. Within 10 seconds walking distance of the hazard area, but no further than 30 m (100 ft).
-May be located further than 30 m, provided that
-(a) a supplementary eyewash facility such as a personal eyewash unit or a non-tempered drench hose is located within 10 seconds walking distance of the hazard area but no further than 30 m, and
-(b) first aid services are maintained to start treatment of an affected worker within 5 minutes of the contact. Within 10 seconds walking distance of the hazard area but no further than 30 m (100 ft).
-
-**Skin**
-
-Equipment
-
-Tempered, continuous flow emergency shower facility with a minimum duration of 15 minutes (or more if required by the nature of the material).
-
-Tempered, continuous flow emergency shower facility with a minimum duration of 15 minutes.
-
-Emergency flushing equipment, such as a non-tempered drench hose.
-
-Location Same location criteria as for high risk eyewash facility except that the shower may be located further than 6 m if
-(a) a supplementary emergency washing facility such as a non-tempered drench hose is located within 5 seconds walking distance of the hazard area but no further than 6 m, and
-(b) a tempered shower facility is available within the building to start emergency washing within 5 minutes of the contact. Same location criteria as for moderate risk eyewash facility except that the supplementary emergency washing facility for locations beyond 30 m must be a unit such as non-tempered drench hose. Same location criteria as for low risk eyewash facility.
+| | High risk | Moderate risk | Low risk |
+| --- | --- | --- | --- |
+| **Eye**<br>Equipment | Tempered, continuous flow eyewash facility with a minimum duration of 15 minutes (or more if required by the nature of the material). | Tempered, continuous flow eyewash facility with a minimum duration of 15 minutes. | Effective means to flush the eyes. |
+| Location | Within 5 seconds walking distance of the hazard area, but no further than 6 m (20 ft). For high risk corrosive gases such as ammonia or chlorine, the facilities must not be located in the gas storage or use area, but rather, adjacent to it. | Within 10 seconds walking distance of the hazard area, but no further than 30 m (100 ft).<br>May be located further than 30 m, provided that<br>(a) a supplementary eyewash facility such as a personal eyewash unit or a non-tempered drench hose is located within 10 seconds walking distance of the hazard area but no further than 30 m, and<br>(b) first aid services are maintained to start treatment of an affected worker within 5 minutes of the contact. | Within 10 seconds walking distance of the hazard area but no further than 30 m (100 ft). |
+| **Skin**<br>Equipment | Tempered, continuous flow emergency shower facility with a minimum duration of 15 minutes (or more if required by the nature of the material). | Tempered, continuous flow emergency shower facility with a minimum duration of 15 minutes. | Emergency flushing equipment, such as a non-tempered drench hose. |
+| Location | Same location criteria as for high risk eyewash facility except that the shower may be located further than 6 m if<br>(a) a supplementary emergency washing facility such as a non-tempered drench hose is located within 5 seconds walking distance of the hazard area but no further than 6 m, and<br>(b) a tempered shower facility is available within the building to start emergency washing within 5 minutes of the contact. | Same location criteria as for moderate risk eyewash facility except that the supplementary emergency washing facility for locations beyond 30 m must be a unit such as non-tempered drench hose. | Same location criteria as for low risk eyewash facility. |
 
 #### Valve operation
 

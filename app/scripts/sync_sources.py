@@ -148,10 +148,197 @@ class SimpleYamlLoader:
         return yaml.safe_dump(data, sort_keys=False)
 
 
+class _OpeningMarker(str):
+    """An emphasis marker that opens a span, so cell text can keep whitespace outside it."""
+
+
+class _ClosingMarker(str):
+    """An emphasis marker that closes a span."""
+
+
+class _LineBreak(str):
+    """A ``<br>``. Inside a table cell it separates the cell's segments."""
+
+
+# A cell is (segments split at <br>, colspan, rowspan).
+_Cell = tuple[list[str], int, int]
+
+
+@dataclass
+class _TableState:
+    """One open ``<table>``. Only data tables collect rows; layout tables stay inline text."""
+
+    is_data: bool
+    outer_tokens: list[str]
+    outside_tokens: list[str]
+    rows: list[list[_Cell]]
+    row: list[_Cell] | None = None
+    cell_span: tuple[int, int] | None = None
+    cell_tokens: list[str] | None = None
+
+
+def _lead_space_outside_openers(tokens: list[str]) -> list[str]:
+    """Move whitespace that follows an opening marker to before it.
+
+    ``<strong> Description</strong>`` would give ``** Description**``; Markdown
+    does not open emphasis before whitespace, so it must be `` **Description**``.
+    """
+    out: list[str] = []
+    waiting: list[str] = []
+    for token in tokens:
+        if isinstance(token, _OpeningMarker):
+            waiting.append(token)
+            continue
+        if waiting:
+            text = token.lstrip()
+            out.append(token[: len(token) - len(text)])
+            if not text:
+                continue
+            out.extend(waiting)
+            waiting = []
+            token = text
+        out.append(token)
+    out.extend(waiting)
+    return out
+
+
+def _cell_segments(tokens: list[str]) -> list[str]:
+    """Split a cell's tokens at each ``<br>`` into one-line Markdown segments.
+
+    Emphasis still open at a break is closed there and reopened in the next
+    segment, so each segment is valid on its own. Empty segments are dropped.
+    """
+    parts: list[list[str]] = []
+    current: list[str] = []
+    open_markers: list[str] = []
+    for token in tokens:
+        if isinstance(token, _LineBreak):
+            while current and not current[-1].strip():
+                current.pop()
+            if current and not isinstance(current[-1], (_OpeningMarker, _ClosingMarker)):
+                current[-1] = current[-1].rstrip()
+            current.extend(_ClosingMarker(m) for m in reversed(open_markers))
+            parts.append(current)
+            current = [_OpeningMarker(m) for m in open_markers]
+            continue
+        if isinstance(token, _OpeningMarker):
+            open_markers.append(str(token))
+        elif isinstance(token, _ClosingMarker) and str(token) in open_markers:
+            del open_markers[len(open_markers) - 1 - open_markers[::-1].index(str(token))]
+        current.append(token)
+    parts.append(current)
+
+    segments = []
+    for part in parts:
+        text = re.sub(r"\s+", " ", "".join(_lead_space_outside_openers(part))).strip()
+        if text.replace("*", "").strip():
+            segments.append(text.replace("|", r"\|"))
+    return segments
+
+
+def _span(value: str | None, limit: int) -> int:
+    """Parse a colspan/rowspan value; missing, zero, or malformed values count as 1."""
+    try:
+        return min(max(int((value or "").strip()), 1), limit)
+    except ValueError:
+        return 1
+
+
+def _expand_br_rows(
+    cells: list[_Cell], covered: bool, is_header: bool
+) -> list[list[tuple[str, int, int]]]:
+    """Turn one ``<tr>`` into Markdown rows.
+
+    Sources pack several rows into one ``<tr>`` with ``<br>`` between values
+    ("1 whistle<br>2 whistles" next to "STOP<br>BACK UP"). When every non-empty
+    cell has the same number of segments n > 1, emit n rows and pair segment i
+    across cells. Otherwise keep one row and join each cell's segments with
+    ``<br>``.
+
+    Not split: the header row of a multi-row table ("Column 1<br>Matter" is one
+    label; splitting would turn the label into a data row), and rows that start
+    or sit under a rowspan, because the span would then cover the wrong rows.
+    """
+    counts = {len(segments) for segments, _, _ in cells if segments}
+    lines = counts.pop() if len(counts) == 1 else 1
+    splittable = not is_header and not covered and all(rowspan == 1 for _, _, rowspan in cells)
+    if lines > 1 and splittable:
+        return [
+            [(segments[i] if segments else "", colspan, 1) for segments, colspan, _ in cells]
+            for i in range(lines)
+        ]
+    return [[("<br>".join(segments), colspan, rowspan) for segments, colspan, rowspan in cells]]
+
+
+def _render_markdown_table(rows: list[list[_Cell]]) -> str:
+    """Render collected rows as a Markdown pipe table. The first row is the header.
+
+    Spans: a spanned value is written once, in its first (top-left) cell; the
+    other cells the span covers are left empty. Later values stay in their own
+    columns, and no text is duplicated.
+    """
+    grid: list[list[str]] = []
+    # column -> rows still covered by a rowspan from an earlier row
+    pending: dict[int, int] = {}
+    for index, row in enumerate(rows):
+        covered = any(n > 0 for n in pending.values())
+        is_header = index == 0 and len(rows) > 1
+        for cells in _expand_br_rows(row, covered=covered, is_header=is_header):
+            grid.append(_layout_row(cells, pending))
+
+    if not any(cell for row in grid for cell in row):
+        return ""
+    width = max(len(row) for row in grid)
+    lines = []
+    for index, row in enumerate(grid):
+        padded = row + [""] * (width - len(row))
+        lines.append("| " + " | ".join(padded) + " |")
+        if index == 0:
+            lines.append("| " + " | ".join(["---"] * width) + " |")
+    return "\n".join(lines)
+
+
+def _layout_row(cells: list[tuple[str, int, int]], pending: dict[int, int]) -> list[str]:
+    """Place one row's cells into columns, skipping columns covered by earlier rowspans."""
+    out: list[str] = []
+    col = 0
+
+    def skip_covered() -> None:
+        nonlocal col
+        while pending.get(col, 0) > 0:
+            pending[col] -= 1
+            out.append("")
+            col += 1
+
+    for text, colspan, rowspan in cells:
+        skip_covered()
+        for offset in range(colspan):
+            out.append(text if offset == 0 else "")
+            if rowspan > 1:
+                pending[col + offset] = rowspan - 1
+        col += colspan
+    last_covered = max((c for c, n in pending.items() if n > 0 and c >= col), default=-1)
+    while col <= last_covered:
+        if pending.get(col, 0) > 0:
+            pending[col] -= 1
+        out.append("")
+        col += 1
+    return out
+
+
 class HTMLContentExtractor(HTMLParser):
     """
     Robust HTML to Markdown content extractor.
     Strips scripts, styles, layout navigation, and extracts targeted containers.
+
+    Tables: a ``<table>`` whose ``border`` attribute is present and not ``0`` is
+    a data table and becomes a Markdown pipe table. BC Laws marks every grid
+    table this way; its chrome, deposit line, formulas, "where" definitions, and
+    contents list use ``border="0"`` or none. Those layout tables keep the
+    flowing-text output (one paragraph per row). A table nested inside a data
+    table is flattened into its enclosing cell, because Markdown has no nested tables.
+    ``<br>`` inside a data cell either splits the row (see ``_expand_br_rows``)
+    or stays as ``<br>`` in the cell; other whitespace in a cell becomes one space.
     """
 
     IGNORABLE_TAGS = {
@@ -187,6 +374,7 @@ class HTMLContentExtractor(HTMLParser):
         self.is_bold = False
         self.is_italic = False
         self.link_text_tokens: list[str] = []
+        self.tables: list[_TableState] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag_lower = tag.lower()
@@ -222,24 +410,30 @@ class HTMLContentExtractor(HTMLParser):
         if not self.inside_target:
             return
 
+        if tag_lower == "table":
+            self._open_table(attr_dict)
+        elif tag_lower == "tr" and self._in_data_table():
+            self._open_row()
+        elif tag_lower in ("td", "th") and self._in_data_table():
+            self._open_cell(attr_dict)
         # Heading tags
-        if re.match(r"^h[1-6]$", tag_lower):
+        elif re.match(r"^h[1-6]$", tag_lower):
             self.heading_level = int(tag_lower[1])
             self.tokens.append(f"\n\n{'#' * self.heading_level} ")
         elif tag_lower in self.BLOCK_TAGS:
             self.tokens.append("\n\n")
         elif tag_lower == "br":
-            self.tokens.append("\n")
+            self.tokens.append(_LineBreak("\n"))
         elif tag_lower == "li":
             self.tokens.append("\n- ")
         elif tag_lower in ("strong", "b"):
             self.is_bold = True
             if not self.current_link:
-                self.tokens.append("**")
+                self.tokens.append(_OpeningMarker("**"))
         elif tag_lower in ("em", "i"):
             self.is_italic = True
             if not self.current_link:
-                self.tokens.append("*")
+                self.tokens.append(_OpeningMarker("*"))
         elif tag_lower == "a":
             href = attr_dict.get("href", "")
             if href and not href.startswith("javascript:"):
@@ -256,6 +450,92 @@ class HTMLContentExtractor(HTMLParser):
         if not self.tokens or self.tokens[-1].endswith((" ", "\n")):
             return
         self.tokens.append(" ")
+
+    def _append_closing_marker(self, marker: str) -> None:
+        """Close emphasis; in a table cell, move trailing whitespace outside the marker.
+
+        A cell is joined onto one line, so ``<strong>Label:<br></strong>Text``
+        would become ``**Label: **Text``. Markdown does not close emphasis after
+        whitespace, so the marker must come first: ``**Label:** Text``.
+        """
+        if not any(t.cell_tokens is self.tokens for t in self.tables):
+            self.tokens.append(_ClosingMarker(marker))
+            return
+        # Popped last-first; line-break tokens are kept whole so cells still split on them.
+        trailing: list[str] = []
+        while self.tokens and not self.tokens[-1].strip():
+            trailing.append(self.tokens.pop())
+        if self.tokens and self.tokens[-1] != self.tokens[-1].rstrip():
+            kept = self.tokens[-1].rstrip()
+            trailing.append(self.tokens[-1][len(kept):])
+            self.tokens[-1] = kept
+        self.tokens.append(_ClosingMarker(marker))
+        self.tokens.extend(reversed(trailing))
+
+    def _in_data_table(self) -> bool:
+        return bool(self.tables) and self.tables[-1].is_data
+
+    def _open_table(self, attrs: dict[str, str]) -> None:
+        border = attrs.get("border")
+        is_data = (
+            border is not None
+            and border.strip() != "0"
+            and not any(t.is_data for t in self.tables)
+        )
+        state = _TableState(is_data=is_data, outer_tokens=self.tokens, outside_tokens=[], rows=[])
+        self.tables.append(state)
+        if is_data:
+            self.tokens = state.outside_tokens
+
+    def _open_row(self) -> None:
+        self._close_row()
+        self.tables[-1].row = []
+
+    def _open_cell(self, attrs: dict[str, str]) -> None:
+        state = self.tables[-1]
+        self._close_cell()
+        if state.row is None:
+            state.row = []
+        # HTML caps colspan at 1000 and rowspan at 65534.
+        state.cell_span = (_span(attrs.get("colspan"), 1000), _span(attrs.get("rowspan"), 65534))
+        state.cell_tokens = []
+        self.tokens = state.cell_tokens
+
+    def _close_cell(self) -> None:
+        state = self.tables[-1]
+        if state.cell_tokens is None or state.cell_span is None or state.row is None:
+            return
+        state.row.append((_cell_segments(state.cell_tokens), *state.cell_span))
+        state.cell_tokens = None
+        state.cell_span = None
+        self.tokens = state.outside_tokens
+
+    def _close_row(self) -> None:
+        state = self.tables[-1]
+        self._close_cell()
+        if state.row:
+            state.rows.append(state.row)
+        state.row = None
+
+    def _close_table(self) -> None:
+        if not self.tables:
+            return
+        if not self.tables[-1].is_data:
+            self.tables.pop()
+            return
+        self._close_row()
+        state = self.tables.pop()
+        self.tokens = state.outer_tokens
+        outside = "".join(state.outside_tokens).strip()
+        if outside:
+            self.tokens.extend(["\n\n", outside, "\n\n"])
+        rendered = _render_markdown_table(state.rows)
+        if rendered:
+            self.tokens.extend(["\n\n", rendered, "\n\n"])
+
+    def _close_open_tables(self) -> None:
+        while self.tables:
+            self._close_table()
 
 
     def handle_endtag(self, tag: str) -> None:
@@ -279,6 +559,7 @@ class HTMLContentExtractor(HTMLParser):
         if self.inside_target and self.target_selector and self.selector_depth > 0:
             self.selector_depth -= 1
             if self.selector_depth == 0:
+                self._close_open_tables()
                 self.inside_target = False
                 return
 
@@ -286,7 +567,13 @@ class HTMLContentExtractor(HTMLParser):
         if not self.inside_target:
             return
 
-        if re.match(r"^h[1-6]$", tag_lower):
+        if tag_lower == "table":
+            self._close_table()
+        elif tag_lower == "tr" and self._in_data_table():
+            self._close_row()
+        elif tag_lower in ("td", "th") and self._in_data_table():
+            self._close_cell()
+        elif re.match(r"^h[1-6]$", tag_lower):
             self.heading_level = 0
             self.tokens.append("\n\n")
         elif tag_lower in self.BLOCK_TAGS:
@@ -294,11 +581,11 @@ class HTMLContentExtractor(HTMLParser):
         elif tag_lower in ("strong", "b"):
             self.is_bold = False
             if not self.current_link:
-                self.tokens.append("**")
+                self._append_closing_marker("**")
         elif tag_lower in ("em", "i"):
             self.is_italic = False
             if not self.current_link:
-                self.tokens.append("*")
+                self._append_closing_marker("*")
         elif tag_lower == "a":
             if self.current_link and self.link_text_tokens:
                 anchor_text = "".join(self.link_text_tokens).strip()
@@ -351,6 +638,7 @@ class HTMLContentExtractor(HTMLParser):
         return None
 
     def get_markdown(self) -> str:
+        self._close_open_tables()
         raw_text = "".join(self.tokens)
         # Clean extra spaces & lines
         lines = []
@@ -419,6 +707,19 @@ _PART_HEADING_RE = re.compile(
 )
 
 
+def _drop_empty_bold(match: re.Match[str]) -> str:
+    """Remove an empty bold pair without joining the words or blocks around it.
+
+    "** **" is also one bold run closing and the next opening; dropping the
+    markers must keep the space. Across a line break ("**Table 3-1**" then
+    "**Minimum ...**") the markers close and reopen bold per block, so they stay.
+    """
+    run = match.group(0)
+    if "\n" in run:
+        return run
+    return run.replace("*", "")
+
+
 def _strip_bclaws_chrome(content: str) -> str:
     """Drop King's Printer chrome, nav rails, and empty bold markers from statute text."""
     content = _KING_PRINTER_RE.sub("", content)
@@ -427,7 +728,7 @@ def _strip_bclaws_chrome(content: str) -> str:
     content = _POINT_IN_TIME_RE.sub("", content)
     content = _CONSOLIDATED_PDF_RE.sub("", content)
     content = _NAV_RAIL_RE.sub("", content)
-    content = _EMPTY_BOLD_RE.sub("", content)
+    content = _EMPTY_BOLD_RE.sub(_drop_empty_bold, content)
     content = _EMPTY_HEADING_RE.sub("", content)
     return content
 

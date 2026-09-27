@@ -22,35 +22,35 @@ sources:
   selector: '#body'
   category: resources
   content_hash: 9b47fe9d83c8089a13634fbc75767ba96571f585ad34dc96d7a54e2982ef2301
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
   url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct
   type: html_selector
   selector: '#body, #cmf-ui-supplementary-content'
   category: primary
   content_hash: 5d1d5fbb25b5213be6b64ead5d37f611cb8443483fe7d1c90ca5bd9b53c819f6
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Labour_Relations_Code.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: f64ad9499d761f0ffb1ffc11670a45f73a2845643ca82a13b25ae865a7c48898
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Employment_Standards_Act.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: c3a81849fdc17a1a16f8aa75c1c8e815b62c283172021502cba65b47f741fece
-  last_synced: '2026-09-26'
+  content_hash: 9f4026a2cd37fb017244c0a221f20a69c2bd8f5a1817d5491c335d964f311f9e
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Human_Rights_Code.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 5182c06e9754d8b97c14756af01f37ec52b42e74d5214fb798570985f41974d2
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_01.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01
   type: bclaws
@@ -58,7 +58,7 @@ sources:
   part: '1'
   category: statutory
   content_hash: 62f19c5f38016ffb2622c418ca97c6259fe956bdeeffe77870d17b41507712b0
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_02.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01
   type: bclaws
@@ -66,57 +66,57 @@ sources:
   part: '2'
   category: statutory
   content_hash: 3ecdf3675c9842e11791cfb2db9e3eddcea5c1688bd08a9793428f6657825107
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_03.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01
   type: bclaws
   selector: '#contentsscroll'
   part: '3'
   category: statutory
-  content_hash: 0e6f9260db6f7ac87468fe44b3f0b1205c4db4daac1f85e4116838b624bffd10
-  last_synced: '2026-09-25'
+  content_hash: d9175153d6247763da5ba2c9867383c3bf11261260e280de6291549ec02b264c
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_04.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_02
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 5d0457a13302f372e92c9cc46269262cd720cd4bcd3ce1d92783a2917c4aa6f0
-  last_synced: '2026-09-25'
+  content_hash: f61ac70195dfc8793b2ae072d88b6bd1a1dc94e7dd7b69cdbf0c596b3de82216
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_05.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_03
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: cc4735fb35c60885ff1b537ca3b5909dbb23dff4250d154f7e74db323a2596de
-  last_synced: '2026-09-25'
+  content_hash: 95d38818ab3378d7de1906a48c4c9582a9d5f35b6d9aa7242712ab6fb4aa418e
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_06.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_04
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: f3529c05d495a68b1069c7f35114298c7951e881bd46d1cbe40c66402912ae26
-  last_synced: '2026-09-25'
+  content_hash: 625c24d7b4ac22ead78d51c16489f048a6a274b7bcebd9eabe35246eecc91233
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_07.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_05
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 0bad36dbb853c676a3fd4d84a11201731449e46021d50f45bd75e09ad6d9c04e
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_08.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_06
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 83f80cadfb09be0bb6b9d5045584f3977f3a948739b593f00bbb368fd1a0197b
-  last_synced: '2026-09-25'
+  content_hash: b5c0e5073a06593aea9d54ffc654855e546da9bbf7e7f6ace5ecc7304d762ad3
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_09.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_07
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 7172679872f5a6a52b2a26af6f64d9c35312035d46291527944698ce071d071d
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_10.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_08
   type: bclaws
@@ -124,7 +124,7 @@ sources:
   part: '10'
   category: statutory
   content_hash: d6463f71da578f838ed5be6c2bdaf3ff563977699216e17e8f8839eb6116dc19
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_11.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_08
   type: bclaws
@@ -132,42 +132,42 @@ sources:
   part: '11'
   category: statutory
   content_hash: f10fed66fc8deec8878bd7b09b48f6eb15936d57321771a0f2b9e4a22c2b07c4
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_12.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_09
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: a25c25c60e2f2be65fa945905d92aeae6da2e418704ef964d6ee585c9d1752bd
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_13.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_10
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 812fa0d246b490bfb04755e7b4b93c815c416391fa4389000ffbb283eb42f295
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_14.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_11
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 1b70e3914f79750a421c806e384c07b956d67279172f28e192bc6176a58b217c
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_15.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_12
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 8dad0ef02054a35ddd096f02ee1ed3b5c8f6ce76c6e09aec7e5dd42e936dd03c
-  last_synced: '2026-09-25'
+  content_hash: a27f330d31ee7c4fd4b0a4eccf72978efdf1c98dee3f9de4b27cc49dd69da220
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_16.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_13
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 66d580c49d6a690ad4be9f5d177ba97d785ac2ed111ce6e9aa373faeeb93117e
-  last_synced: '2026-09-25'
+  content_hash: 7d22779a38d224734617d93a605e5cc8a03fa9d7e0e1ba93dad243408431fdeb
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_17.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_14
   type: bclaws
@@ -175,7 +175,7 @@ sources:
   part: '17'
   category: statutory
   content_hash: 8e92f84c4ba0cd7ae4ee6417a6206f963fd2fef9b2e27b3ed8348c88933e88a6
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_18.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_14
   type: bclaws
@@ -183,49 +183,49 @@ sources:
   part: '18'
   category: statutory
   content_hash: 03f7e9cd8eb7a7125e0d11c418d55ae696e7b341a24ae833c7c43a4b1b34138b
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_19.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_15
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: ddab78ca81ddc4542988ca2e7bcd0cc22efe2615046058394e9dbfb8db5360a8
-  last_synced: '2026-09-25'
+  content_hash: 74604b2a5737f171eef0e956f475ffad9c66aa4e8a8ce36ee41c4f0b10dd8bad
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_20.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_16
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 0af9b7bec04ede3044c11b4528124be3eba81647fc2b52db9a727458062fe36c
-  last_synced: '2026-09-25'
+  content_hash: b4732aaf3b1f48f578e2baabff0de19d79d727ef37f8b8b82ccb46c68f933c8b
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_21.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_17
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 0f5074211541a33593d6fa18d9c09bb0de56f7da0d28152ab2945c95046714ab
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_22.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_18
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 29979cf6e47833e9819c4ac29070e210d5ebe22d49e137c78bad0e3f501f6b25
-  last_synced: '2026-09-25'
+  content_hash: ab9b53f6218927cfd060885fd615f192a0d8c20ad9631b2369cc22d3ca4d1f0b
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_23.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_19
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 531a9e2186461a81f4da76aad57c5ee01d08a2cac7f9d40807527910db4ed7b7
-  last_synced: '2026-09-26'
+  content_hash: 88bdffd40a11889d4d3634a0c8614f7bbead5de6cb6d2eb808ec70388a278a6e
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_24.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_20
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 61bc2c10c1586f48d3b44a24ec37f30b9c0ba45f77b4b74578a6e96358df4a23
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_25.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21
   type: bclaws
@@ -233,29 +233,29 @@ sources:
   part: '25'
   category: statutory
   content_hash: 04575d581ba871d5d3060a3bfdddeefef9688d87988036694406b31bd1f4a63d
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_26.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21
   type: bclaws
   selector: '#contentsscroll'
   part: '26'
   category: statutory
-  content_hash: 3c514865818ca5342afef23c4988704bd240668537c8603a79e5a60228a70a4f
-  last_synced: '2026-09-25'
+  content_hash: 7f55316af96d0d7d88023616f7bd57312ce8ef211874cce05fcadf96394de9a7
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_27.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_22
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 78e1aa7bae98074b9aae522522f8d3aaf74d8a5caec590bab8c49170ef377608
-  last_synced: '2026-09-25'
+  content_hash: 43787c17c23f5db75dbc14d1768084d001ae7d98c8735dbda682fab628148bb5
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_28.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_23
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: e7631440649306fd178e6c6c1266a49990e93b7ccb2ce8ea681ba0457d61a206
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_29.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24
   type: bclaws
@@ -263,7 +263,7 @@ sources:
   part: '29'
   category: statutory
   content_hash: b075bdaf63a0351a2c881d2455835dd3ec05751ece50c71cfe3ae5d324f8e35c
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_30.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24
   type: bclaws
@@ -271,7 +271,7 @@ sources:
   part: '30'
   category: statutory
   content_hash: fa451ffc7eaa8bce119e31b635731719217cb8a417b88a57c8d4666a2f8d199d
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_31.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24
   type: bclaws
@@ -279,7 +279,7 @@ sources:
   part: '31'
   category: statutory
   content_hash: 4abc785fe15182ab8017e3673d9dfc737879bda22ee0b501f881ae1854269d5e
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_32.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24
   type: bclaws
@@ -287,7 +287,7 @@ sources:
   part: '32'
   category: statutory
   content_hash: 5837dbc758d16e9f90c517efa28e01abc42b3a7a525874cfe496e4d72c83cf85
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_33.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24
   type: bclaws
@@ -295,75 +295,75 @@ sources:
   part: '33'
   category: statutory
   content_hash: de0de163e7b711d314f0248058c286b47d7c0d801156b2654e082542b5f1406e
-  last_synced: '2026-09-25'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_34.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24
   type: bclaws
   selector: '#contentsscroll'
   part: '34'
   category: statutory
-  content_hash: 043daa48ded2d04011fe1c25ddbc93af713a28ac6283bb37235cbcf0a77c642d
-  last_synced: '2026-09-25'
+  content_hash: f1a92c97aec4940e1ccb07c7259cca82b7349b917fe713b88d546a9e6dac2345
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_01.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_01
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 1b74304fccfacc0f043f7099db39d869899a0d21b0d38bf59ee9edc4d9066427
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_02.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_02
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 899ef2152f284b2f8997ec55692ede334df41f8648b16c42cf912f7525f3bdc1
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_03.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_03
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 9487e13204381c26ba526712ff50a05caa36d2786eaee3a2c20e67a681711e7a
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_04.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_04
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 84c8801308f43c9c9b3936379972da2184e8a167f65ba0193437c13ead033e15
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_05.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_05
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 99fa3c90f330d6a37f7891bd6db8f804801d7d90dbfc9d82a92e9091911b2e47
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_06.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_06
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: c05a201caf05052865f36ff10df700e33b6645bcfe00f1710d5ef9c38103d5ea
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_07.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_07
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 1aa57505a33d32e2de821138bffc61a5c8760bf0f7cc3d3f167c7edfa3b4be49
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_08.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_08
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
   content_hash: 4aa25fcf40bedb29688c135ebf1dd6cb49a0e6fed3764670eca268492967360c
-  last_synced: '2026-09-26'
+  last_synced: '2026-09-27'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Schedules.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_09
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: ed93b81a7bdbb5d9a2b8295cb7fae78dd670640cba9e42e8d72ead99462daf17
-  last_synced: '2026-09-26'
+  content_hash: 2bfcf0b9cf99f0161b41fcbf834d45136b02061435d575fd9d5ef32252b66709
+  last_synced: '2026-09-27'

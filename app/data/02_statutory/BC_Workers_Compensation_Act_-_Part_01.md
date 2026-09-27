@@ -1,8 +1,8 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_01)  
-**Upstream Last Modified:** Sat, 26 Sep 2026 06:40:52 GMT  
-**Ingestion Date:** 2026-09-26  
+**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:50 GMT  
+**Ingestion Date:** 2026-09-27  
 
 This Act is current to September 22, 2026
 
