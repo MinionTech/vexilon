@@ -167,7 +167,7 @@ async def test_golden_question_rejects_empty_and_rate_limit(monkeypatch):
     assert "x-forwarded-for" not in captured["user_id"].lower()
 
 
-async def test_golden_question_rejects_anonymous_before_the_body(monkeypatch):
+async def test_golden_question_rejects_anonymous_before_the_body(monkeypatch, caplog):
     _allow(monkeypatch)
 
     async def fake_stream(message, history, persona, context=None, queries=None):
@@ -196,17 +196,25 @@ async def test_golden_question_rejects_anonymous_before_the_body(monkeypatch):
         raise AssertionError("wrong token was accepted")
     assert wrong_seen["read"] is False
 
-    monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
-    unconfigured, unconfigured_seen = _request(body)
-    try:
-        await post_golden_question(unconfigured)
-    except HTTPException as exc:
-        assert exc.status_code == 503
-        assert exc.detail == "unavailable"
-        assert "GOLDEN_QUESTION_TOKEN" not in exc.detail
-    else:
-        raise AssertionError("unset token env was accepted")
-    assert unconfigured_seen["read"] is False
+    for value in (None, " ", "\n", "\r"):
+        if value is None:
+            monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
+        else:
+            monkeypatch.setenv("GOLDEN_QUESTION_TOKEN", value)
+        unconfigured, unconfigured_seen = _request(body)
+        caplog.clear()
+        with caplog.at_level(logging.ERROR):
+            try:
+                await post_golden_question(unconfigured)
+            except HTTPException as exc:
+                assert exc.status_code == 503
+                assert exc.detail == "unavailable"
+                assert "GOLDEN_QUESTION_TOKEN" not in exc.detail
+            else:
+                raise AssertionError("rejected token env was accepted")
+        assert unconfigured_seen["read"] is False
+        assert "GOLDEN_QUESTION_TOKEN is unset or invalid" in caplog.text
+        assert TOKEN not in caplog.text
 
 
 async def test_golden_question_logs_the_exception(monkeypatch, caplog):

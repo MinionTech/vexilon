@@ -60,7 +60,7 @@ if "secrets.GOLDEN_QUESTION_TOKEN" not in deploy_test:
     raise SystemExit("merge workflow does not send secrets.GOLDEN_QUESTION_TOKEN")
 if "X-Golden-Question-Token" not in gate:
     raise SystemExit("gate does not send X-Golden-Question-Token")
-if re.search(r'GOLDEN_QUESTION_TOKEN\s*=\s*["\']', gate + merge):
+if re.search(r"GOLDEN_QUESTION_TOKEN\s*=", gate + wrapper + merge):
     raise SystemExit("a token value is committed")
 if "bcgov/actions/workflow-notifier@" not in deploy_test or "secrets.GITHUB_TOKEN" not in deploy_test:
     raise SystemExit("golden failure does not use workflow-notifier")
@@ -172,12 +172,32 @@ def log(exit_code, status):
         handle.write(f"{url}\tmax={shown}\tstatus={status}\texit={exit_code}\n")
 
 expected = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
+if expected and any(expected in arg for arg in args):
+    sys.stderr.write("fake curl: token is in argv\n")
+    sys.exit(2)
 supplied = ""
+saw_header_file = False
 for header in headers:
-    name, _, value = header.partition(":")
-    if name.lower() == "x-golden-question-token":
-        supplied = value.strip()
-if not expected or supplied != expected:
+    lines = [header]
+    from_file = header.startswith("@")
+    if from_file:
+        saw_header_file = True
+        path = header[1:]
+        mode = os.stat(path).st_mode & 0o777
+        if mode != 0o600:
+            sys.stderr.write("fake curl: header file is not mode 0600\n")
+            sys.exit(2)
+        with open(path) as handle:
+            lines = [line for line in handle.read().splitlines() if line.strip()]
+    for line in lines:
+        name, _, value = line.partition(":")
+        if name.lower().strip() != "x-golden-question-token":
+            continue
+        if not from_file:
+            sys.stderr.write("fake curl: token is in argv\n")
+            sys.exit(2)
+        supplied = value[1:] if value.startswith(" ") else value
+if not saw_header_file or supplied != expected:
     sys.stderr.write("fake curl: golden token header missing\n")
     sys.exit(2)
 
@@ -294,9 +314,9 @@ if [ -s "$unset_work/curl.log" ]; then
     cat "$unset_work/curl.log"
     fail "unset token still called curl"
 fi
-if ! grep -F "GOLDEN_QUESTION_TOKEN is unset" "$unset_work/out.txt" >/dev/null; then
+if ! grep -F "GOLDEN_QUESTION_TOKEN is unset or invalid" "$unset_work/out.txt" >/dev/null; then
     cat "$unset_work/out.txt"
-    fail "unset token did not say the env var is unset"
+    fail "unset token did not say the env var is unset or invalid"
 fi
 pass "unset token does not call curl"
 

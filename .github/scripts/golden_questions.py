@@ -106,7 +106,7 @@ def _budget() -> tuple[int, int, int]:
 def _gate_token() -> str:
     token = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
     if not token.strip() or "\r" in token or "\n" in token:
-        raise ValueError("GOLDEN_QUESTION_TOKEN is unset")
+        raise ValueError("GOLDEN_QUESTION_TOKEN is unset or invalid")
     return token
 
 
@@ -117,6 +117,11 @@ def post_with_curl(url: str, question: str, max_time: int) -> tuple[int, int, st
         payload_path = Path(tmp) / "payload.json"
         body_path = Path(tmp) / "body.json"
         payload_path.write_text(json.dumps({"question": question}), encoding="utf-8")
+        header_path = Path(tmp) / "header"
+        fd = os.open(header_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(f"X-Golden-Question-Token: {token}\n")
         result = subprocess.run(
             [
                 "curl",
@@ -128,7 +133,7 @@ def post_with_curl(url: str, question: str, max_time: int) -> tuple[int, int, st
                 "-H",
                 "Accept: application/json",
                 "-H",
-                f"X-Golden-Question-Token: {token}",
+                f"@{header_path}",
                 "-o",
                 str(body_path),
                 "-w",

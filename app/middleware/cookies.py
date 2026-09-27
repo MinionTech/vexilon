@@ -75,7 +75,7 @@ def _answer_failed(text: str) -> bool:
 def _require_golden_token(request: Request) -> None:
     expected = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
     if not expected.strip() or "\r" in expected or "\n" in expected:
-        logger.error("[golden] GOLDEN_QUESTION_TOKEN is unset")
+        logger.error("[golden] GOLDEN_QUESTION_TOKEN is unset or invalid")
         raise HTTPException(status_code=503, detail="unavailable")
     provided = request.headers.get("x-golden-question-token") or ""
     if not hmac.compare_digest(provided.encode(), expected.encode()):
