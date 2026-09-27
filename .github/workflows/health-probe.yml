@@ -1,0 +1,50 @@
+name: Health Probe
+
+on:
+  schedule:
+    - cron: "17 */6 * * *" # Every 6 hours at :17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  probe:
+    name: Probe ${{ matrix.env }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: TEST
+            space: bcgeu/navigator-test
+            title: "TEST Health Probe Failure: Vexilon"
+            labels: "failure,deployment,test"
+          - env: PROD
+            space: bcgeu/navigator
+            title: "PROD Health Probe Failure: Agreement Navigator (AgNav)"
+            labels: "critical,deployment,prod"
+    concurrency:
+      group: health-probe-${{ matrix.env }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Probe Space Health
+        env:
+          SPACE_ID: ${{ matrix.space }}
+        run: ./.github/scripts/probe_health.sh "$SPACE_ID" 300
+
+      - name: Notify Owners on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: ${{ matrix.title }}
+          labels: ${{ matrix.labels }}
