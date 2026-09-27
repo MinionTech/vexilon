@@ -1,9 +1,9 @@
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.routing import APIRoute
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
-from core.config import AGNAV_VERSION
+from core.config import AGNAV_VERSION, GENERIC_ERROR_MESSAGE, HIGH_TRAFFIC_MESSAGE
 from brand import get_brand as _get_brand
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,76 @@ health_route = APIRoute(
     include_in_schema=False
 )
 
+def _answer_failed(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if stripped in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE):
+        return True
+    return stripped.startswith("⚠️ API error:")
+
+async def post_golden_question(request: Request):
+    """Answer one Lookup question. The promotion gate checks the citation."""
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="question is required") from None
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="question is required")
+    question = payload.get("question")
+    if not isinstance(question, str) or not question.strip():
+        raise HTTPException(status_code=400, detail="question is required")
+
+    from core.security import _rate_limiter, sanitize_input
+    from services.llm import (
+        _ensure_startup,
+        build_reference_links,
+        get_rag_context,
+        rag_review_stream,
+    )
+
+    client_host = request.client.host if request.client else "golden-question"
+    allowed, rate_msg = _rate_limiter.is_allowed(f"golden:{client_host}")
+    if not allowed:
+        raise HTTPException(status_code=429, detail=rate_msg or "Rate limit exceeded.")
+
+    sanitized, flagged = sanitize_input(question.strip())
+    if flagged or not sanitized.strip():
+        raise HTTPException(status_code=400, detail="invalid input")
+
+    try:
+        await _ensure_startup()
+        queries, context, snippets = await get_rag_context(sanitized, [])
+        accumulated = ""
+        async for chunk in rag_review_stream(
+            sanitized,
+            [],
+            "Lookup",
+            context=context,
+            queries=queries,
+        ):
+            if chunk:
+                accumulated += chunk
+        if _answer_failed(accumulated):
+            raise HTTPException(status_code=503, detail="answer failed")
+        ref_links = build_reference_links(snippets)
+        if ref_links:
+            accumulated += "\n\n### 📄 Reference Documents\n" + "\n".join(ref_links)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("[golden] answer failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="answer failed") from None
+
+    return {"answer": accumulated}
+
+golden_route = APIRoute(
+    "/api/golden-question",
+    endpoint=post_golden_question,
+    methods=["POST"],
+    include_in_schema=False,
+)
+
 def register_routes_and_middleware(app):
     """Register partitioned cookie middleware and custom FastAPI routes on the app."""
     if not any(
@@ -76,3 +146,5 @@ def register_routes_and_middleware(app):
         app.router.routes.insert(1, version_route)
     if "/api/health" not in existing_paths:
         app.router.routes.insert(2, health_route)
+    if "/api/golden-question" not in existing_paths:
+        app.router.routes.insert(3, golden_route)

@@ -86,9 +86,42 @@ jobs:
           title: "TEST Deployment Failure: Vexilon"
           labels: "failure,deployment,test"
 
+  golden-questions:
+    name: Golden questions on TEST
+    needs: [deploy-test]
+    runs-on: ubuntu-latest
+    # Same lock as deploy-test so a later merge does not replace the image under test.
+    concurrency:
+      group: huggingface-test-space
+      cancel-in-progress: false
+    # Above the 15-minute question step so a failed gate still reaches the notifier.
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Ask golden questions
+        # Script worst case is 765s (see golden_questions.py). Step timeout stays 15 minutes.
+        timeout-minutes: 15
+        run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test
+
+      - name: Notify Owners on Failure
+        if: failure()
+        uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Golden Question Failure: Agreement Navigator (AgNav)"
+          labels: "critical,deployment,prod"
+
   deploy-prod:
     name: Deploy to HF PROD
-    needs: [deploy-test]
+    needs: [deploy-test, golden-questions]
     runs-on: ubuntu-latest
     environment: prod
     concurrency:

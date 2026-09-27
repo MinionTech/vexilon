@@ -111,6 +111,9 @@ jobs:
           cd app
           uv run pytest ../tests/deploy_integrity/ -v
 
+      - name: Golden question gate
+        run: bash tests/golden_questions/offline.sh
+
       - name: Run Local Unit & Streaming Tests
         env:
           VERIFY_ENABLED: "true"
