@@ -898,9 +898,10 @@ def _run(args: argparse.Namespace) -> int:
         logger.error(f"Config file not found: {config_path}")
         return 2
 
-    entries = load_registry(config_path)
+    registry = load_registry(config_path)
+    entries = registry
     if args.filter:
-        entries = [e for e in entries if args.filter in e.path or args.filter in e.url]
+        entries = [e for e in registry if args.filter in e.path or args.filter in e.url]
         logger.info(f"Filtered to {len(entries)} source(s)")
 
     if args.check or (not args.sync and not args.dry_run):
@@ -963,7 +964,7 @@ def _run(args: argparse.Namespace) -> int:
                 updated += 1
 
         if not args.dry_run and updated > 0:
-            save_registry(config_path, entries)
+            save_registry(config_path, registry)
             logger.info("Regenerating manifest.json...")
             data_dir = _APP_ROOT / "data"
             generate_manifest(data_dir=data_dir)
