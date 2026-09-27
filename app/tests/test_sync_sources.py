@@ -387,6 +387,16 @@ def test_clean_bclaws_content_keeps_space_between_adjacent_bold_runs():
     assert cleaned.splitlines()[0] == "| Column 2 Minimum distance |"
 
 
+def test_clean_bclaws_content_keeps_bold_balanced_per_paragraph():
+    raw_html = """
+    <div id="contentsscroll">
+      <p><strong>Table 3-1</strong></p><p><strong>Minimum Requirements</strong></p>
+    </div>
+    """
+    cleaned = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert cleaned == "**Table 3-1**\n\n**Minimum Requirements**"
+
+
 def test_markdown_table_colspan_leaves_spanned_cells_empty():
     """A spanned value is written once; the columns after it stay aligned."""
     markdown = _extract_body("""

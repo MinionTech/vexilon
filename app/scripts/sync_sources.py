@@ -597,6 +597,19 @@ _PART_HEADING_RE = re.compile(
 )
 
 
+def _drop_empty_bold(match: re.Match[str]) -> str:
+    """Remove an empty bold pair without joining the words or blocks around it.
+
+    "** **" is also one bold run closing and the next opening; dropping the
+    markers must keep the space. Across a line break ("**Table 3-1**" then
+    "**Minimum ...**") the markers close and reopen bold per block, so they stay.
+    """
+    run = match.group(0)
+    if "\n" in run:
+        return run
+    return run.replace("*", "")
+
+
 def _strip_bclaws_chrome(content: str) -> str:
     """Drop King's Printer chrome, nav rails, and empty bold markers from statute text."""
     content = _KING_PRINTER_RE.sub("", content)
@@ -605,8 +618,7 @@ def _strip_bclaws_chrome(content: str) -> str:
     content = _POINT_IN_TIME_RE.sub("", content)
     content = _CONSOLIDATED_PDF_RE.sub("", content)
     content = _NAV_RAIL_RE.sub("", content)
-    # "** **" is also a closing marker followed by an opening one; keep the space between the words.
-    content = _EMPTY_BOLD_RE.sub(lambda m: m.group(0).replace("*", ""), content)
+    content = _EMPTY_BOLD_RE.sub(_drop_empty_bold, content)
     content = _EMPTY_HEADING_RE.sub("", content)
     return content
 
