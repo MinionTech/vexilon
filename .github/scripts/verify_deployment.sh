@@ -101,7 +101,7 @@ SPACE_URL="https://$(echo "$SPACE_ID" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
 # Since the server may take a few seconds to fully initialize even after the Space
 # status reports 'running', we run the probe with a brief retry loop.
 MAX_RETRIES=12
-RETRY_INTERVAL=10
+RETRY_INTERVAL=${VERIFY_SMOKE_RETRY_INTERVAL:-10}
 CURL_EXIT=0
 HEALTH_JSON=""
 SMOKE_DEADLINE=""
@@ -150,10 +150,10 @@ for i in $(seq 1 $MAX_RETRIES); do
 done
 
 if [ $CURL_EXIT -ne 0 ] || [ -z "$HEALTH_JSON" ]; then
-  # A budget stop before any curl, or after an empty 200, has no failed curl exit to report.
+  # Exit 0 is an empty body. A budget stop keeps that marker; otherwise say empty-200.
   smoke_report=$CURL_EXIT
-  if [ -n "$SMOKE_STOP" ] && [ "$CURL_EXIT" -eq 0 ]; then
-    smoke_report=$SMOKE_STOP
+  if [ "$CURL_EXIT" -eq 0 ]; then
+    smoke_report=${SMOKE_STOP:-empty-200}
   fi
   echo "❌ Error: Functional smoke test failed. Could not query /api/health after $MAX_RETRIES attempts. curl returned: $smoke_report. Response: $HEALTH_JSON"
   exit 1

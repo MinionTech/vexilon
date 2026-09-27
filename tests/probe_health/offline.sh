@@ -174,6 +174,7 @@ SPECS = {
     "free-retry-ok": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "timeout-then-ok"),
     "free-three-fail": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "fail-three"),
     "smoke-empty": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "ok"),
+    "smoke-empty-immediate": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "ok"),
     "smoke-exit-7": ("RUNNING", {"current": "cpu-basic", "requested": "cpu-basic"}, 172800, "ok"),
 }
 
@@ -226,6 +227,8 @@ if url.endswith("/api/health") and output is not None:
 if url.endswith("/api/health") and fail_with_body and scenario == "smoke-empty":
     if max_time is not None:
         time.sleep(float(max_time))
+    emit("smoke", "", "200", 0)
+if url.endswith("/api/health") and fail_with_body and scenario == "smoke-empty-immediate":
     emit("smoke", "", "200", 0)
 if url.endswith("/api/health") and fail_with_body and scenario == "smoke-exit-7":
     log("smoke", 7)
@@ -380,17 +383,25 @@ run_verify_budget() {
     local scenario="$2"
     local budget="$3"
     local expect_report="$4"
+    local retry_interval="${5:-}"
+    local expect_smokes="${6:-}"
     local work out
     work="$(mktemp -d)"
     out="$work/out.txt"
+    local log="$work/curl.log"
+    local -a env_args=(
+        "SCENARIO=$scenario"
+        "CURL_LOG=$log"
+        "CURL_STATE=$work/state.json"
+        "PATH=/tmp/bin:${PATH}"
+        "VERIFY_SMOKE_BUDGET=$budget"
+        "VERIFY_POLL_INTERVAL=0"
+    )
+    if [ -n "$retry_interval" ]; then
+        env_args+=("VERIFY_SMOKE_RETRY_INTERVAL=$retry_interval")
+    fi
     set +e
-    SCENARIO="$scenario" \
-        CURL_LOG="$work/curl.log" \
-        CURL_STATE="$work/state.json" \
-        PATH="/tmp/bin:${PATH}" \
-        VERIFY_SMOKE_BUDGET="$budget" \
-        VERIFY_POLL_INTERVAL=0 \
-        bash "$VERIFY" "bcgeu/navigator-test" 5 >"$out" 2>&1
+    env "${env_args[@]}" bash "$VERIFY" "bcgeu/navigator-test" 5 >"$out" 2>&1
     local rc=$?
     set -e
     if [ "$rc" -eq 0 ]; then
@@ -409,11 +420,20 @@ run_verify_budget() {
         cat "$out"
         fail "$name: reported curl exit 0 for a failed smoke check"
     fi
+    if [ -n "$expect_smokes" ]; then
+        local smoke_count
+        smoke_count="$(grep -c $'^smoke\t' "$log" || true)"
+        if [ "$smoke_count" -ne "$expect_smokes" ]; then
+            cat "$log"
+            fail "$name: smoke attempts=$smoke_count, expected $expect_smokes"
+        fi
+    fi
     pass "$name"
 }
 
 run_verify_budget "smoke budget exhausted before a curl" smoke-exit-7 0 budget-exhausted
 run_verify_budget "smoke budget keeps the last real curl exit" smoke-exit-7 1 7
 run_verify_budget "empty 200 at the smoke budget does not report curl exit 0" smoke-empty 1 budget-exhausted
+run_verify_budget "smoke retries exhausted on an empty 200" smoke-empty-immediate "" empty-200 0 12
 
 echo "All offline probe cases passed."
