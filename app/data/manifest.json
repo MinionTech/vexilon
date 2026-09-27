@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T06:47:31.878411+00:00",
+  "generated_at": "2026-09-26T06:42:42.397003+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
@@ -15,15 +15,15 @@
       "size_bytes": 23025
     },
     "02_statutory/BC_Employment_Standards_Act.md": {
-      "hash": "c3af9d1ea14f4849286a6a259ffd505865b101603e86822ab4b33f413a02beb3",
+      "hash": "35e7e6b1db11f7aeea90903b9c77aaf573669a84effb45f0d454e67919adf451",
       "size_bytes": 180052
     },
     "02_statutory/BC_Human_Rights_Code.md": {
-      "hash": "09c780a716b490d49046d59a2336e6cb4a9afa9db3ac670f5a763d1fb36f239f",
+      "hash": "f50315fe9f02d6fad3a7d006548fe61319f819e1c1608ca15ec871a2d657b43f",
       "size_bytes": 56435
     },
     "02_statutory/BC_Labour_Relations_Code.md": {
-      "hash": "3c5a5eb556161c6c0c423091f96bc7557387a0c5342ed52e1839e7cf70d6c428",
+      "hash": "0688111a363a3db51c45703d34ee9a2c354a6dd06ad45288f5489a0fbdce97c5",
       "size_bytes": 183438
     },
     "02_statutory/BC_OHS_Regulation_-_Introduction.md": {
@@ -119,8 +119,8 @@
       "size_bytes": 82388
     },
     "02_statutory/BC_OHS_Regulation_-_Part_23.md": {
-      "hash": "496e8e218456c6e47259c09cadf5059bd0d7725d9829064e68d5fd7970438cf6",
-      "size_bytes": 57140
+      "hash": "832285d3409d6cf0174ba2fb684c9f99f973a984bb95ee25a14ce21d11f5b0f8",
+      "size_bytes": 57138
     },
     "02_statutory/BC_OHS_Regulation_-_Part_24.md": {
       "hash": "e48015f1a0ebeb3b255728e5f496b065ced4e071ebe34405f7db1424efdf3d99",
@@ -171,36 +171,40 @@
       "size_bytes": 23547
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_01.md": {
-      "hash": "dcf181c01f9190cfb6ff2f92767f1dcd7216c32cc6026c7d81efaae496749ded",
+      "hash": "b86736d6a9846bdebee36ebf8e163b153ef379300aa2dc235498684ba725d024",
       "size_bytes": 27964
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_02.md": {
-      "hash": "82469cbdc37e18e999c59c1cd69968a707c959e88b2dc84faf88dfb72ca27cb0",
+      "hash": "cbae8508ae702ffe9af881a77cec8ed0e7f52db9c9c3c109257d7aab9eeaba7d",
       "size_bytes": 128252
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_03.md": {
-      "hash": "dc3e65f62365ebb835e68ea1cf82d52385c8c2b28ca96f0623e2e77b91f29a96",
+      "hash": "10a0bf7792a52cae3723792eeb69164b0632acadcd0f44ff8fd7dcb460d41daa",
       "size_bytes": 14640
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_04.md": {
-      "hash": "743961be6e5c172599e7c73d43793c1a34f587e3da5bd0a60e8f564457dc19da",
+      "hash": "18a29cd487b8d825d485adb58dfe230a6c0793699987e78f1cd7ae41b8ac97be",
       "size_bytes": 124631
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_05.md": {
-      "hash": "42e88a8d3bd151b96d21698aaa5eb19edf708051c4b043f6f2402b61029c041d",
+      "hash": "77e3bb6ae982ae260df2e327666f6126f9c7abb4a6c2c8f2a4e07e97169ef66d",
       "size_bytes": 37167
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_06.md": {
-      "hash": "c10b63f6c70738df74b3678d4be30ac4f7df41c97063b02fdc4edb1447656ed1",
+      "hash": "59084f347fb52851ce22ea65d76e51abc7f20b4e0e27dc5dacbd5f02c234eb41",
       "size_bytes": 14715
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_07.md": {
-      "hash": "817db22dad245f15a40bf0d301a2a987d2c799652af4cf2725e65d88d77dc496",
+      "hash": "095cba55dba7664318e7fc87ca1759bdc4c284467c16eed9be30ca6f801c4582",
       "size_bytes": 48941
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Part_08.md": {
-      "hash": "16e23a42ffaacbf1cffbb1bd95de6d3cf62ad39b135bb158f3e667985aae8e4c",
+      "hash": "8de756ef0ee2e969ffc8e58323aeebfd470366d4331f430ac837d243165b39fa",
       "size_bytes": 34378
+    },
+    "02_statutory/BC_Workers_Compensation_Act_-_Schedules.md": {
+      "hash": "62d40a73e499c8ecc98ea67232a0488465bde903b1dccbe7b8431bee20092f7c",
+      "size_bytes": 14794
     },
     "03_resources/BCGEU_Steward_Resources.md": {
       "hash": "73f1e7ca9982dcab4fbb5dbb58917c6e500afb1486732166d36bbd7840d2e295",

@@ -35,22 +35,22 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 50e692e28dbc7f8245df84b22ff06b6925fa55c447146354beff1baf22ace651
-  last_synced: '2026-09-25'
+  content_hash: f64ad9499d761f0ffb1ffc11670a45f73a2845643ca82a13b25ae865a7c48898
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Employment_Standards_Act.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: b27e919dbc92fffb48ec48d4e38657505cdb74c57ed01bf6ea079f261806bd2f
-  last_synced: '2026-09-25'
+  content_hash: c3a81849fdc17a1a16f8aa75c1c8e815b62c283172021502cba65b47f741fece
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Human_Rights_Code.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: b5bdffa73cf4ced3495b1ba34275ff231cd8d4fea58f77528074019eaf36dd35
-  last_synced: '2026-09-25'
+  content_hash: 5182c06e9754d8b97c14756af01f37ec52b42e74d5214fb798570985f41974d2
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_01.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_01
   type: bclaws
@@ -217,8 +217,8 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 7bef1ac0000873fc59d088a8e230795a2e4ff3ad89ccb3a7cd671332d216b3b5
-  last_synced: '2026-09-25'
+  content_hash: 531a9e2186461a81f4da76aad57c5ee01d08a2cac7f9d40807527910db4ed7b7
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_OHS_Regulation_-_Part_24.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_20
   type: bclaws
@@ -309,54 +309,61 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 6ff453a116a7eda2998acf9584300e06129ae41478cd15ace61738fc1811823c
-  last_synced: '2026-09-25'
+  content_hash: 1b74304fccfacc0f043f7099db39d869899a0d21b0d38bf59ee9edc4d9066427
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_02.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_02
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 0cabab0c7eff2c948c79dcac0562f0b6b31ca35ea075dc1ee6ad9201a57ea0e7
-  last_synced: '2026-09-25'
+  content_hash: 899ef2152f284b2f8997ec55692ede334df41f8648b16c42cf912f7525f3bdc1
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_03.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_03
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 7028675e380387a632d1090f23e88ead4d7fcc5361743a01dc0f1673b3ca4afd
-  last_synced: '2026-09-25'
+  content_hash: 9487e13204381c26ba526712ff50a05caa36d2786eaee3a2c20e67a681711e7a
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_04.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_04
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: b39e6f4866c438f1ee4435af6a08d65b35d078b7b80a81f451bb649740e76be2
-  last_synced: '2026-09-25'
+  content_hash: 84c8801308f43c9c9b3936379972da2184e8a167f65ba0193437c13ead033e15
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_05.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_05
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: f63aab133529a1d6f0e4e3456c63eebe40d15bcd2e962aa0b7d8accc3f3495cc
-  last_synced: '2026-09-25'
+  content_hash: 99fa3c90f330d6a37f7891bd6db8f804801d7d90dbfc9d82a92e9091911b2e47
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_06.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_06
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: bcd20cff4be669e6fb6621a555d59fb6a914c1a6bbab04073561ea21b9211a3b
-  last_synced: '2026-09-25'
+  content_hash: c05a201caf05052865f36ff10df700e33b6645bcfe00f1710d5ef9c38103d5ea
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_07.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_07
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 6ac65de181501088d4c78c9e2db6d2a357d1b7ab4c86a7c91303a8628d137857
-  last_synced: '2026-09-25'
+  content_hash: 1aa57505a33d32e2de821138bffc61a5c8760bf0f7cc3d3f167c7edfa3b4be49
+  last_synced: '2026-09-26'
 - path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Part_08.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_08
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 208d6fe1b1d19a3a2b55cf4ea541347949be1587d8f87d559730f8e2937900d8
-  last_synced: '2026-09-25'
+  content_hash: 4aa25fcf40bedb29688c135ebf1dd6cb49a0e6fed3764670eca268492967360c
+  last_synced: '2026-09-26'
+- path: app/data/02_statutory/BC_Workers_Compensation_Act_-_Schedules.md
+  url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_09
+  type: bclaws
+  selector: '#contentsscroll'
+  category: statutory
+  content_hash: ed93b81a7bdbb5d9a2b8295cb7fae78dd670640cba9e42e8d72ead99462daf17
+  last_synced: '2026-09-26'

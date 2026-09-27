@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_19)  
-**Upstream Last Modified:** Fri, 25 Sep 2026 06:47:27 GMT  
-**Ingestion Date:** 2026-09-25  
+**Upstream Last Modified:** Sat, 26 Sep 2026 06:40:49 GMT  
+**Ingestion Date:** 2026-09-26  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
@@ -943,7 +943,7 @@ Drill Stem Testing, Swabbing, Cementing, Well Servicing and Stimulation
 
 (iv) the method of determining how frequently a type of part is to be replaced, including the basis for replacement;
 
-(b) preparing, updating and making readily available at the worksite an up­to­date document, relating to the inspections and testing referred to in paragraph (a), that identifies each part that has been inspected and tested, and sets out, for that part,
+(b) preparing, updating and making readily available at the worksite an up-to-date document, relating to the inspections and testing referred to in paragraph (a), that identifies each part that has been inspected and tested, and sets out, for that part,
 
 (i) the inspection and testing procedures followed,
 
