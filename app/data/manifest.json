@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-27T03:25:49.265692+00:00",
+  "generated_at": "2026-09-27T03:32:09.008905+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_19th_Main_Agreement.md": {
@@ -203,8 +203,8 @@
       "size_bytes": 34378
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Schedules.md": {
-      "hash": "814aea5518ca2b07563f6f2876264ba8beec6a00b5ae169db9378a5e0672c75f",
-      "size_bytes": 15358
+      "hash": "058b7ed1cf9a645257dc43c5df2054f442e960a07bd3201b06fb569605e163c4",
+      "size_bytes": 15356
     },
     "03_resources/BCGEU_Steward_Resources.md": {
       "hash": "73f1e7ca9982dcab4fbb5dbb58917c6e500afb1486732166d36bbd7840d2e295",

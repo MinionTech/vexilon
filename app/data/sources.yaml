@@ -365,5 +365,5 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 00398d705c15d2ad4dcd4b4d4a0290abf462a4b0cf25fccc309933949f1b4163
+  content_hash: 84fb9c648f792ed711e0a597c706e0bc7141763ef8bee8c8a2bf0491f2cf285a
   last_synced: '2026-09-27'

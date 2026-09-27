@@ -1,7 +1,7 @@
 # Workers Compensation Act
 
 **Source:** [Workers Compensation Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/19001_09)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 03:25:39 GMT  
+**Upstream Last Modified:** Sun, 27 Sep 2026 03:31:57 GMT  
 **Ingestion Date:** 2026-09-27  
 
 This Act is current to September 22, 2026
@@ -22,7 +22,7 @@ Schedule 1
 
 Presumption of Occupational Disease Related to Specific Process or Industry
 
-| Item | Column 1 ** Description of Disease** | Column 2 ** Description of Process or Industry** |
+| Item | Column 1 **Description of Disease** | Column 2 **Description of Process or Industry** |
 | --- | --- | --- |
 | 1 | Poisoning by: | |
 | | (1) Lead | Where there is exposure to lead or lead compounds. |
