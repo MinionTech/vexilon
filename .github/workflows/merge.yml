@@ -12,6 +12,11 @@ on:
 
 permissions: {}
 
+# Held through deploy-prod. A later run waits, so the gate scores the image this run deployed.
+concurrency:
+  group: huggingface-test-space
+  cancel-in-progress: false
+
 jobs:
   analysis:
     name: Analysis
@@ -24,10 +29,8 @@ jobs:
     name: Deploy to HF TEST
     runs-on: ubuntu-latest
     environment: test
-    concurrency:
-      group: huggingface-test-space
-      cancel-in-progress: false
-    timeout-minutes: 20
+    # 20-minute deploy step, 15-minute question step, then the notifier.
+    timeout-minutes: 40
     permissions:
       contents: read
       packages: read
@@ -51,6 +54,7 @@ jobs:
           max_depth: 20
 
       - name: Promote and Verify to Hugging Face
+        timeout-minutes: 20
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TEST: "true"
@@ -78,8 +82,24 @@ jobs:
           echo "❌ Deployment failed after $MAX_ATTEMPTS attempts."
           exit 1
 
+      - name: Ask golden questions
+        id: golden
+        # Script worst case is 765s (see golden_questions.py). Step timeout stays 15 minutes.
+        timeout-minutes: 15
+        env:
+          GOLDEN_QUESTION_TOKEN: ${{ secrets.GOLDEN_QUESTION_TOKEN }}
+        run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test
+
+      - name: Notify Owners on Golden Question Failure
+        if: failure() && (steps.golden.outcome == 'failure' || steps.golden.outcome == 'cancelled')
+        uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Golden Question Failure: Agreement Navigator (AgNav)"
+          labels: "critical,deployment,test"
+
       - name: Notify Owners on Failure
-        if: failure()
+        if: failure() && steps.golden.outcome != 'failure' && steps.golden.outcome != 'cancelled'
         uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -141,3 +161,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "PROD Deployment Failure: Agreement Navigator (AgNav)"
           labels: "critical,deployment,prod"
+
+  notify-cancelled:
+    name: Notify on Timeout or Cancellation
+    needs: [deploy-test, deploy-prod]
+    if: always() && contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Notify on timeout or cancellation
+        uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "${{ needs.deploy-test.result == 'cancelled' && 'TEST' || 'PROD' }} Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
+          labels: "failure,deployment,${{ needs.deploy-test.result == 'cancelled' && 'test' || 'prod' }}"
