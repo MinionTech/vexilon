@@ -1,6 +1,4 @@
-import hmac
 import logging
-import os
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.routing import APIRoute
 from fastapi import HTTPException, Request
@@ -72,21 +70,8 @@ def _answer_failed(text: str) -> bool:
         for marker in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
     )
 
-def _require_golden_token(request: Request) -> None:
-    expected = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
-    if not expected.strip() or expected != expected.strip() or "\r" in expected or "\n" in expected:
-        logger.error("[golden] GOLDEN_QUESTION_TOKEN is unset or invalid")
-        raise HTTPException(status_code=503, detail="unavailable")
-    provided = request.headers.get("x-golden-question-token") or ""
-    if not hmac.compare_digest(provided.encode(), expected.encode()):
-        raise HTTPException(status_code=401, detail="unauthorized")
-
-
 async def post_golden_question(request: Request):
     """Answer one Lookup question. The promotion gate checks the citation."""
-    # Before the body, so anonymous traffic cannot upload a payload or spend the limiter.
-    _require_golden_token(request)
-
     from core.security import _rate_limiter, sanitize_input
 
     client_host = request.client.host if request.client else "golden-question"

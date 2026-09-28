@@ -3,7 +3,6 @@
 import importlib.util
 import json
 import re
-import secrets
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
@@ -58,10 +57,11 @@ def test_merge_blocks_prod_and_opens_a_github_issue():
     assert "timeout-minutes: 15" in deploy_test
     assert "steps.golden.outcome == 'failure'" in deploy_test
     assert "run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test" in deploy_test
-    assert "secrets.GOLDEN_QUESTION_TOKEN" in deploy_test
+    assert "GOLDEN_QUESTION_TOKEN" not in deploy_test
     wrapper = (GATE.parent / "golden_questions.sh").read_text(encoding="utf-8")
     gate_text = GATE.read_text(encoding="utf-8")
     assert re.search(r"GOLDEN_QUESTION_TOKEN\s*=", gate_text + wrapper + merge) is None
+    assert "X-Golden-Question-Token" not in gate_text
     assert "Golden Question Failure: Agreement Navigator (AgNav)" in deploy_test
     assert "bcgov/actions/workflow-notifier@" in deploy_test
     assert "secrets.GITHUB_TOKEN" in deploy_test
@@ -138,42 +138,12 @@ def test_gate_pass_fail_and_retry_with_fake_responder(monkeypatch):
     assert down["n"] == 2
 
 
-def test_curl_sends_the_token_header_and_refuses_when_unset(monkeypatch):
+def test_curl_posts_json_without_auth_header(monkeypatch):
     gate = _gate()
-    rejected = (None, " ", " x", "x ", " x ", "\n", "\r", "bad\r\n")
-    for value in rejected:
-        if value is None:
-            monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
-        else:
-            monkeypatch.setenv("GOLDEN_QUESTION_TOKEN", value)
-        try:
-            gate.post_with_curl("https://example.test/api/golden-question", "q", 1)
-        except ValueError as exc:
-            assert str(exc) == "GOLDEN_QUESTION_TOKEN is unset or invalid"
-        else:
-            raise AssertionError("curl ran with a rejected token")
-
-    token = secrets.token_hex(16)
-    monkeypatch.setenv("GOLDEN_QUESTION_TOKEN", token)
     captured: dict[str, object] = {}
 
     def fake_run(args, **kwargs):
         captured["args"] = [str(arg) for arg in args]
-        header_text = ""
-        header_mode = None
-        for index, arg in enumerate(args):
-            if arg not in ("-H", "--header"):
-                continue
-            value = str(args[index + 1])
-            if not value.startswith("@"):
-                continue
-            path = Path(value[1:])
-            text = path.read_text(encoding="utf-8")
-            if "X-Golden-Question-Token:" in text:
-                header_text = text
-                header_mode = path.stat().st_mode & 0o777
-        captured["header"] = header_text
-        captured["mode"] = header_mode
         body_path = args[args.index("-o") + 1]
         Path(body_path).write_text('{"answer":"x"}', encoding="utf-8")
 
@@ -189,7 +159,7 @@ def test_curl_sends_the_token_header_and_refuses_when_unset(monkeypatch):
         "https://example.test/api/golden-question", "q", 5
     )
     assert (exit_code, status, body) == (0, 200, '{"answer":"x"}')
-    assert captured["header"] == f"X-Golden-Question-Token: {token}\n"
-    assert captured["mode"] == 0o600
-    assert all(token not in arg for arg in captured["args"])
-    assert token not in body
+    joined = " ".join(captured["args"])
+    assert "X-Golden-Question-Token" not in joined
+    assert "golden-question-token" not in joined.lower()
+    assert "--data-binary" in joined

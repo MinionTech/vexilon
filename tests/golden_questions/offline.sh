@@ -56,10 +56,8 @@ if "steps.golden.outcome == 'failure'" not in deploy_test or "golden_questions.s
     raise SystemExit("golden failure does not have its own notifier")
 if "run: ./.github/scripts/golden_questions.sh bcgeu/navigator-test" not in deploy_test:
     raise SystemExit("deploy-test does not run golden_questions.sh bcgeu/navigator-test")
-if "secrets.GOLDEN_QUESTION_TOKEN" not in deploy_test:
-    raise SystemExit("merge workflow does not send secrets.GOLDEN_QUESTION_TOKEN")
-if "X-Golden-Question-Token" not in gate:
-    raise SystemExit("gate does not send X-Golden-Question-Token")
+if "GOLDEN_QUESTION_TOKEN" in deploy_test or "X-Golden-Question-Token" in gate:
+    raise SystemExit("golden question gate still requires a token")
 if re.search(r"GOLDEN_QUESTION_TOKEN\s*=", gate + wrapper + merge):
     raise SystemExit("a token value is committed")
 if "bcgov/actions/workflow-notifier@" not in deploy_test or "secrets.GITHUB_TOKEN" not in deploy_test:
@@ -171,39 +169,6 @@ def log(exit_code, status):
     with open(log_path, "a") as handle:
         handle.write(f"{url}\tmax={shown}\tstatus={status}\texit={exit_code}\n")
 
-expected = os.environ.get("GOLDEN_QUESTION_TOKEN", "")
-if expected and any(expected in arg for arg in args):
-    sys.stderr.write("fake curl: token is in argv\n")
-    sys.exit(2)
-supplied = ""
-saw_header_file = False
-for header in headers:
-    lines = [header]
-    from_file = header.startswith("@")
-    if from_file:
-        saw_header_file = True
-        path = header[1:]
-        if not os.path.exists(path):
-            sys.stderr.write("fake curl: header file is missing\n")
-            sys.exit(2)
-        mode = os.stat(path).st_mode & 0o777
-        if mode != 0o600:
-            sys.stderr.write("fake curl: header file is not mode 0600\n")
-            sys.exit(2)
-        with open(path) as handle:
-            lines = [line for line in handle.read().splitlines() if line.strip()]
-    for line in lines:
-        name, _, value = line.partition(":")
-        if name.lower().strip() != "x-golden-question-token":
-            continue
-        if not from_file:
-            sys.stderr.write("fake curl: token is in argv\n")
-            sys.exit(2)
-        supplied = value[1:] if value.startswith(" ") else value
-if not saw_header_file or supplied != expected:
-    sys.stderr.write("fake curl: golden token header missing\n")
-    sys.exit(2)
-
 if not data_path:
     sys.stderr.write("fake curl: missing body\n")
     sys.exit(2)
@@ -250,31 +215,7 @@ emit(good(), 200, 0)
 PY
 chmod +x /tmp/bin/curl
 
-missing_work="$(mktemp -d)"
-set +e
-env -u GOLDEN_QUESTION_TOKEN \
-    CURL_LOG="$missing_work/curl.log" \
-    CURL_STATE="$missing_work/state.json" \
-    /tmp/bin/curl -sS -H "@$missing_work/no-such-header" --data-binary @/dev/null https://example.invalid \
-    >"$missing_work/out.txt" 2>"$missing_work/err.txt"
-missing_rc=$?
-set -e
-if [ "$missing_rc" -ne 2 ]; then
-    cat "$missing_work/err.txt"
-    fail "missing header file: exit $missing_rc, expected 2"
-fi
-if ! grep -F "fake curl: header file is missing" "$missing_work/err.txt" >/dev/null; then
-    cat "$missing_work/err.txt"
-    fail "missing header file did not say the file is missing"
-fi
-if grep -F "FileNotFoundError" "$missing_work/err.txt" >/dev/null; then
-    cat "$missing_work/err.txt"
-    fail "missing header file raised FileNotFoundError"
-fi
-pass "missing header file exits 2"
-
 question_count="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["questions"]))' "$QUESTIONS")"
-GATE_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
 
 run_case() {
     local name="$1"
@@ -293,7 +234,6 @@ run_case() {
         QUESTIONS_FILE="$QUESTIONS" \
         PATH="/tmp/bin:${PATH}" \
         GOLDEN_RETRY_DELAY=0 \
-        GOLDEN_QUESTION_TOKEN="$GATE_TOKEN" \
         bash "$WRAPPER" "bcgeu/navigator-test" >"$out" 2>&1
     local rc=$?
     set -e
@@ -313,38 +253,8 @@ run_case() {
         cat "$log"
         fail "$name: a curl ran without --max-time"
     fi
-    if grep -F "$GATE_TOKEN" "$out" "$log" >/dev/null; then
-        fail "$name: token leaked into output"
-    fi
     pass "$name"
 }
-
-unset_work="$(mktemp -d)"
-: >"$unset_work/curl.log"
-set +e
-SCENARIO=pass \
-    CURL_LOG="$unset_work/curl.log" \
-    CURL_STATE="$unset_work/state.json" \
-    QUESTIONS_FILE="$QUESTIONS" \
-    PATH="/tmp/bin:${PATH}" \
-    GOLDEN_RETRY_DELAY=0 \
-    env -u GOLDEN_QUESTION_TOKEN \
-    bash "$WRAPPER" "bcgeu/navigator-test" >"$unset_work/out.txt" 2>&1
-unset_rc=$?
-set -e
-if [ "$unset_rc" -ne 1 ]; then
-    cat "$unset_work/out.txt"
-    fail "unset token: exit $unset_rc, expected 1"
-fi
-if [ -s "$unset_work/curl.log" ]; then
-    cat "$unset_work/curl.log"
-    fail "unset token still called curl"
-fi
-if ! grep -F "GOLDEN_QUESTION_TOKEN is unset or invalid" "$unset_work/out.txt" >/dev/null; then
-    cat "$unset_work/out.txt"
-    fail "unset token did not say the env var is unset or invalid"
-fi
-pass "unset token does not call curl"
 
 run_case "pass" pass 0 "$question_count"
 run_case "missing locator" missing-locator 1 1

@@ -2,7 +2,6 @@
 
 import json
 import logging
-import secrets
 
 from fastapi import FastAPI, HTTPException, Request
 
@@ -10,19 +9,14 @@ from core.config import GENERIC_ERROR_MESSAGE, HIGH_TRAFFIC_MESSAGE
 from middleware.cookies import post_golden_question, register_routes_and_middleware
 import services.llm as llm
 
-TOKEN = secrets.token_hex(16)
-
 
 def _request(
     body: bytes,
     content_type: str = "application/json",
     *,
-    token: str | None = TOKEN,
     forwarded_for: str | None = None,
 ) -> tuple[Request, dict[str, bool]]:
     headers = [(b"content-type", content_type.encode())]
-    if token is not None:
-        headers.append((b"x-golden-question-token", token.encode()))
     if forwarded_for is not None:
         headers.append((b"x-forwarded-for", forwarded_for.encode()))
     seen = {"read": False}
@@ -40,10 +34,6 @@ def _request(
         return {"type": "http.request", "body": body, "more_body": False}
 
     return Request(scope, receive), seen
-
-
-def _allow(monkeypatch, token: str = TOKEN) -> None:
-    monkeypatch.setenv("GOLDEN_QUESTION_TOKEN", token)
 
 
 def _patch_pipeline(monkeypatch, stream):
@@ -85,7 +75,6 @@ async def test_golden_question_returns_lookup_answer(monkeypatch):
         assert context == "context"
         yield "[BCGEU 20th Main Agreement - 10.1 Burden of Proof]"
 
-    _allow(monkeypatch)
     _patch_pipeline(monkeypatch, fake_stream)
     body = json.dumps({"question": "Who bears the burden?"}).encode()
     request, seen = _request(body)
@@ -100,7 +89,6 @@ async def test_golden_question_model_error_is_503(monkeypatch):
         GENERIC_ERROR_MESSAGE,
         "⚠️ API error: boom",
     )
-    _allow(monkeypatch)
     body = json.dumps({"question": "Who bears the burden?"}).encode()
     for marker in markers:
         async def fake_stream(message, history, persona, context=None, queries=None, marker=marker):
@@ -125,7 +113,6 @@ async def test_golden_question_rejects_empty_and_rate_limit(monkeypatch):
         raise AssertionError("model was called")
         yield ""
 
-    _allow(monkeypatch)
     _patch_pipeline(monkeypatch, fake_stream)
     blank, blank_seen = _request(json.dumps({"question": "  "}).encode())
     try:
@@ -167,59 +154,7 @@ async def test_golden_question_rejects_empty_and_rate_limit(monkeypatch):
     assert "x-forwarded-for" not in captured["user_id"].lower()
 
 
-async def test_golden_question_rejects_anonymous_before_the_body(monkeypatch, caplog):
-    _allow(monkeypatch)
-
-    async def fake_stream(message, history, persona, context=None, queries=None):
-        raise AssertionError("model was called")
-        yield ""
-
-    _patch_pipeline(monkeypatch, fake_stream)
-    body = json.dumps({"question": "Who bears the burden?"}).encode()
-    missing, missing_seen = _request(body, token=None)
-    try:
-        await post_golden_question(missing)
-    except HTTPException as exc:
-        assert exc.status_code == 401
-        assert exc.detail == "unauthorized"
-        assert TOKEN not in exc.detail
-    else:
-        raise AssertionError("missing token was accepted")
-    assert missing_seen["read"] is False
-
-    wrong, wrong_seen = _request(body, token=secrets.token_hex(8))
-    try:
-        await post_golden_question(wrong)
-    except HTTPException as exc:
-        assert exc.status_code == 401
-    else:
-        raise AssertionError("wrong token was accepted")
-    assert wrong_seen["read"] is False
-
-    for value in (None, " ", " x", "x ", " x ", "\n", "\r"):
-        if value is None:
-            monkeypatch.delenv("GOLDEN_QUESTION_TOKEN", raising=False)
-        else:
-            monkeypatch.setenv("GOLDEN_QUESTION_TOKEN", value)
-        unconfigured, unconfigured_seen = _request(body)
-        caplog.clear()
-        with caplog.at_level(logging.ERROR):
-            try:
-                await post_golden_question(unconfigured)
-            except HTTPException as exc:
-                assert exc.status_code == 503
-                assert exc.detail == "unavailable"
-                assert "GOLDEN_QUESTION_TOKEN" not in exc.detail
-            else:
-                raise AssertionError("rejected token env was accepted")
-        assert unconfigured_seen["read"] is False
-        assert "GOLDEN_QUESTION_TOKEN is unset or invalid" in caplog.text
-        assert TOKEN not in caplog.text
-
-
 async def test_golden_question_logs_the_exception(monkeypatch, caplog):
-    _allow(monkeypatch)
-
     async def fake_stream(message, history, persona, context=None, queries=None):
         raise RuntimeError("retrieval exploded")
         yield ""
