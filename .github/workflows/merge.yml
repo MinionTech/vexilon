@@ -178,5 +178,5 @@ jobs:
         uses: bcgov/actions/workflow-notifier@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
-          labels: "failure,deployment"
+          title: "${{ needs.deploy-test.result == 'cancelled' && 'TEST' || 'PROD' }} Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
+          labels: "failure,deployment,${{ needs.deploy-test.result == 'cancelled' && 'test' || 'prod' }}"
