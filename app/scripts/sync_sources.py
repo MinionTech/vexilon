@@ -914,11 +914,18 @@ def _validator_kwargs(source: SourceEntry) -> dict[str, str]:
 
 
 def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
-    """Substantive hash of the local file, or None when that file is absent."""
+    """Substantive hash of the local file, or None when it is absent or unreadable.
+
+    An unreadable file is not a baseline. Callers then fetch unconditionally
+    instead of aborting the rest of ``--check`` or ``--sync``.
+    """
     local_file = repo_root / source.path
     if not local_file.is_file():
         return None
-    text = local_file.read_text(encoding="utf-8")
+    try:
+        text = local_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
     return compute_content_hash(extract_substantive_body(text))
 
 
@@ -1091,9 +1098,9 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             url=source.url,
             status="UNTRACKED",
         )
-    # A missing file keeps the registry hash in the 200 comparison so an
-    # unconditional fetch can still detect upstream drift. It is not a baseline.
-    compared_local_hash = local_hash if local_hash is not None else source.content_hash
+    # Registry hash stays in the comparison so a missing file can still show
+    # upstream drift. It is not a baseline, and it is not the local hash.
+    registry_hash = source.content_hash
 
     try:
         raw_html, headers = fetch_upstream(
@@ -1108,56 +1115,60 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 path=source.path,
                 url=source.url,
                 status="ERROR",
-                local_hash=compared_local_hash,
+                local_hash=local_hash or registry_hash,
                 error="Upstream extraction produced no substantive content",
             )
         upstream_hash = compute_content_hash(upstream_substantive)
         upstream_last_modified = headers.get("last-modified")
 
-        if source.content_hash and upstream_hash != source.content_hash:
+        if registry_hash and upstream_hash != registry_hash:
             return DriftResult(
                 path=source.path,
                 url=source.url,
                 status="DRIFT_DETECTED",
-                local_hash=compared_local_hash or source.content_hash,
+                local_hash=local_hash,
+                upstream_hash=upstream_hash,
+                upstream_last_modified=upstream_last_modified,
+                error="Local file is absent" if local_hash is None else None,
+            )
+        elif local_hash is not None and upstream_hash != local_hash:
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="DRIFT_DETECTED",
+                local_hash=local_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
             )
-        elif compared_local_hash and upstream_hash != compared_local_hash:
+        if local_hash is None and registry_hash:
             return DriftResult(
                 path=source.path,
                 url=source.url,
                 status="DRIFT_DETECTED",
-                local_hash=compared_local_hash,
+                local_hash=None,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
+                error="Local file is absent",
             )
 
         return DriftResult(
             path=source.path,
             url=source.url,
             status="MATCH",
-            local_hash=compared_local_hash,
+            local_hash=local_hash,
             upstream_hash=upstream_hash,
             upstream_last_modified=upstream_last_modified,
         )
 
     except NotModified:
-        if _baseline_is_intact(source, local_hash):
-            return DriftResult(
-                path=source.path,
-                url=source.url,
-                status="MATCH",
-                local_hash=local_hash,
-                upstream_hash=source.content_hash,
-                upstream_last_modified=source.upstream_last_modified,
-            )
+        # Validators are sent only when the local baseline is intact, so a 304
+        # here is that same body. fetch_upstream does not raise this otherwise.
         return DriftResult(
             path=source.path,
             url=source.url,
-            status="DRIFT_DETECTED",
+            status="MATCH",
             local_hash=local_hash,
-            upstream_hash=source.content_hash,
+            upstream_hash=registry_hash,
             upstream_last_modified=source.upstream_last_modified,
         )
     except (urllib.error.URLError, TimeoutError) as e:
@@ -1166,7 +1177,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             path=source.path,
             url=source.url,
             status="ERROR",
-            local_hash=compared_local_hash,
+            local_hash=local_hash or registry_hash,
             error=f"Network error: {e}",
         )
     except Exception as e:
@@ -1175,7 +1186,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             path=source.path,
             url=source.url,
             status="ERROR",
-            local_hash=compared_local_hash,
+            local_hash=local_hash or registry_hash,
             error=str(e),
         )
 
@@ -1196,8 +1207,8 @@ def sync_source(
                 source.url, **_validators_for_intact_baseline(source, local_hash)
             )
         except NotModified:
-            if not _baseline_is_intact(source, local_hash):
-                return False, "HTTP 304 but the local file is not the validated baseline"
+            # Same gate as --check: this runs only after validators were sent,
+            # which requires the local file to still match content_hash.
             logger.info(f"Not modified {source.path}; skipped parse")
             return True, NOT_MODIFIED_DETAIL
         title, body = extract_content(raw_html, source.type, source.selector, source.part)
