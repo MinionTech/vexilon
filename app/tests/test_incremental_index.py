@@ -392,7 +392,7 @@ def test_prune_deletes_stale_cache_temps_only(tmp_path, monkeypatch):
     assert fresh.is_file()
 
 
-def test_cache_write_error_does_not_abort_build(tmp_path, monkeypatch):
+def test_cache_write_error_does_not_abort_build(tmp_path, monkeypatch, caplog):
     """A cache-write failure still returns the index built from the new vectors."""
     data = tmp_path / "data"
     cache = tmp_path / "cache"
@@ -405,7 +405,14 @@ def test_cache_write_error_does_not_abort_build(tmp_path, monkeypatch):
         raise ValueError("npy header failed")
 
     monkeypatch.setattr(indexing, "_atomic_replace", _unwritable)
-    index, chunks = indexing.build_index_from_sources()
+    with caplog.at_level("ERROR", logger="indexing"):
+        index, chunks = indexing.build_index_from_sources()
     assert index is not None
     assert [c["text"] for c in chunks] == ["alpha clause", "beta one", "beta two"]
     assert index.ntotal == 3
+    written = [rec for rec in caplog.records if "Could not write document cache" in rec.message]
+    assert written
+    assert "ValueError: npy header failed" in written[-1].message
+    assert written[-1].exc_info is not None
+    assert written[-1].exc_info[0] is ValueError
+    assert "Traceback (most recent call last)" in caplog.text

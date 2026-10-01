@@ -641,7 +641,7 @@ def _save_document_cache(
     vectors: "np.ndarray",
     chunks: list[dict],
 ) -> None:
-    """Persist one document cache. A write error leaves the build to continue."""
+    """Persist one document cache. A write error is logged with its traceback and the build continues."""
     import numpy as np
     identity = _cache_identity(rel_key, content_hash)
     npy_path = _embedding_cache_file(identity)
@@ -660,7 +660,9 @@ def _save_document_cache(
         _atomic_replace(npy_path, ".npy", write_npy)
         _atomic_replace(json_path, ".json", write_json)
     except Exception as e:
-        logger.warning(f"[build] Could not write document cache for {rel_key}: {e}")
+        logger.exception(
+            f"[build] Could not write document cache for {rel_key}: {type(e).__name__}: {e}"
+        )
 
 
 def _owned_cache_name(name: str, suffix: str) -> bool:
