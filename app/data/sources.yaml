@@ -17,6 +17,15 @@
 #                     "This Act is current to", "This regulation is current to", or
 #                     "This consolidation is current to" stays in the markdown and is omitted from this hash.
 #       last_synced: ISO date when the document was last synced
+#       etag: HTTP ETag from the last --sync that returned 200. Sent as If-None-Match
+#             only when the local file still matches content_hash AND extraction_fingerprint
+#             still matches the current extractor inputs. A 304 is then a MATCH and the
+#             body is not read. A 304 to a request with no validator is an error.
+#       upstream_last_modified: HTTP Last-Modified from that same 200. Sent as
+#             If-Modified-Since under the same rule. The next 200 replaces both.
+#       extraction_fingerprint: SHA-256 of extractor version, type, selector, and part
+#             at the last --sync. Missing or different means fetch the HTML and re-extract.
+#             Bump EXTRACTOR_VERSION in sync_sources.py when extractor behavior changes.
 
 sources:
 - path: app/data/03_resources/BC_Criminal_Notification_Procedures.md

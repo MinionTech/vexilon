@@ -6,9 +6,11 @@ Issue #695: Automate web-sourced document ingestion, provenance tracking, and dr
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from unittest.mock import patch
 import urllib.error
+import urllib.request
+from email.message import EmailMessage
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 from yaml.constructor import ConstructorError
@@ -16,6 +18,8 @@ from yaml.constructor import ConstructorError
 from scripts import sync_sources
 from scripts.sync_sources import (
     HTMLContentExtractor,
+    NOT_MODIFIED_DETAIL,
+    NotModified,
     PartNotFoundError,
     RegistryError,
     SelectorNotFoundError,
@@ -25,6 +29,8 @@ from scripts.sync_sources import (
     compute_content_hash,
     extract_content,
     extract_substantive_body,
+    extraction_fingerprint,
+    fetch_upstream,
     format_provenance_header,
     load_registry,
     save_registry,
@@ -1217,3 +1223,743 @@ def test_sync_with_filter_keeps_every_registry_entry(mock_fetch, mock_manifest, 
     assert after[1].url == before[1].url
     assert after[1].selector == before[1].selector
     assert config.read_text(encoding="utf-8").startswith("# Registry header\n")
+
+
+_KEPT_BODY = "# Title\n\nKept body.\n"
+_STALE_VALIDATOR = "Wed, 21 Aug 2024 12:00:00 GMT"
+
+
+def _digest(body: str) -> str:
+    return compute_content_hash(extract_substantive_body(body))
+
+
+def _write_doc(tmp_path: Path, body: str = _KEPT_BODY) -> tuple[Path, str]:
+    target = tmp_path / "app" / "data" / "doc.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body, encoding="utf-8")
+    return target, _digest(body)
+
+
+def _conditional_registry(
+    tmp_path: Path,
+    etag: str,
+    last_modified: str,
+    *,
+    body: str = _KEPT_BODY,
+    content_hash: str | None = None,
+) -> Path:
+    """Registry whose content_hash is the substantive hash of ``body`` on disk."""
+    _target, digest = _write_doc(tmp_path, body)
+    fingerprint = extraction_fingerprint(SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+    ))
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Registry header\n"
+        "\n"
+        "sources:\n"
+        "  - path: app/data/doc.md\n"
+        "    url: https://example.com/doc\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n"
+        f"    content_hash: {content_hash or digest}\n"
+        "    last_synced: '2000-01-01'\n"
+        f"    etag: '{etag}'\n"
+        f"    upstream_last_modified: '{last_modified}'\n"
+        f"    extraction_fingerprint: {fingerprint}\n",
+        encoding="utf-8",
+    )
+    return config
+
+
+def _http_304(url: str = "https://example.com/doc") -> urllib.error.HTTPError:
+    hdrs = EmailMessage()
+    hdrs["ETag"] = '"unsolicited"'
+    body = Mock()
+    body.read.side_effect = AssertionError("body was read")
+    return urllib.error.HTTPError(url, 304, "Not Modified", hdrs, body)
+
+
+class _UrlResponse:
+    def __init__(self, payload: bytes, headers: dict[str, str]) -> None:
+        self._payload = payload
+        self.headers = headers
+
+    def read(self) -> bytes:
+        return self._payload
+
+    def __enter__(self) -> "_UrlResponse":
+        return self
+
+    def __exit__(self, *_args: object) -> bool:
+        return False
+
+
+def _html_paragraph(text: str) -> str:
+    return f"<html><body><div id='body'><p>{text}</p></div></body></html>"
+
+
+def _request_headers(req: urllib.request.Request) -> dict[str, str]:
+    return {key.lower(): value for key, value in req.header_items()}
+
+
+def _assert_unconditional(req: urllib.request.Request) -> None:
+    sent = _request_headers(req)
+    assert "if-none-match" not in sent
+    assert "if-modified-since" not in sent
+
+
+def _install_urlopen(monkeypatch, responder) -> None:
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        assert timeout == 15
+        return responder(req)
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+
+
+def test_fetch_upstream_sends_conditional_headers(monkeypatch):
+    """--check and --sync send stored validators and still read a 200 body."""
+    captured: dict[str, object] = {}
+
+    class _Resp:
+        headers = {
+            "ETag": '"v2"',
+            "Last-Modified": "Thu, 01 Oct 2026 00:00:00 GMT",
+        }
+
+        def read(self) -> bytes:
+            return b"<html></html>"
+
+        def __enter__(self) -> "_Resp":
+            return self
+
+        def __exit__(self, *_args: object) -> bool:
+            return False
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> _Resp:
+        captured["timeout"] = timeout
+        captured["headers"] = {key.lower(): value for key, value in req.header_items()}
+        return _Resp()
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    content, headers = fetch_upstream(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+    sent = captured["headers"]
+    assert isinstance(sent, dict)
+    assert sent["if-none-match"] == '"v1"'
+    assert sent["if-modified-since"] == "Wed, 21 Aug 2024 12:00:00 GMT"
+    assert captured["timeout"] == 15
+    assert content == "<html></html>"
+    assert headers["etag"] == '"v2"'
+    assert headers["last-modified"] == "Thu, 01 Oct 2026 00:00:00 GMT"
+
+
+def test_fetch_upstream_304_does_not_read_body(monkeypatch):
+    """A 304 response is not parsed. Zero body bytes are read."""
+    body = Mock()
+    body.read.side_effect = AssertionError("body was read")
+    hdrs = EmailMessage()
+    hdrs["ETag"] = '"same"'
+    error = urllib.error.HTTPError(
+        "https://example.com/doc",
+        304,
+        "Not Modified",
+        hdrs,
+        body,
+    )
+
+    def urlopen(_req: urllib.request.Request, timeout: int) -> object:
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    with pytest.raises(NotModified) as raised:
+        fetch_upstream("https://example.com/doc", etag='"same"')
+    body.read.assert_not_called()
+    assert raised.value.headers["etag"] == '"same"'
+
+
+def test_fetch_upstream_304_without_validators_stays_an_error(monkeypatch):
+    """An unsolicited 304 is not NotModified. The body is still not parsed."""
+    error = _http_304()
+
+    def urlopen(_req: urllib.request.Request, timeout: int) -> object:
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    with pytest.raises(urllib.error.HTTPError) as raised:
+        fetch_upstream("https://example.com/doc")
+    assert raised.value.code == 304
+    assert not isinstance(raised.value, NotModified)
+    error.fp.read.assert_not_called()
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_304_is_match_with_zero_bytes_parsed(mock_fetch, mock_extract, tmp_path):
+    """HTTP 304 is a MATCH only when the local file is still the validated baseline."""
+    target, digest = _write_doc(tmp_path)
+    mock_fetch.side_effect = NotModified({"etag": '"same"'})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "MATCH"
+    assert result.error is None
+    assert result.local_hash == digest
+    assert result.upstream_hash == digest
+    mock_extract.assert_not_called()
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+    assert entry.etag == '"same"'
+    assert target.read_text(encoding="utf-8") == _KEPT_BODY
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_fetch, tmp_path):
+    """A 200 after validators are sent still extracts the body and compares hashes."""
+    body = "# Title\n\nOriginal body.\n"
+    _target, digest = _write_doc(tmp_path, body)
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Title</h1><p>Rewritten body.</p></div></body></html>",
+        {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"v1"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+    assert entry.etag == '"v1"'
+
+
+def _entry_with_validators(digest: str) -> SourceEntry:
+    return SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+
+def test_check_edited_file_is_drift_on_real_200(monkeypatch, tmp_path):
+    """An edited file is fetched unconditionally. A matching upstream is still drift."""
+    target, digest = _write_doc(tmp_path)
+    edited = "# Title\n\nEdited body.\n"
+    target.write_text(edited, encoding="utf-8")
+    html = _html_paragraph("Kept body.")
+    _title, body = extract_content(html, "html_selector", "#body")
+    assert compute_content_hash(extract_substantive_body(body)) == digest
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(html.encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(_entry_with_validators(digest), tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.local_hash == _digest(edited)
+    assert result.upstream_hash == digest
+    assert result.local_hash != result.upstream_hash
+
+
+def test_check_deleted_file_is_drift_when_upstream_matches_registry(monkeypatch, tmp_path):
+    """A 200 whose hash matches the registry is still drift when the file is gone."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    html = _html_paragraph("Kept body.")
+    _title, body = extract_content(html, "html_selector", "#body")
+    assert compute_content_hash(extract_substantive_body(body)) == digest
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(html.encode("utf-8"), {"Last-Modified": _STALE_VALIDATOR})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(_entry_with_validators(digest), tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.status != "MATCH"
+    assert result.local_hash is None
+    assert result.upstream_hash == digest
+    assert result.error == "Local file is absent"
+
+
+def test_check_deleted_file_still_reports_upstream_drift(monkeypatch, tmp_path):
+    """A missing file still compares the registry hash, so a changed upstream is drift."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    html = _html_paragraph("Rewritten body.")
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(html.encode("utf-8"), {})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(_entry_with_validators(digest), tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.local_hash is None
+    assert result.upstream_hash != digest
+    assert result.error == "Local file is absent"
+
+
+def test_check_unsolicited_304_is_error_not_match(monkeypatch, tmp_path):
+    """A 304 to a request that sent no validators stays a failure, not MATCH."""
+    _target, digest = _write_doc(tmp_path)
+    error = _http_304()
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        sent = {key.lower(): value for key, value in req.header_items()}
+        assert "if-none-match" not in sent
+        assert "if-modified-since" not in sent
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "ERROR"
+    assert result.status != "MATCH"
+    error.fp.read.assert_not_called()
+
+
+@patch("scripts.sync_sources.generate_manifest")
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_304_skips_parse_and_leaves_registry_unchanged(
+    mock_fetch, mock_extract, mock_manifest, tmp_path, monkeypatch
+):
+    """304 during --sync does not parse HTML and does not rewrite sources.yaml."""
+    config = _conditional_registry(
+        tmp_path, etag='"v1"', last_modified="Wed, 21 Aug 2024 12:00:00 GMT"
+    )
+    before = config.read_text(encoding="utf-8")
+    mock_fetch.side_effect = NotModified({"etag": '"v1"'})
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() == 0
+
+    mock_extract.assert_not_called()
+    mock_manifest.assert_not_called()
+    assert config.read_text(encoding="utf-8") == before
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+
+
+@patch("scripts.sync_sources.generate_manifest")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_200_updates_etag_and_upstream_last_modified(
+    mock_fetch, mock_manifest, tmp_path, monkeypatch
+):
+    """A 200 during --sync stores the new ETag and Last-Modified in sources.yaml."""
+    config = _conditional_registry(
+        tmp_path, etag='"v1"', last_modified="Wed, 21 Aug 2024 12:00:00 GMT"
+    )
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Doc</h1><p>Fresh text.</p></div></body></html>",
+        {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+    )
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() == 0
+
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+    mock_manifest.assert_called_once()
+    after = load_registry(config)
+    assert [entry.type for entry in after] == ["html_selector"]
+    assert after[0].etag == '"v2"'
+    assert after[0].upstream_last_modified == "Thu, 01 Oct 2026 00:00:00 GMT"
+    assert after[0].content_hash != _digest(_KEPT_BODY)
+    assert after[0].extraction_fingerprint == extraction_fingerprint(after[0])
+    text = config.read_text(encoding="utf-8")
+    assert text.startswith("# Registry header\n")
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_304_does_not_write_the_document(mock_fetch, mock_extract, tmp_path):
+    """304 leaves an intact local markdown untouched and reports the not-modified detail."""
+    target, digest = _write_doc(tmp_path)
+    mock_fetch.side_effect = NotModified({})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="bclaws",
+        selector="#contentsscroll",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+
+    success, detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    assert detail == NOT_MODIFIED_DETAIL
+    mock_extract.assert_not_called()
+    assert target.read_text(encoding="utf-8") == _KEPT_BODY
+    assert entry.etag == '"same"'
+    assert entry.content_hash == digest
+    assert entry.type == "bclaws"
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+
+def test_sync_edited_local_fetches_unconditionally_and_rewrites(monkeypatch, tmp_path):
+    """An edited local file is fetched with no validators and rewritten from the 200."""
+    target, digest = _write_doc(tmp_path)
+    target.write_text("# Title\n\nEdited body.\n", encoding="utf-8")
+    html = _html_paragraph("Restored from upstream.")
+    entry = _entry_with_validators(digest)
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(
+            html.encode("utf-8"),
+            {"ETag": '"v2"', "Last-Modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+        )
+
+    _install_urlopen(monkeypatch, responder)
+    success, _detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    written = target.read_text(encoding="utf-8")
+    assert "Restored from upstream." in written
+    assert "Edited body." not in written
+    assert entry.content_hash != digest
+
+
+def test_sync_deleted_local_304_does_not_succeed(monkeypatch, tmp_path):
+    """A 304 on the unconditional fetch of a missing file is a failure, not a restore."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    error = _http_304()
+
+    def responder(req: urllib.request.Request) -> object:
+        _assert_unconditional(req)
+        raise error
+
+    _install_urlopen(monkeypatch, responder)
+    success, detail = sync_source(_entry_with_validators(digest), tmp_path, dry_run=False)
+
+    assert success is False
+    assert detail != NOT_MODIFIED_DETAIL
+    assert not target.exists()
+    error.fp.read.assert_not_called()
+
+
+def test_sync_deleted_local_fetches_unconditionally_and_restores(monkeypatch, tmp_path):
+    """A missing local file is fetched in full and written back."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    html = _html_paragraph("Restored from upstream.")
+    entry = _entry_with_validators(digest)
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(
+            html.encode("utf-8"),
+            {"ETag": '"v2"', "Last-Modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+        )
+
+    _install_urlopen(monkeypatch, responder)
+    success, _detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    assert target.is_file()
+    assert "Restored from upstream." in target.read_text(encoding="utf-8")
+    assert entry.content_hash != digest
+    assert entry.etag == '"v2"'
+
+
+def test_unreadable_local_file_checks_unconditionally_and_does_not_match(monkeypatch, tmp_path):
+    """One undecodable file is an absent baseline, not an abort, and not MATCH."""
+    target, digest = _write_doc(tmp_path)
+    target.write_bytes(b"\xff\xfe not utf-8")
+    html = _html_paragraph("Kept body.")
+    _title, body = extract_content(html, "html_selector", "#body")
+    assert compute_content_hash(extract_substantive_body(body)) == digest
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(html.encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(_entry_with_validators(digest), tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.status != "MATCH"
+    assert result.local_hash is None
+    assert result.upstream_hash == digest
+    assert result.error == "Local file is absent"
+
+
+@patch("scripts.sync_sources.generate_manifest")
+def test_unreadable_local_file_does_not_abort_sync(mock_manifest, monkeypatch, tmp_path):
+    """--sync still restores an unreadable file and continues to the next source."""
+    bad, bad_digest = _write_doc(tmp_path)
+    bad.write_bytes(b"\xff\xfe")
+    good = tmp_path / "app" / "data" / "good.md"
+    good_body = "# Good\n\nStable body.\n"
+    good.write_text(good_body, encoding="utf-8")
+    good_digest = _digest(good_body)
+    good_fingerprint = extraction_fingerprint(SourceEntry(
+        path="app/data/good.md",
+        url="https://example.com/good",
+        type="html_selector",
+        selector="#body",
+    ))
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Registry header\n"
+        "\n"
+        "sources:\n"
+        "  - path: app/data/doc.md\n"
+        "    url: https://example.com/bad\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n"
+        f"    content_hash: {bad_digest}\n"
+        "    etag: '\"stale\"'\n"
+        "    upstream_last_modified: 'Wed, 21 Aug 2024 12:00:00 GMT'\n"
+        "  - path: app/data/good.md\n"
+        "    url: https://example.com/good\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n"
+        f"    content_hash: {good_digest}\n"
+        "    etag: '\"good\"'\n"
+        "    upstream_last_modified: 'Wed, 21 Aug 2024 12:00:00 GMT'\n"
+        f"    extraction_fingerprint: {good_fingerprint}\n",
+        encoding="utf-8",
+    )
+    seen: list[str] = []
+
+    def responder(req: urllib.request.Request) -> object:
+        seen.append(req.full_url)
+        sent = _request_headers(req)
+        if req.full_url.endswith("/bad"):
+            assert "if-none-match" not in sent
+            return _UrlResponse(
+                _html_paragraph("Restored from upstream.").encode("utf-8"),
+                {"ETag": '"v2"', "Last-Modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+            )
+        assert sent["if-none-match"] == '"good"'
+        raise _http_304(req.full_url)
+
+    _install_urlopen(monkeypatch, responder)
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() == 0
+    mock_manifest.assert_called_once()
+    assert seen == ["https://example.com/bad", "https://example.com/good"]
+    assert "Restored from upstream." in bad.read_text(encoding="utf-8")
+    assert good.read_text(encoding="utf-8") == good_body
+
+
+def test_sync_unsolicited_304_is_not_success(monkeypatch, tmp_path):
+    """--sync exits non-zero when an unconditional request receives 304."""
+    _target, digest = _write_doc(tmp_path)
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Registry header\n"
+        "\n"
+        "sources:\n"
+        "  - path: app/data/doc.md\n"
+        "    url: https://example.com/doc\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n"
+        f"    content_hash: {digest}\n"
+        "    last_synced: '2000-01-01'\n",
+        encoding="utf-8",
+    )
+    error = _http_304()
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        sent = {key.lower(): value for key, value in req.header_items()}
+        assert "if-none-match" not in sent
+        assert "if-modified-since" not in sent
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() != 0
+    error.fp.read.assert_not_called()
+
+
+_TWO_SECTIONS = (
+    "<html><body>"
+    "<div id='body'><p>Kept body.</p></div>"
+    "<div id='other'><p>Other section.</p></div>"
+    "</body></html>"
+)
+
+
+def _stored_fingerprint_for(selector: str) -> str:
+    return extraction_fingerprint(SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector=selector,
+    ))
+
+
+def test_check_changed_selector_refetches_and_does_not_match(monkeypatch, tmp_path):
+    """A new selector must not reuse validators stored for the old extraction."""
+    _target, digest = _write_doc(tmp_path)
+    entry = _entry_with_validators(digest)
+    entry.selector = "#other"
+    entry.extraction_fingerprint = _stored_fingerprint_for("#body")
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(_TWO_SECTIONS.encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.status != "MATCH"
+    assert result.upstream_hash != digest
+
+
+def test_sync_changed_selector_does_not_skip_the_write(monkeypatch, tmp_path):
+    """--sync re-extracts when the selector no longer matches the stored fingerprint."""
+    target, digest = _write_doc(tmp_path)
+    entry = _entry_with_validators(digest)
+    entry.selector = "#other"
+    entry.extraction_fingerprint = _stored_fingerprint_for("#body")
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(_TWO_SECTIONS.encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    success, detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    assert detail != NOT_MODIFIED_DETAIL
+    written = target.read_text(encoding="utf-8")
+    assert "Other section." in written
+    assert "Kept body." not in written
+    assert entry.extraction_fingerprint == extraction_fingerprint(entry)
+
+
+def test_check_extractor_version_change_does_not_match(monkeypatch, tmp_path):
+    """A bumped extractor version is a full fetch, not a MATCH, even if the text matches."""
+    _target, digest = _write_doc(tmp_path)
+    entry = _entry_with_validators(digest)
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+    monkeypatch.setattr(sync_sources, "EXTRACTOR_VERSION", "2")
+    html = _html_paragraph("Kept body.")
+    _title, body = extract_content(html, "html_selector", "#body")
+    assert compute_content_hash(extract_substantive_body(body)) == digest
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(html.encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.status != "MATCH"
+    assert result.error == "Extraction inputs changed"
+    assert result.upstream_hash == digest
+
+
+def test_sync_extractor_version_change_does_not_skip_the_write(monkeypatch, tmp_path):
+    """--sync rewrites the file when EXTRACTOR_VERSION no longer matches the registry."""
+    target, digest = _write_doc(tmp_path)
+    before = target.read_text(encoding="utf-8")
+    entry = _entry_with_validators(digest)
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+    monkeypatch.setattr(sync_sources, "EXTRACTOR_VERSION", "2")
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        return _UrlResponse(_html_paragraph("Kept body.").encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    success, detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    assert detail != NOT_MODIFIED_DETAIL
+    assert target.read_text(encoding="utf-8") != before
+    assert "Kept body." in target.read_text(encoding="utf-8")
+    assert entry.extraction_fingerprint == extraction_fingerprint(entry)

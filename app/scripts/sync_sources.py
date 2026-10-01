@@ -48,6 +48,10 @@ logger = logging.getLogger("sync_sources")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 VexilonDocIngestion/1.0"
 
+# Bump when HTMLContentExtractor, clean_bclaws_content, or _strip_bclaws_chrome
+# changes the Markdown those functions emit. A new value forces a full fetch.
+EXTRACTOR_VERSION = "1"
+
 
 @dataclass
 class SourceEntry:
@@ -60,6 +64,11 @@ class SourceEntry:
     category: str = "general"
     content_hash: str | None = None
     last_synced: str | None = None
+    # HTTP validators from the last --sync. Absent until a sync stores them.
+    etag: str | None = None
+    upstream_last_modified: str | None = None
+    # Fingerprint of type, selector, part, and EXTRACTOR_VERSION at last --sync.
+    extraction_fingerprint: str | None = None
 
 
 @dataclass
@@ -102,6 +111,18 @@ class PartNotFoundError(Exception):
 
 class RegistryError(Exception):
     """sources.yaml breaks a cross-entry constraint."""
+
+
+# sync_source returns this detail on 304 so --sync does not rewrite the registry.
+NOT_MODIFIED_DETAIL = "304 Not Modified"
+
+
+class NotModified(Exception):
+    """Upstream returned HTTP 304. The response body was not read or parsed."""
+
+    def __init__(self, headers: dict[str, str]) -> None:
+        self.headers = headers
+        super().__init__(NOT_MODIFIED_DETAIL)
 
 
 class _StrictSafeLoader(yaml.SafeLoader):
@@ -881,15 +902,121 @@ def format_provenance_header(
     )
 
 
-def fetch_upstream(url: str, timeout: int = 15) -> tuple[str, dict[str, str]]:
-    """Fetches upstream content and response headers."""
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"}
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+def _optional_header(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _validator_kwargs(source: SourceEntry) -> dict[str, str]:
+    """Conditional-request kwargs for validators stored on the entry."""
+    kwargs: dict[str, str] = {}
+    if source.etag:
+        kwargs["etag"] = source.etag
+    if source.upstream_last_modified:
+        kwargs["upstream_last_modified"] = source.upstream_last_modified
+    return kwargs
+
+
+def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
+    """Substantive hash of the local file, or None when it is absent or unreadable.
+
+    An unreadable file is not a baseline. Callers then fetch unconditionally
+    instead of aborting the rest of ``--check`` or ``--sync``.
+    """
+    local_file = repo_root / source.path
+    if not local_file.is_file():
+        return None
+    try:
+        text = local_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    return compute_content_hash(extract_substantive_body(text))
+
+
+def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
+    """True when the local file is still the body the stored validators describe."""
+    return bool(source.content_hash) and local_hash is not None and local_hash == source.content_hash
+
+
+def extraction_fingerprint(source: SourceEntry) -> str:
+    """Identity of the inputs that turn upstream HTML into the stored Markdown."""
+    raw = "\n".join((
+        EXTRACTOR_VERSION,
+        source.type or "",
+        source.selector or "",
+        source.part or "",
+    ))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _extraction_fingerprint_matches(source: SourceEntry) -> bool:
+    """True when this sync stored the fingerprint and the inputs are unchanged."""
+    stored = source.extraction_fingerprint
+    return bool(stored) and stored == extraction_fingerprint(source)
+
+
+def _validators_for_intact_baseline(source: SourceEntry, local_hash: str | None) -> dict[str, str]:
+    """Send stored validators only when a 304 would skip the bytes already validated.
+
+    The local file must still match ``content_hash``, and the extractor inputs
+    stored with the validators must still be the ones in effect. A missing or
+    different fingerprint means the Markdown was not produced by this extraction.
+    """
+    if not _baseline_is_intact(source, local_hash):
+        return {}
+    if not _extraction_fingerprint_matches(source):
+        return {}
+    return _validator_kwargs(source)
+
+
+def _store_validators(source: SourceEntry, headers: dict[str, str]) -> None:
+    """Replace stored validators with the ones from a 200 response."""
+    source.etag = _optional_header(headers.get("etag"))
+    source.upstream_last_modified = _optional_header(headers.get("last-modified"))
+
+
+def _header_map(headers: object) -> dict[str, str]:
+    items = getattr(headers, "items", None)
+    if not callable(items):
+        return {}
+    return {str(key).lower(): str(value) for key, value in items()}
+
+
+def fetch_upstream(
+    url: str,
+    timeout: int = 15,
+    *,
+    etag: str | None = None,
+    upstream_last_modified: str | None = None,
+) -> tuple[str, dict[str, str]]:
+    """Fetch upstream content and response headers.
+
+    Stored validators are sent as ``If-None-Match`` and ``If-Modified-Since``.
+    HTTP 304 raises ``NotModified`` and does not read the body only when this
+    request sent a validator. A 304 to an unconditional request stays an error.
+    """
+    req_headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml",
+    }
+    if etag:
+        req_headers["If-None-Match"] = etag
+    if upstream_last_modified:
+        req_headers["If-Modified-Since"] = upstream_last_modified
+    req = urllib.request.Request(url, headers=req_headers)
+    try:
+        resp_ctx = urllib.request.urlopen(req, timeout=timeout)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 304 or not (etag or upstream_last_modified):
+            raise
+        headers = _header_map(exc.headers)
+        exc.close()
+        raise NotModified(headers) from None
+    with resp_ctx as resp:
         content = resp.read().decode("utf-8", errors="replace")
-        headers = {k.lower(): v for k, v in resp.headers.items()}
+        headers = _header_map(resp.headers)
         return content, headers
 
 
@@ -915,6 +1042,9 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
                 category=s.get("category", "general"),
                 content_hash=s.get("content_hash"),
                 last_synced=s.get("last_synced"),
+                etag=_optional_header(s.get("etag")),
+                upstream_last_modified=_optional_header(s.get("upstream_last_modified")),
+                extraction_fingerprint=_optional_header(s.get("extraction_fingerprint")),
             )
         )
     _validate_registry(entries)
@@ -992,23 +1122,21 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
     Checks whether the upstream document has drifted from our local copy or registry hash.
     Does NOT modify local files.
     """
-    local_file = repo_root / source.path
-    local_substantive = ""
-    local_hash = source.content_hash
-
-    if local_file.exists():
-        local_text = local_file.read_text(encoding="utf-8")
-        local_substantive = extract_substantive_body(local_text)
-        local_hash = compute_content_hash(local_substantive)
-    elif source.content_hash is None:
+    local_hash = _local_substantive_hash(source, repo_root)
+    if local_hash is None and source.content_hash is None:
         return DriftResult(
             path=source.path,
             url=source.url,
             status="UNTRACKED",
         )
+    # Registry hash stays in the comparison so a missing file can still show
+    # upstream drift. It is not a baseline, and it is not the local hash.
+    registry_hash = source.content_hash
 
     try:
-        raw_html, headers = fetch_upstream(source.url)
+        raw_html, headers = fetch_upstream(
+            source.url, **_validators_for_intact_baseline(source, local_hash)
+        )
         title, upstream_body = extract_content(
             raw_html, source.type, source.selector, source.part
         )
@@ -1018,22 +1146,13 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 path=source.path,
                 url=source.url,
                 status="ERROR",
-                local_hash=local_hash,
+                local_hash=local_hash or registry_hash,
                 error="Upstream extraction produced no substantive content",
             )
         upstream_hash = compute_content_hash(upstream_substantive)
         upstream_last_modified = headers.get("last-modified")
 
-        if source.content_hash and upstream_hash != source.content_hash:
-            return DriftResult(
-                path=source.path,
-                url=source.url,
-                status="DRIFT_DETECTED",
-                local_hash=local_hash or source.content_hash,
-                upstream_hash=upstream_hash,
-                upstream_last_modified=upstream_last_modified,
-            )
-        elif local_hash and upstream_hash != local_hash:
+        if registry_hash and upstream_hash != registry_hash:
             return DriftResult(
                 path=source.path,
                 url=source.url,
@@ -1041,6 +1160,36 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 local_hash=local_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
+                error="Local file is absent" if local_hash is None else None,
+            )
+        elif local_hash is not None and upstream_hash != local_hash:
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="DRIFT_DETECTED",
+                local_hash=local_hash,
+                upstream_hash=upstream_hash,
+                upstream_last_modified=upstream_last_modified,
+            )
+        if local_hash is None and registry_hash:
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="DRIFT_DETECTED",
+                local_hash=None,
+                upstream_hash=upstream_hash,
+                upstream_last_modified=upstream_last_modified,
+                error="Local file is absent",
+            )
+        if source.extraction_fingerprint and not _extraction_fingerprint_matches(source):
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="DRIFT_DETECTED",
+                local_hash=local_hash,
+                upstream_hash=upstream_hash,
+                upstream_last_modified=upstream_last_modified,
+                error="Extraction inputs changed",
             )
 
         return DriftResult(
@@ -1052,13 +1201,24 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             upstream_last_modified=upstream_last_modified,
         )
 
+    except NotModified:
+        # Validators are sent only when the local baseline is intact, so a 304
+        # here is that same body. fetch_upstream does not raise this otherwise.
+        return DriftResult(
+            path=source.path,
+            url=source.url,
+            status="MATCH",
+            local_hash=local_hash,
+            upstream_hash=registry_hash,
+            upstream_last_modified=source.upstream_last_modified,
+        )
     except (urllib.error.URLError, TimeoutError) as e:
         logger.warning(f"Network error checking {source.url}: {e}")
         return DriftResult(
             path=source.path,
             url=source.url,
             status="ERROR",
-            local_hash=local_hash,
+            local_hash=local_hash or registry_hash,
             error=f"Network error: {e}",
         )
     except Exception as e:
@@ -1067,7 +1227,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             path=source.path,
             url=source.url,
             status="ERROR",
-            local_hash=local_hash,
+            local_hash=local_hash or registry_hash,
             error=str(e),
         )
 
@@ -1081,8 +1241,17 @@ def sync_source(
     Syncs upstream document to local markdown file and updates metadata.
     """
     target_path = repo_root / source.path
+    local_hash = _local_substantive_hash(source, repo_root)
     try:
-        raw_html, headers = fetch_upstream(source.url)
+        try:
+            raw_html, headers = fetch_upstream(
+                source.url, **_validators_for_intact_baseline(source, local_hash)
+            )
+        except NotModified:
+            # Same gate as --check: this runs only after validators were sent,
+            # which requires the local file to still match content_hash.
+            logger.info(f"Not modified {source.path}; skipped parse")
+            return True, NOT_MODIFIED_DETAIL
         title, body = extract_content(raw_html, source.type, source.selector, source.part)
         upstream_last_modified = headers.get("last-modified")
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -1110,6 +1279,8 @@ def sync_source(
             target_path.write_text(full_content, encoding="utf-8")
             source.content_hash = new_hash
             source.last_synced = today
+            source.extraction_fingerprint = extraction_fingerprint(source)
+            _store_validators(source, headers)
             logger.info(f"Updated {source.path} (hash: {new_hash[:8]})")
         else:
             logger.info(f"[DRY-RUN] Would write {source.path} (hash: {new_hash[:8]})")
@@ -1282,13 +1453,16 @@ def _run(args: argparse.Namespace) -> int:
 
     if args.sync or args.dry_run:
         updated = 0
+        wrote = 0
         for entry in entries:
             logger.info(f"Syncing {entry.path} from {entry.url}...")
-            success, _ = sync_source(entry, _REPO_ROOT, dry_run=args.dry_run)
+            success, detail = sync_source(entry, _REPO_ROOT, dry_run=args.dry_run)
             if success:
                 updated += 1
+                if detail != NOT_MODIFIED_DETAIL:
+                    wrote += 1
 
-        if not args.dry_run and updated > 0:
+        if not args.dry_run and wrote > 0:
             save_registry(config_path, registry)
             logger.info("Regenerating manifest.json...")
             data_dir = _APP_ROOT / "data"
