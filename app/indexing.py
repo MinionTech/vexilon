@@ -490,8 +490,92 @@ def search_index_batch(index: "faiss.IndexFlatIP", chunks: list[dict], queries: 
         
     return results
 
-def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
+def _index_config() -> dict[str, Any]:
+    return {
+        "chunk_size": CHUNK_SIZE,
+        "chunk_overlap": CHUNK_OVERLAP,
+        "embed_model": EMBED_MODEL,
+        "tiering_version": "v2",
+    }
+
+
+def _hash_file(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with open(path, "rb") as f:
+        while block := f.read(65536):
+            hasher.update(block)
+    return hasher.hexdigest()
+
+
+def _embedding_cache_file(content_hash: str) -> Path:
+    return CACHE_DIR / "embeddings" / f"{content_hash}.npy"
+
+
+def _chunk_cache_file(content_hash: str) -> Path:
+    return CACHE_DIR / "chunks" / f"{content_hash}.json"
+
+
+def _manifest_file_entry(content_hash: str) -> dict[str, str]:
+    """Per-file manifest record. Cache paths are present only when both files exist."""
+    entry = {"content_hash": content_hash}
+    embeddings = _embedding_cache_file(content_hash)
+    chunks = _chunk_cache_file(content_hash)
+    if embeddings.is_file() and chunks.is_file():
+        entry["embeddings"] = f"embeddings/{content_hash}.npy"
+        entry["chunks"] = f"chunks/{content_hash}.json"
+    return entry
+
+
+def _load_document_cache(content_hash: str) -> "tuple[np.ndarray, list[dict]] | None":
+    """Load cached float32 embeddings and chunks for one document, or None on miss."""
+    import numpy as np
+    npy_path = _embedding_cache_file(content_hash)
+    json_path = _chunk_cache_file(content_hash)
+    if not npy_path.is_file() or not json_path.is_file():
+        return None
+    try:
+        vectors = np.load(npy_path, allow_pickle=False)
+        with open(json_path, encoding="utf-8") as f:
+            chunks = json.load(f)
+    except (OSError, ValueError, json.JSONDecodeError) as e:
+        logger.warning(f"[build] Ignoring unreadable cache for {content_hash}: {e}")
+        return None
+    if not isinstance(chunks, list) or len(chunks) == 0:
+        return None
+    if getattr(vectors, "ndim", None) != 2:
+        return None
+    if vectors.shape != (len(chunks), EMBED_DIM):
+        logger.warning(
+            f"[build] Cache shape {getattr(vectors, 'shape', None)} does not match "
+            f"{len(chunks)} chunks of dimension {EMBED_DIM} for {content_hash}"
+        )
+        return None
+    return np.ascontiguousarray(vectors, dtype=np.float32), chunks
+
+
+def _save_document_cache(content_hash: str, vectors: "np.ndarray", chunks: list[dict]) -> None:
+    import numpy as np
+    npy_path = _embedding_cache_file(content_hash)
+    json_path = _chunk_cache_file(content_hash)
+    npy_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(npy_path, np.ascontiguousarray(vectors, dtype=np.float32))
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(chunks, f, ensure_ascii=False)
+
+
+def build_index_from_vectors(vectors: "np.ndarray") -> "faiss.IndexFlatIP":
+    """L2-normalize stacked embeddings and build an inner-product FAISS index."""
     import faiss
+    import numpy as np
+    matrix = np.ascontiguousarray(vectors, dtype=np.float32)
+    faiss.normalize_L2(matrix)
+    index = faiss.IndexFlatIP(EMBED_DIM)
+    index.add(matrix)
+    return index
+
+
+def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
     import numpy as np
     texts = [c["text"] for c in chunks]
     logger.info(f"[index] Indexing {len(texts)} chunks (Batched for memory safety)...")
@@ -506,11 +590,8 @@ def build_index(chunks: list[dict]) -> "faiss.IndexFlatIP":
             logger.info(f"[index] Progress: {min(i + batch_size, len(texts))}/{len(texts)} chunks embedded...")
             
     vectors = np.vstack(all_vectors)
-    logger.info(f"[index] Embeddings complete. Normalizing...")
-    faiss.normalize_L2(vectors)
-    index = faiss.IndexFlatIP(EMBED_DIM)
-    index.add(vectors)
-    return index
+    logger.info("[index] Embeddings complete. Normalizing...")
+    return build_index_from_vectors(vectors)
 
 def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
     import faiss
@@ -521,62 +602,109 @@ def save_index(index: "faiss.IndexFlatIP", chunks: list[dict]) -> None:
         json.dump(chunks, f, ensure_ascii=False)
     logger.info(f"[index] Saved index to {INDEX_PATH}")
 
+def _read_stored_manifest() -> dict | None:
+    if not MANIFEST_PATH.exists():
+        return None
+    try:
+        with open(MANIFEST_PATH, encoding="utf-8") as f:
+            loaded = json.load(f)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    return loaded if isinstance(loaded, dict) else None
+
+
+def _manifest_for(file_hashes: dict[str, str]) -> dict[str, Any]:
+    return {
+        "config": _index_config(),
+        "files": {
+            rel_key: _manifest_file_entry(digest)
+            for rel_key, digest in file_hashes.items()
+        },
+    }
+
+
+def _chunks_for_source(source_file: Path, strict: bool) -> list[dict]:
+    if source_file.suffix.lower() == ".md":
+        return load_md_chunks(source_file)
+    if source_file.suffix.lower() == ".pdf":
+        return load_pdf_chunks(source_file, strict=strict)
+    return []
+
+
 def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[None, None]:
     """
     Main entry point for index creation.
     NOTE: Manifest hashing is performed here to determine if a re-index is needed.
+    Unchanged documents reuse cache/embeddings/<content_hash>.npy and
+    cache/chunks/<content_hash>.json. Only new or modified documents are encoded.
     In container environments, this is typically called during the build stage.
     """
+    import numpy as np
+
     all_files = _get_rag_source_files()
     if not all_files:
         logger.warning("[build] No source files found!")
         return None, None
 
-    current_manifest = {
-        "config": {
-            "chunk_size": CHUNK_SIZE,
-            "chunk_overlap": CHUNK_OVERLAP,
-            "embed_model": EMBED_MODEL,
-            "tiering_version": "v2",
-        },
-        "files": {}
-    }
+    file_hashes: dict[str, str] = {}
     for source_file in all_files:
-        hasher = hashlib.sha256()
-        with open(source_file, "rb") as f:
-            while chunk := f.read(65536):
-                hasher.update(chunk)
         # Use relative path to avoid clashes with duplicate names in subdirs
         rel_key = str(source_file.relative_to(DATA_DIR))
-        current_manifest["files"][rel_key] = hasher.hexdigest()
+        file_hashes[rel_key] = _hash_file(source_file)
 
-    if not force and MANIFEST_PATH.exists():
-        try:
-            with open(MANIFEST_PATH, "r") as f:
-                stored_manifest = json.load(f)
-            if stored_manifest == current_manifest and INDEX_PATH.exists() and CHUNKS_PATH.exists():
-                logger.info("[build] Smart Refresh: No changes detected in sources or config. Skipping build.")
-                return load_precomputed_index()
-        except Exception:
-            pass
+    stored_manifest = _read_stored_manifest()
+    current_manifest = _manifest_for(file_hashes)
+    if (
+        not force
+        and stored_manifest == current_manifest
+        and INDEX_PATH.exists()
+        and CHUNKS_PATH.exists()
+    ):
+        logger.info("[build] Smart Refresh: No changes detected in sources or config. Skipping build.")
+        return load_precomputed_index()
 
     logger.info(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
-    chunks = []
-    failed_files = []
-    for f in all_files:
+    config_ok = (
+        isinstance(stored_manifest, dict)
+        and stored_manifest.get("config") == _index_config()
+    )
+    strict = os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true"
+    chunks: list[dict] = []
+    vector_blocks: list[Any] = []
+    failed_files: list[str] = []
+    for source_file in all_files:
+        rel_key = str(source_file.relative_to(DATA_DIR))
+        digest = file_hashes[rel_key]
+        cached = _load_document_cache(digest) if config_ok else None
+        if cached is not None:
+            doc_vectors, doc_chunks = cached
+            logger.info(f"[build] Cache hit for {rel_key} ({len(doc_chunks)} chunks)")
+            vector_blocks.append(doc_vectors)
+            chunks.extend(doc_chunks)
+            continue
         try:
-            if f.suffix.lower() == ".md":
-                chunks.extend(load_md_chunks(f))
-            elif f.suffix.lower() == ".pdf":
-                file_chunks = load_pdf_chunks(f, strict=os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true")
-                chunks.extend(file_chunks)
+            doc_chunks = _chunks_for_source(source_file, strict)
         except Exception as e:
-            logger.error(f"[build] ERROR: Failed to index {f.name}: {e}")
-            failed_files.append(f.name)
-            if os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true":
+            logger.error(f"[build] ERROR: Failed to index {source_file.name}: {e}")
+            failed_files.append(source_file.name)
+            if strict:
                 raise
+            continue
+        if not doc_chunks:
+            continue
+        logger.info(f"[build] Encoding {rel_key} ({len(doc_chunks)} chunks)")
+        doc_vectors = embed_texts([c["text"] for c in doc_chunks])
+        doc_vectors = np.ascontiguousarray(doc_vectors, dtype=np.float32)
+        if doc_vectors.shape != (len(doc_chunks), EMBED_DIM):
+            raise RuntimeError(
+                f"Embedding shape {doc_vectors.shape} does not match "
+                f"{len(doc_chunks)} chunks of dimension {EMBED_DIM} for {rel_key}"
+            )
+        _save_document_cache(digest, doc_vectors, doc_chunks)
+        vector_blocks.append(doc_vectors)
+        chunks.extend(doc_chunks)
 
     # Save integrity report
     integrity_data = {
@@ -591,16 +719,18 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     except PermissionError as e:
         logger.warning(f"[build] Could not write integrity manifest: {e}")
 
-    if failed_files and os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true":
+    if failed_files and strict:
         raise FileIntegrityError(f"Build failed due to integrity errors in: {', '.join(failed_files)}")
     
     if not chunks:
         logger.error("[build] No chunks found in source files!")
         return None, None
 
-    index = build_index(chunks)
+    index = build_index_from_vectors(np.vstack(vector_blocks))
     save_index(index, chunks)
-    with open(MANIFEST_PATH, "w") as f:
+    # Cache files exist now, so manifest entries include their relative paths.
+    current_manifest = _manifest_for(file_hashes)
+    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(current_manifest, f, indent=2)
     return index, chunks
 
