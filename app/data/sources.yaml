@@ -17,6 +17,10 @@
 #                     "This Act is current to", "This regulation is current to", or
 #                     "This consolidation is current to" stays in the markdown and is omitted from this hash.
 #       last_synced: ISO date when the document was last synced
+#       etag: HTTP ETag from the last --sync that returned 200. Sent as If-None-Match.
+#             A 304 response is a MATCH: the body is not read, parsed, or hashed.
+#       upstream_last_modified: HTTP Last-Modified from that same 200. Sent as
+#             If-Modified-Since. The next 200 replaces both validators.
 
 sources:
 - path: app/data/03_resources/BC_Criminal_Notification_Procedures.md

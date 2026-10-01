@@ -6,9 +6,11 @@ Issue #695: Automate web-sourced document ingestion, provenance tracking, and dr
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from unittest.mock import patch
 import urllib.error
+import urllib.request
+from email.message import EmailMessage
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 from yaml.constructor import ConstructorError
@@ -16,6 +18,8 @@ from yaml.constructor import ConstructorError
 from scripts import sync_sources
 from scripts.sync_sources import (
     HTMLContentExtractor,
+    NOT_MODIFIED_DETAIL,
+    NotModified,
     PartNotFoundError,
     RegistryError,
     SelectorNotFoundError,
@@ -25,6 +29,7 @@ from scripts.sync_sources import (
     compute_content_hash,
     extract_content,
     extract_substantive_body,
+    fetch_upstream,
     format_provenance_header,
     load_registry,
     save_registry,
@@ -1217,3 +1222,246 @@ def test_sync_with_filter_keeps_every_registry_entry(mock_fetch, mock_manifest, 
     assert after[1].url == before[1].url
     assert after[1].selector == before[1].selector
     assert config.read_text(encoding="utf-8").startswith("# Registry header\n")
+
+
+def _conditional_registry(tmp_path: Path, etag: str, last_modified: str) -> Path:
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Registry header\n"
+        "\n"
+        "sources:\n"
+        "  - path: app/data/doc.md\n"
+        "    url: https://example.com/doc\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n"
+        f"    content_hash: {'a' * 64}\n"
+        "    last_synced: '2000-01-01'\n"
+        f"    etag: '{etag}'\n"
+        f"    upstream_last_modified: '{last_modified}'\n",
+        encoding="utf-8",
+    )
+    return config
+
+
+def test_fetch_upstream_sends_conditional_headers(monkeypatch):
+    """--check and --sync send stored validators and still read a 200 body."""
+    captured: dict[str, object] = {}
+
+    class _Resp:
+        headers = {
+            "ETag": '"v2"',
+            "Last-Modified": "Thu, 01 Oct 2026 00:00:00 GMT",
+        }
+
+        def read(self) -> bytes:
+            return b"<html></html>"
+
+        def __enter__(self) -> "_Resp":
+            return self
+
+        def __exit__(self, *_args: object) -> bool:
+            return False
+
+    def urlopen(req: urllib.request.Request, timeout: int = 15) -> _Resp:
+        captured["timeout"] = timeout
+        captured["headers"] = {key.lower(): value for key, value in req.header_items()}
+        return _Resp()
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    content, headers = fetch_upstream(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+    sent = captured["headers"]
+    assert isinstance(sent, dict)
+    assert sent["if-none-match"] == '"v1"'
+    assert sent["if-modified-since"] == "Wed, 21 Aug 2024 12:00:00 GMT"
+    assert content == "<html></html>"
+    assert headers["etag"] == '"v2"'
+    assert headers["last-modified"] == "Thu, 01 Oct 2026 00:00:00 GMT"
+
+
+def test_fetch_upstream_304_does_not_read_body(monkeypatch):
+    """A 304 response is not parsed. Zero body bytes are read."""
+    body = Mock()
+    body.read.side_effect = AssertionError("body was read")
+    hdrs = EmailMessage()
+    hdrs["ETag"] = '"same"'
+    error = urllib.error.HTTPError(
+        "https://example.com/doc",
+        304,
+        "Not Modified",
+        hdrs,
+        body,
+    )
+
+    def urlopen(_req: urllib.request.Request, timeout: int = 15) -> object:
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    with pytest.raises(NotModified) as raised:
+        fetch_upstream("https://example.com/doc", etag='"same"')
+    body.read.assert_not_called()
+    assert raised.value.headers["etag"] == '"same"'
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_304_is_match_with_zero_bytes_parsed(mock_fetch, mock_extract, tmp_path):
+    """HTTP 304 is a confirmed MATCH and does not parse or hash upstream HTML."""
+    target = tmp_path / "app" / "data" / "doc.md"
+    target.parent.mkdir(parents=True)
+    target.write_text("# Title\n\nKept body.\n", encoding="utf-8")
+    mock_fetch.side_effect = NotModified({"etag": '"same"'})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash="d" * 64,
+        etag='"same"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "MATCH"
+    assert result.error is None
+    mock_extract.assert_not_called()
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"same"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+    assert entry.etag == '"same"'
+    assert target.read_text(encoding="utf-8") == "# Title\n\nKept body.\n"
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_fetch, tmp_path):
+    """A 200 after validators are sent still extracts the body and compares hashes."""
+    target = tmp_path / "app" / "data" / "doc.md"
+    target.parent.mkdir(parents=True)
+    target.write_text("# Title\n\nOriginal body.\n", encoding="utf-8")
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Title</h1><p>Rewritten body.</p></div></body></html>",
+        {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+    assert entry.etag == '"v1"'
+
+
+@patch("scripts.sync_sources.generate_manifest")
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_304_skips_parse_and_leaves_registry_unchanged(
+    mock_fetch, mock_extract, mock_manifest, tmp_path, monkeypatch
+):
+    """304 during --sync does not parse HTML and does not rewrite sources.yaml."""
+    config = _conditional_registry(
+        tmp_path, etag='"v1"', last_modified="Wed, 21 Aug 2024 12:00:00 GMT"
+    )
+    before = config.read_text(encoding="utf-8")
+    mock_fetch.side_effect = NotModified({"etag": '"v1"'})
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() == 0
+
+    mock_extract.assert_not_called()
+    mock_manifest.assert_not_called()
+    assert config.read_text(encoding="utf-8") == before
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+
+
+@patch("scripts.sync_sources.generate_manifest")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_200_updates_etag_and_upstream_last_modified(
+    mock_fetch, mock_manifest, tmp_path, monkeypatch
+):
+    """A 200 during --sync stores the new ETag and Last-Modified in sources.yaml."""
+    config = _conditional_registry(
+        tmp_path, etag='"v1"', last_modified="Wed, 21 Aug 2024 12:00:00 GMT"
+    )
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Doc</h1><p>Fresh text.</p></div></body></html>",
+        {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+    )
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() == 0
+
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"v1"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+    mock_manifest.assert_called_once()
+    after = load_registry(config)
+    assert after[0].type == "html_selector"
+    assert after[0].etag == '"v2"'
+    assert after[0].upstream_last_modified == "Thu, 01 Oct 2026 00:00:00 GMT"
+    assert after[0].content_hash != "a" * 64
+    text = config.read_text(encoding="utf-8")
+    assert text.startswith("# Registry header\n")
+    assert "type: pdf" not in text
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_304_does_not_write_the_document(mock_fetch, mock_extract, tmp_path):
+    """304 leaves the local markdown untouched and reports the not-modified detail."""
+    target = tmp_path / "app" / "data" / "doc.md"
+    target.parent.mkdir(parents=True)
+    original = "# Title\n\nKept body.\n"
+    target.write_text(original, encoding="utf-8")
+    mock_fetch.side_effect = NotModified({})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="bclaws",
+        selector="#contentsscroll",
+        content_hash="e" * 64,
+        etag='"same"',
+        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+    )
+
+    success, detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    assert detail == NOT_MODIFIED_DETAIL
+    mock_extract.assert_not_called()
+    assert target.read_text(encoding="utf-8") == original
+    assert entry.etag == '"same"'
+    assert entry.content_hash == "e" * 64
+    assert entry.type == "bclaws"

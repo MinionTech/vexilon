@@ -60,6 +60,9 @@ class SourceEntry:
     category: str = "general"
     content_hash: str | None = None
     last_synced: str | None = None
+    # HTTP validators from the last --sync. Absent until a sync stores them.
+    etag: str | None = None
+    upstream_last_modified: str | None = None
 
 
 @dataclass
@@ -102,6 +105,18 @@ class PartNotFoundError(Exception):
 
 class RegistryError(Exception):
     """sources.yaml breaks a cross-entry constraint."""
+
+
+# sync_source returns this detail on 304 so --sync does not rewrite the registry.
+NOT_MODIFIED_DETAIL = "304 Not Modified"
+
+
+class NotModified(Exception):
+    """Upstream returned HTTP 304. The response body was not read or parsed."""
+
+    def __init__(self, headers: dict[str, str]) -> None:
+        self.headers = headers
+        super().__init__(NOT_MODIFIED_DETAIL)
 
 
 class _StrictSafeLoader(yaml.SafeLoader):
@@ -881,15 +896,68 @@ def format_provenance_header(
     )
 
 
-def fetch_upstream(url: str, timeout: int = 15) -> tuple[str, dict[str, str]]:
-    """Fetches upstream content and response headers."""
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"}
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+def _optional_header(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _validator_kwargs(source: SourceEntry) -> dict[str, str]:
+    """Conditional-request kwargs for validators stored on the entry."""
+    kwargs: dict[str, str] = {}
+    if source.etag:
+        kwargs["etag"] = source.etag
+    if source.upstream_last_modified:
+        kwargs["upstream_last_modified"] = source.upstream_last_modified
+    return kwargs
+
+
+def _store_validators(source: SourceEntry, headers: dict[str, str]) -> None:
+    """Replace stored validators with the ones from a 200 response."""
+    source.etag = _optional_header(headers.get("etag"))
+    source.upstream_last_modified = _optional_header(headers.get("last-modified"))
+
+
+def _header_map(headers: object) -> dict[str, str]:
+    items = getattr(headers, "items", None)
+    if not callable(items):
+        return {}
+    return {str(key).lower(): str(value) for key, value in items()}
+
+
+def fetch_upstream(
+    url: str,
+    timeout: int = 15,
+    *,
+    etag: str | None = None,
+    upstream_last_modified: str | None = None,
+) -> tuple[str, dict[str, str]]:
+    """Fetch upstream content and response headers.
+
+    Stored validators are sent as ``If-None-Match`` and ``If-Modified-Since``.
+    HTTP 304 raises ``NotModified`` and does not read the body.
+    """
+    req_headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml",
+    }
+    if etag:
+        req_headers["If-None-Match"] = etag
+    if upstream_last_modified:
+        req_headers["If-Modified-Since"] = upstream_last_modified
+    req = urllib.request.Request(url, headers=req_headers)
+    try:
+        resp_ctx = urllib.request.urlopen(req, timeout=timeout)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 304:
+            raise
+        headers = _header_map(exc.headers)
+        exc.close()
+        raise NotModified(headers) from None
+    with resp_ctx as resp:
         content = resp.read().decode("utf-8", errors="replace")
-        headers = {k.lower(): v for k, v in resp.headers.items()}
+        headers = _header_map(resp.headers)
         return content, headers
 
 
@@ -915,6 +983,8 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
                 category=s.get("category", "general"),
                 content_hash=s.get("content_hash"),
                 last_synced=s.get("last_synced"),
+                etag=_optional_header(s.get("etag")),
+                upstream_last_modified=_optional_header(s.get("upstream_last_modified")),
             )
         )
     _validate_registry(entries)
@@ -1008,7 +1078,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
         )
 
     try:
-        raw_html, headers = fetch_upstream(source.url)
+        raw_html, headers = fetch_upstream(source.url, **_validator_kwargs(source))
         title, upstream_body = extract_content(
             raw_html, source.type, source.selector, source.part
         )
@@ -1052,6 +1122,15 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             upstream_last_modified=upstream_last_modified,
         )
 
+    except NotModified:
+        return DriftResult(
+            path=source.path,
+            url=source.url,
+            status="MATCH",
+            local_hash=local_hash,
+            upstream_hash=local_hash or source.content_hash,
+            upstream_last_modified=source.upstream_last_modified,
+        )
     except (urllib.error.URLError, TimeoutError) as e:
         logger.warning(f"Network error checking {source.url}: {e}")
         return DriftResult(
@@ -1082,7 +1161,11 @@ def sync_source(
     """
     target_path = repo_root / source.path
     try:
-        raw_html, headers = fetch_upstream(source.url)
+        try:
+            raw_html, headers = fetch_upstream(source.url, **_validator_kwargs(source))
+        except NotModified:
+            logger.info(f"Not modified {source.path}; skipped parse")
+            return True, NOT_MODIFIED_DETAIL
         title, body = extract_content(raw_html, source.type, source.selector, source.part)
         upstream_last_modified = headers.get("last-modified")
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -1110,6 +1193,7 @@ def sync_source(
             target_path.write_text(full_content, encoding="utf-8")
             source.content_hash = new_hash
             source.last_synced = today
+            _store_validators(source, headers)
             logger.info(f"Updated {source.path} (hash: {new_hash[:8]})")
         else:
             logger.info(f"[DRY-RUN] Would write {source.path} (hash: {new_hash[:8]})")
@@ -1282,13 +1366,16 @@ def _run(args: argparse.Namespace) -> int:
 
     if args.sync or args.dry_run:
         updated = 0
+        wrote = 0
         for entry in entries:
             logger.info(f"Syncing {entry.path} from {entry.url}...")
-            success, _ = sync_source(entry, _REPO_ROOT, dry_run=args.dry_run)
+            success, detail = sync_source(entry, _REPO_ROOT, dry_run=args.dry_run)
             if success:
                 updated += 1
+                if detail != NOT_MODIFIED_DETAIL:
+                    wrote += 1
 
-        if not args.dry_run and updated > 0:
+        if not args.dry_run and wrote > 0:
             save_registry(config_path, registry)
             logger.info("Regenerating manifest.json...")
             data_dir = _APP_ROOT / "data"
