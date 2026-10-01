@@ -15,6 +15,9 @@ import numpy as np
 
 import indexing
 
+# app/conftest.py replaces indexing.get_embed_model before each unit test.
+_REAL_GET_EMBED_MODEL = indexing.get_embed_model
+
 
 def _isolate(monkeypatch, data: Path, cache: Path) -> None:
     data.mkdir(parents=True, exist_ok=True)
@@ -293,6 +296,7 @@ def test_token_limit_identity_matches_encoder(monkeypatch):
     model = type("Model", (), {"max_seq_length": 512, "tokenizer": tokenizer})()
     monkeypatch.setattr(indexing, "_embed_model", model)
     monkeypatch.setattr(indexing, "_loaded_model_name", indexing._effective_embed_model())
+    monkeypatch.setattr(indexing, "get_embed_model", _REAL_GET_EMBED_MODEL)
     loaded = indexing.get_embed_model()
     assert loaded.max_seq_length == 128
     assert loaded.tokenizer.model_max_length == 128
