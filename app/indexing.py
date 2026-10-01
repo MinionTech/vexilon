@@ -73,11 +73,23 @@ TIER3_BOOST = float(os.getenv("AGNAV_TIER3_BOOST", "0.8"))
 _embed_model: Any = None
 _loaded_model_name: str | None = None
 
+def _effective_max_embed_tokens() -> int:
+    """Token limit applied at encode time, including an in-process env change."""
+    raw = os.getenv("AGNAV_MAX_EMBED_TOKENS")
+    if raw is None:
+        return MAX_EMBED_TOKENS
+    try:
+        return int(raw)
+    except ValueError:
+        return MAX_EMBED_TOKENS
+
+
 def get_embed_model() -> "SentenceTransformer":
     global _embed_model, _loaded_model_name
     
     # Reload model if EMBED_MODEL env var has changed since last initialization
     current_model_name = os.getenv("EMBED_MODEL", _DEFAULT_EMBED_MODEL)
+    token_limit = _effective_max_embed_tokens()
     
     if _embed_model is None or _loaded_model_name != current_model_name:
         if os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI"):
@@ -87,7 +99,6 @@ def get_embed_model() -> "SentenceTransformer":
         from sentence_transformers import SentenceTransformer
         _embed_model = SentenceTransformer(current_model_name, device="cpu")
         _loaded_model_name = current_model_name
-        _embed_model.max_seq_length = MAX_EMBED_TOKENS
         
         if hasattr(_embed_model, "tokenizer"):
             # Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping.
@@ -98,9 +109,10 @@ def get_embed_model() -> "SentenceTransformer":
                     "Agreement Navigator requires 'Fast' tokenizers for reliable character-offset mapping."
                 )
             
-            _embed_model.tokenizer.model_max_length = MAX_EMBED_TOKENS
-            
         logger.info(f"[embed] Embedding model '{current_model_name}' ready.")
+    _embed_model.max_seq_length = token_limit
+    if hasattr(_embed_model, "tokenizer"):
+        _embed_model.tokenizer.model_max_length = token_limit
     return _embed_model
 
 def _get_rag_source_files() -> list[Path]:
@@ -506,8 +518,7 @@ def _index_config() -> dict[str, Any]:
         "chunk_size": CHUNK_SIZE,
         "chunk_overlap": CHUNK_OVERLAP,
         "embed_model": _effective_embed_model(),
-        "max_embed_tokens": MAX_EMBED_TOKENS,
-        "agnav_max_embed_tokens": os.getenv("AGNAV_MAX_EMBED_TOKENS"),
+        "max_embed_tokens": _effective_max_embed_tokens(),
         "embed_dim": EMBED_DIM,
         "tiering_version": "v2",
         "pipeline_version": CACHE_PIPELINE_VERSION,
@@ -648,7 +659,7 @@ def _save_document_cache(
     try:
         _atomic_replace(npy_path, ".npy", write_npy)
         _atomic_replace(json_path, ".json", write_json)
-    except OSError as e:
+    except Exception as e:
         logger.warning(f"[build] Could not write document cache for {rel_key}: {e}")
 
 
@@ -658,6 +669,10 @@ def _owned_cache_name(name: str, suffix: str) -> bool:
         return False
     stem = name[: -len(suffix)]
     return len(stem) == 64 and all(char in "0123456789abcdef" for char in stem)
+
+
+# Crash leftovers from mkstemp. Younger files may belong to a live build.
+_CACHE_TEMP_MAX_AGE_SECONDS = 3 * 60 * 60
 
 
 def _prune_unreferenced_document_caches(manifest: dict) -> None:
@@ -677,8 +692,23 @@ def _prune_unreferenced_document_caches(manifest: dict) -> None:
         if not directory.is_dir():
             continue
         for child in directory.iterdir():
+            if not child.is_file():
+                continue
             rel = f"{folder}/{child.name}"
-            if rel in referenced or not child.is_file():
+            if rel in referenced:
+                continue
+            if child.name.startswith(".cache-"):
+                try:
+                    age = time.time() - child.stat().st_mtime
+                except OSError as e:
+                    logger.warning(f"[build] Could not stat cache temp {rel}: {e}")
+                    continue
+                if age < _CACHE_TEMP_MAX_AGE_SECONDS:
+                    continue
+                try:
+                    child.unlink()
+                except OSError as e:
+                    logger.warning(f"[build] Could not remove stale cache temp {rel}: {e}")
                 continue
             if not _owned_cache_name(child.name, suffix):
                 continue

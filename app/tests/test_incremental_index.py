@@ -7,6 +7,8 @@ rebuild a FAISS index whose search results match a cold rebuild.
 
 import hashlib
 import json
+import os
+import time
 from pathlib import Path
 
 import numpy as np
@@ -169,7 +171,8 @@ def test_manifest_records_cache_references(tmp_path, monkeypatch):
     assert [c["text"] for c in payload["chunks"]] == ["beta one", "beta two"]
     assert manifest["config"]["chunk_size"] == indexing.CHUNK_SIZE
     assert manifest["config"]["embed_model"] == indexing._effective_embed_model()
-    assert manifest["config"]["max_embed_tokens"] == indexing.MAX_EMBED_TOKENS
+    assert manifest["config"]["max_embed_tokens"] == indexing._effective_max_embed_tokens()
+    assert "agnav_max_embed_tokens" not in manifest["config"]
     assert manifest["config"]["embed_dim"] == indexing.EMBED_DIM
     assert manifest["config"]["pipeline_version"] == indexing.CACHE_PIPELINE_VERSION
 
@@ -261,7 +264,7 @@ def test_corrupt_chunk_json_and_wrong_shaped_npy_are_rewritten(tmp_path, monkeyp
 
 
 def test_token_limit_change_does_not_reuse_vectors(tmp_path, monkeypatch):
-    """AGNAV_MAX_EMBED_TOKENS and MAX_EMBED_TOKENS are part of the cache identity."""
+    """The live AGNAV_MAX_EMBED_TOKENS value is the only token-limit cache key."""
     data = tmp_path / "data"
     cache = tmp_path / "cache"
     _isolate(monkeypatch, data, cache)
@@ -271,10 +274,29 @@ def test_token_limit_change_does_not_reuse_vectors(tmp_path, monkeypatch):
 
     indexing.build_index_from_sources()
     calls.clear()
-    monkeypatch.setattr(indexing, "MAX_EMBED_TOKENS", indexing.MAX_EMBED_TOKENS + 8)
-    monkeypatch.setenv("AGNAV_MAX_EMBED_TOKENS", str(indexing.MAX_EMBED_TOKENS))
+    new_limit = indexing._effective_max_embed_tokens() + 8
+    monkeypatch.setenv("AGNAV_MAX_EMBED_TOKENS", str(new_limit))
     indexing.build_index_from_sources()
     assert calls == [["alpha clause"], ["beta one", "beta two"]]
+    assert indexing._index_config()["max_embed_tokens"] == new_limit
+
+
+def test_token_limit_identity_matches_encoder(monkeypatch):
+    """The fingerprint and get_embed_model() use the same call-time token limit."""
+    monkeypatch.setenv("AGNAV_MAX_EMBED_TOKENS", "128")
+    monkeypatch.setattr(indexing, "MAX_EMBED_TOKENS", 512)
+    assert indexing._effective_max_embed_tokens() == 128
+    assert indexing._index_config()["max_embed_tokens"] == 128
+    assert "agnav_max_embed_tokens" not in indexing._index_config()
+
+    tokenizer = type("Tok", (), {"is_fast": True, "model_max_length": 512})()
+    model = type("Model", (), {"max_seq_length": 512, "tokenizer": tokenizer})()
+    monkeypatch.setattr(indexing, "_embed_model", model)
+    monkeypatch.setattr(indexing, "_loaded_model_name", indexing._effective_embed_model())
+    loaded = indexing.get_embed_model()
+    assert loaded.max_seq_length == 128
+    assert loaded.tokenizer.model_max_length == 128
+    assert indexing._index_config()["max_embed_tokens"] == loaded.max_seq_length
 
 
 def test_source_path_change_does_not_reuse_vectors(tmp_path, monkeypatch):
@@ -342,7 +364,31 @@ def test_mismatched_cache_header_is_a_miss(tmp_path, monkeypatch):
     assert all(c["path"] != "old/b.md" for c in chunks)
 
 
-def test_cache_write_oserror_does_not_abort_build(tmp_path, monkeypatch):
+def test_prune_deletes_stale_cache_temps_only(tmp_path, monkeypatch):
+    """Stale mkstemp leftovers are removed. A temp from a live build is kept."""
+    data = tmp_path / "data"
+    cache = tmp_path / "cache"
+    _isolate(monkeypatch, data, cache)
+    _install_loaders(monkeypatch, data)
+    _install_embed(monkeypatch)
+    _write_corpus(data)
+    indexing.build_index_from_sources()
+
+    embeddings = cache / "embeddings"
+    stale = embeddings / ".cache-stale.npy"
+    fresh = embeddings / ".cache-fresh.npy"
+    stale.write_bytes(b"old")
+    fresh.write_bytes(b"new")
+    aged = time.time() - indexing._CACHE_TEMP_MAX_AGE_SECONDS - 60
+    os.utime(stale, (aged, aged))
+
+    (data / "b.md").write_text("beta changed\n", encoding="utf-8")
+    indexing.build_index_from_sources()
+    assert not stale.exists()
+    assert fresh.is_file()
+
+
+def test_cache_write_error_does_not_abort_build(tmp_path, monkeypatch):
     """A cache-write failure still returns the index built from the new vectors."""
     data = tmp_path / "data"
     cache = tmp_path / "cache"
@@ -352,7 +398,7 @@ def test_cache_write_oserror_does_not_abort_build(tmp_path, monkeypatch):
     _write_corpus(data)
 
     def _unwritable(*_args, **_kwargs):
-        raise OSError("read-only cache")
+        raise ValueError("npy header failed")
 
     monkeypatch.setattr(indexing, "_atomic_replace", _unwritable)
     index, chunks = indexing.build_index_from_sources()
