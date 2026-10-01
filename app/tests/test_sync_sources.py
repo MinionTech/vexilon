@@ -1224,7 +1224,31 @@ def test_sync_with_filter_keeps_every_registry_entry(mock_fetch, mock_manifest, 
     assert config.read_text(encoding="utf-8").startswith("# Registry header\n")
 
 
-def _conditional_registry(tmp_path: Path, etag: str, last_modified: str) -> Path:
+_KEPT_BODY = "# Title\n\nKept body.\n"
+_STALE_VALIDATOR = "Wed, 21 Aug 2024 12:00:00 GMT"
+
+
+def _digest(body: str) -> str:
+    return compute_content_hash(extract_substantive_body(body))
+
+
+def _write_doc(tmp_path: Path, body: str = _KEPT_BODY) -> tuple[Path, str]:
+    target = tmp_path / "app" / "data" / "doc.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body, encoding="utf-8")
+    return target, _digest(body)
+
+
+def _conditional_registry(
+    tmp_path: Path,
+    etag: str,
+    last_modified: str,
+    *,
+    body: str = _KEPT_BODY,
+    content_hash: str | None = None,
+) -> Path:
+    """Registry whose content_hash is the substantive hash of ``body`` on disk."""
+    _target, digest = _write_doc(tmp_path, body)
     config = tmp_path / "sources.yaml"
     config.write_text(
         "# Registry header\n"
@@ -1235,13 +1259,21 @@ def _conditional_registry(tmp_path: Path, etag: str, last_modified: str) -> Path
         "    type: html_selector\n"
         "    selector: '#body'\n"
         "    category: primary\n"
-        f"    content_hash: {'a' * 64}\n"
+        f"    content_hash: {content_hash or digest}\n"
         "    last_synced: '2000-01-01'\n"
         f"    etag: '{etag}'\n"
         f"    upstream_last_modified: '{last_modified}'\n",
         encoding="utf-8",
     )
     return config
+
+
+def _http_304(url: str = "https://example.com/doc") -> urllib.error.HTTPError:
+    hdrs = EmailMessage()
+    hdrs["ETag"] = '"unsolicited"'
+    body = Mock()
+    body.read.side_effect = AssertionError("body was read")
+    return urllib.error.HTTPError(url, 304, "Not Modified", hdrs, body)
 
 
 def test_fetch_upstream_sends_conditional_headers(monkeypatch):
@@ -1263,7 +1295,7 @@ def test_fetch_upstream_sends_conditional_headers(monkeypatch):
         def __exit__(self, *_args: object) -> bool:
             return False
 
-    def urlopen(req: urllib.request.Request, timeout: int = 15) -> _Resp:
+    def urlopen(req: urllib.request.Request, timeout: int) -> _Resp:
         captured["timeout"] = timeout
         captured["headers"] = {key.lower(): value for key, value in req.header_items()}
         return _Resp()
@@ -1278,6 +1310,7 @@ def test_fetch_upstream_sends_conditional_headers(monkeypatch):
     assert isinstance(sent, dict)
     assert sent["if-none-match"] == '"v1"'
     assert sent["if-modified-since"] == "Wed, 21 Aug 2024 12:00:00 GMT"
+    assert captured["timeout"] == 15
     assert content == "<html></html>"
     assert headers["etag"] == '"v2"'
     assert headers["last-modified"] == "Thu, 01 Oct 2026 00:00:00 GMT"
@@ -1297,7 +1330,7 @@ def test_fetch_upstream_304_does_not_read_body(monkeypatch):
         body,
     )
 
-    def urlopen(_req: urllib.request.Request, timeout: int = 15) -> object:
+    def urlopen(_req: urllib.request.Request, timeout: int) -> object:
         assert timeout == 15
         raise error
 
@@ -1308,44 +1341,59 @@ def test_fetch_upstream_304_does_not_read_body(monkeypatch):
     assert raised.value.headers["etag"] == '"same"'
 
 
+def test_fetch_upstream_304_without_validators_stays_an_error(monkeypatch):
+    """An unsolicited 304 is not NotModified. The body is still not parsed."""
+    error = _http_304()
+
+    def urlopen(_req: urllib.request.Request, timeout: int) -> object:
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    with pytest.raises(urllib.error.HTTPError) as raised:
+        fetch_upstream("https://example.com/doc")
+    assert raised.value.code == 304
+    assert not isinstance(raised.value, NotModified)
+    error.fp.read.assert_not_called()
+
+
 @patch("scripts.sync_sources.extract_content")
 @patch("scripts.sync_sources.fetch_upstream")
 def test_check_304_is_match_with_zero_bytes_parsed(mock_fetch, mock_extract, tmp_path):
-    """HTTP 304 is a confirmed MATCH and does not parse or hash upstream HTML."""
-    target = tmp_path / "app" / "data" / "doc.md"
-    target.parent.mkdir(parents=True)
-    target.write_text("# Title\n\nKept body.\n", encoding="utf-8")
+    """HTTP 304 is a MATCH only when the local file is still the validated baseline."""
+    target, digest = _write_doc(tmp_path)
     mock_fetch.side_effect = NotModified({"etag": '"same"'})
     entry = SourceEntry(
         path="app/data/doc.md",
         url="https://example.com/doc",
         type="html_selector",
         selector="#body",
-        content_hash="d" * 64,
+        content_hash=digest,
         etag='"same"',
-        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+        upstream_last_modified=_STALE_VALIDATOR,
     )
 
     result = check_source_drift(entry, tmp_path)
 
     assert result.status == "MATCH"
     assert result.error is None
+    assert result.local_hash == digest
+    assert result.upstream_hash == digest
     mock_extract.assert_not_called()
     mock_fetch.assert_called_once_with(
         "https://example.com/doc",
         etag='"same"',
-        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+        upstream_last_modified=_STALE_VALIDATOR,
     )
     assert entry.etag == '"same"'
-    assert target.read_text(encoding="utf-8") == "# Title\n\nKept body.\n"
+    assert target.read_text(encoding="utf-8") == _KEPT_BODY
 
 
 @patch("scripts.sync_sources.fetch_upstream")
 def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_fetch, tmp_path):
     """A 200 after validators are sent still extracts the body and compares hashes."""
-    target = tmp_path / "app" / "data" / "doc.md"
-    target.parent.mkdir(parents=True)
-    target.write_text("# Title\n\nOriginal body.\n", encoding="utf-8")
+    body = "# Title\n\nOriginal body.\n"
+    _target, digest = _write_doc(tmp_path, body)
     mock_fetch.return_value = (
         "<html><body><div id='body'><h1>Title</h1><p>Rewritten body.</p></div></body></html>",
         {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
@@ -1355,8 +1403,9 @@ def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_
         url="https://example.com/doc",
         type="html_selector",
         selector="#body",
+        content_hash=digest,
         etag='"v1"',
-        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+        upstream_last_modified=_STALE_VALIDATOR,
     )
 
     result = check_source_drift(entry, tmp_path)
@@ -1365,9 +1414,92 @@ def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_
     mock_fetch.assert_called_once_with(
         "https://example.com/doc",
         etag='"v1"',
-        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+        upstream_last_modified=_STALE_VALIDATOR,
     )
     assert entry.etag == '"v1"'
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_304_is_drift_when_local_file_was_edited(mock_fetch, mock_extract, tmp_path):
+    """A 304 does not vouch for a local file that no longer matches the baseline."""
+    target, digest = _write_doc(tmp_path)
+    edited = "# Title\n\nEdited body.\n"
+    target.write_text(edited, encoding="utf-8")
+    mock_fetch.side_effect = NotModified({"etag": '"same"'})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.upstream_hash == digest
+    assert result.local_hash == _digest(edited)
+    assert result.local_hash != result.upstream_hash
+    mock_extract.assert_not_called()
+    mock_fetch.assert_called_once_with("https://example.com/doc")
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_304_is_drift_when_local_file_was_deleted(mock_fetch, mock_extract, tmp_path):
+    """A 304 does not report MATCH after the validated local file is gone."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    mock_fetch.side_effect = NotModified({"etag": '"same"'})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.status != "MATCH"
+    assert result.local_hash is None
+    assert result.upstream_hash == digest
+    mock_extract.assert_not_called()
+    mock_fetch.assert_called_once_with("https://example.com/doc")
+
+
+def test_check_unsolicited_304_is_error_not_match(monkeypatch, tmp_path):
+    """A 304 to a request that sent no validators stays a failure, not MATCH."""
+    _target, digest = _write_doc(tmp_path)
+    error = _http_304()
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        sent = {key.lower(): value for key, value in req.header_items()}
+        assert "if-none-match" not in sent
+        assert "if-modified-since" not in sent
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "ERROR"
+    assert result.status != "MATCH"
+    error.fp.read.assert_not_called()
 
 
 @patch("scripts.sync_sources.generate_manifest")
@@ -1428,32 +1560,28 @@ def test_sync_200_updates_etag_and_upstream_last_modified(
     )
     mock_manifest.assert_called_once()
     after = load_registry(config)
-    assert after[0].type == "html_selector"
+    assert [entry.type for entry in after] == ["html_selector"]
     assert after[0].etag == '"v2"'
     assert after[0].upstream_last_modified == "Thu, 01 Oct 2026 00:00:00 GMT"
-    assert after[0].content_hash != "a" * 64
+    assert after[0].content_hash != _digest(_KEPT_BODY)
     text = config.read_text(encoding="utf-8")
     assert text.startswith("# Registry header\n")
-    assert "type: pdf" not in text
 
 
 @patch("scripts.sync_sources.extract_content")
 @patch("scripts.sync_sources.fetch_upstream")
 def test_sync_304_does_not_write_the_document(mock_fetch, mock_extract, tmp_path):
-    """304 leaves the local markdown untouched and reports the not-modified detail."""
-    target = tmp_path / "app" / "data" / "doc.md"
-    target.parent.mkdir(parents=True)
-    original = "# Title\n\nKept body.\n"
-    target.write_text(original, encoding="utf-8")
+    """304 leaves an intact local markdown untouched and reports the not-modified detail."""
+    target, digest = _write_doc(tmp_path)
     mock_fetch.side_effect = NotModified({})
     entry = SourceEntry(
         path="app/data/doc.md",
         url="https://example.com/doc",
         type="bclaws",
         selector="#contentsscroll",
-        content_hash="e" * 64,
+        content_hash=digest,
         etag='"same"',
-        upstream_last_modified="Wed, 21 Aug 2024 12:00:00 GMT",
+        upstream_last_modified=_STALE_VALIDATOR,
     )
 
     success, detail = sync_source(entry, tmp_path, dry_run=False)
@@ -1461,7 +1589,131 @@ def test_sync_304_does_not_write_the_document(mock_fetch, mock_extract, tmp_path
     assert success is True
     assert detail == NOT_MODIFIED_DETAIL
     mock_extract.assert_not_called()
-    assert target.read_text(encoding="utf-8") == original
+    assert target.read_text(encoding="utf-8") == _KEPT_BODY
     assert entry.etag == '"same"'
-    assert entry.content_hash == "e" * 64
+    assert entry.content_hash == digest
     assert entry.type == "bclaws"
+    mock_fetch.assert_called_once_with(
+        "https://example.com/doc",
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_edited_local_fetches_unconditionally_and_rewrites(mock_fetch, tmp_path):
+    """An edited local file is not left in place by a 304 skip."""
+    target, digest = _write_doc(tmp_path)
+    target.write_text("# Title\n\nEdited body.\n", encoding="utf-8")
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Title</h1><p>Restored from upstream.</p></div></body></html>",
+        {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+    success, _detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    mock_fetch.assert_called_once_with("https://example.com/doc")
+    written = target.read_text(encoding="utf-8")
+    assert "Restored from upstream." in written
+    assert "Edited body." not in written
+    assert entry.content_hash != digest
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_deleted_local_does_not_succeed_on_304(mock_fetch, mock_extract, tmp_path):
+    """A 304 must not report success and leave a deleted document unrestored."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    mock_fetch.side_effect = NotModified({"etag": '"same"'})
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+    success, detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is False
+    assert detail != NOT_MODIFIED_DETAIL
+    mock_extract.assert_not_called()
+    mock_fetch.assert_called_once_with("https://example.com/doc")
+    assert not target.exists()
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_deleted_local_fetches_unconditionally_and_restores(mock_fetch, tmp_path):
+    """A missing local file is fetched in full and written back."""
+    target, digest = _write_doc(tmp_path)
+    target.unlink()
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Title</h1><p>Restored from upstream.</p></div></body></html>",
+        {"etag": '"v2"', "last-modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+        etag='"same"',
+        upstream_last_modified=_STALE_VALIDATOR,
+    )
+
+    success, _detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    mock_fetch.assert_called_once_with("https://example.com/doc")
+    assert target.is_file()
+    assert "Restored from upstream." in target.read_text(encoding="utf-8")
+
+
+def test_sync_unsolicited_304_is_not_success(monkeypatch, tmp_path):
+    """--sync exits non-zero when an unconditional request receives 304."""
+    _target, digest = _write_doc(tmp_path)
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "# Registry header\n"
+        "\n"
+        "sources:\n"
+        "  - path: app/data/doc.md\n"
+        "    url: https://example.com/doc\n"
+        "    type: html_selector\n"
+        "    selector: '#body'\n"
+        "    category: primary\n"
+        f"    content_hash: {digest}\n"
+        "    last_synced: '2000-01-01'\n",
+        encoding="utf-8",
+    )
+    error = _http_304()
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        sent = {key.lower(): value for key, value in req.header_items()}
+        assert "if-none-match" not in sent
+        assert "if-modified-since" not in sent
+        assert timeout == 15
+        raise error
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() != 0
+    error.fp.read.assert_not_called()

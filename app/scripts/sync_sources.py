@@ -913,6 +913,27 @@ def _validator_kwargs(source: SourceEntry) -> dict[str, str]:
     return kwargs
 
 
+def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
+    """Substantive hash of the local file, or None when that file is absent."""
+    local_file = repo_root / source.path
+    if not local_file.is_file():
+        return None
+    text = local_file.read_text(encoding="utf-8")
+    return compute_content_hash(extract_substantive_body(text))
+
+
+def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
+    """True when the local file is still the body the stored validators describe."""
+    return bool(source.content_hash) and local_hash is not None and local_hash == source.content_hash
+
+
+def _validators_for_intact_baseline(source: SourceEntry, local_hash: str | None) -> dict[str, str]:
+    """Send stored validators only when a 304 would skip the bytes already validated."""
+    if not _baseline_is_intact(source, local_hash):
+        return {}
+    return _validator_kwargs(source)
+
+
 def _store_validators(source: SourceEntry, headers: dict[str, str]) -> None:
     """Replace stored validators with the ones from a 200 response."""
     source.etag = _optional_header(headers.get("etag"))
@@ -936,7 +957,8 @@ def fetch_upstream(
     """Fetch upstream content and response headers.
 
     Stored validators are sent as ``If-None-Match`` and ``If-Modified-Since``.
-    HTTP 304 raises ``NotModified`` and does not read the body.
+    HTTP 304 raises ``NotModified`` and does not read the body only when this
+    request sent a validator. A 304 to an unconditional request stays an error.
     """
     req_headers = {
         "User-Agent": USER_AGENT,
@@ -950,7 +972,7 @@ def fetch_upstream(
     try:
         resp_ctx = urllib.request.urlopen(req, timeout=timeout)
     except urllib.error.HTTPError as exc:
-        if exc.code != 304:
+        if exc.code != 304 or not (etag or upstream_last_modified):
             raise
         headers = _header_map(exc.headers)
         exc.close()
@@ -1062,23 +1084,21 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
     Checks whether the upstream document has drifted from our local copy or registry hash.
     Does NOT modify local files.
     """
-    local_file = repo_root / source.path
-    local_substantive = ""
-    local_hash = source.content_hash
-
-    if local_file.exists():
-        local_text = local_file.read_text(encoding="utf-8")
-        local_substantive = extract_substantive_body(local_text)
-        local_hash = compute_content_hash(local_substantive)
-    elif source.content_hash is None:
+    local_hash = _local_substantive_hash(source, repo_root)
+    if local_hash is None and source.content_hash is None:
         return DriftResult(
             path=source.path,
             url=source.url,
             status="UNTRACKED",
         )
+    # A missing file keeps the registry hash in the 200 comparison so an
+    # unconditional fetch can still detect upstream drift. It is not a baseline.
+    compared_local_hash = local_hash if local_hash is not None else source.content_hash
 
     try:
-        raw_html, headers = fetch_upstream(source.url, **_validator_kwargs(source))
+        raw_html, headers = fetch_upstream(
+            source.url, **_validators_for_intact_baseline(source, local_hash)
+        )
         title, upstream_body = extract_content(
             raw_html, source.type, source.selector, source.part
         )
@@ -1088,7 +1108,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 path=source.path,
                 url=source.url,
                 status="ERROR",
-                local_hash=local_hash,
+                local_hash=compared_local_hash,
                 error="Upstream extraction produced no substantive content",
             )
         upstream_hash = compute_content_hash(upstream_substantive)
@@ -1099,16 +1119,16 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 path=source.path,
                 url=source.url,
                 status="DRIFT_DETECTED",
-                local_hash=local_hash or source.content_hash,
+                local_hash=compared_local_hash or source.content_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
             )
-        elif local_hash and upstream_hash != local_hash:
+        elif compared_local_hash and upstream_hash != compared_local_hash:
             return DriftResult(
                 path=source.path,
                 url=source.url,
                 status="DRIFT_DETECTED",
-                local_hash=local_hash,
+                local_hash=compared_local_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
             )
@@ -1117,18 +1137,27 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             path=source.path,
             url=source.url,
             status="MATCH",
-            local_hash=local_hash,
+            local_hash=compared_local_hash,
             upstream_hash=upstream_hash,
             upstream_last_modified=upstream_last_modified,
         )
 
     except NotModified:
+        if _baseline_is_intact(source, local_hash):
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="MATCH",
+                local_hash=local_hash,
+                upstream_hash=source.content_hash,
+                upstream_last_modified=source.upstream_last_modified,
+            )
         return DriftResult(
             path=source.path,
             url=source.url,
-            status="MATCH",
+            status="DRIFT_DETECTED",
             local_hash=local_hash,
-            upstream_hash=local_hash or source.content_hash,
+            upstream_hash=source.content_hash,
             upstream_last_modified=source.upstream_last_modified,
         )
     except (urllib.error.URLError, TimeoutError) as e:
@@ -1137,7 +1166,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             path=source.path,
             url=source.url,
             status="ERROR",
-            local_hash=local_hash,
+            local_hash=compared_local_hash,
             error=f"Network error: {e}",
         )
     except Exception as e:
@@ -1146,7 +1175,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             path=source.path,
             url=source.url,
             status="ERROR",
-            local_hash=local_hash,
+            local_hash=compared_local_hash,
             error=str(e),
         )
 
@@ -1160,10 +1189,15 @@ def sync_source(
     Syncs upstream document to local markdown file and updates metadata.
     """
     target_path = repo_root / source.path
+    local_hash = _local_substantive_hash(source, repo_root)
     try:
         try:
-            raw_html, headers = fetch_upstream(source.url, **_validator_kwargs(source))
+            raw_html, headers = fetch_upstream(
+                source.url, **_validators_for_intact_baseline(source, local_hash)
+            )
         except NotModified:
+            if not _baseline_is_intact(source, local_hash):
+                return False, "HTTP 304 but the local file is not the validated baseline"
             logger.info(f"Not modified {source.path}; skipped parse")
             return True, NOT_MODIFIED_DETAIL
         title, body = extract_content(raw_html, source.type, source.selector, source.part)
