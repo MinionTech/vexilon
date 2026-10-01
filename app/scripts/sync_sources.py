@@ -48,6 +48,10 @@ logger = logging.getLogger("sync_sources")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 VexilonDocIngestion/1.0"
 
+# Bump when HTMLContentExtractor, clean_bclaws_content, or _strip_bclaws_chrome
+# changes the Markdown those functions emit. A new value forces a full fetch.
+EXTRACTOR_VERSION = "1"
+
 
 @dataclass
 class SourceEntry:
@@ -63,6 +67,8 @@ class SourceEntry:
     # HTTP validators from the last --sync. Absent until a sync stores them.
     etag: str | None = None
     upstream_last_modified: str | None = None
+    # Fingerprint of type, selector, part, and EXTRACTOR_VERSION at last --sync.
+    extraction_fingerprint: str | None = None
 
 
 @dataclass
@@ -934,9 +940,33 @@ def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
     return bool(source.content_hash) and local_hash is not None and local_hash == source.content_hash
 
 
+def extraction_fingerprint(source: SourceEntry) -> str:
+    """Identity of the inputs that turn upstream HTML into the stored Markdown."""
+    raw = "\n".join((
+        EXTRACTOR_VERSION,
+        source.type or "",
+        source.selector or "",
+        source.part or "",
+    ))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _extraction_fingerprint_matches(source: SourceEntry) -> bool:
+    """True when this sync stored the fingerprint and the inputs are unchanged."""
+    stored = source.extraction_fingerprint
+    return bool(stored) and stored == extraction_fingerprint(source)
+
+
 def _validators_for_intact_baseline(source: SourceEntry, local_hash: str | None) -> dict[str, str]:
-    """Send stored validators only when a 304 would skip the bytes already validated."""
+    """Send stored validators only when a 304 would skip the bytes already validated.
+
+    The local file must still match ``content_hash``, and the extractor inputs
+    stored with the validators must still be the ones in effect. A missing or
+    different fingerprint means the Markdown was not produced by this extraction.
+    """
     if not _baseline_is_intact(source, local_hash):
+        return {}
+    if not _extraction_fingerprint_matches(source):
         return {}
     return _validator_kwargs(source)
 
@@ -1014,6 +1044,7 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
                 last_synced=s.get("last_synced"),
                 etag=_optional_header(s.get("etag")),
                 upstream_last_modified=_optional_header(s.get("upstream_last_modified")),
+                extraction_fingerprint=_optional_header(s.get("extraction_fingerprint")),
             )
         )
     _validate_registry(entries)
@@ -1150,6 +1181,16 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 upstream_last_modified=upstream_last_modified,
                 error="Local file is absent",
             )
+        if source.extraction_fingerprint and not _extraction_fingerprint_matches(source):
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="DRIFT_DETECTED",
+                local_hash=local_hash,
+                upstream_hash=upstream_hash,
+                upstream_last_modified=upstream_last_modified,
+                error="Extraction inputs changed",
+            )
 
         return DriftResult(
             path=source.path,
@@ -1238,6 +1279,7 @@ def sync_source(
             target_path.write_text(full_content, encoding="utf-8")
             source.content_hash = new_hash
             source.last_synced = today
+            source.extraction_fingerprint = extraction_fingerprint(source)
             _store_validators(source, headers)
             logger.info(f"Updated {source.path} (hash: {new_hash[:8]})")
         else:
