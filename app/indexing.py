@@ -54,11 +54,16 @@ class FileIntegrityError(Exception):
     pass
 
 # Models
-EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
+_DEFAULT_EMBED_MODEL = "BAAI/bge-small-en-v1.5"
+EMBED_MODEL = os.getenv("EMBED_MODEL", _DEFAULT_EMBED_MODEL)
 MAX_EMBED_TOKENS = int(os.getenv("AGNAV_MAX_EMBED_TOKENS", 512))
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 512))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
 EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
+# Bump when chunking, citation prefixes, or vector normalization change.
+# Document-cache identity includes this value. A chunking change that does not
+# bump it keeps serving stale chunks.
+CACHE_PIPELINE_VERSION = "v2"
 SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))
 # Document score boosting weights
 TIER1_BOOST = float(os.getenv("AGNAV_TIER1_BOOST", "1.2"))
@@ -72,7 +77,7 @@ def get_embed_model() -> "SentenceTransformer":
     global _embed_model, _loaded_model_name
     
     # Reload model if EMBED_MODEL env var has changed since last initialization
-    current_model_name = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
+    current_model_name = os.getenv("EMBED_MODEL", _DEFAULT_EMBED_MODEL)
     
     if _embed_model is None or _loaded_model_name != current_model_name:
         if os.getenv("HF_SPACE_ID") or os.getenv("EXTERNAL_CI"):
@@ -490,12 +495,22 @@ def search_index_batch(index: "faiss.IndexFlatIP", chunks: list[dict], queries: 
         
     return results
 
+def _effective_embed_model() -> str:
+    """Model name get_embed_model() loads, including an in-process env change."""
+    return os.getenv("EMBED_MODEL", _DEFAULT_EMBED_MODEL)
+
+
 def _index_config() -> dict[str, Any]:
+    """Fingerprint of every input that changes chunk text or embedding vectors."""
     return {
         "chunk_size": CHUNK_SIZE,
         "chunk_overlap": CHUNK_OVERLAP,
-        "embed_model": EMBED_MODEL,
+        "embed_model": _effective_embed_model(),
+        "max_embed_tokens": MAX_EMBED_TOKENS,
+        "agnav_max_embed_tokens": os.getenv("AGNAV_MAX_EMBED_TOKENS"),
+        "embed_dim": EMBED_DIM,
         "tiering_version": "v2",
+        "pipeline_version": CACHE_PIPELINE_VERSION,
     }
 
 
@@ -507,61 +522,170 @@ def _hash_file(path: Path) -> str:
     return hasher.hexdigest()
 
 
-def _embedding_cache_file(content_hash: str) -> Path:
-    return CACHE_DIR / "embeddings" / f"{content_hash}.npy"
+def _cache_identity(rel_key: str, content_hash: str) -> str:
+    """Identity is path + file bytes + config, not the file bytes alone."""
+    payload = {
+        "path": rel_key,
+        "content_hash": content_hash,
+        "config": _index_config(),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def _chunk_cache_file(content_hash: str) -> Path:
-    return CACHE_DIR / "chunks" / f"{content_hash}.json"
+def _cache_header(rel_key: str, content_hash: str) -> dict[str, Any]:
+    return {
+        "path": rel_key,
+        "content_hash": content_hash,
+        "config": _index_config(),
+    }
 
 
-def _manifest_file_entry(content_hash: str) -> dict[str, str]:
+def _embedding_cache_file(identity: str) -> Path:
+    return CACHE_DIR / "embeddings" / f"{identity}.npy"
+
+
+def _chunk_cache_file(identity: str) -> Path:
+    return CACHE_DIR / "chunks" / f"{identity}.json"
+
+
+def _manifest_file_entry(rel_key: str, content_hash: str) -> dict[str, str]:
     """Per-file manifest record. Cache paths are present only when both files exist."""
+    identity = _cache_identity(rel_key, content_hash)
     entry = {"content_hash": content_hash}
-    embeddings = _embedding_cache_file(content_hash)
-    chunks = _chunk_cache_file(content_hash)
+    embeddings = _embedding_cache_file(identity)
+    chunks = _chunk_cache_file(identity)
     if embeddings.is_file() and chunks.is_file():
-        entry["embeddings"] = f"embeddings/{content_hash}.npy"
-        entry["chunks"] = f"chunks/{content_hash}.json"
+        entry["embeddings"] = f"embeddings/{identity}.npy"
+        entry["chunks"] = f"chunks/{identity}.json"
     return entry
 
 
-def _load_document_cache(content_hash: str) -> "tuple[np.ndarray, list[dict]] | None":
-    """Load cached float32 embeddings and chunks for one document, or None on miss."""
+def _cached_chunks_usable(chunks: Any, rel_key: str) -> bool:
+    """Chunks must be the dicts the build and search paths read."""
+    if not isinstance(chunks, list) or len(chunks) == 0:
+        return False
+    for item in chunks:
+        if not isinstance(item, dict):
+            return False
+        if not isinstance(item.get("text"), str):
+            return False
+        if not isinstance(item.get("source"), str):
+            return False
+        if item.get("path") != rel_key:
+            return False
+    return True
+
+
+def _load_document_cache(rel_key: str, content_hash: str) -> "tuple[np.ndarray, list[dict]] | None":
+    """Load one document cache, or None when the identity or payload is unusable."""
     import numpy as np
-    npy_path = _embedding_cache_file(content_hash)
-    json_path = _chunk_cache_file(content_hash)
+    identity = _cache_identity(rel_key, content_hash)
+    npy_path = _embedding_cache_file(identity)
+    json_path = _chunk_cache_file(identity)
     if not npy_path.is_file() or not json_path.is_file():
         return None
     try:
         vectors = np.load(npy_path, allow_pickle=False)
         with open(json_path, encoding="utf-8") as f:
-            chunks = json.load(f)
-    except (OSError, ValueError, json.JSONDecodeError) as e:
-        logger.warning(f"[build] Ignoring unreadable cache for {content_hash}: {e}")
+            payload = json.load(f)
+    except (OSError, ValueError, EOFError, json.JSONDecodeError) as e:
+        logger.warning(f"[build] Ignoring unreadable cache for {rel_key}: {e}")
         return None
-    if not isinstance(chunks, list) or len(chunks) == 0:
+    header = _cache_header(rel_key, content_hash)
+    if not isinstance(payload, dict) or any(payload.get(key) != header[key] for key in header):
+        logger.warning(f"[build] Ignoring cache whose identity does not match {rel_key}")
         return None
-    if getattr(vectors, "ndim", None) != 2:
+    chunks = payload.get("chunks")
+    if not _cached_chunks_usable(chunks, rel_key):
+        logger.warning(f"[build] Ignoring cache with unusable chunks for {rel_key}")
         return None
-    if vectors.shape != (len(chunks), EMBED_DIM):
+    if getattr(vectors, "ndim", None) != 2 or vectors.shape != (len(chunks), EMBED_DIM):
         logger.warning(
             f"[build] Cache shape {getattr(vectors, 'shape', None)} does not match "
-            f"{len(chunks)} chunks of dimension {EMBED_DIM} for {content_hash}"
+            f"{len(chunks)} chunks of dimension {EMBED_DIM} for {rel_key}"
         )
         return None
     return np.ascontiguousarray(vectors, dtype=np.float32), chunks
 
 
-def _save_document_cache(content_hash: str, vectors: "np.ndarray", chunks: list[dict]) -> None:
+def _atomic_replace(dest: Path, suffix: str, write) -> None:
+    """Write via a temp file in dest's directory, then os.replace into place."""
+    import tempfile
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=".cache-", suffix=suffix, dir=dest.parent)
+    os.close(fd)
+    tmp = Path(name)
+    try:
+        write(tmp)
+        os.replace(tmp, dest)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def _save_document_cache(
+    rel_key: str,
+    content_hash: str,
+    vectors: "np.ndarray",
+    chunks: list[dict],
+) -> None:
+    """Persist one document cache. A write error leaves the build to continue."""
     import numpy as np
-    npy_path = _embedding_cache_file(content_hash)
-    json_path = _chunk_cache_file(content_hash)
-    npy_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.parent.mkdir(parents=True, exist_ok=True)
-    np.save(npy_path, np.ascontiguousarray(vectors, dtype=np.float32))
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(chunks, f, ensure_ascii=False)
+    identity = _cache_identity(rel_key, content_hash)
+    npy_path = _embedding_cache_file(identity)
+    json_path = _chunk_cache_file(identity)
+    payload = _cache_header(rel_key, content_hash)
+    payload["chunks"] = chunks
+
+    def write_npy(tmp: Path) -> None:
+        np.save(tmp, np.ascontiguousarray(vectors, dtype=np.float32))
+
+    def write_json(tmp: Path) -> None:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
+
+    try:
+        _atomic_replace(npy_path, ".npy", write_npy)
+        _atomic_replace(json_path, ".json", write_json)
+    except OSError as e:
+        logger.warning(f"[build] Could not write document cache for {rel_key}: {e}")
+
+
+def _owned_cache_name(name: str, suffix: str) -> bool:
+    """True for cache files this builder writes: 64-char hex sha256 plus suffix."""
+    if not name.endswith(suffix):
+        return False
+    stem = name[: -len(suffix)]
+    return len(stem) == 64 and all(char in "0123456789abcdef" for char in stem)
+
+
+def _prune_unreferenced_document_caches(manifest: dict) -> None:
+    """Delete embedding and chunk files the manifest no longer references."""
+    referenced: set[str] = set()
+    files = manifest.get("files")
+    if isinstance(files, dict):
+        for entry in files.values():
+            if not isinstance(entry, dict):
+                continue
+            for key in ("embeddings", "chunks"):
+                rel = entry.get(key)
+                if isinstance(rel, str):
+                    referenced.add(rel)
+    for folder, suffix in (("embeddings", ".npy"), ("chunks", ".json")):
+        directory = CACHE_DIR / folder
+        if not directory.is_dir():
+            continue
+        for child in directory.iterdir():
+            rel = f"{folder}/{child.name}"
+            if rel in referenced or not child.is_file():
+                continue
+            if not _owned_cache_name(child.name, suffix):
+                continue
+            try:
+                child.unlink()
+            except OSError as e:
+                logger.warning(f"[build] Could not remove unreferenced cache {rel}: {e}")
 
 
 def build_index_from_vectors(vectors: "np.ndarray") -> "faiss.IndexFlatIP":
@@ -617,7 +741,7 @@ def _manifest_for(file_hashes: dict[str, str]) -> dict[str, Any]:
     return {
         "config": _index_config(),
         "files": {
-            rel_key: _manifest_file_entry(digest)
+            rel_key: _manifest_file_entry(rel_key, digest)
             for rel_key, digest in file_hashes.items()
         },
     }
@@ -634,9 +758,16 @@ def _chunks_for_source(source_file: Path, strict: bool) -> list[dict]:
 def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[None, None]:
     """
     Main entry point for index creation.
-    NOTE: Manifest hashing is performed here to determine if a re-index is needed.
-    Unchanged documents reuse cache/embeddings/<content_hash>.npy and
-    cache/chunks/<content_hash>.json. Only new or modified documents are encoded.
+
+    Unchanged documents reuse a per-document embedding and chunk cache when the
+    source path, file bytes, and index configuration still match. Only new or
+    modified documents are encoded. manifest.json records each file hash and
+    those cache paths.
+
+    force=True skips the unchanged-manifest shortcut and the per-document cache,
+    re-encodes every document, and rebuilds the FAISS index. It is not a
+    partial rebuild.
+
     In container environments, this is typically called during the build stage.
     """
     import numpy as np
@@ -666,10 +797,6 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     logger.info(f"[build] Change detected or forced rebuild. Indexing {len(all_files)} files...")
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
-    config_ok = (
-        isinstance(stored_manifest, dict)
-        and stored_manifest.get("config") == _index_config()
-    )
     strict = os.getenv("AGNAV_STRICT_BUILD", "false").lower() == "true"
     chunks: list[dict] = []
     vector_blocks: list[Any] = []
@@ -677,7 +804,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     for source_file in all_files:
         rel_key = str(source_file.relative_to(DATA_DIR))
         digest = file_hashes[rel_key]
-        cached = _load_document_cache(digest) if config_ok else None
+        cached = None if force else _load_document_cache(rel_key, digest)
         if cached is not None:
             doc_vectors, doc_chunks = cached
             logger.info(f"[build] Cache hit for {rel_key} ({len(doc_chunks)} chunks)")
@@ -702,7 +829,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
                 f"Embedding shape {doc_vectors.shape} does not match "
                 f"{len(doc_chunks)} chunks of dimension {EMBED_DIM} for {rel_key}"
             )
-        _save_document_cache(digest, doc_vectors, doc_chunks)
+        _save_document_cache(rel_key, digest, doc_vectors, doc_chunks)
         vector_blocks.append(doc_vectors)
         chunks.extend(doc_chunks)
 
@@ -732,6 +859,7 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     current_manifest = _manifest_for(file_hashes)
     with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(current_manifest, f, indent=2)
+    _prune_unreferenced_document_caches(current_manifest)
     return index, chunks
 
 def load_precomputed_index() -> tuple[Any, Any] | tuple[None, None]:
