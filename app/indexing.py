@@ -234,6 +234,25 @@ def _resolve_pdf_path(md_path: Path) -> Path:
             return prefix_pdf
     return md_path
 
+
+def _same_stem_page_map_pdf(md_path: Path) -> Path | None:
+    """PDF whose text supplies page numbers for this Markdown file.
+
+    A prefix PDF (one regulation file shared by many part files) is not a page
+    map. ``load_md_chunks`` ignores it, and the cache identity must ignore it too.
+    """
+    if md_path.suffix.lower() != ".md":
+        return None
+    pdf_path = _resolve_pdf_path(md_path)
+    if (
+        pdf_path.suffix.lower() == ".pdf"
+        and pdf_path.is_file()
+        and pdf_path.stem == md_path.stem
+    ):
+        return pdf_path
+    return None
+
+
 def load_md_chunks(md_path: Path) -> list[dict]:
     content = md_path.read_text(encoding="utf-8").strip()
     if not content:
@@ -245,14 +264,9 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     current_header = ""
     lines = content.split("\n")
     
-    pdf_path = _resolve_pdf_path(md_path)
+    pdf_path = _same_stem_page_map_pdf(md_path)
     pdf_pages: list[str] = []
-    same_stem_pdf = (
-        pdf_path.suffix.lower() == ".pdf"
-        and pdf_path.exists()
-        and pdf_path.stem == md_path.stem
-    )
-    if same_stem_pdf:
+    if pdf_path is not None:
         try:
             with fitz.open(str(pdf_path)) as doc:
                 for page in doc:
@@ -588,23 +602,44 @@ def _hash_file(path: Path) -> str:
     return hasher.hexdigest()
 
 
-def _cache_identity(rel_key: str, content_hash: str) -> str:
-    """Identity is path + file bytes + config, not the file bytes alone."""
+def _page_map_sha256(rel_key: str) -> str | None:
+    """Hash of the same-stem PDF that stamps page numbers onto this document."""
+    pdf_path = _same_stem_page_map_pdf(DATA_DIR / rel_key)
+    if pdf_path is None:
+        return None
+    return _hash_file(pdf_path)
+
+
+def _cache_identity_payload(rel_key: str, content_hash: str) -> dict[str, Any]:
+    """Inputs that change chunk text, page numbers, or embedding vectors.
+
+    Page numbers are read from a same-stem PDF that may live outside the source
+    tree (``public/docs``). That file is not part of ``content_hash``. Leaving it
+    out of this payload reuses chunks after the PDF changes.
+    """
     payload = {
         "path": rel_key,
         "content_hash": content_hash,
         "config": _index_config(),
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    page_map = _page_map_sha256(rel_key)
+    if page_map is not None:
+        payload["page_map_sha256"] = page_map
+    return payload
+
+
+def _cache_identity(rel_key: str, content_hash: str) -> str:
+    """Identity is path + file bytes + config + page-map PDF, not the file bytes alone."""
+    encoded = json.dumps(
+        _cache_identity_payload(rel_key, content_hash),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 def _cache_header(rel_key: str, content_hash: str) -> dict[str, Any]:
-    return {
-        "path": rel_key,
-        "content_hash": content_hash,
-        "config": _index_config(),
-    }
+    return _cache_identity_payload(rel_key, content_hash)
 
 
 def _embedding_cache_file(identity: str) -> Path:
@@ -847,9 +882,9 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     Main entry point for index creation.
 
     Unchanged documents reuse a per-document embedding and chunk cache when the
-    source path, file bytes, and index configuration still match. Only new or
-    modified documents are encoded. manifest.json records each file hash and
-    those cache paths.
+    source path, file bytes, index configuration, and same-stem page-map PDF
+    still match. Only new or modified documents are encoded. manifest.json
+    records each file hash and those cache paths.
 
     force=True skips the unchanged-manifest shortcut and the per-document cache,
     re-encodes every document, and rebuilds the FAISS index. It is not a
