@@ -67,7 +67,7 @@ class SourceEntry:
     # HTTP validators from the last --sync. Absent until a sync stores them.
     etag: str | None = None
     upstream_last_modified: str | None = None
-    # Fingerprint of type, selector, part, and EXTRACTOR_VERSION at last --sync.
+    # Fingerprint of type, selector, part, url, and EXTRACTOR_VERSION at last --sync.
     extraction_fingerprint: str | None = None
 
 
@@ -941,12 +941,17 @@ def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
 
 
 def extraction_fingerprint(source: SourceEntry) -> str:
-    """Identity of the inputs that turn upstream HTML into the stored Markdown."""
+    """Identity of the page and the inputs that turn its HTML into stored Markdown.
+
+    ``url`` is part of the identity. Validators stored for one page must not be
+    sent to a different address after the registry URL changes.
+    """
     raw = "\n".join((
         EXTRACTOR_VERSION,
         source.type or "",
         source.selector or "",
         source.part or "",
+        source.url,
     ))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
