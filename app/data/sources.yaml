@@ -23,8 +23,9 @@
 #             body is not read. A 304 to a request with no validator is an error.
 #       upstream_last_modified: HTTP Last-Modified from that same 200. Sent as
 #             If-Modified-Since under the same rule. The next 200 replaces both.
-#       extraction_fingerprint: SHA-256 of extractor version, type, selector, and part
+#       extraction_fingerprint: SHA-256 of extractor version, type, selector, part, and url
 #             at the last --sync. Missing or different means fetch the HTML and re-extract.
+#             A changed url does not reuse the previous page's validators.
 #             Bump EXTRACTOR_VERSION in sync_sources.py when extractor behavior changes.
 
 sources:

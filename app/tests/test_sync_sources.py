@@ -1879,6 +1879,58 @@ def _stored_fingerprint_for(selector: str) -> str:
     ))
 
 
+def test_check_changed_url_refetches_and_does_not_match(monkeypatch, tmp_path):
+    """A new URL must not reuse validators stored for the previous page."""
+    _target, digest = _write_doc(tmp_path)
+    entry = _entry_with_validators(digest)
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+    entry.url = "https://example.com/moved"
+    html = _html_paragraph("Kept body.")
+    _title, body = extract_content(html, "html_selector", "#body")
+    assert compute_content_hash(extract_substantive_body(body)) == digest
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        assert req.full_url == "https://example.com/moved"
+        return _UrlResponse(html.encode("utf-8"), {"ETag": '"v2"'})
+
+    _install_urlopen(monkeypatch, responder)
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.status != "MATCH"
+    assert result.error == "Extraction inputs changed"
+    assert result.upstream_hash == digest
+
+
+def test_sync_changed_url_does_not_skip_the_write(monkeypatch, tmp_path):
+    """--sync rewrites the file when the registry URL no longer matches the fingerprint."""
+    target, digest = _write_doc(tmp_path)
+    before = target.read_text(encoding="utf-8")
+    entry = _entry_with_validators(digest)
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+    entry.url = "https://example.com/moved"
+
+    def responder(req: urllib.request.Request) -> _UrlResponse:
+        _assert_unconditional(req)
+        assert req.full_url == "https://example.com/moved"
+        return _UrlResponse(
+            _html_paragraph("Kept body.").encode("utf-8"),
+            {"ETag": '"v2"', "Last-Modified": "Thu, 01 Oct 2026 00:00:00 GMT"},
+        )
+
+    _install_urlopen(monkeypatch, responder)
+    success, detail = sync_source(entry, tmp_path, dry_run=False)
+
+    assert success is True
+    assert detail != NOT_MODIFIED_DETAIL
+    written = target.read_text(encoding="utf-8")
+    assert written != before
+    assert "https://example.com/moved" in written
+    assert entry.extraction_fingerprint == extraction_fingerprint(entry)
+    assert entry.etag == '"v2"'
+
+
 def test_check_changed_selector_refetches_and_does_not_match(monkeypatch, tmp_path):
     """A new selector must not reuse validators stored for the old extraction."""
     _target, digest = _write_doc(tmp_path)
