@@ -416,3 +416,70 @@ def test_cache_write_error_does_not_abort_build(tmp_path, monkeypatch, caplog):
     assert written[-1].exc_info is not None
     assert written[-1].exc_info[0] is ValueError
     assert "Traceback (most recent call last)" in caplog.text
+
+
+def test_same_stem_pdf_change_reencodes_markdown(tmp_path, monkeypatch):
+    """A same-stem PDF stamps page numbers. Editing it must not reuse cached chunks.
+
+    The PDF lives in public/docs, outside the source tree, so the markdown file
+    hash and the smart-refresh manifest stay put unless the cache identity
+    includes the PDF bytes.
+    """
+    data = tmp_path / "data"
+    cache = tmp_path / "cache"
+    _isolate(monkeypatch, data, cache)
+    monkeypatch.setattr(indexing, "_PKG_ROOT", tmp_path)
+    _install_loaders(monkeypatch, data)
+    calls = _install_embed(monkeypatch)
+    (data / "statute.md").write_text("alpha clause\n", encoding="utf-8")
+    (data / "other.md").write_text("beta one\n", encoding="utf-8")
+    pdf = tmp_path / "public" / "docs" / "statute.pdf"
+    pdf.parent.mkdir(parents=True)
+    pdf.write_bytes(b"%PDF-1.4 page one")
+
+    indexing.build_index_from_sources()
+    assert calls == [["beta one"], ["alpha clause"]]
+    old_npy, old_json = _doc_cache(cache, "statute.md", data / "statute.md")
+    assert old_npy.is_file()
+    stored = json.loads(old_json.read_text(encoding="utf-8"))
+    assert stored["page_map_sha256"] == hashlib.sha256(pdf.read_bytes()).hexdigest()
+
+    calls.clear()
+    indexing.build_index_from_sources()
+    assert calls == []
+
+    pdf.write_bytes(b"%PDF-1.4 page two")
+    calls.clear()
+    _index, chunks = indexing.build_index_from_sources()
+    assert calls == [["alpha clause"]]
+    assert not old_npy.exists()
+    assert not old_json.exists()
+    new_npy, new_json = _doc_cache(cache, "statute.md", data / "statute.md")
+    assert new_npy.is_file()
+    assert new_npy != old_npy
+    restored = json.loads(new_json.read_text(encoding="utf-8"))
+    assert restored["page_map_sha256"] == hashlib.sha256(pdf.read_bytes()).hexdigest()
+    assert [c["path"] for c in chunks] == ["other.md", "statute.md"]
+
+
+def test_prefix_pdf_change_does_not_reencode_part_markdown(tmp_path, monkeypatch):
+    """A shared regulation PDF is not a page map for a part file, so it is not cache identity."""
+    data = tmp_path / "data"
+    cache = tmp_path / "cache"
+    _isolate(monkeypatch, data, cache)
+    monkeypatch.setattr(indexing, "_PKG_ROOT", tmp_path)
+    _install_loaders(monkeypatch, data)
+    calls = _install_embed(monkeypatch)
+    (data / "Reg_-_Part_01.md").write_text("alpha clause\n", encoding="utf-8")
+    pdf = tmp_path / "public" / "docs" / "Reg.pdf"
+    pdf.parent.mkdir(parents=True)
+    pdf.write_bytes(b"%PDF-1.4 version one")
+
+    indexing.build_index_from_sources()
+    calls.clear()
+    pdf.write_bytes(b"%PDF-1.4 version two")
+    indexing.build_index_from_sources()
+    assert calls == []
+    _npy, chunk_json = _doc_cache(cache, "Reg_-_Part_01.md", data / "Reg_-_Part_01.md")
+    stored = json.loads(chunk_json.read_text(encoding="utf-8"))
+    assert "page_map_sha256" not in stored
