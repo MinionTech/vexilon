@@ -246,6 +246,36 @@ def test_verify_deployment_sh_requires_space_id():
     assert "SPACE_ID argument missing" in res.stdout or "SPACE_ID argument missing" in res.stderr
 
 
+def test_verify_deployment_sh_displays_runtime_error_message(tmp_path):
+    """Ensures verify_deployment.sh parses and displays runtime.errorMessage on terminal failure."""
+    verify_script = REPO_ROOT / ".github" / "scripts" / "verify_deployment.sh"
+    assert verify_script.exists(), "verify_deployment.sh not found"
+
+    fake_curl = tmp_path / "curl"
+    fake_curl.write_text(
+        "#!/bin/sh\n"
+        "cat << 'EOF'\n"
+        '{"runtime": {"stage": "RUNTIME_ERROR", "errorMessage": "Fatal: ModuleNotFoundError: No module named requests"}}\n'
+        "EOF\n"
+        'printf "200"\n'
+    )
+    fake_curl.chmod(0o755)
+
+    env = os.environ.copy()
+    env["PATH"] = f"{tmp_path}:{env.get('PATH', '')}"
+
+    res = subprocess.run(
+        [str(verify_script), "test/space", "5"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert res.returncode != 0
+    assert "state is 'runtime_error'" in res.stdout
+    assert "--- Space Error Message ---" in res.stdout
+    assert "Fatal: ModuleNotFoundError: No module named requests" in res.stdout
+
+
 def test_containerfile_package_copy_sync():
     """Ensures all python packages in app/ (directories with __init__.py) are explicitly copied in Containerfile."""
     containerfile_path = REPO_ROOT / "app" / "Containerfile"
