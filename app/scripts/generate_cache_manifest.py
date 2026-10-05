@@ -80,7 +80,15 @@ def generate_manifest(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(manifest, f, indent=2)
-    
+
+    # Regenerate Knowledge Base drawer markdown
+    try:
+        from generate_knowledge_base import update_knowledge_base_files
+        update_knowledge_base_files(data_dir=data_dir)
+    except Exception as e:
+        # Gracefully handle isolated runtimes where public/docs or dependencies are absent
+        pass
+
     return manifest
 
 

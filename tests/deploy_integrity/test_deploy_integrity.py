@@ -106,7 +106,7 @@ def test_chainlit_markdown_links_exist():
     content = chainlit_md_path.read_text()
     
     # Match local links starting with /public/docs/
-    # e.g., [BCGEU 19th Main Agreement](/public/docs/BCGEU_19th_Main_Agreement.pdf)
+    # e.g., [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)
     local_links = re.findall(r"\]\((/public/docs/[^\)]+)\)", content)
     
     public_docs_root = REPO_ROOT / "app" / "public" / "docs"
@@ -120,6 +120,31 @@ def test_chainlit_markdown_links_exist():
         
         assert target_file.exists(), \
             f"Broken Link in chainlit.md: The asset '{link}' was linked, but '{target_file}' does not exist on disk."
+
+
+def test_chainlit_markdown_matches_generated():
+    """Ensures chainlit.md is in sync with the dynamically generated markdown from manifest/data."""
+    import sys
+    scripts_dir = REPO_ROOT / "app" / "scripts"
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+    from generate_knowledge_base import generate_knowledge_base_markdown
+
+    data_dir = REPO_ROOT / "app" / "data"
+    public_docs_dir = REPO_ROOT / "app" / "public" / "docs"
+    chainlit_md_path = REPO_ROOT / "app" / "chainlit.md"
+
+    expected = generate_knowledge_base_markdown(
+        data_dir=data_dir,
+        public_docs_dir=public_docs_dir,
+        create_symlinks=False,
+    )
+    actual = chainlit_md_path.read_text(encoding="utf-8")
+
+    assert actual == expected, (
+        "chainlit.md is out of sync with manifest/sources. "
+        "Run `python app/scripts/generate_knowledge_base.py` to regenerate."
+    )
 
 
 def test_manifest_source_files_exist():
