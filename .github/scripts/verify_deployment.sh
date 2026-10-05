@@ -68,6 +68,7 @@ while [ "$(date +%s)" -lt "$END_TIME" ]; do
 
   # Robust status extraction
   CURRENT_STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys, json; data=json.load(sys.stdin); print(str(data.get('runtime', {}).get('stage', 'unknown')).lower())" 2>/dev/null || echo "unknown")
+  ERROR_MSG=$(echo "$STATUS_JSON" | python3 -c "import sys, json; data=json.load(sys.stdin); print(str(data.get('runtime', {}).get('errorMessage') or ''))" 2>/dev/null || true)
   
   echo "[verify] Current status: $CURRENT_STATUS ($(($(date +%s) - START_TIME))s)"
   
@@ -80,6 +81,11 @@ while [ "$(date +%s)" -lt "$END_TIME" ]; do
   case "$CURRENT_STATUS" in
       *crashed*|*error*|*failed*|*deleted*)
           echo "❌ Error: Space $SPACE_ID state is '$CURRENT_STATUS'."
+          if [ -n "$ERROR_MSG" ]; then
+              echo "--- Space Error Message ---"
+              echo "$ERROR_MSG"
+              echo "---------------------------"
+          fi
           echo "Check logs at: https://huggingface.co/spaces/$SPACE_ID"
           exit 1
           ;;
