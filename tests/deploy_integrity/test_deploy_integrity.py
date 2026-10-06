@@ -106,7 +106,7 @@ def test_chainlit_markdown_links_exist():
     content = chainlit_md_path.read_text()
     
     # Match local links starting with /public/docs/
-    # e.g., [BCGEU 19th Main Agreement](/public/docs/BCGEU_19th_Main_Agreement.pdf)
+    # e.g., [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)
     local_links = re.findall(r"\]\((/public/docs/[^\)]+)\)", content)
     
     public_docs_root = REPO_ROOT / "app" / "public" / "docs"
@@ -120,6 +120,31 @@ def test_chainlit_markdown_links_exist():
         
         assert target_file.exists(), \
             f"Broken Link in chainlit.md: The asset '{link}' was linked, but '{target_file}' does not exist on disk."
+
+
+def test_chainlit_markdown_matches_generated():
+    """Ensures chainlit.md is in sync with the dynamically generated markdown from manifest/data."""
+    import sys
+    scripts_dir = REPO_ROOT / "app" / "scripts"
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+    from generate_knowledge_base import generate_knowledge_base_markdown
+
+    data_dir = REPO_ROOT / "app" / "data"
+    public_docs_dir = REPO_ROOT / "app" / "public" / "docs"
+    chainlit_md_path = REPO_ROOT / "app" / "chainlit.md"
+
+    expected = generate_knowledge_base_markdown(
+        data_dir=data_dir,
+        public_docs_dir=public_docs_dir,
+        create_public_files=False,
+    )
+    actual = chainlit_md_path.read_text(encoding="utf-8")
+
+    assert actual == expected, (
+        "chainlit.md is out of sync with manifest/sources. "
+        "Run `python app/scripts/generate_knowledge_base.py` to regenerate."
+    )
 
 
 def test_manifest_source_files_exist():
@@ -141,6 +166,35 @@ def test_manifest_source_files_exist():
         target_file = data_root / relative_path_str
         assert target_file.exists(), \
             f"Missing indexed resource: Source file '{relative_path_str}' is listed in manifest.json, but '{target_file}' does not exist on disk."
+
+
+def test_primary_authority_20th_agreement_present():
+    """Guards our primary collective agreement against accidental deletion or de-indexing."""
+    import json
+    manifest_path = REPO_ROOT / "app" / "data" / "manifest.json"
+    assert manifest_path.exists(), f"Missing manifest at {manifest_path}"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    # 1. Assert present in indexed corpus
+    sources = manifest.get("sources", {})
+    assert "01_primary/BCGEU_20th_Main_Agreement.md" in sources, (
+        "BCGEU_20th_Main_Agreement.md missing from data/manifest.json sources"
+    )
+
+    # 2. Assert source file exists and has substantive content
+    source_file = REPO_ROOT / "app" / "data" / "01_primary" / "BCGEU_20th_Main_Agreement.md"
+    assert source_file.is_file(), f"Source file does not exist: {source_file}"
+    assert source_file.stat().st_size > 100_000, (
+        f"Source file {source_file} unexpectedly small: {source_file.stat().st_size} bytes"
+    )
+
+    # 3. Assert published in drawer and public docs
+    chainlit_md = (REPO_ROOT / "app" / "chainlit.md").read_text(encoding="utf-8")
+    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)" in chainlit_md, (
+        "BCGEU 20th Main Agreement link missing from app/chainlit.md"
+    )
+    public_file = REPO_ROOT / "app" / "public" / "docs" / "BCGEU_20th_Main_Agreement.md"
+    assert public_file.is_file(), f"Published public document missing: {public_file}"
 
 
 def test_default_model_alignment_with_spec():

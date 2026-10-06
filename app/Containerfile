@@ -90,6 +90,9 @@ COPY prompts/ ./prompts/
 COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 
+# Regenerate Knowledge Base drawer markdown from active sources
+RUN python scripts/generate_knowledge_base.py
+
 # Prepare directories for local testing and Chainlit runtime with non-root ownership
 RUN mkdir -p /app/reports /app/.pytest_cache /hf_cache /app/.files /data/cache /data/sources && \
     chown -R 1000:1000 /app/reports /app/.pytest_cache /app/.files /data /app/.chainlit

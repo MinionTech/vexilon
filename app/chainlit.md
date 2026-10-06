@@ -8,7 +8,7 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 
 ### Primary Authority
 
-* [BCGEU 19th Main Agreement](/public/docs/BCGEU_19th_Main_Agreement.pdf)
+* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)
 
 ### Legislation & Regulations
 
@@ -24,6 +24,8 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 * [Gov BC Standards of Conduct](/public/docs/Gov_BC_Standards_of_Conduct.pdf)
 * [BC Social Media Guidance for Public Service Employees](/public/docs/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf)
 * [BCGEU Steward Resources](/public/docs/BCGEU_Steward_Resources.pdf)
+* [BC Criminal Notification Procedures](/public/docs/BC_Criminal_Notification_Procedures.md)
+* [Gov BC Social Media Guidelines for Personal Use](/public/docs/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md)
 
 ### Forms
 

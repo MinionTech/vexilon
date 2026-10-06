@@ -34,7 +34,7 @@ sources:
   type: html_selector
   selector: '#body'
   category: resources
-  content_hash: 9b47fe9d83c8089a13634fbc75767ba96571f585ad34dc96d7a54e2982ef2301
+  content_hash: 36bc059cf22b32f000257680dfb900fca04303bd3597db39c797673fbeeaf121
   last_synced: '2026-09-27'
 - path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
   url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct

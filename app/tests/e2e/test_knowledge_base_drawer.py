@@ -10,8 +10,8 @@ from playwright.sync_api import Page, expect
 
 from helpers import open_knowledge_base_drawer
 
-# chainlit.md renders 19 drawer links with Chainlit's text-primary class.
-EXPECTED_DRAWER_PRIMARY_LINKS = 19
+# chainlit.md renders 21 drawer links with Chainlit's text-primary class.
+EXPECTED_DRAWER_PRIMARY_LINKS = 21
 
 
 def test_knowledge_base_drawer_opens_with_expected_sections(page: Page, app_url: str):
@@ -32,7 +32,7 @@ def test_knowledge_base_drawer_contains_document_links(page: Page, app_url: str)
 
     dialog = open_knowledge_base_drawer(page)
 
-    expect(dialog.get_by_role("link", name="BCGEU 19th Main Agreement")).to_be_visible()
+    expect(dialog.get_by_role("link", name="BCGEU 20th Main Agreement")).to_be_visible()
     expect(dialog.get_by_role("link", name="Privacy Policy")).to_be_visible()
     expect(dialog.get_by_role("link", name="BC Labour Relations Code")).to_be_visible()
 
