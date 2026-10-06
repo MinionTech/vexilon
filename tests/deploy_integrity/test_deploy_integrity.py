@@ -168,6 +168,35 @@ def test_manifest_source_files_exist():
             f"Missing indexed resource: Source file '{relative_path_str}' is listed in manifest.json, but '{target_file}' does not exist on disk."
 
 
+def test_primary_authority_20th_agreement_present():
+    """Guards our primary collective agreement against accidental deletion or de-indexing."""
+    import json
+    manifest_path = REPO_ROOT / "app" / "data" / "manifest.json"
+    assert manifest_path.exists(), f"Missing manifest at {manifest_path}"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    # 1. Assert present in indexed corpus
+    sources = manifest.get("sources", {})
+    assert "01_primary/BCGEU_20th_Main_Agreement.md" in sources, (
+        "BCGEU_20th_Main_Agreement.md missing from data/manifest.json sources"
+    )
+
+    # 2. Assert source file exists and has substantive content
+    source_file = REPO_ROOT / "app" / "data" / "01_primary" / "BCGEU_20th_Main_Agreement.md"
+    assert source_file.is_file(), f"Source file does not exist: {source_file}"
+    assert source_file.stat().st_size > 100_000, (
+        f"Source file {source_file} unexpectedly small: {source_file.stat().st_size} bytes"
+    )
+
+    # 3. Assert published in drawer and public docs
+    chainlit_md = (REPO_ROOT / "app" / "chainlit.md").read_text(encoding="utf-8")
+    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)" in chainlit_md, (
+        "BCGEU 20th Main Agreement link missing from app/chainlit.md"
+    )
+    public_file = REPO_ROOT / "app" / "public" / "docs" / "BCGEU_20th_Main_Agreement.md"
+    assert public_file.is_file(), f"Published public document missing: {public_file}"
+
+
 def test_default_model_alignment_with_spec():
     """Ensures that the default Hugging Face model in the code matches the flagship model in SPEC.md."""
     config_path = REPO_ROOT / "app" / "core" / "config.py"
