@@ -53,7 +53,7 @@ def test_resolve_document_link_forms_pdf(tmp_path):
     assert link == "/public/docs/forms/Grievance_-_0_-_Instructions.pdf"
 
 
-def test_resolve_document_link_creates_symlink_for_markdown(tmp_path):
+def test_resolve_document_link_copies_file_and_preserves_suffix(tmp_path):
     public_docs = tmp_path / "public" / "docs"
     public_docs.mkdir(parents=True)
     data_dir = tmp_path / "data" / "01_primary"
@@ -67,12 +67,23 @@ def test_resolve_document_link_creates_symlink_for_markdown(tmp_path):
         "01_primary/BCGEU_20th_Main_Agreement.md",
         public_docs,
         tmp_path / "data",
-        create_symlinks=True,
+        create_public_files=True,
     )
     assert link == "/public/docs/BCGEU_20th_Main_Agreement.md"
-    symlink_target = public_docs / "BCGEU_20th_Main_Agreement.md"
-    assert symlink_target.exists()
-    assert symlink_target.is_symlink()
+    published_target = public_docs / "BCGEU_20th_Main_Agreement.md"
+    assert published_target.exists()
+    assert not published_target.is_symlink()
+    assert published_target.read_text(encoding="utf-8") == "# 20th Agreement"
+
+
+def test_resolve_document_link_returns_none_when_unresolvable(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(parents=True)
+
+    link = resolve_document_link("Nonexistent_Document", None, public_docs, data_dir)
+    assert link is None
 
 
 def test_generate_knowledge_base_markdown_structure(tmp_path):
@@ -98,6 +109,18 @@ def test_generate_knowledge_base_markdown_structure(tmp_path):
     assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)" in content
 
 
+def test_generate_knowledge_base_manifest_corrupt_raises(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    data_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+
+    (data_dir / "manifest.json").write_text("{ corrupt json", encoding="utf-8")
+
+    with pytest.raises(json.JSONDecodeError):
+        generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
+
+
 def test_update_knowledge_base_files_dry_run(tmp_path):
     data_dir = tmp_path / "data"
     public_docs = tmp_path / "public" / "docs"
@@ -117,6 +140,47 @@ def test_update_knowledge_base_files_dry_run(tmp_path):
     assert update_knowledge_base_files(data_dir, public_docs, app_root, dry_run=True)
 
 
-def test_main_cli_check_flag(monkeypatch):
+def test_update_knowledge_base_files_broken_symlink_recovery(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    app_root = tmp_path / "app"
+    data_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+    app_root.mkdir(parents=True)
+
+    manifest = {"version": "1.0", "sources": {}}
+    (data_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    # Create dangling symlink
+    dangling = app_root / "chainlit_en-US.md"
+    dangling.symlink_to("nonexistent.md")
+
+    update_knowledge_base_files(data_dir, public_docs, app_root, dry_run=False)
+    assert dangling.exists()
+    assert dangling.is_symlink()
+    assert dangling.resolve() == (app_root / "chainlit.md").resolve()
+
+
+def test_main_cli_check_flag(tmp_path, monkeypatch):
+    app_root = tmp_path / "app"
+    data_dir = app_root / "data"
+    public_docs = app_root / "public" / "docs"
+    data_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+
+    manifest = {"version": "1.0", "sources": {}}
+    (data_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    import scripts.generate_knowledge_base as gen_mod
+    monkeypatch.setattr(gen_mod, "_APP_ROOT", app_root)
+
+    # When out of sync -> returns 1
+    with patch("sys.argv", ["generate_knowledge_base.py", "--check"]):
+        assert main() == 1
+
+    # Update files
+    update_knowledge_base_files(data_dir, public_docs, app_root, dry_run=False)
+
+    # When in sync -> returns 0
     with patch("sys.argv", ["generate_knowledge_base.py", "--check"]):
         assert main() == 0

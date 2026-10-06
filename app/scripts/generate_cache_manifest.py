@@ -83,11 +83,11 @@ def generate_manifest(
 
     # Regenerate Knowledge Base drawer markdown
     try:
+        from scripts.generate_knowledge_base import update_knowledge_base_files
+    except ImportError:
         from generate_knowledge_base import update_knowledge_base_files
-        update_knowledge_base_files(data_dir=data_dir)
-    except Exception as e:
-        # Gracefully handle isolated runtimes where public/docs or dependencies are absent
-        pass
+
+    update_knowledge_base_files(data_dir=data_dir)
 
     return manifest
 

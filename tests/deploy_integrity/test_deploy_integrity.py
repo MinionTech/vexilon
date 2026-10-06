@@ -137,7 +137,7 @@ def test_chainlit_markdown_matches_generated():
     expected = generate_knowledge_base_markdown(
         data_dir=data_dir,
         public_docs_dir=public_docs_dir,
-        create_symlinks=False,
+        create_public_files=False,
     )
     actual = chainlit_md_path.read_text(encoding="utf-8")
 

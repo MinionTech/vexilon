@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -78,12 +79,14 @@ def resolve_document_link(
     source_rel_path: str | None,
     public_docs_dir: Path,
     data_dir: Path,
-    create_symlinks: bool = True,
-) -> str:
+    create_public_files: bool = True,
+) -> str | None:
     """Resolve the best public URL for a document.
 
     Prefers PDF in public/docs, falls back to MD in public/docs.
-    If only MD exists in data_dir, creates a relative symlink in public_docs_dir.
+    If only a file exists in data_dir, publishes a copy inside public_docs_dir
+    so Chainlit can serve it without path-traversal restrictions.
+    Returns None if no matching asset can be found.
     """
     # 1. Check for exact PDF in public/docs
     exact_pdf = public_docs_dir / f"{base_stem}.pdf"
@@ -105,29 +108,36 @@ def resolve_document_link(
     if exact_md.exists():
         return f"/public/docs/{base_stem}.md"
 
-    # 5. If source file exists in data_dir, ensure symlink in public_docs_dir
+    # 5. If source file exists in data_dir, copy to public_docs_dir (preserving extension)
     if source_rel_path:
         source_file = data_dir / source_rel_path
         if source_file.exists():
-            target_symlink = public_docs_dir / f"{base_stem}.md"
-            if create_symlinks and not target_symlink.exists():
-                try:
-                    rel_target = os.path.relpath(source_file, public_docs_dir)
-                    target_symlink.symlink_to(rel_target)
-                    logger.info(f"Created symlink: {target_symlink} -> {rel_target}")
-                except Exception as e:
-                    logger.warning(f"Could not create symlink {target_symlink}: {e}")
-            return f"/public/docs/{base_stem}.md"
+            suffix = source_file.suffix or ".md"
+            target_file = public_docs_dir / f"{base_stem}{suffix}"
+            if create_public_files:
+                target_file.parent.mkdir(parents=True, exist_ok=True)
+                if not target_file.exists() or target_file.stat().st_mtime < source_file.stat().st_mtime:
+                    try:
+                        shutil.copy2(source_file, target_file)
+                        logger.info(f"Published document: {target_file}")
+                    except Exception as e:
+                        logger.error(f"Could not copy {source_file} to {target_file}: {e}")
+                        raise
+            return f"/public/docs/{target_file.name}"
 
-    return f"/public/docs/{base_stem}.md"
+    logger.warning(f"Could not resolve any document for stem: {base_stem}")
+    return None
 
 
 def generate_knowledge_base_markdown(
     data_dir: Path | None = None,
     public_docs_dir: Path | None = None,
-    create_symlinks: bool = True,
+    create_public_files: bool = True,
+    create_symlinks: bool | None = None,
 ) -> str:
     """Generate the full chainlit.md content based on active manifest and public documents."""
+    if create_symlinks is not None:
+        create_public_files = create_symlinks
     data_dir = data_dir or _APP_ROOT / "data"
     public_docs_dir = public_docs_dir or _APP_ROOT / "public" / "docs"
 
@@ -135,15 +145,11 @@ def generate_knowledge_base_markdown(
     sources_dict: dict[str, dict] = {}
 
     if manifest_path.exists():
-        try:
-            with open(manifest_path, encoding="utf-8") as f:
-                data = json.load(f)
-                sources_dict = data.get("sources", {})
-        except Exception as e:
-            logger.warning(f"Failed to load manifest.json: {e}")
-
-    # Fallback to scanning data_dir if manifest empty
-    if not sources_dict:
+        with open(manifest_path, encoding="utf-8") as f:
+            data = json.load(f)
+            sources_dict = data.get("sources", {})
+    else:
+        # Fallback to scanning data_dir only if manifest.json does not exist
         fixtures_dir = data_dir / "test_fixtures"
         for p in data_dir.rglob("*.md"):
             if not p.is_relative_to(fixtures_dir) and not p.name.endswith(".integrity.md"):
@@ -164,22 +170,22 @@ def generate_knowledge_base_markdown(
 
         if "01_primary" in parts:
             if "main_agreement" in stem.lower():
-                primary_authorities[base_stem] = rel_path
+                primary_authorities.setdefault(base_stem, rel_path)
             else:
-                policy_items[base_stem] = rel_path
+                policy_items.setdefault(base_stem, rel_path)
         elif "02_statutory" in parts:
-            statutory_items[base_stem] = rel_path
+            statutory_items.setdefault(base_stem, rel_path)
         elif "03_resources" in parts or "04_jurisprudence" in parts:
-            policy_items[base_stem] = rel_path
+            policy_items.setdefault(base_stem, rel_path)
         elif "forms" in parts:
-            form_items[base_stem] = rel_path
+            form_items.setdefault(base_stem, rel_path)
 
     # Also scan public_docs_dir / forms for static form PDFs
     forms_dir = public_docs_dir / "forms"
     if forms_dir.exists():
         for f in forms_dir.glob("*"):
             if f.suffix.lower() in (".pdf", ".md"):
-                form_items[f.stem] = f"forms/{f.name}"
+                form_items.setdefault(f.stem, f"forms/{f.name}")
 
     sections = [PREAMBLE.strip()]
 
@@ -191,45 +197,54 @@ def generate_knowledge_base_markdown(
         key=lambda s: (0 if "20th" in s else 1, s),
     )
     for stem in sorted_primary:
-        title = clean_title_from_stem(stem)
-        link = resolve_document_link(stem, primary_authorities.get(stem), public_docs_dir, data_dir, create_symlinks)
-        sections.append(f"* [{title}]({link})")
+        link = resolve_document_link(
+            stem, primary_authorities.get(stem), public_docs_dir, data_dir, create_public_files
+        )
+        if link:
+            title = clean_title_from_stem(stem)
+            sections.append(f"* [{title}]({link})")
 
     # 2. Legislation & Regulations
     sections.append("\n### Legislation & Regulations\n")
     sorted_statutory = sorted(
         statutory_items.keys(),
-        key=lambda s: STATUTORY_ORDER.index(s) if s in STATUTORY_ORDER else len(STATUTORY_ORDER),
+        key=lambda s: (0, STATUTORY_ORDER.index(s)) if s in STATUTORY_ORDER else (1, s),
     )
     for stem in sorted_statutory:
-        title = clean_title_from_stem(stem)
-        link = resolve_document_link(stem, statutory_items.get(stem), public_docs_dir, data_dir, create_symlinks)
-        sections.append(f"* [{title}]({link})")
+        link = resolve_document_link(
+            stem, statutory_items.get(stem), public_docs_dir, data_dir, create_public_files
+        )
+        if link:
+            title = clean_title_from_stem(stem)
+            sections.append(f"* [{title}]({link})")
 
     # 3. Policy & Jurisprudence
     sections.append("\n### Policy & Jurisprudence\n")
-    # Keep canonical curated policy items
     sorted_policy = sorted(
         policy_items.keys(),
-        key=lambda s: POLICY_ORDER.index(s) if s in POLICY_ORDER else len(POLICY_ORDER),
+        key=lambda s: (0, POLICY_ORDER.index(s)) if s in POLICY_ORDER else (1, s),
     )
-    # Include only items in POLICY_ORDER to prevent cluttering drawer with granular sub-rules
-    curated_policy = [s for s in sorted_policy if s in POLICY_ORDER]
-    for stem in curated_policy:
-        title = clean_title_from_stem(stem)
-        link = resolve_document_link(stem, policy_items.get(stem), public_docs_dir, data_dir, create_symlinks)
-        sections.append(f"* [{title}]({link})")
+    for stem in sorted_policy:
+        link = resolve_document_link(
+            stem, policy_items.get(stem), public_docs_dir, data_dir, create_public_files
+        )
+        if link:
+            title = clean_title_from_stem(stem)
+            sections.append(f"* [{title}]({link})")
 
     # 4. Forms
     sections.append("\n### Forms\n")
     sorted_forms = sorted(
         form_items.keys(),
-        key=lambda s: FORMS_ORDER.index(s) if s in FORMS_ORDER else len(FORMS_ORDER),
+        key=lambda s: (0, FORMS_ORDER.index(s)) if s in FORMS_ORDER else (1, s),
     )
     for stem in sorted_forms:
-        title = clean_title_from_stem(stem)
-        link = resolve_document_link(stem, form_items.get(stem), public_docs_dir, data_dir, create_symlinks)
-        sections.append(f"* [{title}]({link})")
+        link = resolve_document_link(
+            stem, form_items.get(stem), public_docs_dir, data_dir, create_public_files
+        )
+        if link:
+            title = clean_title_from_stem(stem)
+            sections.append(f"* [{title}]({link})")
 
     sections.append("")
     return "\n".join(sections)
@@ -249,7 +264,7 @@ def update_knowledge_base_files(
     content = generate_knowledge_base_markdown(
         data_dir=data_dir,
         public_docs_dir=public_docs_dir,
-        create_symlinks=not dry_run,
+        create_public_files=not dry_run,
     )
 
     if dry_run:
@@ -257,10 +272,17 @@ def update_knowledge_base_files(
         return existing == content
 
     chainlit_md.write_text(content, encoding="utf-8")
-    if chainlit_en_md.exists() and not chainlit_en_md.is_symlink():
+
+    # Handle chainlit_en-US.md symlink or regular file safely
+    if os.path.islink(chainlit_en_md):
+        if not chainlit_en_md.exists():
+            chainlit_en_md.unlink(missing_ok=True)
+            chainlit_en_md.symlink_to("chainlit.md")
+    elif chainlit_en_md.exists():
         chainlit_en_md.write_text(content, encoding="utf-8")
-    elif not chainlit_en_md.exists():
+    else:
         chainlit_en_md.symlink_to("chainlit.md")
+
     logger.info(f"Updated {chainlit_md}")
     return True
 

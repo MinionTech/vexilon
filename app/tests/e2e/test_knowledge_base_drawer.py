@@ -10,8 +10,8 @@ from playwright.sync_api import Page, expect
 
 from helpers import open_knowledge_base_drawer
 
-# chainlit.md renders 19 drawer links with Chainlit's text-primary class.
-EXPECTED_DRAWER_PRIMARY_LINKS = 19
+# chainlit.md renders 21 drawer links with Chainlit's text-primary class.
+EXPECTED_DRAWER_PRIMARY_LINKS = 21
 
 
 def test_knowledge_base_drawer_opens_with_expected_sections(page: Page, app_url: str):
