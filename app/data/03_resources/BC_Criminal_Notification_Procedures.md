@@ -6,9 +6,9 @@
 
 ## On this page
 
-- [Employee responsibility](#employee)
-- [Role of the Personnel Security Screening Office](#roleof)
-- [Assessing relevance](#accessing)
+- [Employee responsibility](#employee-responsibility)
+- [Role of the Personnel Security Screening Office](#role-of-the-personnel-security-screening-office)
+- [Assessing relevance](#assessing-relevance)
 
 ## Employee responsibility
 

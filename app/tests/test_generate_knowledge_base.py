@@ -76,6 +76,37 @@ def test_resolve_document_link_copies_file_and_preserves_suffix(tmp_path):
     assert published_target.read_text(encoding="utf-8") == "# 20th Agreement"
 
 
+def test_resolve_document_link_refreshes_stale_markdown(tmp_path):
+    import os
+    import time
+
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+
+    source_file = data_dir / "Test_Doc.md"
+    source_file.write_text("# Initial Content", encoding="utf-8")
+
+    published_file = public_docs / "Test_Doc.md"
+    published_file.write_text("# Initial Content", encoding="utf-8")
+
+    # Update source with newer content and explicit future mtime
+    source_file.write_text("# Updated Content", encoding="utf-8")
+    future_time = time.time() + 10
+    os.utime(source_file, (future_time, future_time))
+
+    link = resolve_document_link(
+        "Test_Doc",
+        "01_primary/Test_Doc.md",
+        public_docs,
+        tmp_path / "data",
+        create_public_files=True,
+    )
+    assert link == "/public/docs/Test_Doc.md"
+    assert published_file.read_text(encoding="utf-8") == "# Updated Content"
+
+
 def test_resolve_document_link_returns_none_when_unresolvable(tmp_path):
     public_docs = tmp_path / "public" / "docs"
     public_docs.mkdir(parents=True)

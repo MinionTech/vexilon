@@ -103,12 +103,7 @@ def resolve_document_link(
     if forms_md.exists():
         return f"/public/docs/forms/{base_stem}.md"
 
-    # 4. Check for MD in public/docs
-    exact_md = public_docs_dir / f"{base_stem}.md"
-    if exact_md.exists():
-        return f"/public/docs/{base_stem}.md"
-
-    # 5. If source file exists in data_dir, copy to public_docs_dir (preserving extension)
+    # 4. Check manifest source file in data_dir and ensure public target is up-to-date
     if source_rel_path:
         source_file = data_dir / source_rel_path
         if source_file.exists():
@@ -123,7 +118,13 @@ def resolve_document_link(
                     except Exception as e:
                         logger.error(f"Could not copy {source_file} to {target_file}: {e}")
                         raise
-            return f"/public/docs/{target_file.name}"
+            if target_file.exists() or not create_public_files:
+                return f"/public/docs/{target_file.name}"
+
+    # 5. Check for standalone MD in public/docs
+    exact_md = public_docs_dir / f"{base_stem}.md"
+    if exact_md.exists():
+        return f"/public/docs/{base_stem}.md"
 
     logger.warning(f"Could not resolve any document for stem: {base_stem}")
     return None
