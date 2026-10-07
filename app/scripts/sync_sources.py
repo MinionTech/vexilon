@@ -947,7 +947,7 @@ def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
 
 def _is_valid_pdf_payload(raw_bytes: Any) -> bool:
     """True when payload is non-empty bytes beginning with PDF magic bytes."""
-    return isinstance(raw_bytes, bytes) and len(raw_bytes) >= 5 and raw_bytes.startswith(b"%PDF-")
+    return isinstance(raw_bytes, bytes) and raw_bytes.startswith(b"%PDF-")
 
 
 def extraction_fingerprint(source: SourceEntry) -> str:
