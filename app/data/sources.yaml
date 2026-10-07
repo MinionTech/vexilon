@@ -5,7 +5,7 @@
 #   sources:
 #     - path: Relative path to markdown document within repo (e.g. app/data/03_resources/doc.md)
 #       url: Canonical upstream URL
-#       type: Ingestion parser strategy (html_selector | bclaws)
+#       type: Ingestion parser strategy (html_selector | bclaws | pdf)
 #       selector: CSS or container selector to isolate substantive content (e.g. '#body', '#civix-document');
 #                 a comma-separated list extracts each listed container in document order
 #       part: Optional part number (for example "2"). When set, keep only the text from that

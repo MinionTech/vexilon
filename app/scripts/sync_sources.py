@@ -928,6 +928,11 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
     local_file = repo_root / source.path
     if not local_file.is_file():
         return None
+    if source.type == "pdf":
+        try:
+            return hashlib.sha256(local_file.read_bytes()).hexdigest()
+        except OSError:
+            return None
     try:
         text = local_file.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -938,6 +943,11 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
 def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
     """True when the local file is still the body the stored validators describe."""
     return bool(source.content_hash) and local_hash is not None and local_hash == source.content_hash
+
+
+def _is_valid_pdf_payload(raw_bytes: Any) -> bool:
+    """True when payload is non-empty bytes beginning with PDF magic bytes."""
+    return isinstance(raw_bytes, bytes) and raw_bytes.startswith(b"%PDF-")
 
 
 def extraction_fingerprint(source: SourceEntry) -> str:
@@ -995,7 +1005,8 @@ def fetch_upstream(
     *,
     etag: str | None = None,
     upstream_last_modified: str | None = None,
-) -> tuple[str, dict[str, str]]:
+    is_binary: bool = False,
+) -> tuple[str | bytes, dict[str, str]]:
     """Fetch upstream content and response headers.
 
     Stored validators are sent as ``If-None-Match`` and ``If-Modified-Since``.
@@ -1004,7 +1015,7 @@ def fetch_upstream(
     """
     req_headers = {
         "User-Agent": USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml",
+        "Accept": "application/pdf,application/octet-stream,*/*" if is_binary else "text/html,application/xhtml+xml",
     }
     if etag:
         req_headers["If-None-Match"] = etag
@@ -1020,8 +1031,11 @@ def fetch_upstream(
         exc.close()
         raise NotModified(headers) from None
     with resp_ctx as resp:
-        content = resp.read().decode("utf-8", errors="replace")
         headers = _header_map(resp.headers)
+        if is_binary:
+            content: str | bytes = resp.read()
+        else:
+            content = resp.read().decode("utf-8", errors="replace")
         return content, headers
 
 
@@ -1139,23 +1153,40 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
     registry_hash = source.content_hash
 
     try:
-        raw_html, headers = fetch_upstream(
-            source.url, **_validators_for_intact_baseline(source, local_hash)
-        )
-        title, upstream_body = extract_content(
-            raw_html, source.type, source.selector, source.part
-        )
-        upstream_substantive = extract_substantive_body(upstream_body)
-        if not upstream_substantive:
-            return DriftResult(
-                path=source.path,
-                url=source.url,
-                status="ERROR",
-                local_hash=local_hash or registry_hash,
-                error="Upstream extraction produced no substantive content",
+        if source.type == "pdf":
+            raw_bytes, headers = fetch_upstream(
+                source.url,
+                **_validators_for_intact_baseline(source, local_hash),
+                is_binary=True,
             )
-        upstream_hash = compute_content_hash(upstream_substantive)
-        upstream_last_modified = headers.get("last-modified")
+            if not _is_valid_pdf_payload(raw_bytes):
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="ERROR",
+                    local_hash=local_hash or registry_hash,
+                    error="Upstream response is not a valid PDF payload",
+                )
+            upstream_hash = hashlib.sha256(raw_bytes).hexdigest()
+            upstream_last_modified = headers.get("last-modified")
+        else:
+            raw_html, headers = fetch_upstream(
+                source.url, **_validators_for_intact_baseline(source, local_hash)
+            )
+            title, upstream_body = extract_content(
+                raw_html, source.type, source.selector, source.part
+            )
+            upstream_substantive = extract_substantive_body(upstream_body)
+            if not upstream_substantive:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="ERROR",
+                    local_hash=local_hash or registry_hash,
+                    error="Upstream extraction produced no substantive content",
+                )
+            upstream_hash = compute_content_hash(upstream_substantive)
+            upstream_last_modified = headers.get("last-modified")
 
         if registry_hash and upstream_hash != registry_hash:
             return DriftResult(
@@ -1247,6 +1278,42 @@ def sync_source(
     """
     target_path = repo_root / source.path
     local_hash = _local_substantive_hash(source, repo_root)
+
+    if source.type == "pdf":
+        try:
+            try:
+                raw_bytes, headers = fetch_upstream(
+                    source.url,
+                    **_validators_for_intact_baseline(source, local_hash),
+                    is_binary=True,
+                )
+            except NotModified:
+                logger.info(f"Not modified {source.path}; skipped download")
+                return True, NOT_MODIFIED_DETAIL
+
+            if not _is_valid_pdf_payload(raw_bytes):
+                logger.error(f"Upstream did not return a valid PDF: {source.url}")
+                return False, "Upstream response is not a valid PDF payload"
+
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            new_hash = hashlib.sha256(raw_bytes).hexdigest()
+
+            if not dry_run:
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                target_path.write_bytes(raw_bytes)
+                source.content_hash = new_hash
+                source.last_synced = today
+                source.extraction_fingerprint = extraction_fingerprint(source)
+                _store_validators(source, headers)
+                logger.info(f"Updated {source.path} (hash: {new_hash[:8]})")
+            else:
+                logger.info(f"[DRY-RUN] Would write {source.path} (hash: {new_hash[:8]})")
+
+            return True, new_hash
+        except Exception as e:
+            logger.error(f"Failed to sync {source.url}: {e}", exc_info=True)
+            return False, str(e)
+
     try:
         try:
             raw_html, headers = fetch_upstream(
