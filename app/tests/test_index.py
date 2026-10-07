@@ -133,14 +133,20 @@ def test_get_document_tier_weight():
 
 
 def test_get_document_tier_weight_driven_by_registry(monkeypatch):
-    """Ensure category from registry dynamically drives tier weight."""
+    """Ensure category from registry dynamically drives tier weight without loose substring matching."""
     indexing.get_document_tier_weight.cache_clear()
     monkeypatch.setattr(
         indexing,
         "_get_registry_category_map",
         lambda: {"custom_ethics_policy.md": "conduct", "custom_ethics_policy": "conduct"},
     )
+    # Exact stem / path match
     assert indexing.get_document_tier_weight("Custom Policy", "03_resources/custom_ethics_policy.md") == 1.2
+    # Normalized source name match
+    assert indexing.get_document_tier_weight("Custom Ethics Policy", "") == 1.2
+    # Distinct document with prefix should NOT match via substring or inherit Tier 1 boost
+    assert indexing.get_document_tier_weight("Custom Ethics Policy Review", "04_jurisprudence/custom_ethics_policy_review.md") == 1.0
+    assert indexing.get_document_tier_weight("Custom Ethics Policy Review", "03_resources/custom_ethics_policy_review.md") != 1.2
     indexing.get_document_tier_weight.cache_clear()
 
 

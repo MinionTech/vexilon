@@ -399,27 +399,32 @@ _REGISTRY_CATEGORY_CACHE: dict[str, str] | None = None
 def _get_registry_category_map() -> dict[str, str]:
     global _REGISTRY_CATEGORY_CACHE
     if _REGISTRY_CATEGORY_CACHE is None:
-        _REGISTRY_CATEGORY_CACHE = {}
         sources_path = _PKG_ROOT / "data" / "sources.yaml"
-        if sources_path.exists():
-            try:
-                import yaml
-                data = yaml.safe_load(sources_path.read_text(encoding="utf-8")) or {}
-                raw_sources = data.get("sources")
-                if raw_sources is None:
-                    raw_sources = []
-                    raw_sources.extend(data.get("public_sources", []))
-                    raw_sources.extend(data.get("manual_sources", []))
-                for s in raw_sources:
-                    cat = s.get("category", "")
-                    p = s.get("path", "")
-                    if p and cat:
-                        p_norm = p.replace("\\", "/").lower()
-                        _REGISTRY_CATEGORY_CACHE[p_norm] = cat.lower()
-                        stem = Path(p).stem.lower()
-                        _REGISTRY_CATEGORY_CACHE[stem] = cat.lower()
-            except Exception:
-                pass
+        if not sources_path.exists():
+            _REGISTRY_CATEGORY_CACHE = {}
+            return _REGISTRY_CATEGORY_CACHE
+        try:
+            import yaml
+            data = yaml.safe_load(sources_path.read_text(encoding="utf-8")) or {}
+            raw_sources = data.get("sources")
+            if raw_sources is None:
+                raw_sources = []
+                raw_sources.extend(data.get("public_sources", []))
+                raw_sources.extend(data.get("manual_sources", []))
+            cache: dict[str, str] = {}
+            for s in raw_sources:
+                cat = s.get("category", "")
+                p = s.get("path", "")
+                if p and cat:
+                    p_norm = p.replace("\\", "/").lower()
+                    cache[p_norm] = cat.lower()
+                    stem = Path(p_norm).stem.lower()
+                    cache[stem] = cat.lower()
+                    cache[stem.replace("_", " ")] = cat.lower()
+            _REGISTRY_CATEGORY_CACHE = cache
+        except Exception as e:
+            logger.error("Failed to load registry category map from %s: %s", sources_path, e)
+            return {}
     return _REGISTRY_CATEGORY_CACHE
 
 
@@ -438,12 +443,13 @@ def get_document_tier_weight(source_name: str, path: str = "") -> float:
 
     # Check category from sources.yaml
     cat_map = _get_registry_category_map()
-    cat = cat_map.get(path_lower) or cat_map.get(stem) or cat_map.get(source_lower)
-    if not cat:
-        for k, v in cat_map.items():
-            if (path_lower and k in path_lower) or (source_lower and k in source_lower):
-                cat = v
-                break
+    cat = (
+        cat_map.get(path_lower)
+        or cat_map.get(stem)
+        or cat_map.get(source_lower)
+        or cat_map.get(source_lower.replace(" ", "_"))
+        or cat_map.get(source_lower.replace("_", " "))
+    )
 
     if cat in ("agreement", "conduct"):
         return TIER1_BOOST
