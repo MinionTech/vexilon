@@ -1443,9 +1443,10 @@ def format_drift_alert_markdown(results: list[DriftResult]) -> str:
         "",
         "### Steward Action Required",
         "1. Review the upstream changes at the provided URLs.",
-        "2. Run `python app/scripts/sync_sources.py --sync` locally.",
+        "2. Run `(cd app && uv run python scripts/sync_sources.py --sync)` to update sources, manifest, and drawer navigation.",
         "3. Inspect the `git diff` to verify legal and substantive integrity.",
-        "4. Commit and push the candidate changes in a PR referencing this issue.",
+        "4. Run verification tests: `(cd app && uv run pytest tests/test_sync_sources.py tests/test_index.py tests/test_generate_knowledge_base.py ../tests/deploy_integrity/)`.",
+        "5. Commit and push the candidate changes in a PR referencing this issue.",
     ])
     return "\n".join(lines) + "\n"
 
@@ -1579,10 +1580,10 @@ def _run(args: argparse.Namespace) -> int:
 
         if not args.dry_run and wrote > 0:
             save_registry(config_path, registry)
-            logger.info("Regenerating manifest.json...")
+            logger.info("Regenerating manifest.json and knowledge base drawer...")
             data_dir = _APP_ROOT / "data"
             generate_manifest(data_dir=data_dir)
-            logger.info("Sync complete and manifest updated.")
+            logger.info("Sync complete: manifest and knowledge base drawer updated.")
 
         if entries and updated == 0:
             logger.error("All sources failed to sync.")

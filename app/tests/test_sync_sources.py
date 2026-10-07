@@ -854,7 +854,7 @@ def test_format_drift_alert_markdown():
     assert "| `app/data/02_statutory/BC_Labour_Relations_Code.md` | [BC_Labour_Relations_Code.md](https://example.com/lrc) | `abcdef12` | `789012ab` | Thu, 17 Sep 2026 14:00:00 GMT |" in alert_md
     assert "Gov_BC_Standards_of_Conduct.md" not in alert_md  # Only drifted docs should be listed
     assert "Steward Action Required" in alert_md
-    assert "python app/scripts/sync_sources.py --sync" in alert_md
+    assert "scripts/sync_sources.py --sync" in alert_md
 
 
 def test_html_content_extractor_input_tag_does_not_ratchet_ignore_depth():
@@ -2279,5 +2279,32 @@ def test_load_registry_manual_source_omits_url(tmp_path):
     assert len(entries) == 1
     assert entries[0].type == "manual"
     assert entries[0].url == ""
+
+
+@patch("scripts.sync_sources.generate_manifest")
+def test_sync_regenerates_manifest_and_drawer(mock_manifest, tmp_path, monkeypatch):
+    """--sync invokes generate_manifest for corpus data_dir (_APP_ROOT / 'data') when sources are written."""
+    config = tmp_path / "data" / "sources.yaml"
+    config.parent.mkdir(parents=True)
+    doc_file = tmp_path / "app/data/01_primary/Agreement.md"
+    doc_file.parent.mkdir(parents=True)
+    doc_file.write_text("# Agreement\n\nBody content.", encoding="utf-8")
+
+    config.write_text(
+        "sources:\n"
+        "  - path: app/data/01_primary/Agreement.md\n"
+        "    type: manual\n"
+        "    category: agreement\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(sync_sources, "_APP_ROOT", tmp_path / "app")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--sync"],
+    )
+
+    assert sync_sources.main() == 0
+    mock_manifest.assert_called_once_with(data_dir=tmp_path / "app" / "data")
 
 
