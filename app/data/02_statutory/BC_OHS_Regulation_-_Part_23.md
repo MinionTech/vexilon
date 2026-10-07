@@ -1,23 +1,23 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_19)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:47 GMT  
-**Ingestion Date:** 2026-09-27  
+**Upstream Last Modified:** Wed, 07 Oct 2026 03:05:07 GMT  
+**Ingestion Date:** 2026-10-07  
 
 B.C. Reg. 296/97
 Workers' Compensation Board Deposited September 8, 1997
 effective April 15, 1998
 
-**This consolidation is current to September 22, 2026.
+**This consolidation is current to September 29, 2026.
 See “Amendments Not in Force” and the
 [Cumulative B.C. Regulations Bulletin 2026](http://www.bclaws.ca/civix/document/id/regulationbulletin/regulationbulletin/2026cumulati) for
-amendments effective after September 22, 2026.**
+amendments effective after September 29, 2026.**
 
 ## Workers Compensation Act
 
 ## Occupational Health and Safety Regulation
 
-[Last amended April 1, 2026 by B.C. Reg. 229/2025]
+[Last amended October 1, 2026 by B.C. Reg. 39/2026]
 
 Part 23 — Oil and Gas
 
@@ -925,7 +925,7 @@ Drill Stem Testing, Swabbing, Cementing, Well Servicing and Stimulation
 
 (iv) the method of determining how frequently a type of part is to be replaced, including the basis for replacement;
 
-(b) preparing, updating and making readily available at the worksite an up-to-date document, relating to the inspections and testing referred to in paragraph (a), that identifies each part that has been inspected and tested, and sets out, for that part,
+(b) preparing, updating and making readily available at the worksite an up­to­date document, relating to the inspections and testing referred to in paragraph (a), that identifies each part that has been inspected and tested, and sets out, for that part,
 
 (i) the inspection and testing procedures followed,
 
