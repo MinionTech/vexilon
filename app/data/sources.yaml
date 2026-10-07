@@ -1,8 +1,8 @@
 # =============================================================================
 # Knowledge Base Document Registry (sources.yaml)
 # =============================================================================
-# Single source of truth for all documents ingested into the RAG vector store
-# and displayed in the Knowledge Base drawer.
+# Registry for documents managed by sync_sources.py, including fetched sources
+# and selected locally maintained sources.
 #
 # Categories (Hierarchy of Authority):
 #   - agreement: Negotiated collective agreements (e.g. BCGEU 20th Main Agreement)

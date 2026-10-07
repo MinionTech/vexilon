@@ -1059,7 +1059,7 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
         entries.append(
             SourceEntry(
                 path=s["path"],
-                url=s.get("url", ""),
+                url=s.get("url", "") if s.get("type", "html_selector") == "manual" else s["url"],
                 type=s.get("type", "html_selector"),
                 selector=s.get("selector"),
                 part=part,

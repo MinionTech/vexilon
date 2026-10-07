@@ -2252,3 +2252,32 @@ def test_sync_source_manual(tmp_path):
     assert entry.content_hash == expected_hash
 
 
+def test_load_registry_network_source_missing_url_raises(tmp_path):
+    """Network-backed source entries must require a url field."""
+    config_file = tmp_path / "sources.yaml"
+    config_file.write_text(
+        "sources:\n"
+        "  - path: app/data/02_statutory/doc.md\n"
+        "    type: html_selector\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KeyError):
+        load_registry(config_file)
+
+
+def test_load_registry_manual_source_omits_url(tmp_path):
+    """Manual source entries are permitted to omit the url field."""
+    config_file = tmp_path / "sources.yaml"
+    config_file.write_text(
+        "sources:\n"
+        "  - path: app/data/01_primary/doc.md\n"
+        "    type: manual\n"
+        "    category: agreement\n",
+        encoding="utf-8",
+    )
+    entries = load_registry(config_file)
+    assert len(entries) == 1
+    assert entries[0].type == "manual"
+    assert entries[0].url == ""
+
+
