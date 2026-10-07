@@ -29,17 +29,13 @@ Ingestion strategies:
 ### Ingestion Lifecycle Runbook
 1. Place source Markdown into `app/data/<tier_folder>/`.
 2. Register the entry in `app/data/sources.yaml` with `path`, `category`, and `type`.
-3. Compute baseline hash & sync manifest:
+3. Synchronize baseline hash, manifest, and Knowledge Base drawer:
    ```bash
    cd app && uv run python scripts/sync_sources.py --sync
    # For targeted sync:
    # cd app && uv run python scripts/sync_sources.py --sync --filter <name-substring>
    ```
-4. Regenerate Knowledge Base drawer navigation:
-   ```bash
-   cd app && uv run python scripts/generate_knowledge_base.py
-   ```
-5. Run test verification suite:
+4. Run test verification suite:
    ```bash
    cd app && pytest tests/test_sync_sources.py tests/test_index.py tests/test_generate_knowledge_base.py ../tests/deploy_integrity/
    ```

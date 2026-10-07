@@ -74,6 +74,5 @@ To prevent accidental regression and "downgrades" that frustrate the team, the f
   Every document addition or modification MUST complete the following sequence:
   1. **Stage**: Place Markdown in `app/data/01_primary/`, `02_statutory/`, `03_resources/`, `04_jurisprudence/`, or `forms/`.
   2. **Register**: Add the entry with `category` and `type` to `app/data/sources.yaml`.
-  3. **Baseline**: From `app/`, run `uv run python scripts/sync_sources.py --sync` (or targeted `--filter <name-substring>`) to update `manifest.json` and `content_hash`.
-  4. **Drawer Sync**: From `app/`, run `uv run python scripts/generate_knowledge_base.py` to regenerate `app/chainlit.md`.
-  5. **Verification**: From `app/`, run `pytest tests/test_sync_sources.py tests/test_index.py tests/test_generate_knowledge_base.py ../tests/deploy_integrity/`.
+  3. **Sync & Baseline**: From `app/`, run `uv run python scripts/sync_sources.py --sync` (or targeted `--filter <name-substring>`) to update `manifest.json`, `content_hash`, and automatically regenerate `app/chainlit.md`.
+  4. **Verification**: From `app/`, run `pytest tests/test_sync_sources.py tests/test_index.py tests/test_generate_knowledge_base.py ../tests/deploy_integrity/`.
