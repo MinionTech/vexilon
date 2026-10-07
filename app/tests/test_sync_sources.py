@@ -25,6 +25,7 @@ from scripts.sync_sources import (
     RegistryError,
     SelectorNotFoundError,
     SourceEntry,
+    _local_substantive_hash,
     check_source_drift,
     clean_bclaws_content,
     compute_content_hash,
@@ -2124,3 +2125,63 @@ def test_sync_source_pdf_writes_binary(mock_fetch, tmp_path):
     assert target.read_bytes() == pdf_bytes
     assert entry.content_hash == expected_hash
     assert entry.etag == '"abc"'
+
+
+def test_local_substantive_hash_pdf_oserror(monkeypatch, tmp_path):
+    """An unreadable local PDF returns None instead of raising OSError."""
+    doc_path = tmp_path / "app/public/docs/locked.pdf"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_bytes(b"%PDF-1.4 dummy")
+
+    def mock_read_bytes(self):
+        raise OSError("Permission denied")
+
+    monkeypatch.setattr(Path, "read_bytes", mock_read_bytes)
+    entry = SourceEntry(
+        path="app/public/docs/locked.pdf",
+        url="https://example.com/locked.pdf",
+        type="pdf",
+        category="primary",
+    )
+    assert _local_substantive_hash(entry, tmp_path) is None
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_source_drift_pdf_invalid_payload(mock_fetch, tmp_path):
+    """HTML error page returned for a PDF source reports ERROR instead of MATCH/DRIFT."""
+    entry = SourceEntry(
+        path="app/public/docs/contract.pdf",
+        url="https://example.com/contract.pdf",
+        type="pdf",
+        category="primary",
+        content_hash="abc",
+    )
+    mock_fetch.return_value = (b"<html><body>502 Bad Gateway</body></html>", {})
+
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "ERROR"
+    assert "not a valid PDF" in (res.error or "")
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_source_pdf_rejects_invalid_payload(mock_fetch, tmp_path):
+    """Syncing a non-PDF payload fails closed without replacing the local file."""
+    initial_bytes = b"%PDF-1.4 original valid contract"
+    doc_path = tmp_path / "app/public/docs/contract.pdf"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_bytes(initial_bytes)
+
+    entry = SourceEntry(
+        path="app/public/docs/contract.pdf",
+        url="https://example.com/contract.pdf",
+        type="pdf",
+        category="primary",
+        content_hash=hashlib.sha256(initial_bytes).hexdigest(),
+    )
+    mock_fetch.return_value = (b"<!DOCTYPE html><html>404 Not Found</html>", {})
+
+    success, error = sync_source(entry, tmp_path, dry_run=False)
+    assert success is False
+    assert "not a valid PDF" in error
+    assert doc_path.read_bytes() == initial_bytes
+

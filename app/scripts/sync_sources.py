@@ -929,7 +929,10 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
     if not local_file.is_file():
         return None
     if source.type == "pdf":
-        return hashlib.sha256(local_file.read_bytes()).hexdigest()
+        try:
+            return hashlib.sha256(local_file.read_bytes()).hexdigest()
+        except OSError:
+            return None
     try:
         text = local_file.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -940,6 +943,11 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
 def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
     """True when the local file is still the body the stored validators describe."""
     return bool(source.content_hash) and local_hash is not None and local_hash == source.content_hash
+
+
+def _is_valid_pdf_payload(raw_bytes: Any) -> bool:
+    """True when payload is non-empty bytes beginning with PDF magic bytes."""
+    return isinstance(raw_bytes, bytes) and len(raw_bytes) >= 5 and raw_bytes.startswith(b"%PDF-")
 
 
 def extraction_fingerprint(source: SourceEntry) -> str:
@@ -1151,66 +1159,34 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 **_validators_for_intact_baseline(source, local_hash),
                 is_binary=True,
             )
-            upstream_hash = hashlib.sha256(
-                raw_bytes if isinstance(raw_bytes, bytes) else raw_bytes.encode()
-            ).hexdigest()
+            if not _is_valid_pdf_payload(raw_bytes):
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="ERROR",
+                    local_hash=local_hash or registry_hash,
+                    error="Upstream response is not a valid PDF payload",
+                )
+            upstream_hash = hashlib.sha256(raw_bytes).hexdigest()
             upstream_last_modified = headers.get("last-modified")
-
-            if registry_hash and upstream_hash != registry_hash:
-                return DriftResult(
-                    path=source.path,
-                    url=source.url,
-                    status="DRIFT_DETECTED",
-                    local_hash=local_hash,
-                    upstream_hash=upstream_hash,
-                    upstream_last_modified=upstream_last_modified,
-                    error="Local file is absent" if local_hash is None else None,
-                )
-            elif local_hash is not None and upstream_hash != local_hash:
-                return DriftResult(
-                    path=source.path,
-                    url=source.url,
-                    status="DRIFT_DETECTED",
-                    local_hash=local_hash,
-                    upstream_hash=upstream_hash,
-                    upstream_last_modified=upstream_last_modified,
-                )
-            if local_hash is None and registry_hash:
-                return DriftResult(
-                    path=source.path,
-                    url=source.url,
-                    status="DRIFT_DETECTED",
-                    local_hash=None,
-                    upstream_hash=upstream_hash,
-                    upstream_last_modified=upstream_last_modified,
-                    error="Local file is absent",
-                )
-            return DriftResult(
-                path=source.path,
-                url=source.url,
-                status="MATCH",
-                local_hash=local_hash,
-                upstream_hash=upstream_hash,
-                upstream_last_modified=upstream_last_modified,
+        else:
+            raw_html, headers = fetch_upstream(
+                source.url, **_validators_for_intact_baseline(source, local_hash)
             )
-
-        raw_html, headers = fetch_upstream(
-            source.url, **_validators_for_intact_baseline(source, local_hash)
-        )
-        title, upstream_body = extract_content(
-            raw_html, source.type, source.selector, source.part
-        )
-        upstream_substantive = extract_substantive_body(upstream_body)
-        if not upstream_substantive:
-            return DriftResult(
-                path=source.path,
-                url=source.url,
-                status="ERROR",
-                local_hash=local_hash or registry_hash,
-                error="Upstream extraction produced no substantive content",
+            title, upstream_body = extract_content(
+                raw_html, source.type, source.selector, source.part
             )
-        upstream_hash = compute_content_hash(upstream_substantive)
-        upstream_last_modified = headers.get("last-modified")
+            upstream_substantive = extract_substantive_body(upstream_body)
+            if not upstream_substantive:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="ERROR",
+                    local_hash=local_hash or registry_hash,
+                    error="Upstream extraction produced no substantive content",
+                )
+            upstream_hash = compute_content_hash(upstream_substantive)
+            upstream_last_modified = headers.get("last-modified")
 
         if registry_hash and upstream_hash != registry_hash:
             return DriftResult(
@@ -1315,18 +1291,16 @@ def sync_source(
                 logger.info(f"Not modified {source.path}; skipped download")
                 return True, NOT_MODIFIED_DETAIL
 
-            upstream_last_modified = headers.get("last-modified")
+            if not _is_valid_pdf_payload(raw_bytes):
+                logger.error(f"Upstream did not return a valid PDF: {source.url}")
+                return False, "Upstream response is not a valid PDF payload"
+
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            new_hash = hashlib.sha256(
-                raw_bytes if isinstance(raw_bytes, bytes) else raw_bytes.encode()
-            ).hexdigest()
+            new_hash = hashlib.sha256(raw_bytes).hexdigest()
 
             if not dry_run:
                 target_path.parent.mkdir(parents=True, exist_ok=True)
-                if isinstance(raw_bytes, bytes):
-                    target_path.write_bytes(raw_bytes)
-                else:
-                    target_path.write_text(raw_bytes, encoding="utf-8")
+                target_path.write_bytes(raw_bytes)
                 source.content_hash = new_hash
                 source.last_synced = today
                 source.extraction_fingerprint = extraction_fingerprint(source)
