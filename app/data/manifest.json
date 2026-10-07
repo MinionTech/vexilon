@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06T00:23:39.106746+00:00",
+  "generated_at": "2026-10-07T03:05:02.960217+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_20th_Main_Agreement.md": {
@@ -31,139 +31,139 @@
       "size_bytes": 61701
     },
     "02_statutory/BC_OHS_Regulation_-_Part_01.md": {
-      "hash": "9d591244ab24115ba0f25c3d6d75979ac48f3ba182c4018a8c097b59eec56106",
+      "hash": "a4e81342b48aa04cb77eae1cfe7aa7d8b69e7d4135b349a849e9e651e036b77c",
       "size_bytes": 8029
     },
     "02_statutory/BC_OHS_Regulation_-_Part_02.md": {
-      "hash": "23be645b9121a17303c31e124c8c2b7a6356df295bffd4cf0146c3cf6da4cef5",
+      "hash": "393625f92f68d97d830a38201398426a97a5abdbf3afe4d6af5d7c75a7a5b17c",
       "size_bytes": 3341
     },
     "02_statutory/BC_OHS_Regulation_-_Part_03.md": {
-      "hash": "11c959664c96a3b6f4b0dd8db2eaa2a64a64abbd41143c94ddffe87eae1fc462",
+      "hash": "141ddafba39811c2427c8c48aff3a5f36e051b86db8d76d585d6798a3c00bccc",
       "size_bytes": 48417
     },
     "02_statutory/BC_OHS_Regulation_-_Part_04.md": {
-      "hash": "4ae00644835576cb4bdf044d4eedb8122b26f172bf7d379a0253b79039f3e9a2",
-      "size_bytes": 72923
+      "hash": "3346af4bcb170429535fbdc9b089947bd00cc285b7696d794fb59cd5ff9f8521",
+      "size_bytes": 72924
     },
     "02_statutory/BC_OHS_Regulation_-_Part_05.md": {
-      "hash": "889c74fce9b3c5ba991bcf2f93d075d55be50305234bb33e5eb49a98381eb155",
-      "size_bytes": 83420
+      "hash": "5cdff9336f59b1f8cc4ff397a59a4a97e2afe7d69e019e89e3d735904cbdb2fb",
+      "size_bytes": 83421
     },
     "02_statutory/BC_OHS_Regulation_-_Part_06.md": {
-      "hash": "94a25fa8a864aa366bd857a57b844a485996287224831dfdf33ac58b44477c58",
-      "size_bytes": 120596
+      "hash": "cbf65f4a3693ae88780eaf2469699f720c70e2c61ad9bc5644022c2bd4d69741",
+      "size_bytes": 120597
     },
     "02_statutory/BC_OHS_Regulation_-_Part_07.md": {
-      "hash": "39d22b145ff44a017637168221e9063455d593f218c92722fb9f40dacdf132e2",
-      "size_bytes": 24992
+      "hash": "bbbc49a222639b019cc970ed01f24c40a8e5790660e1ae6d6c14b94756fd4aea",
+      "size_bytes": 24993
     },
     "02_statutory/BC_OHS_Regulation_-_Part_08.md": {
-      "hash": "c42f4ae1d05cbeef32b0905eba7439d80591e2408d4757288a2cd4a8ea824411",
-      "size_bytes": 42804
+      "hash": "92e69b241223fd9711f2379c1d1856637f76816ceaba350c4740e2b9f015f48b",
+      "size_bytes": 42805
     },
     "02_statutory/BC_OHS_Regulation_-_Part_09.md": {
-      "hash": "b0064f1380d10a64272b33c773742ecc246c7c25eab0fc231d9a2983bea2b536",
-      "size_bytes": 32795
+      "hash": "42a0e2d054038f9fad61b8283ce2825527cee6337c2f438b994a739a4bbf6f40",
+      "size_bytes": 32796
     },
     "02_statutory/BC_OHS_Regulation_-_Part_10.md": {
-      "hash": "97830e2dc3482030b04781f083294c767555bf97afc4ff77a9e27f27f5578d3d",
+      "hash": "01d7ee1a7c5089652da67701234cdad9671ce181c4d1644fd53f6b85594f4510",
       "size_bytes": 8926
     },
     "02_statutory/BC_OHS_Regulation_-_Part_11.md": {
-      "hash": "7439aa9186594073157a3325e1d572c58f8b08d030ae98cd037a8e9844148b79",
+      "hash": "1d710dac94ae9bdb9a6dead3dbbfb870ade4e59588785efe4b405a48636e4ddf",
       "size_bytes": 9175
     },
     "02_statutory/BC_OHS_Regulation_-_Part_12.md": {
-      "hash": "0d31af839f5c5a8a23804eb374e0b20aa5b573b111064d1b5dbcaaceb2ef519f",
-      "size_bytes": 75307
+      "hash": "d6432ab957e50abca40208c15dc3fa6ff742379d17b908c06e8f285967d36059",
+      "size_bytes": 75308
     },
     "02_statutory/BC_OHS_Regulation_-_Part_13.md": {
-      "hash": "7db4945787b0222ba385eddb1862664e85fc4e9f635cebafc01a115b2bb91150",
-      "size_bytes": 28030
+      "hash": "618082d7581ced19c838711c522ddb9e7c931ecd91ca2da4b1b5643d98fa22fc",
+      "size_bytes": 28031
     },
     "02_statutory/BC_OHS_Regulation_-_Part_14.md": {
-      "hash": "8af9bdfde39d95962865299bfc0301ab66bd6e4b2d758f84da3d0b5001706410",
-      "size_bytes": 85459
+      "hash": "c42d422edc44be3e525ce64cac05fcef2fd1b6c2760e575cb941436bbe3d14c0",
+      "size_bytes": 85460
     },
     "02_statutory/BC_OHS_Regulation_-_Part_15.md": {
-      "hash": "ff4ac7860fe465d004d9bfef34ac3b6fe3f49391e150d0b03985127333191838",
-      "size_bytes": 23433
+      "hash": "0a523877b649b9299d5b92e314807a2957f1a616656215832fb2f4f5ac9d037d",
+      "size_bytes": 23434
     },
     "02_statutory/BC_OHS_Regulation_-_Part_16.md": {
-      "hash": "eb3f11f920f56423110da16d6802ed8bfa2510196b96cc763dae9cdec1b7d562",
-      "size_bytes": 58346
+      "hash": "bc9d0222daf12705b0d2e079c6cfb98e21dfcd25c3f0e2f92216f6ccf8dee777",
+      "size_bytes": 58347
     },
     "02_statutory/BC_OHS_Regulation_-_Part_17.md": {
-      "hash": "39e04d4a30ab61a9624242d1457b48f9b70be5aa5595ec9286c9404e407950cf",
+      "hash": "818912a4c098ec54bf2f87e5702c35b2b54ff027c11c0db78b75bee6ad117443",
       "size_bytes": 12270
     },
     "02_statutory/BC_OHS_Regulation_-_Part_18.md": {
-      "hash": "388cc55b5772a89976fe387474f3b35cf0245b277bc07197baa46205699fbe4c",
+      "hash": "de91593d141b172e6ecf7fa8f688f956ba57b3d9bf47ff12e784227cc5757485",
       "size_bytes": 21569
     },
     "02_statutory/BC_OHS_Regulation_-_Part_19.md": {
-      "hash": "8f89fdd5550a32b9747ad93882ea57104311102be9e6317a30ee743dd1bcb86f",
-      "size_bytes": 40015
+      "hash": "2d05dd018a58fb0e3ece7e68ae6fe8c5610ab79e7d79c43d52a87e1f0cad1295",
+      "size_bytes": 40016
     },
     "02_statutory/BC_OHS_Regulation_-_Part_20.md": {
-      "hash": "95a86a0825f121a999e125dd3ea21ae677afa9a9729123ca4ef93bec9c74819f",
-      "size_bytes": 94851
+      "hash": "75962555780d76ef9260f9d1b469eda056738c649fdac1f3063b41da66a6e906",
+      "size_bytes": 94852
     },
     "02_statutory/BC_OHS_Regulation_-_Part_21.md": {
-      "hash": "f5096eff7603c02ec04f65217838175f0b0db603843e646ebba50ee65d403ef0",
-      "size_bytes": 54413
+      "hash": "efe3f4a89e6bb985e30d6c167263b14558156a5a0c2c6871797777ec1ca8c051",
+      "size_bytes": 54414
     },
     "02_statutory/BC_OHS_Regulation_-_Part_22.md": {
-      "hash": "78d5658da1bd430e246c4def782e1a56d224c91fcbdd5e18b477d623a2f45d06",
-      "size_bytes": 82394
+      "hash": "c3d6b03ef04a35fa802044e1d5b2395382e861e9eee0c3905cf6bd8ab0d36f73",
+      "size_bytes": 82395
     },
     "02_statutory/BC_OHS_Regulation_-_Part_23.md": {
-      "hash": "128e3ece8a4add96b87d714b744aea40fbae7ce996d166d1572cec2991d31a2a",
-      "size_bytes": 57285
+      "hash": "dcd34d74d82c5d7d1bc35aa1eb72cd5246925d5d6363d127d71b45cac5cedc34",
+      "size_bytes": 57288
     },
     "02_statutory/BC_OHS_Regulation_-_Part_24.md": {
-      "hash": "36eb5214f7353715822dc1513df11d216c69190e23bca0f1d120673175e59440",
-      "size_bytes": 75532
+      "hash": "c23e8e234f9643e4424486c83b43b32b7144614007734a9a55d22367f2087e99",
+      "size_bytes": 75533
     },
     "02_statutory/BC_OHS_Regulation_-_Part_25.md": {
-      "hash": "ca737cbbfe99412061dd8172fe360f870903837b652eb772a94f8b8179821a14",
+      "hash": "01ee9fd821623fd815b777a8837d29e117045cde689b985f2b0ca1c04c23cfb4",
       "size_bytes": 774
     },
     "02_statutory/BC_OHS_Regulation_-_Part_26.md": {
-      "hash": "73945f0c6f4d2d46c0d425b24860c2b8e032f682202747f6f0491e209f9e3809",
+      "hash": "43006a02a2f748706fc3ec564bdd2af66b5c81f4fd2342e6f4566615f857957a",
       "size_bytes": 103401
     },
     "02_statutory/BC_OHS_Regulation_-_Part_27.md": {
-      "hash": "a54e109aca1cab678ca2d87fc6196515fe0a124051f98bc3353ba43076a29249",
-      "size_bytes": 22263
+      "hash": "d3fdff67ffa1fde46a0f6423d7cc214806e4ded28afdc4bcc5ae227dea76c5ea",
+      "size_bytes": 22264
     },
     "02_statutory/BC_OHS_Regulation_-_Part_28.md": {
-      "hash": "944c9f9c61516443aabe17215cdd978a28e9df26cef72c1183ae1b38f6a535f1",
-      "size_bytes": 18232
+      "hash": "ed6dfb0b7b61c5b4dc451631f96b8c7b5ac6b9949975e029f1a79d8b7a99b2ab",
+      "size_bytes": 18233
     },
     "02_statutory/BC_OHS_Regulation_-_Part_29.md": {
-      "hash": "ac18fba6a5a0f4a972bbf228e0b553ceda45c3d09b037b7cc4c09d185bb7d799",
+      "hash": "deef6eab827ba8f6db20c37367fed27f441454a34a7cf8326622a7d7a15894e5",
       "size_bytes": 3809
     },
     "02_statutory/BC_OHS_Regulation_-_Part_30.md": {
-      "hash": "7c8e6563c22da996257bc81d31d05e582fceb2c5807c5dee126115f806804a3b",
+      "hash": "7e3ff947bf18cdb418f1ae227621e6d9b108cf553753ce4bf6210f0763d2e6b7",
       "size_bytes": 22080
     },
     "02_statutory/BC_OHS_Regulation_-_Part_31.md": {
-      "hash": "b663e003c1f775e03ea72b141bf17fdaf7d5bf1eccb794c151616b4eab95251c",
-      "size_bytes": 16759
+      "hash": "275ee0863b60b02788dbda8de94682714e2f35b1b212dedf5cee4145119d8db2",
+      "size_bytes": 16548
     },
     "02_statutory/BC_OHS_Regulation_-_Part_32.md": {
-      "hash": "5776bfaf884b32274a0810457624b19a09ba8ffec242c6c6c539f9ee3717ac31",
+      "hash": "5a95691ac17fbe721802d7b6cc499a4f204e7684534da37edca5c413ce5cdda9",
       "size_bytes": 4266
     },
     "02_statutory/BC_OHS_Regulation_-_Part_33.md": {
-      "hash": "153962fd6510f2330fa10e229341177d8f384496c732ea1e8bef5935efd96e3f",
+      "hash": "bc5e6ba019d7a4ea07f304b96f379df9642bddb037a59cdc033b0e35db345044",
       "size_bytes": 351
     },
     "02_statutory/BC_OHS_Regulation_-_Part_34.md": {
-      "hash": "39b5869f3bda0259170d892478335200d23fb9dc5b02e34fc89c889ccf76111b",
+      "hash": "e5adf4a512fd2fb868e737b2703f561958a647f2642722ea15cfcc5cdece3648",
       "size_bytes": 16708
     },
     "02_statutory/BC_Workers_Compensation_Act_-_Introduction.md": {

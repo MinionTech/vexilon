@@ -1,14 +1,14 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:48 GMT  
-**Ingestion Date:** 2026-09-27  
+**Upstream Last Modified:** Wed, 07 Oct 2026 03:05:10 GMT  
+**Ingestion Date:** 2026-10-07  
 
 Part 31 — Firefighting
 
 #### Definitions
 
-**31.1** In this Part:
+**31.1** (1) In this Part:
 
 "emergency incident" means a specific emergency operation of a fire department or industrial fire brigade;
 
@@ -18,11 +18,11 @@ Part 31 — Firefighting
 
 (a) a municipality, a regional district or an improvement district,
 
-(b) a board or commission having the management or conduct of work or services on behalf of any of the bodies referred to in paragraph (a), or
+(b) a board, society or commission on behalf of a body referred to in paragraph (a), or
 
 (c) a parks board;
 
-"firefighter" means any worker employed in firefighting, fire inspection, fire investigation, the maintenance of firefighting equipment, the training for and direction of those activities, or other similar duties;
+"fire personnel" means workers, other than firefighters, who are employed, with or without remuneration, in firefighting, fire inspection, fire investigation, the maintenance of firefighting equipment, the training for and direction of those activities, or other similar duties;
 
 "firefighting vehicle" means an emergency vehicle used for firefighting;
 
@@ -32,13 +32,15 @@ Part 31 — Firefighting
 
 "structure" means a building, vehicle, vessel or similar enclosed location.
 
-[am. B.C. Regs. 185/99, s. 76; 279/2019, App. D, s. 7.]
+(2) In this Part, a reference to a firefighter is to be read as including fire personnel.
+
+[am. B.C. Regs. 185/99, s. 76; 279/2019, App. D, s. 7; 39/2026, s.1.]
 
 #### Application
 
-**31.2** This Part applies to employers and to workers who are employed in firefighting activities on a full or part time basis, including volunteer firefighting in municipal service and industrial fire brigades to which the compensation provisions of the [Workers Compensation Act](/civix/document/id/complete/statreg/19001_00) apply, but does not apply to forest fire fighting.
+**31.2** This Part does not apply to forest fire fighting.
 
-[am. B.C. Reg. 279/2019, App. D, s. 8.]
+[en. B.C. Reg. 39/2026, s. 2.]
 
 General Requirements
 
