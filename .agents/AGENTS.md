@@ -55,3 +55,25 @@ To prevent accidental regression and "downgrades" that frustrate the team, the f
 - **Minimal Overhaul Rule**: If a "basic" or "minimal" overhaul is requested, agents MUST NOT add new navigation components (sidebars, tabs, menus) or change established layouts without explicit, itemized confirmation.
 - **Discussion First**: Proposed UI features or aesthetic improvements MUST be presented as options first before implementing.
 - **Respect User Preferences**: User-stated preferences for specific UI elements are immutable constraints.
+
+## 11. Knowledge Base & Document Governance
+- **Declarative Registry (`app/data/sources.yaml`)**:
+  - Every ingested document MUST have an entry in `app/data/sources.yaml`.
+  - Required fields: `path`, `category`, `type`.
+  - Allowed categories: `agreement`, `conduct`, `statutory`, `resources`, `forms`.
+  - Authority hierarchy & retrieval weights:
+    - `agreement`: Tier 1 (1.2x retrieval weight; Primary Authority drawer section).
+    - `conduct`: Tier 1 (1.2x retrieval weight; sorted first in Policy & Jurisprudence drawer section).
+    - `statutory`: Tier 3 (0.8x retrieval weight; Legislation & Regulations drawer section).
+    - `resources`: Tier 3 (0.8x retrieval weight when staged in `03_resources/`; Policy & Jurisprudence drawer section).
+    - `forms`: Tier 2 (1.0x baseline weight; Forms drawer section).
+  - Ingestion types:
+    - `manual`: In-repo Markdown files. `url` is optional. Drift detection verifies local SHA-256 baseline; skips network requests.
+    - `html_selector` | `bclaws` | `pdf`: Network-backed documents. `url` is mandatory.
+- **Document Ingestion Lifecycle**:
+  Every document addition or modification MUST complete the following sequence:
+  1. **Stage**: Place Markdown in `app/data/01_primary/`, `02_statutory/`, `03_resources/`, `04_jurisprudence/`, or `forms/`.
+  2. **Register**: Add the entry with `category` and `type` to `app/data/sources.yaml`.
+  3. **Baseline**: From `app/`, run `uv run python scripts/sync_sources.py --sync` (or targeted `--filter <name-substring>`) to update `manifest.json` and `content_hash`.
+  4. **Drawer Sync**: From `app/`, run `uv run python scripts/generate_knowledge_base.py` to regenerate `app/chainlit.md`.
+  5. **Verification**: From `app/`, run `pytest tests/test_sync_sources.py tests/test_index.py tests/test_generate_knowledge_base.py ../tests/deploy_integrity/`.
