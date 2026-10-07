@@ -276,3 +276,15 @@ def test_main_cli_check_flag(tmp_path, monkeypatch):
     # When in sync -> returns 0
     with patch("sys.argv", ["generate_knowledge_base.py", "--check"]):
         assert main() == 0
+
+
+def test_generate_manifest_invokes_update_knowledge_base_files(tmp_path):
+    """generate_manifest invokes update_knowledge_base_files once for the corpus."""
+    from scripts.generate_cache_manifest import generate_manifest
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(parents=True)
+
+    with patch("scripts.generate_knowledge_base.update_knowledge_base_files") as mock_update_kb:
+        generate_manifest(data_dir=data_dir)
+        mock_update_kb.assert_called_once_with(data_dir=data_dir)

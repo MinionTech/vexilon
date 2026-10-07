@@ -42,7 +42,6 @@ from yaml.nodes import MappingNode
 
 
 from generate_cache_manifest import generate_manifest
-from generate_knowledge_base import update_knowledge_base_files
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("sync_sources")
@@ -1581,12 +1580,9 @@ def _run(args: argparse.Namespace) -> int:
 
         if not args.dry_run and wrote > 0:
             save_registry(config_path, registry)
-            logger.info("Regenerating manifest.json...")
-            data_dir = config_path.parent if config_path.parent.name == "data" else _APP_ROOT / "data"
+            logger.info("Regenerating manifest.json and knowledge base drawer...")
+            data_dir = _REPO_ROOT / "app" / "data"
             generate_manifest(data_dir=data_dir)
-            logger.info("Updating Knowledge Base drawer...")
-            app_root = data_dir.parent if data_dir.name == "data" else _APP_ROOT
-            update_knowledge_base_files(data_dir=data_dir, app_root=app_root)
             logger.info("Sync complete: manifest and knowledge base drawer updated.")
 
         if entries and updated == 0:

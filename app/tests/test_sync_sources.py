@@ -2281,10 +2281,9 @@ def test_load_registry_manual_source_omits_url(tmp_path):
     assert entries[0].url == ""
 
 
-@patch("scripts.sync_sources.update_knowledge_base_files")
 @patch("scripts.sync_sources.generate_manifest")
-def test_sync_regenerates_knowledge_base_drawer(mock_manifest, mock_kb, tmp_path, monkeypatch):
-    """--sync invokes update_knowledge_base_files alongside generate_manifest when sources are written."""
+def test_sync_regenerates_manifest_and_drawer(mock_manifest, tmp_path, monkeypatch):
+    """--sync invokes generate_manifest for corpus data_dir derived from repo root when sources are written."""
     config = tmp_path / "data" / "sources.yaml"
     config.parent.mkdir(parents=True)
     doc_file = tmp_path / "app/data/01_primary/Agreement.md"
@@ -2305,7 +2304,6 @@ def test_sync_regenerates_knowledge_base_drawer(mock_manifest, mock_kb, tmp_path
     )
 
     assert sync_sources.main() == 0
-    mock_manifest.assert_called_once_with(data_dir=config.parent)
-    mock_kb.assert_called_once()
+    mock_manifest.assert_called_once_with(data_dir=tmp_path / "app" / "data")
 
 
