@@ -928,6 +928,8 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
     local_file = repo_root / source.path
     if not local_file.is_file():
         return None
+    if source.type == "pdf":
+        return hashlib.sha256(local_file.read_bytes()).hexdigest()
     try:
         text = local_file.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -995,7 +997,8 @@ def fetch_upstream(
     *,
     etag: str | None = None,
     upstream_last_modified: str | None = None,
-) -> tuple[str, dict[str, str]]:
+    is_binary: bool = False,
+) -> tuple[str | bytes, dict[str, str]]:
     """Fetch upstream content and response headers.
 
     Stored validators are sent as ``If-None-Match`` and ``If-Modified-Since``.
@@ -1004,7 +1007,7 @@ def fetch_upstream(
     """
     req_headers = {
         "User-Agent": USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml",
+        "Accept": "application/pdf,application/octet-stream,*/*" if is_binary else "text/html,application/xhtml+xml",
     }
     if etag:
         req_headers["If-None-Match"] = etag
@@ -1020,8 +1023,11 @@ def fetch_upstream(
         exc.close()
         raise NotModified(headers) from None
     with resp_ctx as resp:
-        content = resp.read().decode("utf-8", errors="replace")
         headers = _header_map(resp.headers)
+        if is_binary:
+            content: str | bytes = resp.read()
+        else:
+            content = resp.read().decode("utf-8", errors="replace")
         return content, headers
 
 
@@ -1139,6 +1145,55 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
     registry_hash = source.content_hash
 
     try:
+        if source.type == "pdf":
+            raw_bytes, headers = fetch_upstream(
+                source.url,
+                **_validators_for_intact_baseline(source, local_hash),
+                is_binary=True,
+            )
+            upstream_hash = hashlib.sha256(
+                raw_bytes if isinstance(raw_bytes, bytes) else raw_bytes.encode()
+            ).hexdigest()
+            upstream_last_modified = headers.get("last-modified")
+
+            if registry_hash and upstream_hash != registry_hash:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="DRIFT_DETECTED",
+                    local_hash=local_hash,
+                    upstream_hash=upstream_hash,
+                    upstream_last_modified=upstream_last_modified,
+                    error="Local file is absent" if local_hash is None else None,
+                )
+            elif local_hash is not None and upstream_hash != local_hash:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="DRIFT_DETECTED",
+                    local_hash=local_hash,
+                    upstream_hash=upstream_hash,
+                    upstream_last_modified=upstream_last_modified,
+                )
+            if local_hash is None and registry_hash:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="DRIFT_DETECTED",
+                    local_hash=None,
+                    upstream_hash=upstream_hash,
+                    upstream_last_modified=upstream_last_modified,
+                    error="Local file is absent",
+                )
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="MATCH",
+                local_hash=local_hash,
+                upstream_hash=upstream_hash,
+                upstream_last_modified=upstream_last_modified,
+            )
+
         raw_html, headers = fetch_upstream(
             source.url, **_validators_for_intact_baseline(source, local_hash)
         )
@@ -1247,6 +1302,44 @@ def sync_source(
     """
     target_path = repo_root / source.path
     local_hash = _local_substantive_hash(source, repo_root)
+
+    if source.type == "pdf":
+        try:
+            try:
+                raw_bytes, headers = fetch_upstream(
+                    source.url,
+                    **_validators_for_intact_baseline(source, local_hash),
+                    is_binary=True,
+                )
+            except NotModified:
+                logger.info(f"Not modified {source.path}; skipped download")
+                return True, NOT_MODIFIED_DETAIL
+
+            upstream_last_modified = headers.get("last-modified")
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            new_hash = hashlib.sha256(
+                raw_bytes if isinstance(raw_bytes, bytes) else raw_bytes.encode()
+            ).hexdigest()
+
+            if not dry_run:
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                if isinstance(raw_bytes, bytes):
+                    target_path.write_bytes(raw_bytes)
+                else:
+                    target_path.write_text(raw_bytes, encoding="utf-8")
+                source.content_hash = new_hash
+                source.last_synced = today
+                source.extraction_fingerprint = extraction_fingerprint(source)
+                _store_validators(source, headers)
+                logger.info(f"Updated {source.path} (hash: {new_hash[:8]})")
+            else:
+                logger.info(f"[DRY-RUN] Would write {source.path} (hash: {new_hash[:8]})")
+
+            return True, new_hash
+        except Exception as e:
+            logger.error(f"Failed to sync {source.url}: {e}", exc_info=True)
+            return False, str(e)
+
     try:
         try:
             raw_html, headers = fetch_upstream(

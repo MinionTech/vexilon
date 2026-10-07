@@ -5,6 +5,7 @@ Issue #695: Automate web-sourced document ingestion, provenance tracking, and dr
 
 from __future__ import annotations
 
+import hashlib
 import re
 import urllib.error
 import urllib.request
@@ -56,9 +57,11 @@ def test_sources_yaml_exists_and_valid():
     seen_statutes: set[str] = set()
 
     for entry in entries:
-        assert entry.path.startswith("app/data/"), f"Path must be in app/data/: {entry.path}"
+        assert entry.path.startswith("app/data/") or entry.path.startswith("app/public/docs/"), (
+            f"Path must be in app/data/ or app/public/docs/: {entry.path}"
+        )
         assert entry.url.startswith("http"), f"Invalid URL: {entry.url}"
-        assert entry.type in ("html_selector", "bclaws"), f"Unknown type: {entry.type}"
+        assert entry.type in ("html_selector", "bclaws", "pdf"), f"Unknown type: {entry.type}"
         assert entry.category in ("primary", "statutory", "resources", "jurisprudence")
         if entry.path in statute_selectors:
             assert entry.selector == statute_selectors[entry.path], entry.path
@@ -68,10 +71,15 @@ def test_sources_yaml_exists_and_valid():
         assert target_file.exists(), f"Target document does not exist: {target_file}"
         # The registry baseline is the committed file. A stale hash makes MATCH
         # impossible and the Sunday job files a drift issue while this test stays green.
-        substantive = extract_substantive_body(target_file.read_text(encoding="utf-8"))
-        assert entry.content_hash == compute_content_hash(substantive), (
-            f"content_hash for {entry.path} does not match the committed file"
-        )
+        if entry.type == "pdf":
+            assert entry.content_hash == hashlib.sha256(target_file.read_bytes()).hexdigest(), (
+                f"content_hash for {entry.path} does not match the committed file"
+            )
+        else:
+            substantive = extract_substantive_body(target_file.read_text(encoding="utf-8"))
+            assert entry.content_hash == compute_content_hash(substantive), (
+                f"content_hash for {entry.path} does not match the committed file"
+            )
 
     assert seen_statutes == set(statute_selectors)
 
@@ -2015,3 +2023,104 @@ def test_sync_extractor_version_change_does_not_skip_the_write(monkeypatch, tmp_
     assert target.read_text(encoding="utf-8") != before
     assert "Kept body." in target.read_text(encoding="utf-8")
     assert entry.extraction_fingerprint == extraction_fingerprint(entry)
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_source_drift_pdf_match(mock_fetch, tmp_path):
+    """PDF source reports MATCH when upstream bytes match local binary hash."""
+    pdf_content = b"%PDF-1.4 mock contract binary content"
+    pdf_hash = hashlib.sha256(pdf_content).hexdigest()
+    doc_path = tmp_path / "app/public/docs/contract.pdf"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_bytes(pdf_content)
+
+    entry = SourceEntry(
+        path="app/public/docs/contract.pdf",
+        url="https://example.com/contract.pdf",
+        type="pdf",
+        category="primary",
+        content_hash=pdf_hash,
+    )
+    mock_fetch.return_value = (pdf_content, {"last-modified": "Wed, 01 Oct 2026 12:00:00 GMT"})
+
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "MATCH"
+    assert res.local_hash == pdf_hash
+    assert res.upstream_hash == pdf_hash
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_source_drift_pdf_detected(mock_fetch, tmp_path):
+    """PDF source reports DRIFT_DETECTED when upstream bytes change."""
+    local_content = b"%PDF-1.4 original contract"
+    remote_content = b"%PDF-1.4 revised contract with amendments"
+    local_hash = hashlib.sha256(local_content).hexdigest()
+    remote_hash = hashlib.sha256(remote_content).hexdigest()
+
+    doc_path = tmp_path / "app/public/docs/contract.pdf"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_bytes(local_content)
+
+    entry = SourceEntry(
+        path="app/public/docs/contract.pdf",
+        url="https://example.com/contract.pdf",
+        type="pdf",
+        category="primary",
+        content_hash=local_hash,
+    )
+    mock_fetch.return_value = (remote_content, {"last-modified": "Thu, 02 Oct 2026 12:00:00 GMT"})
+
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "DRIFT_DETECTED"
+    assert res.local_hash == local_hash
+    assert res.upstream_hash == remote_hash
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_source_drift_pdf_304(mock_fetch, tmp_path):
+    """HTTP 304 to a PDF conditional request reports MATCH with zero bytes parsed."""
+    pdf_content = b"%PDF-1.4 intact contract"
+    pdf_hash = hashlib.sha256(pdf_content).hexdigest()
+    doc_path = tmp_path / "app/public/docs/contract.pdf"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_bytes(pdf_content)
+
+    entry = SourceEntry(
+        path="app/public/docs/contract.pdf",
+        url="https://example.com/contract.pdf",
+        type="pdf",
+        category="primary",
+        content_hash=pdf_hash,
+        etag='"etag123"',
+    )
+    entry.extraction_fingerprint = extraction_fingerprint(entry)
+    mock_fetch.side_effect = sync_sources.NotModified({"etag": '"etag123"'})
+
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "MATCH"
+    assert res.local_hash == pdf_hash
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_source_pdf_writes_binary(mock_fetch, tmp_path):
+    """Syncing a PDF source writes raw bytes to target path and records sha256."""
+    pdf_bytes = b"%PDF-1.4 downloaded contract bytes"
+    expected_hash = hashlib.sha256(pdf_bytes).hexdigest()
+
+    entry = SourceEntry(
+        path="app/public/docs/contract.pdf",
+        url="https://example.com/contract.pdf",
+        type="pdf",
+        category="primary",
+    )
+    mock_fetch.return_value = (pdf_bytes, {"last-modified": "Wed, 01 Oct 2026 12:00:00 GMT", "etag": '"abc"'})
+
+    success, result_hash = sync_source(entry, tmp_path, dry_run=False)
+    assert success is True
+    assert result_hash == expected_hash
+
+    target = tmp_path / "app/public/docs/contract.pdf"
+    assert target.exists()
+    assert target.read_bytes() == pdf_bytes
+    assert entry.content_hash == expected_hash
+    assert entry.etag == '"abc"'
