@@ -178,8 +178,9 @@ def generate_knowledge_base_markdown(
                     stem = Path(p).stem
                     category_map[stem] = cat.lower()
                     category_map[get_base_stem(stem)] = cat.lower()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("Failed to parse registry %s: %s", sources_yaml_path, e)
+            raise
 
     primary_authorities: dict[str, str] = {}  # base_stem -> rel_path
     statutory_items: dict[str, str] = {}
@@ -199,7 +200,7 @@ def generate_knowledge_base_markdown(
             statutory_items.setdefault(base_stem, rel_path)
         elif cat == "forms" or "forms" in parts:
             form_items.setdefault(base_stem, rel_path)
-        else:
+        elif cat or "03_resources" in parts or "04_jurisprudence" in parts:
             policy_items.setdefault(base_stem, rel_path)
 
     # Also scan public_docs_dir / forms for static form PDFs
