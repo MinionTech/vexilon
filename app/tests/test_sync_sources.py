@@ -2283,7 +2283,7 @@ def test_load_registry_manual_source_omits_url(tmp_path):
 
 @patch("scripts.sync_sources.generate_manifest")
 def test_sync_regenerates_manifest_and_drawer(mock_manifest, tmp_path, monkeypatch):
-    """--sync invokes generate_manifest for corpus data_dir derived from repo root when sources are written."""
+    """--sync invokes generate_manifest for corpus data_dir (_APP_ROOT / 'data') when sources are written."""
     config = tmp_path / "data" / "sources.yaml"
     config.parent.mkdir(parents=True)
     doc_file = tmp_path / "app/data/01_primary/Agreement.md"
@@ -2298,6 +2298,7 @@ def test_sync_regenerates_manifest_and_drawer(mock_manifest, tmp_path, monkeypat
         encoding="utf-8",
     )
     monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(sync_sources, "_APP_ROOT", tmp_path / "app")
     monkeypatch.setattr(
         "sys.argv",
         ["sync_sources.py", "--config", str(config), "--sync"],

@@ -1581,7 +1581,7 @@ def _run(args: argparse.Namespace) -> int:
         if not args.dry_run and wrote > 0:
             save_registry(config_path, registry)
             logger.info("Regenerating manifest.json and knowledge base drawer...")
-            data_dir = _REPO_ROOT / "app" / "data"
+            data_dir = _APP_ROOT / "data"
             generate_manifest(data_dir=data_dir)
             logger.info("Sync complete: manifest and knowledge base drawer updated.")
 
