@@ -108,12 +108,18 @@ def test_get_document_tier_weight():
     # Tier 1 documents
     assert indexing.get_document_tier_weight("BCGEU 20th Main Agreement", "01_primary/BCGEU_20th_Main_Agreement.md") == 1.2
     assert indexing.get_document_tier_weight("Gov BC Standards of Conduct", "01_primary/Gov_BC_Standards_of_Conduct.md") == 1.2
+    assert indexing.get_document_tier_weight("BC Criminal Notification Procedures", "03_resources/BC_Criminal_Notification_Procedures.md") == 1.2
+    assert indexing.get_document_tier_weight("Gov BC Social Media Guidelines for Personal Use", "01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md") == 1.2
     
     # Matching by source name only or path only (robustness checks)
     assert indexing.get_document_tier_weight("Gov BC Standards of Conduct", "") == 1.2
     assert indexing.get_document_tier_weight("", "01_primary/Gov_BC_Standards_of_Conduct.md") == 1.2
     assert indexing.get_document_tier_weight("BCGEU 20th Main Agreement", "") == 1.2
     assert indexing.get_document_tier_weight("", "01_primary/BCGEU_20th_Main_Agreement.md") == 1.2
+    assert indexing.get_document_tier_weight("BC Criminal Notification Procedures", "") == 1.2
+    assert indexing.get_document_tier_weight("", "03_resources/BC_Criminal_Notification_Procedures.md") == 1.2
+    assert indexing.get_document_tier_weight("Gov BC Social Media Guidelines for Personal Use", "") == 1.2
+    assert indexing.get_document_tier_weight("", "01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md") == 1.2
     
     # Tier 2 documents (unmodified)
     assert indexing.get_document_tier_weight("Nexus Test and Off-Duty Conduct", "04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.md") == 1.0
@@ -124,6 +130,24 @@ def test_get_document_tier_weight():
     assert indexing.get_document_tier_weight("BC Employment Standards Act", "02_statutory/BC_Employment_Standards_Act.md") == 0.8
     assert indexing.get_document_tier_weight("BC OHS Regulation - Part 07", "02_statutory/BC_OHS_Regulation_-_Part_07.md") == 0.8
     assert indexing.get_document_tier_weight("BCGEU Steward Resources", "03_resources/BCGEU_Steward_Resources.md") == 0.8
+
+
+def test_get_document_tier_weight_driven_by_registry(monkeypatch):
+    """Ensure category from registry dynamically drives tier weight without loose substring matching."""
+    indexing.get_document_tier_weight.cache_clear()
+    monkeypatch.setattr(
+        indexing,
+        "_get_registry_category_map",
+        lambda: {"custom_ethics_policy.md": "conduct", "custom_ethics_policy": "conduct"},
+    )
+    # Exact stem / path match
+    assert indexing.get_document_tier_weight("Custom Policy", "03_resources/custom_ethics_policy.md") == 1.2
+    # Normalized source name match
+    assert indexing.get_document_tier_weight("Custom Ethics Policy", "") == 1.2
+    # Distinct document with prefix should NOT match via substring or inherit Tier 1 boost
+    assert indexing.get_document_tier_weight("Custom Ethics Policy Review", "04_jurisprudence/custom_ethics_policy_review.md") == 1.0
+    assert indexing.get_document_tier_weight("Custom Ethics Policy Review", "03_resources/custom_ethics_policy_review.md") != 1.2
+    indexing.get_document_tier_weight.cache_clear()
 
 
 def test_search_index_boosts_tier_1_documents(monkeypatch):

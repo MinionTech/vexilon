@@ -140,6 +140,67 @@ def test_generate_knowledge_base_markdown_structure(tmp_path):
     assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)" in content
 
 
+def test_generate_knowledge_base_registry_conduct_ordering(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    data_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+    (data_dir / "03_resources").mkdir(parents=True)
+    (data_dir / "03_resources" / "Custom_Conduct_Doc.md").write_text("# Conduct", encoding="utf-8")
+    (data_dir / "03_resources" / "Alpha_Resource_Doc.md").write_text("# Resource", encoding="utf-8")
+
+    sources_yaml = (
+        "sources:\n"
+        "  - path: app/data/03_resources/Custom_Conduct_Doc.md\n"
+        "    category: conduct\n"
+        "  - path: app/data/03_resources/Alpha_Resource_Doc.md\n"
+        "    category: resources\n"
+    )
+    (data_dir / "sources.yaml").write_text(sources_yaml, encoding="utf-8")
+
+    manifest = {
+        "version": "1.0",
+        "sources": {
+            "03_resources/Custom_Conduct_Doc.md": {"hash": "111", "size_bytes": 10},
+            "03_resources/Alpha_Resource_Doc.md": {"hash": "222", "size_bytes": 10},
+        },
+    }
+    (data_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    content = generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
+    conduct_pos = content.find("Custom Conduct Doc")
+    alpha_pos = content.find("Alpha Resource Doc")
+    assert conduct_pos != -1 and alpha_pos != -1
+    assert conduct_pos < alpha_pos
+
+
+def test_generate_knowledge_base_sources_yaml_corrupt_raises(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    data_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+    manifest = {"version": "1.0", "sources": {}}
+    (data_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (data_dir / "sources.yaml").write_text("invalid: [yaml: string: :", encoding="utf-8")
+
+    with pytest.raises(Exception):
+        generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
+
+
+def test_generate_knowledge_base_restricts_unrecognized_markdown(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    data_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+
+    # Place an arbitrary markdown file in an unrecognized subfolder without manifest/registry
+    (data_dir / "99_internal").mkdir(parents=True)
+    (data_dir / "99_internal" / "Secret_Notes.md").write_text("# Secret", encoding="utf-8")
+
+    content = generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
+    assert "Secret Notes" not in content
+
+
 def test_generate_knowledge_base_manifest_corrupt_raises(tmp_path):
     data_dir = tmp_path / "data"
     public_docs = tmp_path / "public" / "docs"

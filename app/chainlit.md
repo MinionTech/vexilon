@@ -20,12 +20,12 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 
 ### Policy & Jurisprudence
 
-* [Nexus Test and Off-Duty Conduct](/public/docs/Nexus_Test_and_Off-Duty_Conduct.pdf)
 * [Gov BC Standards of Conduct](/public/docs/Gov_BC_Standards_of_Conduct.pdf)
-* [BC Social Media Guidance for Public Service Employees](/public/docs/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf)
-* [BCGEU Steward Resources](/public/docs/BCGEU_Steward_Resources.pdf)
 * [BC Criminal Notification Procedures](/public/docs/BC_Criminal_Notification_Procedures.md)
 * [Gov BC Social Media Guidelines for Personal Use](/public/docs/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md)
+* [BC Social Media Guidance for Public Service Employees](/public/docs/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf)
+* [Nexus Test and Off-Duty Conduct](/public/docs/Nexus_Test_and_Off-Duty_Conduct.pdf)
+* [BCGEU Steward Resources](/public/docs/BCGEU_Steward_Resources.pdf)
 
 ### Forms
 

@@ -62,8 +62,16 @@ def test_sources_yaml_exists_and_valid():
             f"Path must be in app/data/ or app/public/docs/: {entry.path}"
         )
         assert entry.url.startswith("http"), f"Invalid URL: {entry.url}"
-        assert entry.type in ("html_selector", "bclaws", "pdf"), f"Unknown type: {entry.type}"
-        assert entry.category in ("primary", "statutory", "resources", "jurisprudence")
+        assert entry.type in ("html_selector", "bclaws", "pdf", "manual"), f"Unknown type: {entry.type}"
+        assert entry.category in (
+            "agreement",
+            "conduct",
+            "primary",
+            "statutory",
+            "resources",
+            "jurisprudence",
+            "forms",
+        )
         if entry.path in statute_selectors:
             assert entry.selector == statute_selectors[entry.path], entry.path
             seen_statutes.add(entry.path)
@@ -2184,4 +2192,92 @@ def test_sync_source_pdf_rejects_invalid_payload(mock_fetch, tmp_path):
     assert success is False
     assert "not a valid PDF" in error
     assert doc_path.read_bytes() == initial_bytes
+
+
+def test_check_source_drift_manual_match(tmp_path):
+    """Manual source reports MATCH when committed file matches baseline."""
+    doc_path = tmp_path / "app/data/01_primary/Agreement.md"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_text("# Binding Agreement\n\nSubstantive content.", encoding="utf-8")
+    sub = extract_substantive_body(doc_path.read_text(encoding="utf-8"))
+    h = compute_content_hash(sub)
+
+    entry = SourceEntry(
+        path="app/data/01_primary/Agreement.md",
+        url="https://example.com/agreement.pdf",
+        type="manual",
+        category="agreement",
+        content_hash=h,
+    )
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "MATCH"
+    assert res.local_hash == h
+
+
+def test_check_source_drift_manual_drift_detected(tmp_path):
+    """Manual source reports DRIFT_DETECTED when local file changes relative to baseline."""
+    doc_path = tmp_path / "app/data/01_primary/Agreement.md"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_text("# Binding Agreement\n\nModified content.", encoding="utf-8")
+
+    entry = SourceEntry(
+        path="app/data/01_primary/Agreement.md",
+        url="https://example.com/agreement.pdf",
+        type="manual",
+        category="agreement",
+        content_hash="old_baseline_hash",
+    )
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "DRIFT_DETECTED"
+    assert "modified" in (res.error or "").lower()
+
+
+def test_sync_source_manual(tmp_path):
+    """Syncing a manual source updates content_hash from local file."""
+    doc_path = tmp_path / "app/data/01_primary/Agreement.md"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_text("# Binding Agreement\n\nFresh text.", encoding="utf-8")
+    sub = extract_substantive_body(doc_path.read_text(encoding="utf-8"))
+    expected_hash = compute_content_hash(sub)
+
+    entry = SourceEntry(
+        path="app/data/01_primary/Agreement.md",
+        url="https://example.com/agreement.pdf",
+        type="manual",
+        category="agreement",
+    )
+    success, res_hash = sync_source(entry, tmp_path, dry_run=False)
+    assert success is True
+    assert res_hash == expected_hash
+    assert entry.content_hash == expected_hash
+
+
+def test_load_registry_network_source_missing_url_raises(tmp_path):
+    """Network-backed source entries must require a url field."""
+    config_file = tmp_path / "sources.yaml"
+    config_file.write_text(
+        "sources:\n"
+        "  - path: app/data/02_statutory/doc.md\n"
+        "    type: html_selector\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KeyError):
+        load_registry(config_file)
+
+
+def test_load_registry_manual_source_omits_url(tmp_path):
+    """Manual source entries are permitted to omit the url field."""
+    config_file = tmp_path / "sources.yaml"
+    config_file.write_text(
+        "sources:\n"
+        "  - path: app/data/01_primary/doc.md\n"
+        "    type: manual\n"
+        "    category: agreement\n",
+        encoding="utf-8",
+    )
+    entries = load_registry(config_file)
+    assert len(entries) == 1
+    assert entries[0].type == "manual"
+    assert entries[0].url == ""
+
 

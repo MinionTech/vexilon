@@ -393,31 +393,86 @@ def embed_texts(texts: list[str]) -> "np.ndarray":
     embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
     return embeddings.astype(np.float32)
 
+_REGISTRY_CATEGORY_CACHE: dict[str, str] | None = None
+
+
+def _get_registry_category_map() -> dict[str, str]:
+    global _REGISTRY_CATEGORY_CACHE
+    if _REGISTRY_CATEGORY_CACHE is None:
+        sources_path = _PKG_ROOT / "data" / "sources.yaml"
+        if not sources_path.exists():
+            _REGISTRY_CATEGORY_CACHE = {}
+            return _REGISTRY_CATEGORY_CACHE
+        try:
+            import yaml
+            data = yaml.safe_load(sources_path.read_text(encoding="utf-8")) or {}
+            raw_sources = data.get("sources")
+            if raw_sources is None:
+                raw_sources = []
+                raw_sources.extend(data.get("public_sources", []))
+                raw_sources.extend(data.get("manual_sources", []))
+            cache: dict[str, str] = {}
+            for s in raw_sources:
+                cat = s.get("category", "")
+                p = s.get("path", "")
+                if p and cat:
+                    p_norm = p.replace("\\", "/").lower()
+                    cache[p_norm] = cat.lower()
+                    stem = Path(p_norm).stem.lower()
+                    cache[stem] = cat.lower()
+                    cache[stem.replace("_", " ")] = cat.lower()
+            _REGISTRY_CATEGORY_CACHE = cache
+        except Exception as e:
+            logger.error("Failed to load registry category map from %s: %s", sources_path, e)
+            return {}
+    return _REGISTRY_CATEGORY_CACHE
+
+
 @lru_cache(maxsize=128)
 def get_document_tier_weight(source_name: str, path: str = "") -> float:
     """
     Determine the retrieval boost weight for a document based on its tier.
-    - Tier 1: 20th Main Agreement & Standards of Conduct (default 1.2)
+    - Tier 1: Collective Agreements & Conduct/Ethics Policies (default 1.2)
     - Tier 3: Statutory and general secondary resources (default 0.8)
     - Tier 2: Core agreements, jurisprudence, forms, etc. (default 1.0)
     """
     # Normalise input paths and source names for robust matching
     path_lower = path.lower().replace("\\", "/")
     source_lower = source_name.lower()
+    stem = Path(path_lower).stem if path_lower else ""
+
+    # Check category from sources.yaml
+    cat_map = _get_registry_category_map()
+    cat = (
+        cat_map.get(path_lower)
+        or cat_map.get(stem)
+        or cat_map.get(source_lower)
+        or cat_map.get(source_lower.replace(" ", "_"))
+        or cat_map.get(source_lower.replace("_", " "))
+    )
+
+    if cat in ("agreement", "conduct"):
+        return TIER1_BOOST
+    elif cat == "statutory":
+        return TIER3_BOOST
 
     # Tier 1 checks:
-    # 1. Gov BC Standards of Conduct (either via relative path or source name)
-    # 2. BCGEU 20th Main Agreement (either via relative path or source name)
-    is_standards_of_conduct = (
+    # 1. Core Employer Conduct Policies (Standards of Conduct, Criminal Notifications, Social Media)
+    # 2. BCGEU 20th Main Agreement
+    is_conduct = (
         "standards_of_conduct" in path_lower 
         or "standards of conduct" in source_lower
+        or "criminal_notification" in path_lower
+        or "criminal notification" in source_lower
+        or "social_media_guidelines" in path_lower
+        or "social media guidelines" in source_lower
     )
     is_main_agreement = (
         "20th_main_agreement" in path_lower
         or "20th main agreement" in source_lower
     )
 
-    if is_standards_of_conduct or is_main_agreement:
+    if is_conduct or is_main_agreement:
         return TIER1_BOOST
 
     # Tier 3 checks:
@@ -431,7 +486,7 @@ def get_document_tier_weight(source_name: str, path: str = "") -> float:
     )
     is_general_resource = (
         "03_resources" in path_lower
-        and not is_standards_of_conduct
+        and not is_conduct
     )
 
     if is_statutory or is_general_resource:

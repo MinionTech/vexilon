@@ -43,9 +43,11 @@ STATUTORY_ORDER = [
 ]
 
 POLICY_ORDER = [
-    "Nexus_Test_and_Off-Duty_Conduct",
     "Gov_BC_Standards_of_Conduct",
+    "BC_Criminal_Notification_Procedures",
+    "Gov_BC_Social_Media_Guidelines_for_Personal_Use",
     "BC_Social_Media_Guidance_for_Public_Service_Employees",
+    "Nexus_Test_and_Off-Duty_Conduct",
     "BCGEU_Steward_Resources",
 ]
 
@@ -157,7 +159,29 @@ def generate_knowledge_base_markdown(
                 rel = str(p.relative_to(data_dir))
                 sources_dict[rel] = {}
 
-    # Categorize items
+    # Categorize items, reading domain categories from sources.yaml when available
+    category_map: dict[str, str] = {}
+    sources_yaml_path = data_dir / "sources.yaml"
+    if sources_yaml_path.exists():
+        try:
+            import yaml
+            ydata = yaml.safe_load(sources_yaml_path.read_text(encoding="utf-8")) or {}
+            raw_sources = ydata.get("sources")
+            if raw_sources is None:
+                raw_sources = []
+                raw_sources.extend(ydata.get("public_sources", []))
+                raw_sources.extend(ydata.get("manual_sources", []))
+            for s in raw_sources:
+                cat = s.get("category", "")
+                p = s.get("path", "")
+                if p and cat:
+                    stem = Path(p).stem
+                    category_map[stem] = cat.lower()
+                    category_map[get_base_stem(stem)] = cat.lower()
+        except Exception as e:
+            logger.error("Failed to parse registry %s: %s", sources_yaml_path, e)
+            raise
+
     primary_authorities: dict[str, str] = {}  # base_stem -> rel_path
     statutory_items: dict[str, str] = {}
     policy_items: dict[str, str] = {}
@@ -168,18 +192,16 @@ def generate_knowledge_base_markdown(
         stem = path_obj.stem
         base_stem = get_base_stem(stem)
         parts = path_obj.parts
+        cat = category_map.get(base_stem) or category_map.get(stem)
 
-        if "01_primary" in parts:
-            if "main_agreement" in stem.lower():
-                primary_authorities.setdefault(base_stem, rel_path)
-            else:
-                policy_items.setdefault(base_stem, rel_path)
-        elif "02_statutory" in parts:
+        if cat == "agreement" or ("01_primary" in parts and "main_agreement" in stem.lower()):
+            primary_authorities.setdefault(base_stem, rel_path)
+        elif cat == "statutory" or "02_statutory" in parts:
             statutory_items.setdefault(base_stem, rel_path)
-        elif "03_resources" in parts or "04_jurisprudence" in parts:
-            policy_items.setdefault(base_stem, rel_path)
-        elif "forms" in parts:
+        elif cat == "forms" or "forms" in parts:
             form_items.setdefault(base_stem, rel_path)
+        elif cat or "03_resources" in parts or "04_jurisprudence" in parts:
+            policy_items.setdefault(base_stem, rel_path)
 
     # Also scan public_docs_dir / forms for static form PDFs
     forms_dir = public_docs_dir / "forms"
@@ -223,7 +245,11 @@ def generate_knowledge_base_markdown(
     sections.append("\n### Policy & Jurisprudence\n")
     sorted_policy = sorted(
         policy_items.keys(),
-        key=lambda s: (0, POLICY_ORDER.index(s)) if s in POLICY_ORDER else (1, s),
+        key=lambda s: (
+            0 if category_map.get(s) == "conduct" else 1,
+            POLICY_ORDER.index(s) if s in POLICY_ORDER else 99,
+            s,
+        ),
     )
     for stem in sorted_policy:
         link = resolve_document_link(

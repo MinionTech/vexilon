@@ -1,48 +1,64 @@
-# Declarative Source Registry for Web-Sourced Knowledge Base Documents
-# Issue #695: Automate web-sourced document ingestion, provenance tracking, and drift detection.
+# =============================================================================
+# Knowledge Base Document Registry (sources.yaml)
+# =============================================================================
+# Registry for documents managed by sync_sources.py, including fetched sources
+# and selected locally maintained sources.
+#
+# Categories (Hierarchy of Authority):
+#   - agreement: Negotiated collective agreements (e.g. BCGEU 20th Main Agreement)
+#   - conduct: Core employer conduct & ethics policies (Standards of Conduct, Criminal Notifications)
+#   - statutory: Provincial Acts, Codes, and Regulations (Labour Relations Code, OHS, WCA)
+#   - resources: Steward reference guides, practice notes, and local bylaws
+#   - forms: Administrative dispute and grievance forms
+#
+# Ingestion Types:
+#   - html_selector: Scrapes HTML via CSS selectors into Markdown
+#   - bclaws: Extracts BC Laws Civix documents
+#   - pdf: Downloads and tracks upstream binary PDF
+#   - manual: Staged or maintained directly in-repo (skips HTTP fetching)
 #
 # Schema:
 #   sources:
-#     - path: Relative path to markdown document within repo (e.g. app/data/03_resources/doc.md)
-#       url: Canonical upstream URL
-#       type: Ingestion parser strategy (html_selector | bclaws | pdf)
-#       selector: CSS or container selector to isolate substantive content (e.g. '#body', '#civix-document');
-#                 a comma-separated list extracts each listed container in document order
-#       part: Optional part number (for example "2"). When set, keep only the text from that
-#             part heading ("Part 2 —") up to the next part heading. Omit it to keep the whole
-#             container. Entries that share a URL must set different part values.
-#       category: Document classification (primary | statutory | resources | jurisprudence)
-#       content_hash: SHA-256 hash of substantive body content (for drift baseline). Unique across entries.
-#                     A line that, after stripping whitespace, is optional leading "**" plus
-#                     "This Act is current to", "This regulation is current to", or
-#                     "This consolidation is current to" stays in the markdown and is omitted from this hash.
+#     - path: Relative path to document within repo (e.g. app/data/01_primary/doc.md)
+#       url: Canonical upstream URL or reference link
+#       type: Ingestion parser strategy (html_selector | bclaws | pdf | manual)
+#       selector: CSS or container selector to isolate substantive content
+#       part: Optional part number for multi-part documents
+#       category: Document classification (agreement | conduct | statutory | resources | forms)
+#       content_hash: SHA-256 hash of substantive body content (for drift baseline)
 #       last_synced: ISO date when the document was last synced
-#       etag: HTTP ETag from the last --sync that returned 200. Sent as If-None-Match
-#             only when the local file still matches content_hash AND extraction_fingerprint
-#             still matches the current extractor inputs. A 304 is then a MATCH and the
-#             body is not read. A 304 to a request with no validator is an error.
-#       upstream_last_modified: HTTP Last-Modified from that same 200. Sent as
-#             If-Modified-Since under the same rule. The next 200 replaces both.
-#       extraction_fingerprint: SHA-256 of extractor version, type, selector, part, and url
-#             at the last --sync. Missing or different means fetch the HTML and re-extract.
-#             A changed url does not reuse the previous page's validators.
-#             Bump EXTRACTOR_VERSION in sync_sources.py when extractor behavior changes.
+#       etag: Optional HTTP ETag validator
+#       upstream_last_modified: Optional HTTP Last-Modified validator
+#       extraction_fingerprint: Optional SHA-256 fingerprint of extractor inputs
+# =============================================================================
 
 sources:
-- path: app/data/03_resources/BC_Criminal_Notification_Procedures.md
-  url: https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee
-  type: html_selector
-  selector: '#body'
-  category: resources
-  content_hash: 36bc059cf22b32f000257680dfb900fca04303bd3597db39c797673fbeeaf121
-  last_synced: '2026-09-27'
+- path: app/data/01_primary/BCGEU_20th_Main_Agreement.md
+  url: https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf
+  type: manual
+  category: agreement
+  content_hash: 7b7e3b761ad73ba40c91980db8e0eee8d12f79db3a6b7a445a83d914b2b82b6f
+  last_synced: '2026-10-06'
 - path: app/data/01_primary/Gov_BC_Standards_of_Conduct.md
   url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct
   type: html_selector
   selector: '#body, #cmf-ui-supplementary-content'
-  category: primary
+  category: conduct
   content_hash: 5d1d5fbb25b5213be6b64ead5d37f611cb8443483fe7d1c90ca5bd9b53c819f6
   last_synced: '2026-09-27'
+- path: app/data/03_resources/BC_Criminal_Notification_Procedures.md
+  url: https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee
+  type: html_selector
+  selector: '#body'
+  category: conduct
+  content_hash: 36bc059cf22b32f000257680dfb900fca04303bd3597db39c797673fbeeaf121
+  last_synced: '2026-09-27'
+- path: app/data/01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md
+  url: https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/working-with-others/social-media-guidelines-for-personal-use
+  type: manual
+  category: conduct
+  content_hash: 21c57dd6fd5e78c4648438082a612f415f31cd7fc2a2f36dff6974d63f56429e
+  last_synced: '2026-10-06'
 - path: app/data/02_statutory/BC_Labour_Relations_Code.md
   url: https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01
   type: bclaws

@@ -928,7 +928,7 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
     local_file = repo_root / source.path
     if not local_file.is_file():
         return None
-    if source.type == "pdf":
+    if source.type == "pdf" or local_file.suffix.lower() == ".pdf":
         try:
             return hashlib.sha256(local_file.read_bytes()).hexdigest()
         except OSError:
@@ -1045,7 +1045,12 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
         raise FileNotFoundError(f"Source registry not found: {config_path}")
     raw_data = SimpleYamlLoader.load(config_path.read_text(encoding="utf-8"))
     entries: list[SourceEntry] = []
-    for s in raw_data.get("sources", []):
+    raw_sources = raw_data.get("sources")
+    if raw_sources is None:
+        raw_sources = []
+        raw_sources.extend(raw_data.get("public_sources", []))
+        raw_sources.extend(raw_data.get("manual_sources", []))
+    for s in raw_sources:
         raw_part = s.get("part")
         if raw_part is None or (isinstance(raw_part, str) and not raw_part.strip()):
             part = None
@@ -1054,7 +1059,7 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
         entries.append(
             SourceEntry(
                 path=s["path"],
-                url=s["url"],
+                url=s.get("url", "") if s.get("type", "html_selector") == "manual" else s["url"],
                 type=s.get("type", "html_selector"),
                 selector=s.get("selector"),
                 part=part,
@@ -1080,7 +1085,8 @@ def _validate_registry(entries: list[SourceEntry]) -> None:
     parts_by_url: dict[str, list[str | None]] = {}
     paths_by_hash: dict[str, list[str]] = {}
     for entry in entries:
-        parts_by_url.setdefault(entry.url, []).append(entry.part)
+        if entry.url:
+            parts_by_url.setdefault(entry.url, []).append(entry.part)
         if entry.content_hash:
             paths_by_hash.setdefault(entry.content_hash, []).append(entry.path)
     for url, parts in parts_by_url.items():
@@ -1153,6 +1159,34 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
     registry_hash = source.content_hash
 
     try:
+        if source.type == "manual":
+            if local_hash is not None and (registry_hash is None or local_hash == registry_hash):
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="MATCH",
+                    local_hash=local_hash,
+                    upstream_hash=local_hash,
+                )
+            elif local_hash is None:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="DRIFT_DETECTED",
+                    local_hash=None,
+                    upstream_hash=registry_hash,
+                    error="Local file is absent",
+                )
+            else:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="DRIFT_DETECTED",
+                    local_hash=local_hash,
+                    upstream_hash=registry_hash,
+                    error="Local content modified relative to registry baseline",
+                )
+
         if source.type == "pdf":
             raw_bytes, headers = fetch_upstream(
                 source.url,
@@ -1278,6 +1312,15 @@ def sync_source(
     """
     target_path = repo_root / source.path
     local_hash = _local_substantive_hash(source, repo_root)
+
+    if source.type == "manual":
+        logger.info(f"Manual source {source.path} is maintained locally; updating hash baseline.")
+        if local_hash:
+            if not dry_run:
+                source.content_hash = local_hash
+                source.last_synced = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            return True, local_hash
+        return False, "Local file is absent"
 
     if source.type == "pdf":
         try:
