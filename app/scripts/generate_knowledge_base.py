@@ -43,9 +43,11 @@ STATUTORY_ORDER = [
 ]
 
 POLICY_ORDER = [
-    "Nexus_Test_and_Off-Duty_Conduct",
     "Gov_BC_Standards_of_Conduct",
+    "BC_Criminal_Notification_Procedures",
+    "Gov_BC_Social_Media_Guidelines_for_Personal_Use",
     "BC_Social_Media_Guidance_for_Public_Service_Employees",
+    "Nexus_Test_and_Off-Duty_Conduct",
     "BCGEU_Steward_Resources",
 ]
 

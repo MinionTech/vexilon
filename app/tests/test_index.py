@@ -108,6 +108,8 @@ def test_get_document_tier_weight():
     # Tier 1 documents
     assert indexing.get_document_tier_weight("BCGEU 20th Main Agreement", "01_primary/BCGEU_20th_Main_Agreement.md") == 1.2
     assert indexing.get_document_tier_weight("Gov BC Standards of Conduct", "01_primary/Gov_BC_Standards_of_Conduct.md") == 1.2
+    assert indexing.get_document_tier_weight("BC Criminal Notification Procedures", "03_resources/BC_Criminal_Notification_Procedures.md") == 1.2
+    assert indexing.get_document_tier_weight("Gov BC Social Media Guidelines for Personal Use", "01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md") == 1.2
     
     # Matching by source name only or path only (robustness checks)
     assert indexing.get_document_tier_weight("Gov BC Standards of Conduct", "") == 1.2

@@ -406,18 +406,22 @@ def get_document_tier_weight(source_name: str, path: str = "") -> float:
     source_lower = source_name.lower()
 
     # Tier 1 checks:
-    # 1. Gov BC Standards of Conduct (either via relative path or source name)
-    # 2. BCGEU 20th Main Agreement (either via relative path or source name)
-    is_standards_of_conduct = (
+    # 1. Core Employer Conduct Policies (Standards of Conduct, Criminal Notifications, Social Media)
+    # 2. BCGEU 20th Main Agreement
+    is_conduct = (
         "standards_of_conduct" in path_lower 
         or "standards of conduct" in source_lower
+        or "criminal_notification" in path_lower
+        or "criminal notification" in source_lower
+        or "social_media_guidelines" in path_lower
+        or "social media guidelines" in source_lower
     )
     is_main_agreement = (
         "20th_main_agreement" in path_lower
         or "20th main agreement" in source_lower
     )
 
-    if is_standards_of_conduct or is_main_agreement:
+    if is_conduct or is_main_agreement:
         return TIER1_BOOST
 
     # Tier 3 checks:
@@ -431,7 +435,7 @@ def get_document_tier_weight(source_name: str, path: str = "") -> float:
     )
     is_general_resource = (
         "03_resources" in path_lower
-        and not is_standards_of_conduct
+        and not is_conduct
     )
 
     if is_statutory or is_general_resource:
