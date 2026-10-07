@@ -93,6 +93,23 @@ def test_sources_yaml_exists_and_valid():
     assert seen_statutes == set(statute_selectors)
 
 
+def test_all_corpus_markdown_files_registered_in_sources_yaml():
+    """Ensure every committed knowledge-base document under app/data/ has an entry in sources.yaml."""
+    entries = load_registry(SOURCES_YAML)
+    registered_paths = {entry.path for entry in entries}
+
+    data_dir = APP_ROOT / "data"
+    fixtures_dir = data_dir / "test_fixtures"
+    for md_file in data_dir.rglob("*.md"):
+        if md_file.is_relative_to(fixtures_dir) or md_file.name.endswith(".integrity.md") or "cache" in md_file.parts:
+            continue
+        rel_to_repo = f"app/data/{md_file.relative_to(data_dir)}"
+        assert rel_to_repo in registered_paths, (
+            f"Unregistered document found: {rel_to_repo}. "
+            "Every committed document must be registered in app/data/sources.yaml per AGENTS.md rule 11."
+        )
+
+
 _PART_HEADING_LINE = re.compile(r"^(?:#{1,6}[ \t]+)?Part (\d+)(?:[ \t]+[—–-].*)?[ \t]*$")
 
 
