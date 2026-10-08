@@ -188,13 +188,21 @@ def test_primary_authority_20th_agreement_present():
         f"Source file {source_file} unexpectedly small: {source_file.stat().st_size} bytes"
     )
 
-    # 3. Assert published in drawer and public docs
+    # 3. People open the PDF we host. The markdown stays in the bot corpus only.
     chainlit_md = (REPO_ROOT / "app" / "chainlit.md").read_text(encoding="utf-8")
-    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)" in chainlit_md, (
-        "BCGEU 20th Main Agreement link missing from app/chainlit.md"
+    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.pdf)" in chainlit_md, (
+        "BCGEU 20th Main Agreement PDF link missing from app/chainlit.md"
     )
-    public_file = REPO_ROOT / "app" / "public" / "docs" / "BCGEU_20th_Main_Agreement.md"
-    assert public_file.is_file(), f"Published public document missing: {public_file}"
+    hosted_pdf = REPO_ROOT / "app" / "public" / "docs" / "BCGEU_20th_Main_Agreement.pdf"
+    assert hosted_pdf.is_file(), f"Hosted agreement PDF missing: {hosted_pdf}"
+    assert hosted_pdf.stat().st_size > 100_000, (
+        f"Hosted agreement PDF unexpectedly small: {hosted_pdf.stat().st_size} bytes"
+    )
+    assert hosted_pdf.read_bytes().startswith(b"%PDF-")
+    published_markdown = REPO_ROOT / "app" / "public" / "docs" / "BCGEU_20th_Main_Agreement.md"
+    assert not published_markdown.exists(), (
+        "The 20th agreement markdown is the bot corpus, not a public download"
+    )
 
 
 def test_default_model_alignment_with_spec():

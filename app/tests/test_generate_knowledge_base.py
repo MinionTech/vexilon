@@ -10,6 +10,7 @@ from scripts.generate_knowledge_base import (
     generate_knowledge_base_markdown,
     update_knowledge_base_files,
     main,
+    _is_pdf_url,
 )
 
 
@@ -74,6 +75,146 @@ def test_resolve_document_link_copies_file_and_preserves_suffix(tmp_path):
     assert published_target.exists()
     assert not published_target.is_symlink()
     assert published_target.read_text(encoding="utf-8") == "# 20th Agreement"
+
+
+def test_is_pdf_url_ignores_query_and_fragment():
+    assert _is_pdf_url("https://example.test/agreement.pdf")
+    assert _is_pdf_url("https://example.test/agreement.pdf?download=1")
+    assert _is_pdf_url("https://example.test/agreement.pdf#page=5")
+    assert not _is_pdf_url("https://example.test/agreement")
+    assert not _is_pdf_url(None)
+
+
+def test_markdown_edit_refreshes_generated_pdf(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+    source = data_dir / "BCGEU_20th_Main_Agreement.md"
+    source.write_text("Article 1 alpha applies to regular employees.\n", encoding="utf-8")
+    pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
+    resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url=pdf_url,
+    )
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    first = hosted.read_bytes()
+
+    source.write_text("Article 1 beta applies to regular employees.\n", encoding="utf-8")
+    link = resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url=pdf_url,
+    )
+    assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.read_bytes() != first
+    import pymupdf
+    with pymupdf.open(hosted) as doc:
+        text = "".join(page.get_text() for page in doc)
+    assert "Article 1 beta" in text
+    assert "Article 1 alpha" not in text
+
+
+def test_failed_pdf_refresh_keeps_the_previous_file(tmp_path, monkeypatch):
+    import pymupdf
+    from scripts.generate_knowledge_base import render_markdown_as_pdf
+
+    source = tmp_path / "agreement.md"
+    source.write_text("Article 1 alpha applies to regular employees.\n", encoding="utf-8")
+    dest = tmp_path / "agreement.pdf"
+    render_markdown_as_pdf(source, dest)
+    original = dest.read_bytes()
+    source.write_text("Article 1 beta applies to regular employees.\n", encoding="utf-8")
+
+    def fail_save(self, filename, *args, **kwargs):
+        raise RuntimeError("save failed")
+
+    monkeypatch.setattr(pymupdf.Document, "save", fail_save)
+    with pytest.raises(RuntimeError, match="save failed"):
+        render_markdown_as_pdf(source, dest)
+    assert dest.read_bytes() == original
+    assert not dest.with_name(dest.name + ".tmp").exists()
+
+
+def test_resolve_document_link_hosts_pdf_instead_of_upstream_url(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+    (data_dir / "BCGEU_20th_Main_Agreement.md").write_text(
+        "# Twentieth Main Public Service Agreement\n\nArticle 1 applies to employees.",
+        encoding="utf-8",
+    )
+
+    pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
+    link = resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url=pdf_url,
+    )
+    assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.is_file()
+    assert hosted.read_bytes().startswith(b"%PDF-")
+    assert not (public_docs / "BCGEU_20th_Main_Agreement.md").exists()
+
+
+def test_resolve_document_link_keeps_existing_hosted_pdf(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+    (data_dir / "BCGEU_20th_Main_Agreement.md").write_text("# 20th", encoding="utf-8")
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    hosted.write_bytes(b"%PDF-1.4 official")
+
+    link = resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url="https://example.test/agreement.pdf",
+    )
+    assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.read_bytes() == b"%PDF-1.4 official"
+
+
+def test_generate_knowledge_base_links_registry_pdf(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    primary_dir = data_dir / "01_primary"
+    primary_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+    (primary_dir / "BCGEU_20th_Main_Agreement.md").write_text("# 20th", encoding="utf-8")
+    manifest = {
+        "version": "1.0",
+        "sources": {
+            "01_primary/BCGEU_20th_Main_Agreement.md": {"hash": "abc", "size_bytes": 100}
+        },
+    }
+    (data_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (data_dir / "sources.yaml").write_text(
+        "sources:\n"
+        "- path: app/data/01_primary/BCGEU_20th_Main_Agreement.md\n"
+        "  url: https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf\n"
+        "  type: manual\n"
+        "  category: agreement\n",
+        encoding="utf-8",
+    )
+
+    content = generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
+    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.pdf)" in content
+    assert "bcgeu.ca" not in content
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.is_file()
+    assert hosted.read_bytes().startswith(b"%PDF-")
 
 
 def test_resolve_document_link_refreshes_stale_markdown(tmp_path):

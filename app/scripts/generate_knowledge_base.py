@@ -10,12 +10,14 @@ manifest.json, and public documents.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
 import shutil
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("generate_knowledge_base")
@@ -76,23 +78,197 @@ def get_base_stem(stem: str) -> str:
     return stem
 
 
+def _is_pdf_url(url: str | None) -> bool:
+    if not url:
+        return False
+    return urlsplit(url.strip()).path.lower().endswith(".pdf")
+
+
+def _source_fingerprint(source: Path) -> str:
+    return hashlib.sha256(source.read_bytes()).hexdigest()
+
+
+def _is_generated_pdf(path: Path) -> bool:
+    """True when this tool wrote the PDF. An official file is left alone."""
+    import pymupdf
+    try:
+        with pymupdf.open(str(path)) as doc:
+            return (doc.metadata or {}).get("creator") == "vexilon"
+    except Exception:
+        return False
+
+
+def _generated_pdf_fingerprint(path: Path) -> str | None:
+    import pymupdf
+    try:
+        with pymupdf.open(str(path)) as doc:
+            subject = (doc.metadata or {}).get("subject") or ""
+    except Exception:
+        return None
+    prefix = "sha256:"
+    if subject.startswith(prefix):
+        return subject[len(prefix):]
+    return None
+
+
+def _hosted_pdf_needs_render(source_file: Path, hosted_pdf: Path) -> bool:
+    if not hosted_pdf.exists():
+        return True
+    if not _is_generated_pdf(hosted_pdf):
+        return False
+    return _generated_pdf_fingerprint(hosted_pdf) != _source_fingerprint(source_file)
+
+
+def _registry_sources(data_dir: Path) -> list[dict]:
+    sources_yaml_path = data_dir / "sources.yaml"
+    if not sources_yaml_path.is_file():
+        return []
+    import yaml
+    ydata = yaml.safe_load(sources_yaml_path.read_text(encoding="utf-8")) or {}
+    raw_sources = ydata.get("sources")
+    if raw_sources is None:
+        raw_sources = []
+        raw_sources.extend(ydata.get("public_sources", []))
+        raw_sources.extend(ydata.get("manual_sources", []))
+    return [s for s in raw_sources if isinstance(s, dict)]
+
+
+def _wrap_text(font, text: str, fontsize: float, width: float) -> list[str]:
+    """Wrap text on spaces so the joined lines still equal the source line."""
+    if text == "":
+        return [""]
+    pieces: list[str] = []
+    current = ""
+    for word in text.split(" "):
+        candidate = word if current == "" else f"{current} {word}"
+        if font.text_length(candidate, fontsize) <= width:
+            current = candidate
+            continue
+        if current:
+            pieces.append(current)
+        if font.text_length(word, fontsize) <= width:
+            current = word
+            continue
+        buf = ""
+        for ch in word:
+            if font.text_length(buf + ch, fontsize) <= width:
+                buf += ch
+            else:
+                if buf:
+                    pieces.append(buf)
+                buf = ch
+        current = buf
+    pieces.append(current)
+    return pieces
+
+
+def render_markdown_as_pdf(source: Path, dest: Path) -> None:
+    """Write a PDF we host from the bot's markdown transcription.
+
+    The upstream PDF URL can sit behind a login. People still need a file
+    this app can serve. Plain lines are copied unchanged so a same-stem page
+    map can find them.
+    """
+    import pymupdf
+
+    serif = Path("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf")
+    serif_bold = Path("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf")
+    use_file = serif.is_file()
+    body_font = pymupdf.Font(fontfile=str(serif)) if use_file else pymupdf.Font("helv")
+    bold_font = pymupdf.Font(fontfile=str(serif_bold)) if serif_bold.is_file() else body_font
+    raw = source.read_text(encoding="utf-8").replace("\uf0ac", "*")
+    page_width = 612
+    page_height = 792
+    margin = 54
+    text_width = page_width - (2 * margin)
+
+    doc = pymupdf.open()
+    page = None
+    y = 0.0
+
+    def new_page():
+        nonlocal page, y
+        page = doc.new_page(width=page_width, height=page_height)
+        y = float(margin)
+
+    for line in raw.splitlines():
+        stripped = line.strip()
+        font = body_font
+        size = 10.0
+        display = stripped
+        if stripped.startswith("#"):
+            level = len(stripped) - len(stripped.lstrip("#"))
+            display = stripped.lstrip("#").strip()
+            font = bold_font
+            size = {1: 16.0, 2: 13.0, 3: 11.0}.get(level, 10.0)
+        elif stripped.startswith(">"):
+            display = stripped.lstrip(">").strip().replace("**", "")
+        visual = _wrap_text(font, display, size, text_width)
+        leading = size + 3
+        block_h = leading * max(1, len(visual))
+        if page is None or (y + block_h > page_height - margin and block_h < page_height - (2 * margin)):
+            new_page()
+        font_kwargs = {"fontfile": str(serif if font is body_font else serif_bold)} if use_file else {"fontname": "helv"}
+        if font is bold_font and serif_bold.is_file():
+            font_kwargs = {"fontfile": str(serif_bold)}
+        elif use_file:
+            font_kwargs = {"fontfile": str(serif)}
+        for piece in visual:
+            page.insert_text(pymupdf.Point(margin, y + size), piece, fontsize=size, **font_kwargs)
+            y += leading
+
+    if doc.page_count == 0:
+        new_page()
+    doc.set_metadata({
+        "title": source.stem.replace("_", " "),
+        "creator": "vexilon",
+        "subject": f"sha256:{_source_fingerprint(source)}",
+        "creationDate": "D:20251006000000Z",
+        "modDate": "D:20251006000000Z",
+    })
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    temporary = dest.with_name(dest.name + ".tmp")
+    try:
+        doc.save(str(temporary), garbage=4, deflate=True, no_new_id=True)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+    finally:
+        doc.close()
+    os.replace(temporary, dest)
+
+
 def resolve_document_link(
     base_stem: str,
     source_rel_path: str | None,
     public_docs_dir: Path,
     data_dir: Path,
     create_public_files: bool = True,
+    pdf_url: str | None = None,
 ) -> str | None:
     """Resolve the best public URL for a document.
 
-    Prefers PDF in public/docs, falls back to MD in public/docs.
-    If only a file exists in data_dir, publishes a copy inside public_docs_dir
-    so Chainlit can serve it without path-traversal restrictions.
+    Prefers a PDF in public/docs. When the registry names a PDF but that file
+    is not one we serve, render the markdown transcription into public/docs
+    and link to that copy. The upstream address may require a login.
+    Otherwise falls back to markdown in public/docs.
     Returns None if no matching asset can be found.
     """
+    source_file = data_dir / source_rel_path if source_rel_path else None
+    hosted_pdf = public_docs_dir / f"{base_stem}.pdf"
+    if (
+        _is_pdf_url(pdf_url)
+        and source_file is not None
+        and source_file.suffix.lower() == ".md"
+        and source_file.is_file()
+        and create_public_files
+        and _hosted_pdf_needs_render(source_file, hosted_pdf)
+    ):
+        render_markdown_as_pdf(source_file, hosted_pdf)
+        logger.info(f"Published hosted PDF: {hosted_pdf}")
+
     # 1. Check for exact PDF in public/docs
-    exact_pdf = public_docs_dir / f"{base_stem}.pdf"
-    if exact_pdf.exists():
+    if hosted_pdf.exists():
         return f"/public/docs/{base_stem}.pdf"
 
     # 2. Check for PDF in forms
@@ -100,12 +276,12 @@ def resolve_document_link(
     if forms_pdf.exists():
         return f"/public/docs/forms/{base_stem}.pdf"
 
-    # 3. Check for MD in forms
+    # 4. Check for MD in forms
     forms_md = public_docs_dir / "forms" / f"{base_stem}.md"
     if forms_md.exists():
         return f"/public/docs/forms/{base_stem}.md"
 
-    # 4. Check manifest source file in data_dir and ensure public target is up-to-date
+    # 5. Check manifest source file in data_dir and ensure public target is up-to-date
     if source_rel_path:
         source_file = data_dir / source_rel_path
         if source_file.exists():
@@ -123,7 +299,7 @@ def resolve_document_link(
             if target_file.exists() or not create_public_files:
                 return f"/public/docs/{target_file.name}"
 
-    # 5. Check for standalone MD in public/docs
+    # 6. Check for standalone MD in public/docs
     exact_md = public_docs_dir / f"{base_stem}.md"
     if exact_md.exists():
         return f"/public/docs/{base_stem}.md"
@@ -159,28 +335,26 @@ def generate_knowledge_base_markdown(
                 rel = str(p.relative_to(data_dir))
                 sources_dict[rel] = {}
 
-    # Categorize items, reading domain categories from sources.yaml when available
+    # Categorize items, reading domain categories from sources.yaml when available.
+    # path is the bot's markdown. A PDF url on the same entry is the human document.
     category_map: dict[str, str] = {}
-    sources_yaml_path = data_dir / "sources.yaml"
-    if sources_yaml_path.exists():
-        try:
-            import yaml
-            ydata = yaml.safe_load(sources_yaml_path.read_text(encoding="utf-8")) or {}
-            raw_sources = ydata.get("sources")
-            if raw_sources is None:
-                raw_sources = []
-                raw_sources.extend(ydata.get("public_sources", []))
-                raw_sources.extend(ydata.get("manual_sources", []))
-            for s in raw_sources:
-                cat = s.get("category", "")
-                p = s.get("path", "")
-                if p and cat:
-                    stem = Path(p).stem
-                    category_map[stem] = cat.lower()
-                    category_map[get_base_stem(stem)] = cat.lower()
-        except Exception as e:
-            logger.error("Failed to parse registry %s: %s", sources_yaml_path, e)
-            raise
+    pdf_url_map: dict[str, str] = {}
+    try:
+        for s in _registry_sources(data_dir):
+            cat = s.get("category", "")
+            p = s.get("path", "")
+            if p and cat:
+                stem = Path(p).stem
+                category_map[stem] = cat.lower()
+                category_map[get_base_stem(stem)] = cat.lower()
+            url = s.get("url")
+            if p and _is_pdf_url(url):
+                stem = Path(p).stem
+                pdf_url_map[stem] = url
+                pdf_url_map[get_base_stem(stem)] = url
+    except Exception as e:
+        logger.error("Failed to parse registry %s: %s", data_dir / "sources.yaml", e)
+        raise
 
     primary_authorities: dict[str, str] = {}  # base_stem -> rel_path
     statutory_items: dict[str, str] = {}
@@ -221,7 +395,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_primary:
         link = resolve_document_link(
-            stem, primary_authorities.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            primary_authorities.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -235,7 +414,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_statutory:
         link = resolve_document_link(
-            stem, statutory_items.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            statutory_items.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -253,7 +437,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_policy:
         link = resolve_document_link(
-            stem, policy_items.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            policy_items.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -267,7 +456,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_forms:
         link = resolve_document_link(
-            stem, form_items.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            form_items.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)

@@ -191,6 +191,41 @@ def test_build_reference_links_dynamic_lookup(monkeypatch, tmp_path):
     assert "/public/docs/contracts/Test_Agreement.pdf" in links[0]
 
 
+def test_build_reference_links_uses_hosted_pdf_for_markdown(monkeypatch, tmp_path):
+    """Citations open the PDF we host, not the markdown the bot searches."""
+    from services.llm import build_reference_links
+    import services.llm as llm_service
+
+    md_file = tmp_path / "data" / "01_primary" / "BCGEU_20th_Main_Agreement.md"
+    md_file.parent.mkdir(parents=True)
+    md_file.write_text("# 20th", encoding="utf-8")
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    (public_docs / "BCGEU_20th_Main_Agreement.md").write_text("transcription", encoding="utf-8")
+    (public_docs / "BCGEU_20th_Main_Agreement.pdf").write_bytes(b"%PDF-1.4 hosted")
+
+    monkeypatch.setattr(llm_service, "PUBLIC_DOCS_DIR", public_docs)
+    monkeypatch.setattr(
+        llm_service,
+        "_source_path_map",
+        {"BCGEU 20th Main Agreement": md_file},
+    )
+    active_main = llm_service._get_active_main()
+    if active_main:
+        monkeypatch.setattr(
+            active_main,
+            "_source_path_map",
+            {"BCGEU 20th Main Agreement": md_file},
+            raising=False,
+        )
+        monkeypatch.setattr(active_main, "PUBLIC_DOCS_DIR", public_docs, raising=False)
+
+    links = build_reference_links([{"source": "BCGEU 20th Main Agreement", "text": "article"}])
+    assert links == [
+        "- [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.pdf)"
+    ]
+
+
 def test_default_model_setting_respects_configured_model(monkeypatch):
     """Verify get_default_model_setting preserves DEFAULT_MODEL_LLM configuration."""
     from core.config import get_default_model_setting
