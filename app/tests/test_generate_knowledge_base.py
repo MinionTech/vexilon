@@ -120,6 +120,27 @@ def test_markdown_edit_refreshes_generated_pdf(tmp_path):
     assert "Article 1 alpha" not in text
 
 
+def test_failed_pdf_refresh_keeps_the_previous_file(tmp_path, monkeypatch):
+    import pymupdf
+    from scripts.generate_knowledge_base import render_markdown_as_pdf
+
+    source = tmp_path / "agreement.md"
+    source.write_text("Article 1 alpha applies to regular employees.\n", encoding="utf-8")
+    dest = tmp_path / "agreement.pdf"
+    render_markdown_as_pdf(source, dest)
+    original = dest.read_bytes()
+    source.write_text("Article 1 beta applies to regular employees.\n", encoding="utf-8")
+
+    def fail_save(self, filename, *args, **kwargs):
+        raise RuntimeError("save failed")
+
+    monkeypatch.setattr(pymupdf.Document, "save", fail_save)
+    with pytest.raises(RuntimeError, match="save failed"):
+        render_markdown_as_pdf(source, dest)
+    assert dest.read_bytes() == original
+    assert not dest.with_name(dest.name + ".tmp").exists()
+
+
 def test_resolve_document_link_hosts_pdf_instead_of_upstream_url(tmp_path):
     public_docs = tmp_path / "public" / "docs"
     public_docs.mkdir(parents=True)

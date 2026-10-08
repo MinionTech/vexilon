@@ -227,8 +227,15 @@ def render_markdown_as_pdf(source: Path, dest: Path) -> None:
         "modDate": "D:20251006000000Z",
     })
     dest.parent.mkdir(parents=True, exist_ok=True)
-    doc.save(str(dest), garbage=4, deflate=True, no_new_id=True)
-    doc.close()
+    temporary = dest.with_name(dest.name + ".tmp")
+    try:
+        doc.save(str(temporary), garbage=4, deflate=True, no_new_id=True)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+    finally:
+        doc.close()
+    os.replace(temporary, dest)
 
 
 def resolve_document_link(
