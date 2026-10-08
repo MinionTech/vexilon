@@ -76,12 +76,15 @@ def test_resolve_document_link_copies_file_and_preserves_suffix(tmp_path):
     assert published_target.read_text(encoding="utf-8") == "# 20th Agreement"
 
 
-def test_resolve_document_link_prefers_registry_pdf_over_markdown(tmp_path):
+def test_resolve_document_link_hosts_pdf_instead_of_upstream_url(tmp_path):
     public_docs = tmp_path / "public" / "docs"
     public_docs.mkdir(parents=True)
     data_dir = tmp_path / "data" / "01_primary"
     data_dir.mkdir(parents=True)
-    (data_dir / "BCGEU_20th_Main_Agreement.md").write_text("# 20th", encoding="utf-8")
+    (data_dir / "BCGEU_20th_Main_Agreement.md").write_text(
+        "# Twentieth Main Public Service Agreement\n\nArticle 1 applies to employees.",
+        encoding="utf-8",
+    )
 
     pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
     link = resolve_document_link(
@@ -91,13 +94,21 @@ def test_resolve_document_link_prefers_registry_pdf_over_markdown(tmp_path):
         tmp_path / "data",
         pdf_url=pdf_url,
     )
-    assert link == pdf_url
+    assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.is_file()
+    assert hosted.read_bytes().startswith(b"%PDF-")
+    assert not (public_docs / "BCGEU_20th_Main_Agreement.md").exists()
 
 
-def test_resolve_document_link_local_pdf_beats_registry_url(tmp_path):
+def test_resolve_document_link_keeps_existing_hosted_pdf(tmp_path):
     public_docs = tmp_path / "public" / "docs"
     public_docs.mkdir(parents=True)
-    (public_docs / "BCGEU_20th_Main_Agreement.pdf").touch()
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+    (data_dir / "BCGEU_20th_Main_Agreement.md").write_text("# 20th", encoding="utf-8")
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    hosted.write_bytes(b"%PDF-1.4 official")
 
     link = resolve_document_link(
         "BCGEU_20th_Main_Agreement",
@@ -107,6 +118,7 @@ def test_resolve_document_link_local_pdf_beats_registry_url(tmp_path):
         pdf_url="https://example.test/agreement.pdf",
     )
     assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.read_bytes() == b"%PDF-1.4 official"
 
 
 def test_generate_knowledge_base_links_registry_pdf(tmp_path):
@@ -133,10 +145,11 @@ def test_generate_knowledge_base_links_registry_pdf(tmp_path):
     )
 
     content = generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
-    assert (
-        "* [BCGEU 20th Main Agreement](https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf)"
-        in content
-    )
+    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.pdf)" in content
+    assert "bcgeu.ca" not in content
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.is_file()
+    assert hosted.read_bytes().startswith(b"%PDF-")
 
 
 def test_resolve_document_link_refreshes_stale_markdown(tmp_path):

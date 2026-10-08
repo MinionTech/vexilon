@@ -96,22 +96,101 @@ def _registry_sources(data_dir: Path) -> list[dict]:
     return [s for s in raw_sources if isinstance(s, dict)]
 
 
-def pdf_url_for_stem(stem: str, data_dir: Path | None = None) -> str | None:
-    """PDF a person should open for this stem.
-
-    The bot reads the markdown registered at ``path``. When ``url`` is a PDF,
-    that URL is the human document. No extra drawer setting.
-    """
-    data_dir = data_dir or _APP_ROOT / "data"
-    for source in _registry_sources(data_dir):
-        path = source.get("path") or ""
-        url = source.get("url")
-        if not path or not _is_pdf_url(url):
+def _wrap_text(font, text: str, fontsize: float, width: float) -> list[str]:
+    """Wrap text on spaces so the joined lines still equal the source line."""
+    if text == "":
+        return [""]
+    pieces: list[str] = []
+    current = ""
+    for word in text.split(" "):
+        candidate = word if current == "" else f"{current} {word}"
+        if font.text_length(candidate, fontsize) <= width:
+            current = candidate
             continue
-        entry_stem = Path(path).stem
-        if stem in (entry_stem, get_base_stem(entry_stem)):
-            return url
-    return None
+        if current:
+            pieces.append(current)
+        if font.text_length(word, fontsize) <= width:
+            current = word
+            continue
+        buf = ""
+        for ch in word:
+            if font.text_length(buf + ch, fontsize) <= width:
+                buf += ch
+            else:
+                if buf:
+                    pieces.append(buf)
+                buf = ch
+        current = buf
+    pieces.append(current)
+    return pieces
+
+
+def render_markdown_as_pdf(source: Path, dest: Path) -> None:
+    """Write a PDF we host from the bot's markdown transcription.
+
+    The upstream PDF URL can sit behind a login. People still need a file
+    this app can serve. Plain lines are copied unchanged so a same-stem page
+    map can find them.
+    """
+    import pymupdf
+
+    serif = Path("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf")
+    serif_bold = Path("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf")
+    use_file = serif.is_file()
+    body_font = pymupdf.Font(fontfile=str(serif)) if use_file else pymupdf.Font("helv")
+    bold_font = pymupdf.Font(fontfile=str(serif_bold)) if serif_bold.is_file() else body_font
+    raw = source.read_text(encoding="utf-8").replace("\uf0ac", "*")
+    page_width = 612
+    page_height = 792
+    margin = 54
+    text_width = page_width - (2 * margin)
+
+    doc = pymupdf.open()
+    page = None
+    y = 0.0
+
+    def new_page():
+        nonlocal page, y
+        page = doc.new_page(width=page_width, height=page_height)
+        y = float(margin)
+
+    for line in raw.splitlines():
+        stripped = line.strip()
+        font = body_font
+        size = 10.0
+        display = stripped
+        if stripped.startswith("#"):
+            level = len(stripped) - len(stripped.lstrip("#"))
+            display = stripped.lstrip("#").strip()
+            font = bold_font
+            size = {1: 16.0, 2: 13.0, 3: 11.0}.get(level, 10.0)
+        elif stripped.startswith(">"):
+            display = stripped.lstrip(">").strip().replace("**", "")
+        visual = _wrap_text(font, display, size, text_width)
+        leading = size + 3
+        block_h = leading * max(1, len(visual))
+        if page is None or (y + block_h > page_height - margin and block_h < page_height - (2 * margin)):
+            new_page()
+        font_kwargs = {"fontfile": str(serif if font is body_font else serif_bold)} if use_file else {"fontname": "helv"}
+        if font is bold_font and serif_bold.is_file():
+            font_kwargs = {"fontfile": str(serif_bold)}
+        elif use_file:
+            font_kwargs = {"fontfile": str(serif)}
+        for piece in visual:
+            page.insert_text(pymupdf.Point(margin, y + size), piece, fontsize=size, **font_kwargs)
+            y += leading
+
+    if doc.page_count == 0:
+        new_page()
+    doc.set_metadata({
+        "title": source.stem.replace("_", " "),
+        "creator": "vexilon",
+        "creationDate": "D:20251006000000Z",
+        "modDate": "D:20251006000000Z",
+    })
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(dest), garbage=4, deflate=True, no_new_id=True)
+    doc.close()
 
 
 def resolve_document_link(
@@ -124,26 +203,33 @@ def resolve_document_link(
 ) -> str | None:
     """Resolve the best public URL for a document.
 
-    Prefers a PDF in public/docs, then a PDF URL from the source registry,
-    then markdown in public/docs. If only a file exists in data_dir, publishes
-    a copy inside public_docs_dir so Chainlit can serve it without
-    path-traversal restrictions.
+    Prefers a PDF in public/docs. When the registry names a PDF but that file
+    is not one we serve, render the markdown transcription into public/docs
+    and link to that copy. The upstream address may require a login.
+    Otherwise falls back to markdown in public/docs.
     Returns None if no matching asset can be found.
     """
+    source_file = data_dir / source_rel_path if source_rel_path else None
+    hosted_pdf = public_docs_dir / f"{base_stem}.pdf"
+    if (
+        _is_pdf_url(pdf_url)
+        and source_file is not None
+        and source_file.suffix.lower() == ".md"
+        and source_file.is_file()
+        and create_public_files
+        and not hosted_pdf.exists()
+    ):
+        render_markdown_as_pdf(source_file, hosted_pdf)
+        logger.info(f"Published hosted PDF: {hosted_pdf}")
+
     # 1. Check for exact PDF in public/docs
-    exact_pdf = public_docs_dir / f"{base_stem}.pdf"
-    if exact_pdf.exists():
+    if hosted_pdf.exists():
         return f"/public/docs/{base_stem}.pdf"
 
     # 2. Check for PDF in forms
     forms_pdf = public_docs_dir / "forms" / f"{base_stem}.pdf"
     if forms_pdf.exists():
         return f"/public/docs/forms/{base_stem}.pdf"
-
-    # 3. Registry PDF. The indexed file may be a markdown transcription;
-    # the drawer should still open the PDF named for that source.
-    if _is_pdf_url(pdf_url):
-        return pdf_url
 
     # 4. Check for MD in forms
     forms_md = public_docs_dir / "forms" / f"{base_stem}.md"
