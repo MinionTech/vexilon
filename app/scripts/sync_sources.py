@@ -1164,7 +1164,18 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
 
     try:
         if source.type == "manual":
-            if local_hash is not None and (registry_hash is None or local_hash == registry_hash):
+            # No stored hash means this file was never checked. MATCH would
+            # make --check exit 0 for a baseline that does not exist.
+            if local_hash is not None and not registry_hash:
+                return DriftResult(
+                    path=source.path,
+                    url=source.url,
+                    status="DRIFT_DETECTED",
+                    local_hash=local_hash,
+                    upstream_hash=None,
+                    error="No baseline recorded",
+                )
+            if local_hash is not None and local_hash == registry_hash:
                 return DriftResult(
                     path=source.path,
                     url=source.url,

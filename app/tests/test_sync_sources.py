@@ -2234,6 +2234,31 @@ def test_check_source_drift_manual_match(tmp_path):
     assert res.local_hash == h
 
 
+def test_check_source_drift_manual_without_baseline_is_not_match(tmp_path):
+    """A manual file with no content_hash must not be reported as MATCH.
+
+    --check exits 0 on MATCH. An absent baseline has not been compared to
+    anything, so the result is drift and the check fails.
+    """
+    doc_path = tmp_path / "app/data/01_primary/Agreement.md"
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_text("# Binding Agreement\n\nSubstantive content.", encoding="utf-8")
+    sub = extract_substantive_body(doc_path.read_text(encoding="utf-8"))
+
+    entry = SourceEntry(
+        path="app/data/01_primary/Agreement.md",
+        url="",
+        type="manual",
+        category="agreement",
+        content_hash=None,
+    )
+    res = check_source_drift(entry, tmp_path)
+    assert res.status == "DRIFT_DETECTED"
+    assert res.error == "No baseline recorded"
+    assert res.local_hash == compute_content_hash(sub)
+    assert res.upstream_hash is None
+
+
 def test_check_source_drift_manual_drift_detected(tmp_path):
     """Manual source reports DRIFT_DETECTED when local file changes relative to baseline."""
     doc_path = tmp_path / "app/data/01_primary/Agreement.md"
