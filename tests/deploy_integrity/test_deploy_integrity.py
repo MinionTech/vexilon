@@ -352,17 +352,19 @@ def _pr_workflow_filters() -> dict[str, list[str]]:
     content = (REPO_ROOT / ".github" / "workflows" / "pr.yml").read_text()
     filters: dict[str, list[str]] = {}
     current: str | None = None
-    in_filters = False
+    filters_indent: int | None = None
     for line in content.splitlines():
-        if line.strip() == "filters: |":
-            in_filters = True
+        if filters_indent is None:
+            if line.strip() == "filters: |":
+                filters_indent = len(line) - len(line.lstrip(" "))
             continue
-        if not in_filters:
+        if not line.strip():
             continue
-        if line and not line.startswith(" "):
+        indent = len(line) - len(line.lstrip(" "))
+        if indent <= filters_indent:
             break
         stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
+        if stripped.startswith("#"):
             continue
         if stripped.endswith(":") and not stripped.startswith("-"):
             current = stripped[:-1]
@@ -393,9 +395,19 @@ def test_pr_workflow_selects_jobs_by_changed_files():
     assert "ready_for_review" not in types.group(1)
 
     filters = _pr_workflow_filters()
+    assert set(filters) == {"workflows", "unit", "container", "image", "analysis"}
     assert "app/**" in filters["unit"]
     assert "app/**" in filters["image"]
+    assert filters["analysis"] == [
+        "app/**",
+        "tests/**",
+        "compose.yml",
+        ".github/**",
+        "!app/data/**",
+        "!app/public/**",
+    ]
     assert "!app/data/sources.yaml" in filters["container"]
+    assert ".github/workflows/**" not in filters["container"]
 
     container_files = _git_pathspec_files(filters["container"])
     unit_files = _git_pathspec_files(filters["unit"])
