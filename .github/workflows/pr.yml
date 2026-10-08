@@ -2,7 +2,9 @@ name: PR
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    # opened and synchronize already run for a draft. ready_for_review would
+    # start the same jobs a second time when the pull request leaves draft.
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: pr-${{ github.event.number }}
@@ -17,13 +19,16 @@ env:
 jobs:
   check:
     name: Check Triggers
-    if: (! github.event.pull_request.draft)
     runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
     outputs:
-      triggered: ${{ steps.diff.outputs.triggered }}
+      workflows: ${{ steps.diff.outputs.workflows }}
+      unit: ${{ steps.diff.outputs.unit }}
+      container: ${{ steps.diff.outputs.container }}
+      image: ${{ steps.diff.outputs.image }}
+      analysis: ${{ steps.diff.outputs.analysis }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -31,15 +36,34 @@ jobs:
       - id: diff
         uses: bcgov/actions/diff-triggers@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
         with:
-          triggers: |
-            app/**
-            .github/workflows/**
-            tests/**
-            compose.yml
+          filters: |
+            workflows:
+              - .github/workflows/**
+            unit:
+              - app/**
+              - tests/**
+              - compose.yml
+              - .github/workflows/**
+            container:
+              - app/**
+              - tests/**
+              - compose.yml
+              - '!app/data/sources.yaml'
+            image:
+              - app/**
+              - tests/**
+            analysis:
+              - app/**
+              - tests/**
+              - compose.yml
+              - .github/**
+              - '!app/data/**'
+              - '!app/public/**'
 
   actionlint:
     name: Lint Workflows
-    if: (! github.event.pull_request.draft)
+    needs: check
+    if: needs.check.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -54,7 +78,7 @@ jobs:
   prepare-tests:
     name: Prepare Test Cache
     needs: check
-    if: needs.check.outputs.triggered == 'true'
+    if: needs.check.outputs.container == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -81,7 +105,7 @@ jobs:
   test-unit:
     name: Unit Tests
     needs: check
-    if: needs.check.outputs.triggered == 'true'
+    if: needs.check.outputs.unit == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -320,7 +344,8 @@ jobs:
 
   build:
     name: Build & Push to GHCR
-    needs: [test-unit, prepare-tests]
+    needs: [check, test-unit]
+    if: needs.check.outputs.image == 'true' && needs.test-unit.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -339,6 +364,8 @@ jobs:
 
   analysis:
     name: Analysis
+    needs: check
+    if: needs.check.outputs.analysis == 'true'
     permissions:
       contents: read
       security-events: write

@@ -347,3 +347,74 @@ def test_containerfile_package_copy_sync():
             )
 
 
+def _pr_workflow_filters() -> dict[str, list[str]]:
+    """Filter names and pathspecs from the pull request workflow."""
+    content = (REPO_ROOT / ".github" / "workflows" / "pr.yml").read_text()
+    filters: dict[str, list[str]] = {}
+    current: str | None = None
+    filters_indent: int | None = None
+    for line in content.splitlines():
+        if filters_indent is None:
+            if line.strip() == "filters: |":
+                filters_indent = len(line) - len(line.lstrip(" "))
+            continue
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+        if indent <= filters_indent:
+            break
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            continue
+        if stripped.endswith(":") and not stripped.startswith("-"):
+            current = stripped[:-1]
+            filters[current] = []
+            continue
+        if current and stripped.startswith("-"):
+            filters[current].append(stripped[1:].strip().strip("'\""))
+    return filters
+
+
+def _git_pathspec_files(pathspecs: list[str]) -> set[str]:
+    """Files matching the same pathspecs diff-triggers passes to git."""
+    git_specs = [f":(exclude){spec[1:]}" if spec.startswith("!") else spec for spec in pathspecs]
+    output = subprocess.check_output(
+        ["git", "ls-files", "--", *git_specs],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+    return {line for line in output.splitlines() if line}
+
+
+def test_pr_workflow_selects_jobs_by_changed_files():
+    """Draft status does not gate jobs, and a registry-only edit skips the test image."""
+    content = (REPO_ROOT / ".github" / "workflows" / "pr.yml").read_text()
+    assert "github.event.pull_request.draft" not in content
+    types = re.search(r"types:\s*\[([^\]]+)\]", content)
+    assert types is not None
+    assert "ready_for_review" not in types.group(1)
+
+    filters = _pr_workflow_filters()
+    assert set(filters) == {"workflows", "unit", "container", "image", "analysis"}
+    assert "app/**" in filters["unit"]
+    assert "app/**" in filters["image"]
+    assert filters["analysis"] == [
+        "app/**",
+        "tests/**",
+        "compose.yml",
+        ".github/**",
+        "!app/data/**",
+        "!app/public/**",
+    ]
+    assert "!app/data/sources.yaml" in filters["container"]
+    assert ".github/workflows/**" not in filters["container"]
+
+    container_files = _git_pathspec_files(filters["container"])
+    unit_files = _git_pathspec_files(filters["unit"])
+    image_files = _git_pathspec_files(filters["image"])
+    assert "app/data/sources.yaml" not in container_files
+    assert "app/indexing.py" in container_files
+    assert "app/data/sources.yaml" in unit_files
+    assert "app/data/sources.yaml" in image_files
+
+
