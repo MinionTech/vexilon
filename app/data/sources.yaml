@@ -489,19 +489,16 @@ sources:
   content_hash: afeb8c8ac48157b250b424e7bde02c23896d448f8f62bf14f45dad6e2a3bce47
   last_synced: '2026-10-07'
 - path: app/data/04_jurisprudence/Nexus_Test_and_Off-Duty_Conduct.md
-  url: https://www.canlii.org/en/commentary/millhaven-fibres-nexus-test
   type: manual
   category: resources
   content_hash: 4ff8d6bd9f36388a3e3ccbca95d87d2ce4ace8c243169c623f6b8a720f16743e
   last_synced: '2026-10-07'
 - path: app/data/forms/BCGEU_Grievance_Form_Guide.md
-  url: https://www.bcgeu.ca/grievance_form_guide
   type: manual
   category: forms
   content_hash: 3b6018de49a024fd675e83656d8d9a3a4f8dc6fbfb3d7d41f5eb0a308ff1b243
   last_synced: '2026-10-07'
 - path: app/data/forms/Policy_Grievance_Form_Guide.md
-  url: https://www.bcgeu.ca/policy_grievance_form_guide
   type: manual
   category: forms
   content_hash: 7d58d52f052fe5d5316c3226f323f73c30f78593873e2821fb447ee5b5c3b1ab

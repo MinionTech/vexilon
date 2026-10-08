@@ -1132,7 +1132,11 @@ def save_registry(config_path: Path, entries: list[SourceEntry]) -> None:
     header = leading_comment_block(existing)
     data = {
         "sources": [
-            {key: value for key, value in asdict(entry).items() if value is not None}
+            {
+                key: value
+                for key, value in asdict(entry).items()
+                if value is not None and not (key == "url" and value == "" and entry.type == "manual")
+            }
             for entry in entries
         ]
     }

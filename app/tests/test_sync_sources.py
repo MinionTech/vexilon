@@ -61,7 +61,10 @@ def test_sources_yaml_exists_and_valid():
         assert entry.path.startswith("app/data/") or entry.path.startswith("app/public/docs/"), (
             f"Path must be in app/data/ or app/public/docs/: {entry.path}"
         )
-        assert entry.url.startswith("http"), f"Invalid URL: {entry.url}"
+        if entry.type == "manual":
+            assert not entry.url or entry.url.startswith("http"), f"Invalid URL: {entry.url}"
+        else:
+            assert entry.url.startswith("http"), f"Invalid URL: {entry.url}"
         assert entry.type in ("html_selector", "bclaws", "pdf", "manual"), f"Unknown type: {entry.type}"
         assert entry.category in (
             "agreement",
