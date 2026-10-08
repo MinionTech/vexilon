@@ -53,6 +53,18 @@ class FileIntegrityError(Exception):
     """Raised when source file parsing fails and strict mode is active."""
     pass
 
+
+class PageMapUnreadable(OSError):
+    """A same-stem page-map PDF exists but cannot be read or hashed.
+
+    The build stops. A missing page map is not this error: there is nothing
+    to stamp, and the document is indexed without page numbers.
+    """
+
+    def __init__(self, pdf_path: Path) -> None:
+        self.pdf_path = pdf_path
+        super().__init__(f"Cannot read page map {pdf_path}")
+
 # Models
 _DEFAULT_EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 EMBED_MODEL = os.getenv("EMBED_MODEL", _DEFAULT_EMBED_MODEL)
@@ -234,6 +246,25 @@ def _resolve_pdf_path(md_path: Path) -> Path:
             return prefix_pdf
     return md_path
 
+
+def _same_stem_page_map_pdf(md_path: Path) -> Path | None:
+    """PDF whose text supplies page numbers for this Markdown file.
+
+    A prefix PDF (one regulation file shared by many part files) is not a page
+    map. ``load_md_chunks`` ignores it, and the cache identity must ignore it too.
+    """
+    if md_path.suffix.lower() != ".md":
+        return None
+    pdf_path = _resolve_pdf_path(md_path)
+    if (
+        pdf_path.suffix.lower() == ".pdf"
+        and pdf_path.is_file()
+        and pdf_path.stem == md_path.stem
+    ):
+        return pdf_path
+    return None
+
+
 def load_md_chunks(md_path: Path) -> list[dict]:
     content = md_path.read_text(encoding="utf-8").strip()
     if not content:
@@ -245,20 +276,15 @@ def load_md_chunks(md_path: Path) -> list[dict]:
     current_header = ""
     lines = content.split("\n")
     
-    pdf_path = _resolve_pdf_path(md_path)
+    pdf_path = _same_stem_page_map_pdf(md_path)
     pdf_pages: list[str] = []
-    same_stem_pdf = (
-        pdf_path.suffix.lower() == ".pdf"
-        and pdf_path.exists()
-        and pdf_path.stem == md_path.stem
-    )
-    if same_stem_pdf:
+    if pdf_path is not None:
         try:
             with fitz.open(str(pdf_path)) as doc:
                 for page in doc:
                     pdf_pages.append(page.get_text().replace("\n", " "))
-        except Exception as e:
-            logger.warning(f"Could not read PDF for {md_path.name}: {e}")
+        except Exception as exc:
+            raise PageMapUnreadable(pdf_path) from exc
             
     
     sections = []
@@ -588,23 +614,57 @@ def _hash_file(path: Path) -> str:
     return hasher.hexdigest()
 
 
-def _cache_identity(rel_key: str, content_hash: str) -> str:
-    """Identity is path + file bytes + config, not the file bytes alone."""
+def _page_map_sha256(rel_key: str) -> str | None:
+    """Hash of the same-stem PDF that stamps page numbers onto this document.
+
+    ``None`` means there is no same-stem page map. If that PDF exists and
+    cannot be read, raise ``PageMapUnreadable``. Returning ``None`` for a
+    read failure would select the no-page-map identity and reuse chunks
+    stamped when the PDF was readable.
+    """
+    pdf_path = _same_stem_page_map_pdf(DATA_DIR / rel_key)
+    if pdf_path is None:
+        return None
+    try:
+        return _hash_file(pdf_path)
+    except OSError as exc:
+        raise PageMapUnreadable(pdf_path) from exc
+
+
+def _cache_identity_payload(rel_key: str, content_hash: str) -> dict[str, Any]:
+    """Inputs that change chunk text, page numbers, or embedding vectors.
+
+    Page numbers are read from a same-stem PDF that may live outside the source
+    tree (``public/docs``). That file is not part of ``content_hash``. Leaving it
+    out of this payload reuses chunks after the PDF changes.
+
+    Call this once per document operation and derive the identity and the
+    header from the returned dict. Do not memoize it on ``rel_key`` alone:
+    a later build in the same process may replace the PDF.
+    """
     payload = {
         "path": rel_key,
         "content_hash": content_hash,
         "config": _index_config(),
     }
+    page_map = _page_map_sha256(rel_key)
+    if page_map is not None:
+        payload["page_map_sha256"] = page_map
+    return payload
+
+
+def _digest_cache_payload(payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def _cache_identity(rel_key: str, content_hash: str) -> str:
+    """Identity is path + file bytes + config + page-map PDF, not the file bytes alone."""
+    return _digest_cache_payload(_cache_identity_payload(rel_key, content_hash))
+
+
 def _cache_header(rel_key: str, content_hash: str) -> dict[str, Any]:
-    return {
-        "path": rel_key,
-        "content_hash": content_hash,
-        "config": _index_config(),
-    }
+    return _cache_identity_payload(rel_key, content_hash)
 
 
 def _embedding_cache_file(identity: str) -> Path:
@@ -646,7 +706,8 @@ def _cached_chunks_usable(chunks: Any, rel_key: str) -> bool:
 def _load_document_cache(rel_key: str, content_hash: str) -> "tuple[np.ndarray, list[dict]] | None":
     """Load one document cache, or None when the identity or payload is unusable."""
     import numpy as np
-    identity = _cache_identity(rel_key, content_hash)
+    header = _cache_identity_payload(rel_key, content_hash)
+    identity = _digest_cache_payload(header)
     npy_path = _embedding_cache_file(identity)
     json_path = _chunk_cache_file(identity)
     if not npy_path.is_file() or not json_path.is_file():
@@ -658,7 +719,6 @@ def _load_document_cache(rel_key: str, content_hash: str) -> "tuple[np.ndarray, 
     except (OSError, ValueError, EOFError, json.JSONDecodeError) as e:
         logger.warning(f"[build] Ignoring unreadable cache for {rel_key}: {e}")
         return None
-    header = _cache_header(rel_key, content_hash)
     if not isinstance(payload, dict) or any(payload.get(key) != header[key] for key in header):
         logger.warning(f"[build] Ignoring cache whose identity does not match {rel_key}")
         return None
@@ -698,10 +758,11 @@ def _save_document_cache(
 ) -> None:
     """Persist one document cache. A write error is logged with its traceback and the build continues."""
     import numpy as np
-    identity = _cache_identity(rel_key, content_hash)
+    header = _cache_identity_payload(rel_key, content_hash)
+    identity = _digest_cache_payload(header)
     npy_path = _embedding_cache_file(identity)
     json_path = _chunk_cache_file(identity)
-    payload = _cache_header(rel_key, content_hash)
+    payload = dict(header)
     payload["chunks"] = chunks
 
     def write_npy(tmp: Path) -> None:
@@ -847,9 +908,13 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
     Main entry point for index creation.
 
     Unchanged documents reuse a per-document embedding and chunk cache when the
-    source path, file bytes, and index configuration still match. Only new or
-    modified documents are encoded. manifest.json records each file hash and
-    those cache paths.
+    source path, file bytes, index configuration, and same-stem page-map PDF
+    still match. Only new or modified documents are encoded. manifest.json
+    records each file hash and those cache paths.
+
+    A missing same-stem PDF is not an error. A same-stem PDF that cannot be
+    read or hashed raises ``PageMapUnreadable`` and stops the build. That
+    document's cache is not loaded or saved.
 
     force=True skips the unchanged-manifest shortcut and the per-document cache,
     re-encodes every document, and rebuilds the FAISS index. It is not a
@@ -900,6 +965,8 @@ def build_index_from_sources(force: bool = False) -> tuple[Any, Any] | tuple[Non
             continue
         try:
             doc_chunks = _chunks_for_source(source_file, strict)
+        except PageMapUnreadable:
+            raise
         except Exception as e:
             logger.error(f"[build] ERROR: Failed to index {source_file.name}: {e}")
             failed_files.append(source_file.name)
