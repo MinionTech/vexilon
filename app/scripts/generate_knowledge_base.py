@@ -10,12 +10,14 @@ manifest.json, and public documents.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
 import shutil
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("generate_knowledge_base")
@@ -79,7 +81,42 @@ def get_base_stem(stem: str) -> str:
 def _is_pdf_url(url: str | None) -> bool:
     if not url:
         return False
-    return url.split("?", 1)[0].lower().endswith(".pdf")
+    return urlsplit(url.strip()).path.lower().endswith(".pdf")
+
+
+def _source_fingerprint(source: Path) -> str:
+    return hashlib.sha256(source.read_bytes()).hexdigest()
+
+
+def _is_generated_pdf(path: Path) -> bool:
+    """True when this tool wrote the PDF. An official file is left alone."""
+    import pymupdf
+    try:
+        with pymupdf.open(str(path)) as doc:
+            return (doc.metadata or {}).get("creator") == "vexilon"
+    except Exception:
+        return False
+
+
+def _generated_pdf_fingerprint(path: Path) -> str | None:
+    import pymupdf
+    try:
+        with pymupdf.open(str(path)) as doc:
+            subject = (doc.metadata or {}).get("subject") or ""
+    except Exception:
+        return None
+    prefix = "sha256:"
+    if subject.startswith(prefix):
+        return subject[len(prefix):]
+    return None
+
+
+def _hosted_pdf_needs_render(source_file: Path, hosted_pdf: Path) -> bool:
+    if not hosted_pdf.exists():
+        return True
+    if not _is_generated_pdf(hosted_pdf):
+        return False
+    return _generated_pdf_fingerprint(hosted_pdf) != _source_fingerprint(source_file)
 
 
 def _registry_sources(data_dir: Path) -> list[dict]:
@@ -185,6 +222,7 @@ def render_markdown_as_pdf(source: Path, dest: Path) -> None:
     doc.set_metadata({
         "title": source.stem.replace("_", " "),
         "creator": "vexilon",
+        "subject": f"sha256:{_source_fingerprint(source)}",
         "creationDate": "D:20251006000000Z",
         "modDate": "D:20251006000000Z",
     })
@@ -217,7 +255,7 @@ def resolve_document_link(
         and source_file.suffix.lower() == ".md"
         and source_file.is_file()
         and create_public_files
-        and not hosted_pdf.exists()
+        and _hosted_pdf_needs_render(source_file, hosted_pdf)
     ):
         render_markdown_as_pdf(source_file, hosted_pdf)
         logger.info(f"Published hosted PDF: {hosted_pdf}")

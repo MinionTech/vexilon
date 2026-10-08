@@ -10,6 +10,7 @@ from scripts.generate_knowledge_base import (
     generate_knowledge_base_markdown,
     update_knowledge_base_files,
     main,
+    _is_pdf_url,
 )
 
 
@@ -74,6 +75,49 @@ def test_resolve_document_link_copies_file_and_preserves_suffix(tmp_path):
     assert published_target.exists()
     assert not published_target.is_symlink()
     assert published_target.read_text(encoding="utf-8") == "# 20th Agreement"
+
+
+def test_is_pdf_url_ignores_query_and_fragment():
+    assert _is_pdf_url("https://example.test/agreement.pdf")
+    assert _is_pdf_url("https://example.test/agreement.pdf?download=1")
+    assert _is_pdf_url("https://example.test/agreement.pdf#page=5")
+    assert not _is_pdf_url("https://example.test/agreement")
+    assert not _is_pdf_url(None)
+
+
+def test_markdown_edit_refreshes_generated_pdf(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+    source = data_dir / "BCGEU_20th_Main_Agreement.md"
+    source.write_text("Article 1 alpha applies to regular employees.\n", encoding="utf-8")
+    pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
+    resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url=pdf_url,
+    )
+    hosted = public_docs / "BCGEU_20th_Main_Agreement.pdf"
+    first = hosted.read_bytes()
+
+    source.write_text("Article 1 beta applies to regular employees.\n", encoding="utf-8")
+    link = resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url=pdf_url,
+    )
+    assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+    assert hosted.read_bytes() != first
+    import pymupdf
+    with pymupdf.open(hosted) as doc:
+        text = "".join(page.get_text() for page in doc)
+    assert "Article 1 beta" in text
+    assert "Article 1 alpha" not in text
 
 
 def test_resolve_document_link_hosts_pdf_instead_of_upstream_url(tmp_path):
