@@ -76,6 +76,69 @@ def test_resolve_document_link_copies_file_and_preserves_suffix(tmp_path):
     assert published_target.read_text(encoding="utf-8") == "# 20th Agreement"
 
 
+def test_resolve_document_link_prefers_registry_pdf_over_markdown(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data" / "01_primary"
+    data_dir.mkdir(parents=True)
+    (data_dir / "BCGEU_20th_Main_Agreement.md").write_text("# 20th", encoding="utf-8")
+
+    pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
+    link = resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url=pdf_url,
+    )
+    assert link == pdf_url
+
+
+def test_resolve_document_link_local_pdf_beats_registry_url(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    (public_docs / "BCGEU_20th_Main_Agreement.pdf").touch()
+
+    link = resolve_document_link(
+        "BCGEU_20th_Main_Agreement",
+        "01_primary/BCGEU_20th_Main_Agreement.md",
+        public_docs,
+        tmp_path / "data",
+        pdf_url="https://example.test/agreement.pdf",
+    )
+    assert link == "/public/docs/BCGEU_20th_Main_Agreement.pdf"
+
+
+def test_generate_knowledge_base_links_registry_pdf(tmp_path):
+    data_dir = tmp_path / "data"
+    public_docs = tmp_path / "public" / "docs"
+    primary_dir = data_dir / "01_primary"
+    primary_dir.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+    (primary_dir / "BCGEU_20th_Main_Agreement.md").write_text("# 20th", encoding="utf-8")
+    manifest = {
+        "version": "1.0",
+        "sources": {
+            "01_primary/BCGEU_20th_Main_Agreement.md": {"hash": "abc", "size_bytes": 100}
+        },
+    }
+    (data_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (data_dir / "sources.yaml").write_text(
+        "sources:\n"
+        "- path: app/data/01_primary/BCGEU_20th_Main_Agreement.md\n"
+        "  url: https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf\n"
+        "  type: manual\n"
+        "  category: agreement\n",
+        encoding="utf-8",
+    )
+
+    content = generate_knowledge_base_markdown(data_dir=data_dir, public_docs_dir=public_docs)
+    assert (
+        "* [BCGEU 20th Main Agreement](https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf)"
+        in content
+    )
+
+
 def test_resolve_document_link_refreshes_stale_markdown(tmp_path):
     import os
     import time

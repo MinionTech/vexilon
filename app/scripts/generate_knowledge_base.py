@@ -76,18 +76,26 @@ def get_base_stem(stem: str) -> str:
     return stem
 
 
+def _is_pdf_url(url: str | None) -> bool:
+    if not url:
+        return False
+    return url.split("?", 1)[0].lower().endswith(".pdf")
+
+
 def resolve_document_link(
     base_stem: str,
     source_rel_path: str | None,
     public_docs_dir: Path,
     data_dir: Path,
     create_public_files: bool = True,
+    pdf_url: str | None = None,
 ) -> str | None:
     """Resolve the best public URL for a document.
 
-    Prefers PDF in public/docs, falls back to MD in public/docs.
-    If only a file exists in data_dir, publishes a copy inside public_docs_dir
-    so Chainlit can serve it without path-traversal restrictions.
+    Prefers a PDF in public/docs, then a PDF URL from the source registry,
+    then markdown in public/docs. If only a file exists in data_dir, publishes
+    a copy inside public_docs_dir so Chainlit can serve it without
+    path-traversal restrictions.
     Returns None if no matching asset can be found.
     """
     # 1. Check for exact PDF in public/docs
@@ -100,12 +108,17 @@ def resolve_document_link(
     if forms_pdf.exists():
         return f"/public/docs/forms/{base_stem}.pdf"
 
-    # 3. Check for MD in forms
+    # 3. Registry PDF. The indexed file may be a markdown transcription;
+    # the drawer should still open the PDF named for that source.
+    if _is_pdf_url(pdf_url):
+        return pdf_url
+
+    # 4. Check for MD in forms
     forms_md = public_docs_dir / "forms" / f"{base_stem}.md"
     if forms_md.exists():
         return f"/public/docs/forms/{base_stem}.md"
 
-    # 4. Check manifest source file in data_dir and ensure public target is up-to-date
+    # 5. Check manifest source file in data_dir and ensure public target is up-to-date
     if source_rel_path:
         source_file = data_dir / source_rel_path
         if source_file.exists():
@@ -123,7 +136,7 @@ def resolve_document_link(
             if target_file.exists() or not create_public_files:
                 return f"/public/docs/{target_file.name}"
 
-    # 5. Check for standalone MD in public/docs
+    # 6. Check for standalone MD in public/docs
     exact_md = public_docs_dir / f"{base_stem}.md"
     if exact_md.exists():
         return f"/public/docs/{base_stem}.md"
@@ -161,6 +174,7 @@ def generate_knowledge_base_markdown(
 
     # Categorize items, reading domain categories from sources.yaml when available
     category_map: dict[str, str] = {}
+    pdf_url_map: dict[str, str] = {}
     sources_yaml_path = data_dir / "sources.yaml"
     if sources_yaml_path.exists():
         try:
@@ -178,6 +192,11 @@ def generate_knowledge_base_markdown(
                     stem = Path(p).stem
                     category_map[stem] = cat.lower()
                     category_map[get_base_stem(stem)] = cat.lower()
+                url = s.get("url")
+                if p and _is_pdf_url(url):
+                    stem = Path(p).stem
+                    pdf_url_map[stem] = url
+                    pdf_url_map[get_base_stem(stem)] = url
         except Exception as e:
             logger.error("Failed to parse registry %s: %s", sources_yaml_path, e)
             raise
@@ -221,7 +240,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_primary:
         link = resolve_document_link(
-            stem, primary_authorities.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            primary_authorities.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -235,7 +259,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_statutory:
         link = resolve_document_link(
-            stem, statutory_items.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            statutory_items.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -253,7 +282,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_policy:
         link = resolve_document_link(
-            stem, policy_items.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            policy_items.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -267,7 +301,12 @@ def generate_knowledge_base_markdown(
     )
     for stem in sorted_forms:
         link = resolve_document_link(
-            stem, form_items.get(stem), public_docs_dir, data_dir, create_public_files
+            stem,
+            form_items.get(stem),
+            public_docs_dir,
+            data_dir,
+            create_public_files,
+            pdf_url=pdf_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)

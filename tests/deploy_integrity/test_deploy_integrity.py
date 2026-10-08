@@ -190,8 +190,8 @@ def test_primary_authority_20th_agreement_present():
 
     # 3. Assert published in drawer and public docs
     chainlit_md = (REPO_ROOT / "app" / "chainlit.md").read_text(encoding="utf-8")
-    assert "* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)" in chainlit_md, (
-        "BCGEU 20th Main Agreement link missing from app/chainlit.md"
+    assert "* [BCGEU 20th Main Agreement](https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf)" in chainlit_md, (
+        "BCGEU 20th Main Agreement PDF link missing from app/chainlit.md"
     )
     public_file = REPO_ROOT / "app" / "public" / "docs" / "BCGEU_20th_Main_Agreement.md"
     assert public_file.is_file(), f"Published public document missing: {public_file}"

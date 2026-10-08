@@ -8,7 +8,7 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 
 ### Primary Authority
 
-* [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.md)
+* [BCGEU 20th Main Agreement](https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf)
 
 ### Legislation & Regulations
 
