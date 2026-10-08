@@ -54,7 +54,7 @@ sources:
   content_hash: 36bc059cf22b32f000257680dfb900fca04303bd3597db39c797673fbeeaf121
   last_synced: '2026-09-27'
 - path: app/data/01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md
-  url: https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/working-with-others/social-media-guidelines-for-personal-use
+  url: https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/social-media-guidelines
   type: manual
   category: conduct
   content_hash: 21c57dd6fd5e78c4648438082a612f415f31cd7fc2a2f36dff6974d63f56429e
