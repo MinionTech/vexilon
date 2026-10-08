@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 import indexing
 
@@ -460,6 +461,52 @@ def test_same_stem_pdf_change_reencodes_markdown(tmp_path, monkeypatch):
     restored = json.loads(new_json.read_text(encoding="utf-8"))
     assert restored["page_map_sha256"] == hashlib.sha256(pdf.read_bytes()).hexdigest()
     assert [c["path"] for c in chunks] == ["other.md", "statute.md"]
+
+
+def test_unreadable_same_stem_pdf_aborts_and_does_not_reuse_page_stamps(tmp_path, monkeypatch):
+    """A same-stem PDF that cannot be hashed stops the build.
+
+    The failure must not select the no-page-map identity, load chunks stamped
+    on an earlier successful hash, or write a new cache entry for that file.
+    """
+    data = tmp_path / "data"
+    cache = tmp_path / "cache"
+    _isolate(monkeypatch, data, cache)
+    monkeypatch.setattr(indexing, "_PKG_ROOT", tmp_path)
+    _install_loaders(monkeypatch, data)
+    calls = _install_embed(monkeypatch)
+    (data / "statute.md").write_text("alpha clause\n", encoding="utf-8")
+    pdf = tmp_path / "public" / "docs" / "statute.pdf"
+    pdf.parent.mkdir(parents=True)
+    pdf.write_bytes(b"%PDF-1.4 page one")
+
+    indexing.build_index_from_sources()
+    _npy, chunk_json = _doc_cache(cache, "statute.md", data / "statute.md")
+    stored = json.loads(chunk_json.read_text(encoding="utf-8"))
+    stored["chunks"][0]["page"] = 4
+    chunk_json.write_text(json.dumps(stored), encoding="utf-8")
+    page_map = stored["page_map_sha256"]
+    _drop_built_index(cache)
+    calls.clear()
+
+    real_hash = indexing._hash_file
+
+    def hash_file(path: Path) -> str:
+        if Path(path) == pdf:
+            raise OSError(5, "Input/output error")
+        return real_hash(path)
+
+    monkeypatch.setattr(indexing, "_hash_file", hash_file)
+
+    with pytest.raises(indexing.PageMapUnreadable):
+        indexing.build_index_from_sources()
+
+    assert calls == []
+    assert chunk_json.is_file()
+    still = json.loads(chunk_json.read_text(encoding="utf-8"))
+    assert still["chunks"][0]["page"] == 4
+    assert still["page_map_sha256"] == page_map
+    assert list(cache.glob("chunks/*.json")) == [chunk_json]
 
 
 def test_prefix_pdf_change_does_not_reencode_part_markdown(tmp_path, monkeypatch):
