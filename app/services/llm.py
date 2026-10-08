@@ -798,14 +798,26 @@ def build_reference_links(snippets: list[dict], source_path_map: dict[str, Path]
             md_path = active_path_map.get(source_name)
             if md_path:
                 download_path = resolve_pdf_path(md_path)
-                if download_path.exists():
+                clean_title = source_name.replace("_", " ")
+                if download_path.suffix.lower() == ".pdf" and download_path.exists():
                     try:
                         rel_path = download_path.relative_to(effective_docs_dir)
                         rel_url = f"/public/docs/{rel_path}"
                     except ValueError:
                         rel_url = f"/public/docs/{download_path.name}"
-                    clean_title = source_name.replace("_", " ")
                     ref_links.append(f"- [{clean_title}]({rel_url})")
+                else:
+                    from scripts.generate_knowledge_base import pdf_url_for_stem
+                    pdf_url = pdf_url_for_stem(md_path.stem, DATA_DIR)
+                    if pdf_url:
+                        ref_links.append(f"- [{clean_title}]({pdf_url})")
+                    elif download_path.exists():
+                        try:
+                            rel_path = download_path.relative_to(effective_docs_dir)
+                            rel_url = f"/public/docs/{rel_path}"
+                        except ValueError:
+                            rel_url = f"/public/docs/{download_path.name}"
+                        ref_links.append(f"- [{clean_title}]({rel_url})")
             seen_sources.add(source_name)
     return ref_links
 

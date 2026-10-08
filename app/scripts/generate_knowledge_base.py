@@ -82,6 +82,38 @@ def _is_pdf_url(url: str | None) -> bool:
     return url.split("?", 1)[0].lower().endswith(".pdf")
 
 
+def _registry_sources(data_dir: Path) -> list[dict]:
+    sources_yaml_path = data_dir / "sources.yaml"
+    if not sources_yaml_path.is_file():
+        return []
+    import yaml
+    ydata = yaml.safe_load(sources_yaml_path.read_text(encoding="utf-8")) or {}
+    raw_sources = ydata.get("sources")
+    if raw_sources is None:
+        raw_sources = []
+        raw_sources.extend(ydata.get("public_sources", []))
+        raw_sources.extend(ydata.get("manual_sources", []))
+    return [s for s in raw_sources if isinstance(s, dict)]
+
+
+def pdf_url_for_stem(stem: str, data_dir: Path | None = None) -> str | None:
+    """PDF a person should open for this stem.
+
+    The bot reads the markdown registered at ``path``. When ``url`` is a PDF,
+    that URL is the human document. No extra drawer setting.
+    """
+    data_dir = data_dir or _APP_ROOT / "data"
+    for source in _registry_sources(data_dir):
+        path = source.get("path") or ""
+        url = source.get("url")
+        if not path or not _is_pdf_url(url):
+            continue
+        entry_stem = Path(path).stem
+        if stem in (entry_stem, get_base_stem(entry_stem)):
+            return url
+    return None
+
+
 def resolve_document_link(
     base_stem: str,
     source_rel_path: str | None,
@@ -172,34 +204,26 @@ def generate_knowledge_base_markdown(
                 rel = str(p.relative_to(data_dir))
                 sources_dict[rel] = {}
 
-    # Categorize items, reading domain categories from sources.yaml when available
+    # Categorize items, reading domain categories from sources.yaml when available.
+    # path is the bot's markdown. A PDF url on the same entry is the human document.
     category_map: dict[str, str] = {}
     pdf_url_map: dict[str, str] = {}
-    sources_yaml_path = data_dir / "sources.yaml"
-    if sources_yaml_path.exists():
-        try:
-            import yaml
-            ydata = yaml.safe_load(sources_yaml_path.read_text(encoding="utf-8")) or {}
-            raw_sources = ydata.get("sources")
-            if raw_sources is None:
-                raw_sources = []
-                raw_sources.extend(ydata.get("public_sources", []))
-                raw_sources.extend(ydata.get("manual_sources", []))
-            for s in raw_sources:
-                cat = s.get("category", "")
-                p = s.get("path", "")
-                if p and cat:
-                    stem = Path(p).stem
-                    category_map[stem] = cat.lower()
-                    category_map[get_base_stem(stem)] = cat.lower()
-                url = s.get("url")
-                if p and _is_pdf_url(url):
-                    stem = Path(p).stem
-                    pdf_url_map[stem] = url
-                    pdf_url_map[get_base_stem(stem)] = url
-        except Exception as e:
-            logger.error("Failed to parse registry %s: %s", sources_yaml_path, e)
-            raise
+    try:
+        for s in _registry_sources(data_dir):
+            cat = s.get("category", "")
+            p = s.get("path", "")
+            if p and cat:
+                stem = Path(p).stem
+                category_map[stem] = cat.lower()
+                category_map[get_base_stem(stem)] = cat.lower()
+            url = s.get("url")
+            if p and _is_pdf_url(url):
+                stem = Path(p).stem
+                pdf_url_map[stem] = url
+                pdf_url_map[get_base_stem(stem)] = url
+    except Exception as e:
+        logger.error("Failed to parse registry %s: %s", data_dir / "sources.yaml", e)
+        raise
 
     primary_authorities: dict[str, str] = {}  # base_stem -> rel_path
     statutory_items: dict[str, str] = {}
