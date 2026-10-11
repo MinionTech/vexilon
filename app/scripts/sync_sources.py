@@ -855,8 +855,12 @@ def extract_substantive_body(markdown_text: str) -> str:
 # that is not a change to the statute, so a date-only bump must not open a
 # drift issue. The line stays in the synced markdown; only the hash omits it.
 # Optional leading "**" is the markdown bold wrapper on the consolidation stamp.
+# A regulation stamp spans three lines and repeats the date on its last line,
+# "amendments effective after <Month> <day>, <year>.**". That whole line is the
+# stamp, so it is omitted only when it is exactly that.
 _BCLAWS_CURRENCY_LINE_RE = re.compile(
     r"^(?:\*\*)?(?:This Act is current to|This regulation is current to|This consolidation is current to)\b"
+    r"|^amendments effective after [A-Z][a-z]+ \d{1,2}, \d{4}\.(?:\*\*)?$"
 )
 
 
@@ -874,8 +878,9 @@ def compute_content_hash(text: str) -> str:
 
     A line is omitted when, after stripping surrounding whitespace, it is
     optional leading markdown bold plus "This Act is current to",
-    "This regulation is current to", or "This consolidation is current to".
-    Any other text remains in the hash.
+    "This regulation is current to", or "This consolidation is current to",
+    or it is exactly "amendments effective after <Month> <day>, <year>."
+    with optional trailing markdown bold. Any other text remains in the hash.
     """
     normalized = re.sub(r"\s+", " ", _omit_bclaws_currency_lines(text)).strip()
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
