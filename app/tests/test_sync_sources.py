@@ -701,6 +701,21 @@ def test_content_hash_ignores_bclaws_currency_date_line():
         assert compute_content_hash(earlier) == compute_content_hash(later)
         assert compute_content_hash(later) != compute_content_hash(changed)
 
+    def stamp(date: str) -> str:
+        return (
+            f"**This consolidation is current to {date}.\n"
+            "See \u201cAmendments Not in Force\u201d and the\n"
+            "[Cumulative B.C. Regulations Bulletin 2026](http://example.test) for\n"
+            f"amendments effective after {date}.**\n\n"
+        )
+
+    earlier = stamp("September 29, 2026") + statute
+    later = stamp("October 6, 2026") + statute
+    assert compute_content_hash(earlier) == compute_content_hash(later)
+    assert compute_content_hash(later) != compute_content_hash(stamp("October 6, 2026") + amended)
+    prose = "Notice of amendments effective after October 6, 2026. must be posted."
+    assert compute_content_hash(prose) != compute_content_hash(prose.replace("October", "November"))
+
     charge = (
         "minimize the potential for an electrical charge or current to "
         "unintentionally reach an explosive\n"

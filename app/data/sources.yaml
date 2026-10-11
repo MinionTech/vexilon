@@ -115,7 +115,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: b9e1185e4cd061d2d9a7eb387929dc6f04bd74ef9f8c0e57add99b1fd110f11e
+  content_hash: 50e694b806aba201885a922efd3e5f4588c0d0f864a7cd58e7458dc7f382e424
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:01 GMT
   extraction_fingerprint: 17d33427922e87231cc76668a8c196b7d33cb3b8c056cd73d23856eba6be4842
@@ -124,7 +124,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 363786638cf7f24b8a6d4e8afdb23102e8649c5d3e0dd77fe0c63d18f50a8dec
+  content_hash: 7d0d3bff53a8bdea951062bce6495bbda55c05d00e288b282a8c3001b4f870e1
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:01 GMT
   extraction_fingerprint: f8df927039428d9b671562fcb8ecbb516798708b1bfaf3e6d108304018b85d8e
@@ -133,7 +133,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: a72e7d1fc832bd63f6dd431eb01d465e698e9ecb2be6433a74fec51c8d3c3e83
+  content_hash: 21fdad00315fca070f338aab9f825ef4ca220411db3ce4bdd6dfd05690fa0229
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:02 GMT
   extraction_fingerprint: 3bce268abfa1f6e502b53ae20de9a77539398069ac79b0f8fd83a2ec9c8577ac
@@ -142,7 +142,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 465753f902873e04607a5116ffa999553532b1c7ef0f0fcfae5c8e1fe2a309f5
+  content_hash: e1680534083a924e9f45157eaae0e1ab2eb05da05bf955cb8fed516e1107a7d7
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:02 GMT
   extraction_fingerprint: 52bbb57f5557bcf8aa4a91b70599ccc6c985d9982abb3495dc96dd6e2713b722
@@ -151,7 +151,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 624fb963d1cd7b7cedf992fbbfd3c6fe11d0c68fc80f7d6169caf83d7858e756
+  content_hash: e87ba26359afc9db85cee5462784bb1198147f31e6ca45d279e74d8e162c8614
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:02 GMT
   extraction_fingerprint: a7b86c99071d799e8158ae2886ff08bb963f8231e545a4d20c16e714dea84e17
@@ -160,7 +160,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 456db30a1f77ae6aa6793174cfd8b76c53f69ed62bbd0622f580f4290642a942
+  content_hash: 4e31b6f006f198e47f86d640b1f51566dd654c68ba4e9e9cf30c8a0c36c0da44
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:03 GMT
   extraction_fingerprint: 45065ecd0ff0c2eabeab413ec4c6f995467b1bf93e7bdc74f956751e32d0df9b
@@ -189,7 +189,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: b2874911ffa57df8ad6a5a7c739dcd9b899eebeeb6c04def931b50dfaee69266
+  content_hash: aa04b2564ecb5ba78043944d6734c3f7a964341f01f795b228959ecbd4bf1914
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:03 GMT
   extraction_fingerprint: fdcec752964aed1b83271bc2fa6c0859c6c63ca83e777df179e0648f8d58b68a
@@ -198,7 +198,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 8d3dde61508651ced8ba4aeaee17ce96514359275e9bac13af5f18fd155f416e
+  content_hash: 0f36ce7211ca03c24c2068f2d630a07cb663abbe7e4e2c9aecec334eed09f711
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:04 GMT
   extraction_fingerprint: 139f7cd36652a48eac90e4a4cb5032fdcb24f8f1efd5c970a816505de638cabd
@@ -207,7 +207,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: b9991ec475607b5cdaebc05546e8d980e9625dc5d443fac4643439b9ccb95a51
+  content_hash: 929fef1748a121994418da1856b24e3f53f000acee44e332033aa757eed99856
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:04 GMT
   extraction_fingerprint: d204491b8cf39d0f00445020358850f48cfaed3d61cd458fa11718e1507827c3
@@ -216,7 +216,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 1a3fcfa68bd183656e7caf4d688e0b41d1458eb7e1212104be65565bcc873fb7
+  content_hash: 4cf96cb2666c525a5ab252f3972c540e94cdc878c2991060042fce015fcf9de4
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:04 GMT
   extraction_fingerprint: 6cef1b5fd79b8b5e455a90b627abc4406ecae0a9057cae339c7f12fb6a8114d3
@@ -225,7 +225,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 35c5ce7b9ca697ab7f76e57328919e51e5f1c4bac2da79a01cb7d4cf124a2810
+  content_hash: 07d0c9f226bd03dbe011117c896c17595634ab715856c0b3cd294e7a2a0c432c
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:05 GMT
   extraction_fingerprint: 381f45fb07b7b3a37372717ff91aa85b3431ce65ec606243f79c381f2835b34a
@@ -254,7 +254,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 7c7d8447e1249f15969bb0a0c51864ae25c7d5a47743a704ef22ac7f145a7564
+  content_hash: 15b8d8c8ffee84f927b5e38f101e6a6527af054c6f3ab2a2b787d5e5d5b45176
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:05 GMT
   extraction_fingerprint: 7b32d13fc55e27aca57a06555b8ef511054efb4d7d57b4841008966e084c74c2
@@ -263,7 +263,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 17475d07e11aa216273a4a534fdd0461bd20cf6e871b7c3fe4d9d371c8f29143
+  content_hash: a1701ccaf21e6db4bfa9a5d4f8e0e078945a75c4351f57aafa7ed58ca1cf742d
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:06 GMT
   extraction_fingerprint: 4856f9a006ec570f25a39e655645cff44083aedfa28e6c6d03569187ffd37f5f
@@ -272,7 +272,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: ca640765d9507b21dd3aaf5b6d053529b4fa864274171df9d3cf92fa9b30a108
+  content_hash: b01a22dc908845a6495f7ad342b93929f2bc2f7aaebbab6f483fd8a251c5c22d
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:06 GMT
   extraction_fingerprint: 521532bf73542bff4150461b4400dd28ff279acf86f8e5740c584999db5d3a62
@@ -281,7 +281,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 93177cf283815475a42cc07fc990b22b1a52bd4bffdaadc7d4bf53e78037c38b
+  content_hash: f2d13327cd917c76bdc045510dc9052547f28bbe8cfe8136b1a598e3d3e7d08e
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:06 GMT
   extraction_fingerprint: 28287e9c1c1e5bb8a12b8ca2b51d9ca8c7346a404bf2ff7029b24ba84d72f52d
@@ -290,7 +290,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: a7c895e987f41524c53d216abc58a9a4eb4c09f45ed8b2fc308fb260eacd4cbb
+  content_hash: 2146b8bc21663676e676739cee99d75104510a61f21c729163c3046bb5e467b2
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:07 GMT
   extraction_fingerprint: 33328fc77593e498b2d402201e40ace8397c94e4894cf8d4be3e4a5813b136c8
@@ -299,7 +299,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 3e145a5206c4b05ce45ba228e9c2840ac1f3627f2607f1867a0bfc48caa284e0
+  content_hash: 6772c0b4d1f510e8b329fb44079b14236d0736a60a1bee1502427917db802487
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:07 GMT
   extraction_fingerprint: 135c8f95dc9b7425de70c4a10ef9598a02952ebc383e55ff63bdaa88edc4f5d0
@@ -328,7 +328,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: 95f79783992fe60aa56be59aa690400f02b47064c58c46696f91f5d97f07ef7f
+  content_hash: 26f011dbf8010b5451ca0655234a616ddd9c1e50027b3c936ba655eb35925c8e
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:09 GMT
   extraction_fingerprint: 5e3dc5d3023d8f75f5cda421dfdd9043019046d4eccde0b771096d2b88a78f27
@@ -337,7 +337,7 @@ sources:
   type: bclaws
   selector: '#contentsscroll'
   category: statutory
-  content_hash: f2238c903a51fd1221ab9902c5f68af22fe1d25ed5e44a2e148124013b232395
+  content_hash: d9f99ca57baf592d6b547abd824412687e8f0de3d871873cc21c7d1cdebb3510
   last_synced: '2026-10-07'
   upstream_last_modified: Wed, 07 Oct 2026 03:05:09 GMT
   extraction_fingerprint: 5614c6c8053632a3a4707f05fb9a653d0c9560239264fe3a04769b2db67443c5
