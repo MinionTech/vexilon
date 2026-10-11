@@ -713,6 +713,10 @@ def test_content_hash_ignores_bclaws_currency_date_line():
     later = stamp("October 6, 2026") + statute
     assert compute_content_hash(earlier) == compute_content_hash(later)
     assert compute_content_hash(later) != compute_content_hash(stamp("October 6, 2026") + amended)
+    for bold in ("**", ""):
+        assert compute_content_hash(
+            f"amendments effective after September 29, 2026.{bold}\n{statute}"
+        ) == compute_content_hash(f"amendments effective after October 6, 2026.{bold}\n{statute}")
     prose = "Notice of amendments effective after October 6, 2026. must be posted."
     assert compute_content_hash(prose) != compute_content_hash(prose.replace("October", "November"))
 
