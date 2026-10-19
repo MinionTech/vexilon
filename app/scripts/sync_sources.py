@@ -50,7 +50,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 # Bump when HTMLContentExtractor, clean_bclaws_content, or _strip_bclaws_chrome
 # changes the Markdown those functions emit. A new value forces a full fetch.
-EXTRACTOR_VERSION = "1"
+EXTRACTOR_VERSION = "2"
 
 
 @dataclass
@@ -167,6 +167,14 @@ class SimpleYamlLoader:
     @staticmethod
     def dump(data: dict[str, Any]) -> str:
         return yaml.safe_dump(data, sort_keys=False)
+
+
+def _heading_slug(text: str) -> str:
+    """GitHub-style heading slug: lowercase, drop punctuation, spaces to hyphens."""
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"\s+", " ", text.replace("*", "")).strip().lower()
+    text = re.sub(r"[^\w\- ]", "", text)
+    return text.replace(" ", "-")
 
 
 class _OpeningMarker(str):
@@ -396,6 +404,12 @@ class HTMLContentExtractor(HTMLParser):
         self.is_italic = False
         self.link_text_tokens: list[str] = []
         self.tables: list[_TableState] = []
+        # In-page anchors: an id or name on a heading, or on an element inside it,
+        # maps to that heading's Markdown slug so "#id" links still resolve.
+        self.heading_start: int | None = None
+        self.heading_ids: list[str] = []
+        self.anchor_slugs: dict[str, str] = {}
+        self.slug_counts: dict[str, int] = {}
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag_lower = tag.lower()
@@ -431,6 +445,12 @@ class HTMLContentExtractor(HTMLParser):
         if not self.inside_target:
             return
 
+        is_heading = re.match(r"^h[1-6]$", tag_lower) is not None
+        if is_heading or self.heading_level:
+            for key in ("id", "name"):
+                if attr_dict.get(key):
+                    self.heading_ids.append(attr_dict[key])
+
         if tag_lower == "table":
             self._open_table(attr_dict)
         elif tag_lower == "tr" and self._in_data_table():
@@ -441,6 +461,7 @@ class HTMLContentExtractor(HTMLParser):
         elif re.match(r"^h[1-6]$", tag_lower):
             self.heading_level = int(tag_lower[1])
             self.tokens.append(f"\n\n{'#' * self.heading_level} ")
+            self.heading_start = len(self.tokens)
         elif tag_lower in self.BLOCK_TAGS:
             self.tokens.append("\n\n")
         elif tag_lower == "br":
@@ -595,6 +616,7 @@ class HTMLContentExtractor(HTMLParser):
         elif tag_lower in ("td", "th") and self._in_data_table():
             self._close_cell()
         elif re.match(r"^h[1-6]$", tag_lower):
+            self._record_heading_anchor()
             self.heading_level = 0
             self.tokens.append("\n\n")
         elif tag_lower in self.BLOCK_TAGS:
@@ -658,9 +680,31 @@ class HTMLContentExtractor(HTMLParser):
                 return selector
         return None
 
+    def _record_heading_anchor(self) -> None:
+        """Map the closing heading's ids to the slug a Markdown renderer gives it."""
+        if self.heading_start is None:
+            return
+        text = "".join(self.tokens[self.heading_start:])
+        self.heading_start = None
+        ids, self.heading_ids = self.heading_ids, []
+        base = _heading_slug(text)
+        if not base:
+            return
+        count = self.slug_counts.get(base, 0)
+        self.slug_counts[base] = count + 1
+        slug = base if count == 0 else f"{base}-{count}"
+        for anchor_id in ids:
+            self.anchor_slugs.setdefault(anchor_id, slug)
+
     def get_markdown(self) -> str:
         self._close_open_tables()
         raw_text = "".join(self.tokens)
+        if self.anchor_slugs:
+            raw_text = re.sub(
+                r"\]\(#([^)\s]+)\)",
+                lambda m: f"](#{self.anchor_slugs.get(m.group(1), m.group(1))})",
+                raw_text,
+            )
         # Clean extra spaces & lines
         lines = []
         for line in raw_text.splitlines():
