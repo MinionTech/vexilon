@@ -842,7 +842,7 @@ def test_check_source_drift_network_error(mock_fetch):
     mock_fetch.side_effect = urllib.error.URLError("Connection refused")
 
     res = check_source_drift(entry, REPO_ROOT)
-    assert res.status == "ERROR"
+    assert res.status == "UNREACHABLE"
     assert "Connection refused" in (res.error or "")
 
 
@@ -2372,3 +2372,131 @@ def test_sync_regenerates_manifest_and_drawer(mock_manifest, tmp_path, monkeypat
     mock_manifest.assert_called_once_with(data_dir=tmp_path / "app" / "data")
 
 
+def _no_sleep(monkeypatch) -> list[float]:
+    delays: list[float] = []
+    monkeypatch.setattr(sync_sources.time, "sleep", delays.append)
+    return delays
+
+
+def test_fetch_upstream_retries_closed_connection_then_succeeds(monkeypatch):
+    """A connection closed before any response is retried with backoff."""
+    import http.client
+
+    delays = _no_sleep(monkeypatch)
+    calls: list[int] = []
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        calls.append(1)
+        if len(calls) < 3:
+            raise http.client.RemoteDisconnected("Remote end closed connection without response")
+        response = Mock()
+        response.headers = EmailMessage()
+        response.read.return_value = b"<html>ok</html>"
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        return response
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+
+    content, _headers = fetch_upstream("https://example.com/doc")
+
+    assert content == "<html>ok</html>"
+    assert len(calls) == 3
+    assert delays == list(sync_sources.FETCH_BACKOFF_SECONDS)
+
+
+def test_fetch_upstream_does_not_retry_http_status(monkeypatch):
+    """An HTTP status response is an answer from the server, not a network error."""
+    delays = _no_sleep(monkeypatch)
+    calls: list[int] = []
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        calls.append(1)
+        raise urllib.error.HTTPError(req.full_url, 503, "Service Unavailable", EmailMessage(), None)
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+
+    with pytest.raises(urllib.error.HTTPError):
+        fetch_upstream("https://example.com/doc")
+    assert len(calls) == 1
+    assert delays == []
+
+
+def test_check_reports_unreachable_after_retries(monkeypatch, tmp_path):
+    """Every attempt failing on the network is UNREACHABLE, not drift and not MATCH."""
+    import http.client
+
+    _target, digest = _write_doc(tmp_path)
+    delays = _no_sleep(monkeypatch)
+    calls: list[int] = []
+
+    def urlopen(req: urllib.request.Request, timeout: int) -> object:
+        calls.append(1)
+        raise http.client.RemoteDisconnected("Remote end closed connection without response")
+
+    monkeypatch.setattr(sync_sources.urllib.request, "urlopen", urlopen)
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "UNREACHABLE"
+    assert "Remote end closed connection" in (result.error or "")
+    assert len(calls) == sync_sources.FETCH_ATTEMPTS
+    assert len(delays) == sync_sources.FETCH_ATTEMPTS - 1
+
+
+@pytest.mark.parametrize(
+    ("statuses", "expected"),
+    [
+        (["MATCH", "MATCH"], 0),
+        (["DRIFT_DETECTED", "MATCH"], 1),
+        (["ERROR", "MATCH"], 2),
+        (["UNREACHABLE", "MATCH"], 4),
+        (["DRIFT_DETECTED", "UNREACHABLE"], 5),
+        (["ERROR", "UNREACHABLE"], 6),
+    ],
+)
+def test_check_exit_code_reports_drift_and_unreachable_together(
+    monkeypatch, tmp_path, statuses, expected
+):
+    """Drift never hides an unreachable source, and an unreachable source never hides drift."""
+    from scripts.sync_sources import DriftResult
+
+    config = tmp_path / "sources.yaml"
+    config.write_text(
+        "sources:\n"
+        + "".join(
+            f"  - path: app/data/doc{i}.md\n"
+            f"    url: https://example.com/doc{i}\n"
+            "    type: html_selector\n"
+            "    selector: '#body'\n"
+            "    category: resources\n"
+            f"    content_hash: {str(i) * 64}\n"
+            for i in range(len(statuses))
+        ),
+        encoding="utf-8",
+    )
+    by_path = {f"app/data/doc{i}.md": status for i, status in enumerate(statuses)}
+
+    def fake_check(entry: SourceEntry, repo_root: Path) -> DriftResult:
+        return DriftResult(path=entry.path, url=entry.url, status=by_path[entry.path])
+
+    monkeypatch.setattr(sync_sources, "check_source_drift", fake_check)
+    monkeypatch.setattr(sync_sources, "_REPO_ROOT", tmp_path)
+    alert = tmp_path / "alert.md"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync_sources.py", "--config", str(config), "--check", "--alert-body", str(alert)],
+    )
+
+    assert sync_sources.main() == expected
+    if "DRIFT_DETECTED" in statuses and "UNREACHABLE" in statuses:
+        body = alert.read_text(encoding="utf-8")
+        assert "Sources That Could Not Be Reached" in body
+        assert "doc1.md" in body
