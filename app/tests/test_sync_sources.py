@@ -1082,7 +1082,7 @@ def test_check_source_drift_returns_untracked_when_no_local_file_and_no_hash(tmp
 
 
 def test_format_drift_alert_markdown_includes_error_entries():
-    """Regression W4: ERROR sources must appear in the alert body when drift and errors co-occur."""
+    """Regression W4: unreachable sources must appear in the alert body when drift and errors co-occur."""
     from scripts.sync_sources import DriftResult, format_drift_alert_markdown
 
     results = [
@@ -1097,7 +1097,7 @@ def test_format_drift_alert_markdown_includes_error_entries():
         DriftResult(
             path="app/data/01_primary/Some_Policy.md",
             url="https://example.com/policy",
-            status="ERROR",
+            status="UNREACHABLE",
             error="Network error: timed out",
         ),
     ]
@@ -2460,6 +2460,8 @@ def test_check_reports_unreachable_after_retries(monkeypatch, tmp_path):
         (["UNREACHABLE", "MATCH"], 4),
         (["DRIFT_DETECTED", "UNREACHABLE"], 5),
         (["ERROR", "UNREACHABLE"], 6),
+        (["DRIFT_DETECTED", "ERROR"], 3),
+        (["DRIFT_DETECTED", "ERROR", "UNREACHABLE"], 7),
     ],
 )
 def test_check_exit_code_reports_drift_and_unreachable_together(
@@ -2496,7 +2498,7 @@ def test_check_exit_code_reports_drift_and_unreachable_together(
     )
 
     assert sync_sources.main() == expected
-    if "DRIFT_DETECTED" in statuses and "UNREACHABLE" in statuses:
+    if "DRIFT_DETECTED" in statuses:
         body = alert.read_text(encoding="utf-8")
-        assert "Sources That Could Not Be Reached" in body
-        assert "doc1.md" in body
+        assert ("Sources That Could Not Be Reached" in body) == ("UNREACHABLE" in statuses)
+        assert ("Sources That Failed To Check" in body) == ("ERROR" in statuses)

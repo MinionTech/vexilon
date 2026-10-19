@@ -59,9 +59,8 @@ EXTRACTOR_VERSION = "1"
 FETCH_BACKOFF_SECONDS = (5, 15)
 FETCH_ATTEMPTS = len(FETCH_BACKOFF_SECONDS) + 1
 
-# --check exit status. DRIFT and CHECK_ERROR keep their earlier values; the
-# UNREACHABLE bit is added on top, so drift and unreachable sources are both
-# visible in one code (1 | 4 == 5).
+# --check exit status is a bit set, so outcomes that happen together are all
+# visible in one code (drift plus an unreachable source is 1 | 4 == 5).
 EXIT_DRIFT = 1
 EXIT_CHECK_ERROR = 2
 EXIT_UNREACHABLE = 4
@@ -1474,7 +1473,8 @@ def sync_source(
 def format_drift_alert_markdown(results: list[DriftResult]) -> str:
     """Formats markdown issue body for drifted documents."""
     drifted = [r for r in results if r.status == "DRIFT_DETECTED"]
-    errored = [r for r in results if r.status in ("ERROR", "UNREACHABLE")]
+    unreachable = [r for r in results if r.status == "UNREACHABLE"]
+    errored = [r for r in results if r.status == "ERROR"]
     lines = [
         "## Upstream Document Drift Detected",
         "",
@@ -1490,15 +1490,20 @@ def format_drift_alert_markdown(results: list[DriftResult]) -> str:
         last_mod = d.upstream_last_modified or "Unknown"
         lines.append(f"| `{d.path}` | [{doc_name}]({d.url}) | `{local_h}` | `{upstream_h}` | {last_mod} |")
 
-    if errored:
+    for heading, group in (
+        ("Sources That Could Not Be Reached", unreachable),
+        ("Sources That Failed To Check", errored),
+    ):
+        if not group:
+            continue
         lines.extend([
             "",
-            "### Sources That Could Not Be Reached",
+            f"### {heading}",
             "",
             "| Document Path | Upstream URL | Error |",
             "| :--- | :--- | :--- |",
         ])
-        for e in errored:
+        for e in group:
             doc_name = e.path.split("/")[-1]
             error_msg = (e.error or "Unknown error").replace("|", "\\|")
             lines.append(f"| `{e.path}` | [{doc_name}]({e.url}) | {error_msg} |")
@@ -1628,15 +1633,11 @@ def _run(args: argparse.Namespace) -> int:
                 elif r.status == "UNTRACKED":
                     print(f"    No local file and no registry hash — run --sync to initialise.")
 
-        if has_drift:
-            code = EXIT_DRIFT
-        elif has_error:
-            code = EXIT_CHECK_ERROR
-        else:
-            code = 0
-        if has_unreachable:
-            code |= EXIT_UNREACHABLE
-        return code
+        return (
+            (EXIT_DRIFT if has_drift else 0)
+            | (EXIT_CHECK_ERROR if has_error else 0)
+            | (EXIT_UNREACHABLE if has_unreachable else 0)
+        )
 
     if args.sync or args.dry_run:
         updated = 0

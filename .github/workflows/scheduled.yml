@@ -55,6 +55,10 @@ jobs:
           uv run python scripts/sync_sources.py --check --json --alert-body ../issue_body.md > ../drift_report.json
           EXIT_CODE=$?
           set -e
+          if ! jq -e 'type == "array"' ../drift_report.json > /dev/null 2>&1; then
+            echo "::error::Drift report is missing or not valid JSON (exit code $EXIT_CODE)"
+            exit 1
+          fi
           cat ../drift_report.json
           if [ "$EXIT_CODE" -gt 7 ]; then
             echo "::error::Drift detection did not run to completion (exit code $EXIT_CODE)"
