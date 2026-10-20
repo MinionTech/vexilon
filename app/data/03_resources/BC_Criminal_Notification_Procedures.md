@@ -2,13 +2,13 @@
 
 **Source:** [Criminal notification procedures - Province of British Columbia](https://www2.gov.bc.ca/gov/content/careers-myhr/hiring-managers/process/extend-offer/security-screening/criminal-notification-procedures#employee)  
 **Upstream Last Modified:** Unknown  
-**Ingestion Date:** 2026-09-27  
+**Ingestion Date:** 2026-10-19  
 
 ## On this page
 
-- [Employee responsibility](#employee-responsibility)
-- [Role of the Personnel Security Screening Office](#role-of-the-personnel-security-screening-office)
-- [Assessing relevance](#assessing-relevance)
+- [Employee responsibility](#employee)
+- [Role of the Personnel Security Screening Office](#roleof)
+- [Assessing relevance](#accessing)
 
 ## Employee responsibility
 
