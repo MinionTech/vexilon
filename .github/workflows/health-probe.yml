@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   probe:
     name: Probe ${{ matrix.env }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # Above the 15-minute probe step so a failed probe still reaches the notifier.
     timeout-minutes: 20
     strategy:
