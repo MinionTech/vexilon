@@ -2554,6 +2554,22 @@ def test_in_page_anchor_slugs_stay_unique_and_fragments_decode():
     assert "[P](#part-one)" in markdown
 
 
+def test_heading_line_break_stays_on_heading_line():
+    """A <br> inside a heading must not split it, so the slug matches the rendered heading."""
+    raw_html = """
+    <html><body><div id="body">
+      <p><a href="#part">Go</a></p>
+      <h2 id="part">First<br>Second</h2>
+    </div></body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "## First Second" in markdown
+    assert "[Go](#first-second)" in markdown
+
+
 def test_bclaws_in_page_anchor_links_point_at_heading_slugs():
     """The bclaws cleaner shares the extractor, so its anchors resolve too."""
     raw_html = """

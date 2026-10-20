@@ -479,7 +479,8 @@ class HTMLContentExtractor(HTMLParser):
         elif tag_lower in self.BLOCK_TAGS:
             self.tokens.append("\n\n")
         elif tag_lower == "br":
-            self.tokens.append(_LineBreak("\n"))
+            # A Markdown heading ends at the newline, so keep a heading on one line.
+            self.tokens.append(" " if self.heading_start is not None else _LineBreak("\n"))
         elif tag_lower == "li":
             self.tokens.append("\n- ")
         elif tag_lower in ("strong", "b"):
