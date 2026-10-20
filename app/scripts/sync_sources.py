@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
@@ -51,6 +52,18 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # Bump when HTMLContentExtractor, clean_bclaws_content, or _strip_bclaws_chrome
 # changes the Markdown those functions emit. A new value forces a full fetch.
 EXTRACTOR_VERSION = "2"
+
+# A fetch that fails before any HTTP status arrives is retried with backoff.
+# An HTTP status response (including 4xx and 5xx) is not retried.
+# One delay per retry, so FETCH_ATTEMPTS is the delay count plus the first try.
+FETCH_BACKOFF_SECONDS = (5, 15)
+FETCH_ATTEMPTS = len(FETCH_BACKOFF_SECONDS) + 1
+
+# --check exit status is a bit set, so outcomes that happen together are all
+# visible in one code (drift plus an unreachable source is 1 | 4 == 5).
+EXIT_DRIFT = 1
+EXIT_CHECK_ERROR = 2
+EXIT_UNREACHABLE = 4
 
 
 @dataclass
@@ -1048,6 +1061,36 @@ def _header_map(headers: object) -> dict[str, str]:
     return {str(key).lower(): str(value) for key, value in items()}
 
 
+def _is_network_error(exc: BaseException) -> bool:
+    """True for a failure with no HTTP status: DNS, connect, reset, closed connection, timeout.
+
+    ``http.client.RemoteDisconnected`` ("Remote end closed connection without
+    response") is a ``ConnectionResetError``, so it is a network error.
+    """
+    if isinstance(exc, urllib.error.HTTPError):
+        return False
+    return isinstance(
+        exc,
+        (urllib.error.URLError, ConnectionError, TimeoutError),
+    )
+
+
+def _urlopen_with_retries(req: urllib.request.Request, timeout: int) -> Any:
+    """Open ``req``; a network error is retried until FETCH_ATTEMPTS attempts are spent."""
+    for attempt, delay in enumerate(FETCH_BACKOFF_SECONDS, start=1):
+        try:
+            return urllib.request.urlopen(req, timeout=timeout)
+        except Exception as exc:
+            if not _is_network_error(exc):
+                raise
+            logger.warning(
+                f"Network error fetching {req.full_url} (attempt {attempt}/{FETCH_ATTEMPTS}): "
+                f"{exc}. Retrying in {delay}s."
+            )
+            time.sleep(delay)
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
 def fetch_upstream(
     url: str,
     timeout: int = 15,
@@ -1072,7 +1115,7 @@ def fetch_upstream(
         req_headers["If-Modified-Since"] = upstream_last_modified
     req = urllib.request.Request(url, headers=req_headers)
     try:
-        resp_ctx = urllib.request.urlopen(req, timeout=timeout)
+        resp_ctx = _urlopen_with_retries(req, timeout)
     except urllib.error.HTTPError as exc:
         if exc.code != 304 or not (etag or upstream_last_modified):
             raise
@@ -1346,16 +1389,16 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             upstream_hash=registry_hash,
             upstream_last_modified=source.upstream_last_modified,
         )
-    except (urllib.error.URLError, TimeoutError) as e:
-        logger.warning(f"Network error checking {source.url}: {e}")
-        return DriftResult(
-            path=source.path,
-            url=source.url,
-            status="ERROR",
-            local_hash=local_hash or registry_hash,
-            error=f"Network error: {e}",
-        )
     except Exception as e:
+        if _is_network_error(e):
+            logger.warning(f"Unreachable {source.url}: {e}")
+            return DriftResult(
+                path=source.path,
+                url=source.url,
+                status="UNREACHABLE",
+                local_hash=local_hash or registry_hash,
+                error=f"Network error: {e}",
+            )
         logger.error(f"Failed to check {source.url}: {e}", exc_info=True)
         return DriftResult(
             path=source.path,
@@ -1474,6 +1517,7 @@ def sync_source(
 def format_drift_alert_markdown(results: list[DriftResult]) -> str:
     """Formats markdown issue body for drifted documents."""
     drifted = [r for r in results if r.status == "DRIFT_DETECTED"]
+    unreachable = [r for r in results if r.status == "UNREACHABLE"]
     errored = [r for r in results if r.status == "ERROR"]
     lines = [
         "## Upstream Document Drift Detected",
@@ -1490,15 +1534,20 @@ def format_drift_alert_markdown(results: list[DriftResult]) -> str:
         last_mod = d.upstream_last_modified or "Unknown"
         lines.append(f"| `{d.path}` | [{doc_name}]({d.url}) | `{local_h}` | `{upstream_h}` | {last_mod} |")
 
-    if errored:
+    for heading, group in (
+        ("Sources That Could Not Be Reached", unreachable),
+        ("Sources That Failed To Check", errored),
+    ):
+        if not group:
+            continue
         lines.extend([
             "",
-            "### Sources That Could Not Be Reached",
+            f"### {heading}",
             "",
             "| Document Path | Upstream URL | Error |",
             "| :--- | :--- | :--- |",
         ])
-        for e in errored:
+        for e in group:
             doc_name = e.path.split("/")[-1]
             error_msg = (e.error or "Unknown error").replace("|", "\\|")
             lines.append(f"| `{e.path}` | [{doc_name}]({e.url}) | {error_msg} |")
@@ -1585,6 +1634,7 @@ def _run(args: argparse.Namespace) -> int:
         results: list[DriftResult] = []
         has_drift = False
         has_error = False
+        has_unreachable = False
 
         for entry in entries:
             logger.info(f"Checking {entry.path}...")
@@ -1594,6 +1644,8 @@ def _run(args: argparse.Namespace) -> int:
                 has_drift = True
             elif res.status == "ERROR":
                 has_error = True
+            elif res.status == "UNREACHABLE":
+                has_unreachable = True
 
         if args.alert_body and has_drift:
             args.alert_body.resolve().write_text(
@@ -1620,16 +1672,16 @@ def _run(args: argparse.Namespace) -> int:
                 if r.status == "DRIFT_DETECTED":
                     print(f"    Local Hash:    {r.local_hash}")
                     print(f"    Upstream Hash: {r.upstream_hash}")
-                elif r.status == "ERROR":
+                elif r.status in ("ERROR", "UNREACHABLE"):
                     print(f"    Error:         {r.error}")
                 elif r.status == "UNTRACKED":
                     print(f"    No local file and no registry hash — run --sync to initialise.")
 
-        if has_drift:
-            return 1
-        if has_error:
-            return 2
-        return 0
+        return (
+            (EXIT_DRIFT if has_drift else 0)
+            | (EXIT_CHECK_ERROR if has_error else 0)
+            | (EXIT_UNREACHABLE if has_unreachable else 0)
+        )
 
     if args.sync or args.dry_run:
         updated = 0

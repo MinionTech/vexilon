@@ -47,22 +47,48 @@ jobs:
 
       - name: Run Drift Detection
         id: drift_check
+        # Exit status (app/scripts/sync_sources.py): bit 1 drift, 2 check error,
+        # 4 unreachable source. Drift and unreachable sources are reported together.
         run: |
           cd app
           set +e
           uv run python scripts/sync_sources.py --check --json --alert-body ../issue_body.md > ../drift_report.json
           EXIT_CODE=$?
           set -e
-          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          if ! jq -e 'type == "array"' ../drift_report.json > /dev/null 2>&1; then
+            echo "::error::Drift report is missing or not valid JSON (exit code $EXIT_CODE)"
+            exit 1
+          fi
           cat ../drift_report.json
-          if [ "$EXIT_CODE" -gt 1 ]; then
-            echo "::error::Drift detection encountered an operational error (exit code $EXIT_CODE)"
+          if [ "$EXIT_CODE" -gt 7 ]; then
+            echo "::error::Drift detection did not run to completion (exit code $EXIT_CODE)"
             exit "$EXIT_CODE"
           fi
-
+          {
+            echo "exit_code=$EXIT_CODE"
+            echo "drift=$(( EXIT_CODE & 1 ? 1 : 0 ))"
+            echo "check_error=$(( EXIT_CODE & 2 ? 1 : 0 ))"
+            echo "unreachable=$(( EXIT_CODE & 4 ? 1 : 0 ))"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## Document Drift Check"
+            echo ""
+            echo "- Drifted: $(jq '[.[] | select(.status == "DRIFT_DETECTED")] | length' ../drift_report.json)"
+            echo "- Check errors: $(jq '[.[] | select(.status == "ERROR")] | length' ../drift_report.json)"
+            echo "- Unreachable: $(jq '[.[] | select(.status == "UNREACHABLE")] | length' ../drift_report.json)"
+            if [ $(( EXIT_CODE & 6 )) -ne 0 ]; then
+              echo ""
+              echo "| Status | Document Path | Upstream URL | Error |"
+              echo "| :--- | :--- | :--- | :--- |"
+              jq -r '.[] | select(.status == "ERROR" or .status == "UNREACHABLE")
+                | "| \(.status) | `\(.path)` | \(.url) | \(.error // "" | gsub("\\|"; "\\|")) |"' ../drift_report.json
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          jq -r '.[] | select(.status == "UNREACHABLE")
+            | "::error title=Unreachable source::\(.path) (\(.url)): \(.error)"' ../drift_report.json
 
       - name: File Drift Alert Issue
-        if: steps.drift_check.outputs.exit_code == '1'
+        if: steps.drift_check.outputs.drift == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -79,4 +105,16 @@ jobs:
               --label "documentation"
           fi
 
-
+      - name: Fail on Unreachable Sources or Check Errors
+        if: steps.drift_check.outputs.unreachable == '1' || steps.drift_check.outputs.check_error == '1'
+        env:
+          UNREACHABLE: ${{ steps.drift_check.outputs.unreachable }}
+          CHECK_ERROR: ${{ steps.drift_check.outputs.check_error }}
+        run: |
+          if [ "$UNREACHABLE" = "1" ]; then
+            echo "::error::One or more upstream sources could not be reached after retries. See the job summary."
+          fi
+          if [ "$CHECK_ERROR" = "1" ]; then
+            echo "::error::One or more sources failed to check. See the job summary."
+          fi
+          exit 1
