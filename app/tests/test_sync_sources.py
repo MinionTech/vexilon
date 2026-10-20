@@ -2533,6 +2533,27 @@ def test_in_page_anchor_links_point_at_heading_slugs():
     assert "[Missing](#nowhere)" in markdown
 
 
+def test_in_page_anchor_slugs_stay_unique_and_fragments_decode():
+    """A heading whose text matches an earlier suffixed slug still gets its own slug."""
+    raw_html = """
+    <html><body><div id="body">
+      <p><a href="#a">A</a> <a href="#b">B</a> <a href="#c">C</a> <a href="#part%3A1">P</a></p>
+      <h2 id="a">Foo</h2>
+      <h2 id="b">Foo 1</h2>
+      <h2 id="c">Foo</h2>
+      <h2 id="part:1">Part one</h2>
+    </div></body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "[A](#foo)" in markdown
+    assert "[B](#foo-1)" in markdown
+    assert "[C](#foo-2)" in markdown
+    assert "[P](#part-one)" in markdown
+
+
 def test_bclaws_in_page_anchor_links_point_at_heading_slugs():
     """The bclaws cleaner shares the extractor, so its anchors resolve too."""
     raw_html = """

@@ -20,6 +20,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -703,9 +704,11 @@ class HTMLContentExtractor(HTMLParser):
         base = _heading_slug(text)
         if not base:
             return
-        count = self.slug_counts.get(base, 0)
-        self.slug_counts[base] = count + 1
-        slug = base if count == 0 else f"{base}-{count}"
+        slug = base
+        while slug in self.slug_counts:
+            self.slug_counts[base] += 1
+            slug = f"{base}-{self.slug_counts[base]}"
+        self.slug_counts[slug] = 0
         for anchor_id in ids:
             self.anchor_slugs.setdefault(anchor_id, slug)
 
@@ -715,7 +718,7 @@ class HTMLContentExtractor(HTMLParser):
         if self.anchor_slugs:
             raw_text = re.sub(
                 r"\]\(#([^)\s]+)\)",
-                lambda m: f"](#{self.anchor_slugs.get(m.group(1), m.group(1))})",
+                lambda m: f"](#{self.anchor_slugs.get(urllib.parse.unquote(m.group(1)), m.group(1))})",
                 raw_text,
             )
         # Clean extra spaces & lines
