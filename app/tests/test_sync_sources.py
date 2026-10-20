@@ -2033,7 +2033,7 @@ def test_check_extractor_version_change_does_not_match(monkeypatch, tmp_path):
     _target, digest = _write_doc(tmp_path)
     entry = _entry_with_validators(digest)
     entry.extraction_fingerprint = extraction_fingerprint(entry)
-    monkeypatch.setattr(sync_sources, "EXTRACTOR_VERSION", "2")
+    monkeypatch.setattr(sync_sources, "EXTRACTOR_VERSION", sync_sources.EXTRACTOR_VERSION + "-next")
     html = _html_paragraph("Kept body.")
     _title, body = extract_content(html, "html_selector", "#body")
     assert compute_content_hash(extract_substantive_body(body)) == digest
@@ -2057,7 +2057,7 @@ def test_sync_extractor_version_change_does_not_skip_the_write(monkeypatch, tmp_
     before = target.read_text(encoding="utf-8")
     entry = _entry_with_validators(digest)
     entry.extraction_fingerprint = extraction_fingerprint(entry)
-    monkeypatch.setattr(sync_sources, "EXTRACTOR_VERSION", "2")
+    monkeypatch.setattr(sync_sources, "EXTRACTOR_VERSION", sync_sources.EXTRACTOR_VERSION + "-next")
 
     def responder(req: urllib.request.Request) -> _UrlResponse:
         _assert_unconditional(req)
@@ -2502,3 +2502,82 @@ def test_check_exit_code_reports_drift_and_unreachable_together(
         body = alert.read_text(encoding="utf-8")
         assert ("Sources That Could Not Be Reached" in body) == ("UNREACHABLE" in statuses)
         assert ("Sources That Failed To Check" in body) == ("ERROR" in statuses)
+
+
+def test_in_page_anchor_links_point_at_heading_slugs():
+    """An "#id" link to a heading's own id or a nested anchor resolves to the Markdown slug."""
+    raw_html = """
+    <html><body><div id="body">
+      <ul>
+        <li><a href="#employee">Employee responsibility</a></li>
+        <li><a href="#roleof">Role of the Office</a></li>
+        <li><a href="#sec2">Section two</a></li>
+        <li><a href="#again">Again</a></li>
+        <li><a href="#nowhere">Missing</a></li>
+      </ul>
+      <h2><span><a id="employee" name="employee"></a>Employee responsibility</span></h2>
+      <p>Body.</p>
+      <h2><a name="roleof"></a>Role of the <strong>Office</strong></h2>
+      <h3 id="sec2">Section 2 &mdash; Scope, and limits</h3>
+      <h2 id="again">Employee responsibility</h2>
+    </div></body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "[Employee responsibility](#employee-responsibility)" in markdown
+    assert "[Role of the Office](#role-of-the-office)" in markdown
+    assert "[Section two](#section-2--scope-and-limits)" in markdown
+    assert "[Again](#employee-responsibility-1)" in markdown
+    assert "[Missing](#nowhere)" in markdown
+
+
+def test_in_page_anchor_slugs_stay_unique_and_fragments_decode():
+    """A heading whose text matches an earlier suffixed slug still gets its own slug."""
+    raw_html = """
+    <html><body><div id="body">
+      <p><a href="#a">A</a> <a href="#b">B</a> <a href="#c">C</a> <a href="#part%3A1">P</a></p>
+      <h2 id="a">Foo</h2>
+      <h2 id="b">Foo 1</h2>
+      <h2 id="c">Foo</h2>
+      <h2 id="part:1">Part one</h2>
+    </div></body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "[A](#foo)" in markdown
+    assert "[B](#foo-1)" in markdown
+    assert "[C](#foo-2)" in markdown
+    assert "[P](#part-one)" in markdown
+
+
+def test_heading_line_break_stays_on_heading_line():
+    """A <br> inside a heading must not split it, so the slug matches the rendered heading."""
+    raw_html = """
+    <html><body><div id="body">
+      <p><a href="#part">Go</a></p>
+      <h2 id="part">First<br>Second</h2>
+    </div></body></html>
+    """
+    extractor = HTMLContentExtractor(target_selector="#body")
+    extractor.feed(raw_html)
+    markdown = extractor.get_markdown()
+
+    assert "## First Second" in markdown
+    assert "[Go](#first-second)" in markdown
+
+
+def test_bclaws_in_page_anchor_links_point_at_heading_slugs():
+    """The bclaws cleaner shares the extractor, so its anchors resolve too."""
+    raw_html = """
+    <html><body><div id="contentsscroll">
+      <p><a href="#section1">1</a></p>
+      <h4 id="section1">Definitions</h4>
+      <p>Text.</p>
+    </div></body></html>
+    """
+    markdown = clean_bclaws_content(raw_html, selector="#contentsscroll")
+    assert "[1](#definitions)" in markdown
