@@ -14,8 +14,6 @@ VERIFY_API_MAX_TIME=${VERIFY_API_MAX_TIME:-60}
 # One /api/health call. The app aborts models.list after 10s, so a healthy
 # body returns inside 30s. Attempts still retry while the server is down.
 VERIFY_HEALTH_MAX_TIME=${VERIFY_HEALTH_MAX_TIME:-30}
-# Optional ceiling on the functional smoke test loop. When unset, runs all 12 attempts.
-VERIFY_SMOKE_BUDGET=${VERIFY_SMOKE_BUDGET:-}
 VERIFY_POLL_INTERVAL=${VERIFY_POLL_INTERVAL:-30}
 INTERVAL=$VERIFY_POLL_INTERVAL
 
@@ -110,58 +108,22 @@ MAX_RETRIES=12
 RETRY_INTERVAL=${VERIFY_SMOKE_RETRY_INTERVAL:-10}
 CURL_EXIT=0
 HEALTH_JSON=""
-SMOKE_DEADLINE=""
-SMOKE_STOP=""
-if [ -n "$VERIFY_SMOKE_BUDGET" ]; then
-  SMOKE_DEADLINE=$(( $(date +%s) + VERIFY_SMOKE_BUDGET ))
-fi
 
 for i in $(seq 1 $MAX_RETRIES); do
-  this_max=$VERIFY_HEALTH_MAX_TIME
-  if [ -n "$SMOKE_DEADLINE" ]; then
-    remaining=$((SMOKE_DEADLINE - $(date +%s)))
-    if [ "$remaining" -le 0 ]; then
-      echo "[verify] Smoke-test budget of ${VERIFY_SMOKE_BUDGET}s exhausted."
-      SMOKE_STOP=budget-exhausted
-      break
-    fi
-    if [ "$remaining" -lt "$this_max" ]; then
-      this_max=$remaining
-    fi
-  fi
-
   echo "[verify] Querying /api/health (Attempt $i/$MAX_RETRIES)..."
   CURL_EXIT=0
-  HEALTH_JSON=$(curl -s --fail-with-body --max-time "$this_max" "$SPACE_URL/api/health") || CURL_EXIT=$?
+  HEALTH_JSON=$(curl -s --fail-with-body --max-time "$VERIFY_HEALTH_MAX_TIME" "$SPACE_URL/api/health") || CURL_EXIT=$?
   
   if [ $CURL_EXIT -eq 0 ] && [ -n "$HEALTH_JSON" ]; then
     break
   fi
 
-  sleep_for=$RETRY_INTERVAL
-  if [ -n "$SMOKE_DEADLINE" ]; then
-    remaining=$((SMOKE_DEADLINE - $(date +%s)))
-    if [ "$remaining" -le 0 ]; then
-      echo "[verify] Smoke-test budget of ${VERIFY_SMOKE_BUDGET}s exhausted."
-      SMOKE_STOP=budget-exhausted
-      break
-    fi
-    if [ "$remaining" -lt "$sleep_for" ]; then
-      sleep_for=$remaining
-    fi
-  fi
-  
-  echo "[verify] Attempt $i failed (exit code: $CURL_EXIT). Retrying in $sleep_for seconds..."
-  sleep "$sleep_for"
+  echo "[verify] Attempt $i failed (exit code: $CURL_EXIT). Retrying in $RETRY_INTERVAL seconds..."
+  sleep "$RETRY_INTERVAL"
 done
 
 if [ $CURL_EXIT -ne 0 ] || [ -z "$HEALTH_JSON" ]; then
-  # Exit 0 is an empty body. A budget stop keeps that marker; otherwise say empty-200.
-  smoke_report=$CURL_EXIT
-  if [ "$CURL_EXIT" -eq 0 ]; then
-    smoke_report=${SMOKE_STOP:-empty-200}
-  fi
-  echo "❌ Error: Functional smoke test failed. Could not query /api/health after $MAX_RETRIES attempts. curl returned: $smoke_report. Response: $HEALTH_JSON"
+  echo "❌ Error: Functional smoke test failed. Could not query /api/health after $MAX_RETRIES attempts. curl returned: $CURL_EXIT. Response: $HEALTH_JSON"
   exit 1
 fi
 
