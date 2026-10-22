@@ -14,7 +14,7 @@ VERIFY_API_MAX_TIME=${VERIFY_API_MAX_TIME:-60}
 # One /api/health call. The app aborts models.list after 10s, so a healthy
 # body returns inside 30s. Attempts still retry while the server is down.
 VERIFY_HEALTH_MAX_TIME=${VERIFY_HEALTH_MAX_TIME:-30}
-# probe_health.sh sets this. Deploy leaves it empty and keeps all 12 attempts.
+# Optional ceiling on the functional smoke test loop. When unset, runs all 12 attempts.
 VERIFY_SMOKE_BUDGET=${VERIFY_SMOKE_BUDGET:-}
 VERIFY_POLL_INTERVAL=${VERIFY_POLL_INTERVAL:-30}
 INTERVAL=$VERIFY_POLL_INTERVAL
