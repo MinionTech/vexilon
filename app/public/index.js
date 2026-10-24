@@ -130,6 +130,7 @@
             if (!data.plausible_domain) return;
             return fetch("https://plausible.io/api/event", {
                 method: "POST",
+                keepalive: true,
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify({
                     name: "pageview",
