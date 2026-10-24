@@ -21,6 +21,10 @@ class PartitionedCookieMiddleware(BaseHTTPMiddleware):
                 response.headers.append("set-cookie", header)
         return response
 
+def get_analytics_config():
+    from services.analytics import PLAUSIBLE_DOMAIN
+    return {"plausible_domain": PLAUSIBLE_DOMAIN or None}
+
 def get_version():
     return {
         "version": AGNAV_VERSION
@@ -54,6 +58,13 @@ version_route = APIRoute(
     include_in_schema=False
 )
 
+analytics_route = APIRoute(
+    "/api/analytics",
+    endpoint=get_analytics_config,
+    methods=["GET"],
+    include_in_schema=False
+)
+
 health_route = APIRoute(
     "/api/health",
     endpoint=get_health,
@@ -76,3 +87,5 @@ def register_routes_and_middleware(app):
         app.router.routes.insert(1, version_route)
     if "/api/health" not in existing_paths:
         app.router.routes.insert(2, health_route)
+    if "/api/analytics" not in existing_paths:
+        app.router.routes.insert(3, analytics_route)
