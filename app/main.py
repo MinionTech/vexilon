@@ -18,6 +18,7 @@ from core.config import *  # noqa: F401, F403
 from core.security import *  # noqa: F401, F403
 from services.llm import *  # noqa: F401, F403
 from services.persistence import *  # noqa: F401, F403
+from services.analytics import track
 from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
     _get_source_name,
@@ -83,6 +84,7 @@ if os.getenv("AGNAV_PASSWORD"):
 @cl.on_settings_update
 async def setup_agent(settings):
     cl.user_session.set("persona", settings["Persona"])
+    track("Persona Selected", persona=settings["Persona"])
 
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
@@ -133,6 +135,10 @@ async def on_chat_start():
     cl.user_session.set("history", [])
     cl.user_session.set("persona", "Lookup")
     cl.user_session.set("selected_model", get_default_model_setting())
+
+    chat_profile = cl.user_session.get("chat_profile")
+    if chat_profile:
+        track("Persona Selected", persona=chat_profile)
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
@@ -197,6 +203,7 @@ async def on_message(message: cl.Message) -> None:
                     await cl.Message(content="✓ Session restored successfully.", author="System").send()
                 except Exception as e:
                     logger.error(f"[load] Failed to read uploaded session file: {e}")
+                    track("Import", result="failure")
                     await cl.Message(content="Failed to read the uploaded session file.", author="System").send()
                 return
 
