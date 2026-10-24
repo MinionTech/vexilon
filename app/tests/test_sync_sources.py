@@ -2581,3 +2581,235 @@ def test_bclaws_in_page_anchor_links_point_at_heading_slugs():
     """
     markdown = clean_bclaws_content(raw_html, selector="#contentsscroll")
     assert "[1](#definitions)" in markdown
+
+
+# Issue #699: PDF to Markdown sources and shadow parity verification.
+
+PDF_MD_BYTES = b"%PDF-1.4 agreement bytes"
+
+
+def _fake_convert(audit_tail: str):
+    """Stand-in for pdf_to_md.convert_to_md that writes Markdown and an audit."""
+
+    def convert(input_path, output_path, verify=True, resume=False):
+        assert input_path.read_bytes() == PDF_MD_BYTES
+        output_path.write_text("# Agreement\n\nArticle 1 Recognition\n", encoding="utf-8")
+        output_path.with_suffix(".integrity.md").write_text(
+            "# Audit\n" + audit_tail, encoding="utf-8"
+        )
+        return output_path.read_text(encoding="utf-8")
+
+    return convert
+
+
+def _pdf_md_entry() -> SourceEntry:
+    return SourceEntry(
+        path="app/data/01_primary/Agreement.md",
+        url="https://example.com/agreement.pdf",
+        type="pdf",
+    )
+
+
+@patch("pdf_to_md.extract_raw_text", return_value=["Agreement", "Article 1 Recognition"])
+@patch("pdf_to_md.convert_to_md")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_pdf_markdown_writes_md_and_audit(mock_fetch, mock_convert, _raw, tmp_path):
+    """A pdf entry with a .md path is converted in staging and written with its audit."""
+    mock_fetch.return_value = (PDF_MD_BYTES, {"etag": '"v1"'})
+    mock_convert.side_effect = _fake_convert(
+        "✅ **SUCCESS:** Forensic word-integrity check passed with 100% parity.\n"
+    )
+    entry = _pdf_md_entry()
+
+    success, detail = sync_source(entry, tmp_path)
+
+    assert success is True
+    target = tmp_path / entry.path
+    assert target.read_text(encoding="utf-8") == "# Agreement\n\nArticle 1 Recognition\n"
+    assert "100% parity" in target.with_suffix(".integrity.md").read_text(encoding="utf-8")
+    assert entry.content_hash == detail == _local_substantive_hash(entry, tmp_path)
+    assert entry.source_hash == hashlib.sha256(PDF_MD_BYTES).hexdigest()
+    assert entry.etag == '"v1"'
+
+
+@patch("pdf_to_md.convert_to_md")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_pdf_markdown_failed_audit_writes_nothing(mock_fetch, mock_convert, tmp_path):
+    """A flagged audit fails the sync and leaves the committed file alone."""
+    mock_fetch.return_value = (PDF_MD_BYTES, {})
+    mock_convert.side_effect = _fake_convert("### [Batch 1] Hallucination Flagged: ['x']\n")
+    entry = _pdf_md_entry()
+    target = tmp_path / entry.path
+    target.parent.mkdir(parents=True)
+    target.write_text("committed\n", encoding="utf-8")
+
+    with patch.object(sync_sources.logger, "error"):
+        success, detail = sync_source(entry, tmp_path)
+
+    assert success is False
+    assert "Word-integrity audit did not pass" in detail
+    assert target.read_text(encoding="utf-8") == "committed\n"
+    assert not target.with_suffix(".integrity.md").exists()
+    assert entry.content_hash is None
+
+
+@patch("pdf_to_md.extract_raw_text", return_value=["Agreement", "Article 1 Recognition Article 2"])
+@patch("pdf_to_md.convert_to_md")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_pdf_markdown_omitted_words_write_nothing(mock_fetch, mock_convert, _raw, tmp_path):
+    """A passing audit is not enough: words missing from the Markdown fail the sync."""
+    mock_fetch.return_value = (PDF_MD_BYTES, {})
+    mock_convert.side_effect = _fake_convert(
+        "✅ **SUCCESS:** Forensic word-integrity check passed with 100% parity.\n"
+    )
+    entry = _pdf_md_entry()
+
+    with patch.object(sync_sources.logger, "error"):
+        success, detail = sync_source(entry, tmp_path)
+
+    assert success is False
+    assert "differ from the PDF at word 4" in detail
+    assert not (tmp_path / entry.path).exists()
+
+
+@pytest.mark.parametrize(
+    ("source_hash_bytes", "local_body", "expected", "error"),
+    [
+        (PDF_MD_BYTES, "Article 1\n", "MATCH", None),
+        (None, "Article 1\n", "DRIFT_DETECTED", "No PDF baseline recorded"),
+        (b"%PDF-1.4 older", "Article 1\n", "DRIFT_DETECTED", "Upstream PDF changed"),
+        (PDF_MD_BYTES, "Edited\n", "DRIFT_DETECTED", "Local content modified relative to registry baseline"),
+    ],
+)
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_pdf_markdown_drift(mock_fetch, tmp_path, source_hash_bytes, local_body, expected, error):
+    """Drift compares the PDF with source_hash and the Markdown with content_hash."""
+    mock_fetch.return_value = (PDF_MD_BYTES, {})
+    entry = _pdf_md_entry()
+    target = tmp_path / entry.path
+    target.parent.mkdir(parents=True)
+    target.write_text("# Agreement\n\nArticle 1\n", encoding="utf-8")
+    entry.content_hash = _local_substantive_hash(entry, tmp_path)
+    entry.source_hash = hashlib.sha256(source_hash_bytes).hexdigest() if source_hash_bytes else None
+    target.write_text("# Agreement\n\n" + local_body, encoding="utf-8")
+
+    res = check_source_drift(entry, tmp_path)
+
+    assert res.status == expected
+    assert res.error == error
+
+
+def test_shadow_registry_round_trip(tmp_path):
+    """source_hash is loaded from and saved to sources.yaml."""
+    config = tmp_path / "sources.yaml"
+    entry = _pdf_md_entry()
+    entry.source_hash = "a" * 64
+    sync_sources.save_registry(config, [entry])
+    assert sync_sources.load_registry(config)[0].source_hash == "a" * 64
+
+
+@pytest.mark.parametrize(
+    ("upstream", "expected", "first_difference"),
+    [
+        ("Article 1: Recognition.", "PARITY", None),
+        ("Article 1: Recognitions.", "MISMATCH", 2),
+        ("Article 1: Recognition. Extra", "MISMATCH", 3),
+    ],
+)
+@patch("scripts.sync_sources.extract_pdf_text")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_shadow_verify_pdf(mock_fetch, mock_text, tmp_path, upstream, expected, first_difference):
+    """Shadow verification compares normalized words of the remote PDF and the committed file."""
+    mock_fetch.return_value = (PDF_MD_BYTES, {})
+    mock_text.return_value = upstream
+    entry = SourceEntry(path="doc.md", url="https://example.com/a.pdf", type="manual")
+    (tmp_path / "doc.md").write_text("# Doc\n\n**Article 1** Recognition\n", encoding="utf-8")
+
+    res = sync_sources.shadow_verify_source(entry, tmp_path)
+
+    assert res.status == expected
+    assert res.first_difference == first_difference
+    assert (tmp_path / "doc.md").read_text(encoding="utf-8") == "# Doc\n\n**Article 1** Recognition\n"
+
+
+@patch("scripts.sync_sources.extract_content")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_shadow_verify_html(mock_fetch, mock_extract, tmp_path):
+    """HTML sources use the registry extractor before the word comparison."""
+    mock_fetch.return_value = (b"<html></html>", {})
+    mock_extract.return_value = ("Part 1", "# Part 1\n\nSection 1 text")
+    entry = SourceEntry(path="p.md", url="https://example.com/p", type="bclaws", part="1")
+    (tmp_path / "p.md").write_text("# Part 1\n\n**Source:** x\n\nSection 1 text\n", encoding="utf-8")
+
+    assert sync_sources.shadow_verify_source(entry, tmp_path).status == "PARITY"
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_shadow_verify_manual_html_skipped(mock_fetch, tmp_path):
+    """A manual source whose remote is HTML has no extractor and is skipped."""
+    mock_fetch.return_value = (b"<html></html>", {})
+    entry = SourceEntry(path="m.md", url="https://example.com/m", type="manual")
+    (tmp_path / "m.md").write_text("text\n", encoding="utf-8")
+
+    assert sync_sources.shadow_verify_source(entry, tmp_path).status == "SKIPPED"
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_shadow_verify_pdf_entry_html_is_error(mock_fetch, tmp_path):
+    """A pdf entry that gets HTML back fails the check instead of being skipped."""
+    mock_fetch.return_value = (b"<html></html>", {})
+    entry = _pdf_md_entry()
+    (tmp_path / entry.path).parent.mkdir(parents=True)
+    (tmp_path / entry.path).write_text("text\n", encoding="utf-8")
+
+    assert sync_sources.shadow_verify_source(entry, tmp_path).status == "ERROR"
+
+
+def test_extract_pdf_text_progress_goes_to_stderr(capsys):
+    """Extractor progress must not mix into --shadow-verify --json output."""
+    def fake_extract(path):
+        print("[*] Extracting")
+        return ["word"]
+
+    with patch("pdf_to_md.extract_raw_text", side_effect=fake_extract):
+        assert sync_sources.extract_pdf_text(PDF_MD_BYTES) == "word"
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Extracting" in captured.err
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_shadow_verify_unreachable(mock_fetch, tmp_path):
+    """A network failure is reported, not raised."""
+    mock_fetch.side_effect = urllib.error.URLError("down")
+    entry = SourceEntry(path="m.md", url="https://example.com/m.pdf", type="manual")
+    (tmp_path / "m.md").write_text("text\n", encoding="utf-8")
+
+    assert sync_sources.shadow_verify_source(entry, tmp_path).status == "UNREACHABLE"
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [("PARITY", 0), ("SKIPPED", 0), ("MISMATCH", 1), ("ERROR", 2), ("UNREACHABLE", 4)],
+)
+def test_shadow_verify_exit_code(monkeypatch, tmp_path, capsys, status, expected):
+    """--shadow-verify exits with the same bits as --check."""
+    config = tmp_path / "sources.yaml"
+    sync_sources.save_registry(config, [_pdf_md_entry()])
+    monkeypatch.setattr(
+        sync_sources,
+        "shadow_verify_source",
+        lambda entry, root: sync_sources.ShadowResult(entry.path, entry.url, status),
+    )
+    monkeypatch.setattr("sys.argv", ["sync_sources.py", "--config", str(config), "--shadow-verify"])
+
+    assert sync_sources.main() == expected
+    assert "SHADOW PARITY REPORT" in capsys.readouterr().out
+
+
+def test_shadow_verify_rejects_sync(monkeypatch, capsys):
+    """--shadow-verify cannot be combined with a writing mode."""
+    monkeypatch.setattr("sys.argv", ["sync_sources.py", "--shadow-verify", "--sync"])
+    with pytest.raises(SystemExit):
+        sync_sources.main()
+    capsys.readouterr()
