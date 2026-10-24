@@ -32,6 +32,7 @@ from services.grievance_builder import (  # noqa: F401
     PENDING_DRAFT_HELP,
     DRAFT_RETRY_COMMANDS,
 )
+from services.analytics import track
 from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
     _get_source_name,
@@ -100,6 +101,7 @@ async def setup_agent(settings):
     prev = cl.user_session.get("persona")
     persona = settings["Persona"]
     cl.user_session.set("persona", persona)
+    track("Persona Selected", persona=persona)
     if persona == "Grieve" and prev != "Grieve":
         cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
         await cl.Message(content=wizard_intro_message(), author="System").send()
@@ -149,6 +151,10 @@ async def on_chat_start():
     if profile == "Grieve":
         cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
         await cl.Message(content=wizard_intro_message(), author="System").send()
+
+    chat_profile = cl.user_session.get("chat_profile")
+    if chat_profile:
+        track("Persona Selected", persona=chat_profile)
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
@@ -213,6 +219,7 @@ async def on_message(message: cl.Message) -> None:
                     await cl.Message(content="✓ Session restored successfully.", author="System").send()
                 except Exception as e:
                     logger.error(f"[load] Failed to read uploaded session file: {e}")
+                    track("Import", result="failure")
                     await cl.Message(content="Failed to read the uploaded session file.", author="System").send()
                 return
 

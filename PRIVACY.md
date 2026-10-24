@@ -2,6 +2,10 @@
 
 This app is built with a "Privacy-by-Design" architecture, specifically aligned with the British Columbia [**Personal Information Protection Act (PIPA)**](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03063_01). As a tool designed for union stewards, we recognize the high sensitivity of labour relations data and the legal requirements for protecting personal information.
 
+## Analytics
+
+We count how the app is used with [Plausible Analytics](https://plausible.io/data-policy). We count unique visitors, imports and exports of saved conversations (and whether each succeeded or failed), and which persona or mode is selected. It is anonymous: no cookies are set, no raw IP addresses are stored, and no content, file names, questions, answers, or anything you type is ever sent. Plausible hosts this data in the EU, and the app itself stores none of it.
+
 ## The 10 PIPA Principles in this Application
 
 ### 1. Accountability

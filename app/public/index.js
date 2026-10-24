@@ -119,6 +119,22 @@
         });
     }
 
+    // ── Plausible analytics (#796) ──────────────────────────────────────────
+    // Cookieless pageview counting; loaded only when PLAUSIBLE_DOMAIN is set.
+    // See PRIVACY.md (Analytics).
+
+    fetch("/api/analytics")
+        .then((res) => res.json())
+        .then((data) => {
+            if (!data.plausible_domain) return;
+            const script = document.createElement("script");
+            script.defer = true;
+            script.dataset.domain = data.plausible_domain;
+            script.src = "https://plausible.io/js/script.js";
+            document.head.appendChild(script);
+        })
+        .catch(() => {});
+
     // ── Brand Configuration ────────────────────────────────────────────────────
 
     let welcomeTitle = "BCGEU Navigator";
