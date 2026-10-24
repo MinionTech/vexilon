@@ -145,3 +145,19 @@ class caplog_off:
         logging.disable(logging.ERROR)
     def __exit__(self, *exc):
         logging.disable(logging.NOTSET)
+
+
+async def test_forwarded_ip_uses_proxy_entry(plausible):
+    """A client-supplied X-Forwarded-For prefix is ignored; the proxy's entry is sent."""
+    analytics.cl.context.session.environ["HTTP_X_FORWARDED_FOR"] = "6.6.6.6, 203.0.113.9"
+    analytics.track("Export", result="success")
+    await _drain()
+    assert plausible.call_args.kwargs["headers"]["X-Forwarded-For"] == "203.0.113.9"
+
+
+async def test_excess_events_are_dropped(plausible, monkeypatch):
+    """Pending events are bounded so an outage cannot pile up work."""
+    monkeypatch.setattr(analytics, "MAX_PENDING", 0)
+    analytics.track("Export", result="success")
+    await _drain()
+    plausible.assert_not_called()

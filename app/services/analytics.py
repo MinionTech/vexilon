@@ -2,12 +2,13 @@
 
 Events carry only an event name and enumerated property values. Content, file
 names, and user input are never sent. When ``PLAUSIBLE_DOMAIN`` is unset,
-nothing is sent. Sending runs in a background task with a short timeout, and
-every error is swallowed, so analytics can never break or slow a user action.
+nothing is sent. Sending runs on a small dedicated thread pool with a short timeout, excess
+events are dropped, and every error is swallowed, so analytics can never break or slow a user action.
 """
 import asyncio
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import chainlit as cl
 import requests
@@ -17,6 +18,9 @@ logger = logging.getLogger(__name__)
 PLAUSIBLE_DOMAIN = os.getenv("PLAUSIBLE_DOMAIN", "").strip()
 PLAUSIBLE_API_HOST = "https://plausible.io"
 TIMEOUT_SECONDS = 2
+# Own pool, so a slow Plausible never holds the default executor that chat retrieval uses.
+MAX_PENDING = 32
+_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analytics")
 
 # The only events and property values that may ever be sent.
 ALLOWED_EVENTS: dict[str, dict[str, frozenset[str]]] = {
@@ -25,7 +29,7 @@ ALLOWED_EVENTS: dict[str, dict[str, frozenset[str]]] = {
     "Persona Selected": {"persona": frozenset({"Lookup", "Grieve", "Manage"})},
 }
 
-_background_tasks: set[asyncio.Task] = set()
+_background_tasks: set[asyncio.Future] = set()
 
 
 def build_payload(name: str, props: dict[str, str], url: str) -> dict:
@@ -47,7 +51,10 @@ def _visitor_headers() -> tuple[dict[str, str], str]:
     These are passed straight through to Plausible and are never logged or stored.
     """
     environ = cl.context.session.environ or {}
-    ip = environ.get("HTTP_X_FORWARDED_FOR") or environ.get("REMOTE_ADDR") or ""
+    # The last X-Forwarded-For entry is the one the proxy in front of the app
+    # appended. Earlier entries come from the client and can be forged.
+    forwarded = [part.strip() for part in environ.get("HTTP_X_FORWARDED_FOR", "").split(",") if part.strip()]
+    ip = forwarded[-1] if forwarded else environ.get("REMOTE_ADDR", "")
     headers = {
         "User-Agent": environ.get("HTTP_USER_AGENT", ""),
         "X-Forwarded-For": ip,
@@ -75,7 +82,11 @@ def track(name: str, **props: str) -> None:
     try:
         headers, url = _visitor_headers()
         payload = build_payload(name, props, url)
-        task = asyncio.get_running_loop().create_task(asyncio.to_thread(_post, payload, headers))
+        loop = asyncio.get_running_loop()
+        if len(_background_tasks) >= MAX_PENDING:
+            logger.debug("[analytics] Event dropped: too many pending")
+            return
+        task = loop.run_in_executor(_EXECUTOR, _post, payload, headers)
         _background_tasks.add(task)
         task.add_done_callback(_background_tasks.discard)
     except Exception as e:

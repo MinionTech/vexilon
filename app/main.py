@@ -144,7 +144,8 @@ async def on_chat_start():
     await build_persona_settings(initial_index=persona_index).send()
 
     cl.user_session.set("history", [])
-    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    chat_profile = cl.user_session.get("chat_profile")
+    profile = chat_profile or DEFAULT_PERSONA
     cl.user_session.set("persona", profile)
     cl.user_session.set("selected_model", get_default_model_setting())
 
@@ -152,7 +153,6 @@ async def on_chat_start():
         cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
         await cl.Message(content=wizard_intro_message(), author="System").send()
 
-    chat_profile = cl.user_session.get("chat_profile")
     if chat_profile:
         track("Persona Selected", persona=chat_profile)
 

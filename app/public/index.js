@@ -120,18 +120,24 @@
     }
 
     // ── Plausible analytics (#796) ──────────────────────────────────────────
-    // Cookieless pageview counting; loaded only when PLAUSIBLE_DOMAIN is set.
-    // See PRIVACY.md (Analytics).
+    // Cookieless pageview counting; sent only when PLAUSIBLE_DOMAIN is set.
+    // The url is origin plus path only, and no referrer is sent, so a query
+    // string or a referring URL can never reach Plausible. See PRIVACY.md.
 
     fetch("/api/analytics")
         .then((res) => res.json())
         .then((data) => {
             if (!data.plausible_domain) return;
-            const script = document.createElement("script");
-            script.defer = true;
-            script.dataset.domain = data.plausible_domain;
-            script.src = "https://plausible.io/js/script.js";
-            document.head.appendChild(script);
+            return fetch("https://plausible.io/api/event", {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify({
+                    name: "pageview",
+                    domain: data.plausible_domain,
+                    url: location.origin + location.pathname,
+                    referrer: null,
+                }),
+            });
         })
         .catch(() => {});
 
