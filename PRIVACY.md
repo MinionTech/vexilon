@@ -4,7 +4,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 
 ## Analytics
 
-We count how the app is used with [Plausible Analytics](https://plausible.io/data-policy). We count unique visitors, imports and exports of saved conversations (and whether each succeeded or failed), and which persona or mode is selected. It is anonymous: no cookies are set, no raw IP addresses are stored, and no content, file names, questions, answers, or anything you type is ever sent. Plausible hosts this data in the EU, and the app itself stores none of it.
+We count how the app is used with [Plausible Analytics](https://plausible.io/data-policy). We count unique visitors, imports and exports of saved conversations (and whether each succeeded or failed), and which persona or mode is selected. It is anonymous: no cookies are set, and no raw IP addresses are stored. To count unique visitors, the app passes your IP address and browser User-Agent to Plausible with each event, and Plausible uses them only to compute a daily rotating, salted hash before discarding them. Page addresses are sent without any query string, no referring address is sent, and no content, file names, questions, answers, or anything you type is ever sent. Plausible hosts this data in the EU, and the app itself stores none of it.
 
 ## The 10 PIPA Principles in this Application
 

@@ -133,10 +133,10 @@ async def on_chat_start():
     ).send()
 
     cl.user_session.set("history", [])
-    cl.user_session.set("persona", "Lookup")
+    chat_profile = cl.user_session.get("chat_profile")
+    cl.user_session.set("persona", chat_profile or "Lookup")
     cl.user_session.set("selected_model", get_default_model_setting())
 
-    chat_profile = cl.user_session.get("chat_profile")
     if chat_profile:
         track("Persona Selected", persona=chat_profile)
 
