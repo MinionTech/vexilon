@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -83,6 +84,8 @@ class SourceEntry:
     upstream_last_modified: str | None = None
     # Fingerprint of type, selector, part, url, and EXTRACTOR_VERSION at last --sync.
     extraction_fingerprint: str | None = None
+    # SHA-256 of the upstream PDF bytes behind a type: pdf entry whose path is Markdown.
+    source_hash: str | None = None
 
 
 @dataclass
@@ -994,7 +997,7 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
     local_file = repo_root / source.path
     if not local_file.is_file():
         return None
-    if source.type == "pdf" or local_file.suffix.lower() == ".pdf":
+    if (source.type == "pdf" and not _is_pdf_markdown(source)) or local_file.suffix.lower() == ".pdf":
         try:
             return hashlib.sha256(local_file.read_bytes()).hexdigest()
         except OSError:
@@ -1014,6 +1017,49 @@ def _baseline_is_intact(source: SourceEntry, local_hash: str | None) -> bool:
 def _is_valid_pdf_payload(raw_bytes: Any) -> bool:
     """True when payload is non-empty bytes beginning with PDF magic bytes."""
     return isinstance(raw_bytes, bytes) and raw_bytes.startswith(b"%PDF-")
+
+
+def _is_pdf_markdown(source: SourceEntry) -> bool:
+    """True for a type: pdf entry stored as Markdown converted from the PDF."""
+    return source.type == "pdf" and source.path.lower().endswith(".md")
+
+
+# pdf_to_md.convert_to_md writes this line to the audit only when no batch was flagged.
+PDF_INTEGRITY_PASS = "Forensic word-integrity check passed with 100% parity"
+
+
+class PdfIntegrityError(Exception):
+    """pdf_to_md did not record a passing word-integrity audit."""
+
+
+def convert_pdf_to_markdown(raw_bytes: bytes, stem: str) -> tuple[str, str]:
+    """Convert PDF bytes in a temporary staging folder with pdf_to_md.
+
+    Returns the Markdown and its ``.integrity.md`` audit. Raises
+    ``PdfIntegrityError`` when the audit does not record 100% word parity.
+    """
+    import pdf_to_md
+
+    with tempfile.TemporaryDirectory() as staging:
+        pdf_path = Path(staging) / f"{stem}.pdf"
+        md_path = Path(staging) / f"{stem}.md"
+        pdf_path.write_bytes(raw_bytes)
+        pdf_to_md.convert_to_md(pdf_path, md_path, verify=True)
+        audit_path = md_path.with_suffix(".integrity.md")
+        audit = audit_path.read_text(encoding="utf-8") if audit_path.is_file() else ""
+        if PDF_INTEGRITY_PASS not in audit:
+            raise PdfIntegrityError(f"Word-integrity audit did not pass for {stem}")
+        return md_path.read_text(encoding="utf-8"), audit
+
+
+def extract_pdf_text(raw_bytes: bytes) -> str:
+    """Raw PDF text from PyMuPDF, the same extraction pdf_to_md audits against."""
+    import pdf_to_md
+
+    with tempfile.TemporaryDirectory() as staging:
+        pdf_path = Path(staging) / "source.pdf"
+        pdf_path.write_bytes(raw_bytes)
+        return "\n".join(pdf_to_md.extract_raw_text(pdf_path))
 
 
 def extraction_fingerprint(source: SourceEntry) -> str:
@@ -1135,6 +1181,35 @@ def fetch_upstream(
         return content, headers
 
 
+def _pdf_markdown_drift(
+    source: SourceEntry,
+    local_hash: str | None,
+    upstream_hash: str,
+    upstream_last_modified: str | None,
+) -> DriftResult:
+    """Drift for Markdown converted from a PDF.
+
+    The upstream PDF is compared with ``source_hash``. The Markdown is compared
+    with ``content_hash``, so a local edit is drift as well.
+    """
+    error = None
+    if source.source_hash and upstream_hash != source.source_hash:
+        error = "Upstream PDF changed"
+    elif local_hash is None:
+        error = "Local file is absent"
+    elif local_hash != source.content_hash:
+        error = "Local content modified relative to registry baseline"
+    return DriftResult(
+        path=source.path,
+        url=source.url,
+        status="DRIFT_DETECTED" if error else "MATCH",
+        local_hash=local_hash,
+        upstream_hash=upstream_hash,
+        upstream_last_modified=upstream_last_modified,
+        error=error,
+    )
+
+
 def load_registry(config_path: Path) -> list[SourceEntry]:
     """Loads declarative source registry from sources.yaml."""
     if not config_path.exists():
@@ -1165,6 +1240,7 @@ def load_registry(config_path: Path) -> list[SourceEntry]:
                 etag=_optional_header(s.get("etag")),
                 upstream_last_modified=_optional_header(s.get("upstream_last_modified")),
                 extraction_fingerprint=_optional_header(s.get("extraction_fingerprint")),
+                source_hash=_optional_header(s.get("source_hash")),
             )
         )
     _validate_registry(entries)
@@ -1314,6 +1390,8 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 )
             upstream_hash = hashlib.sha256(raw_bytes).hexdigest()
             upstream_last_modified = headers.get("last-modified")
+            if _is_pdf_markdown(source):
+                return _pdf_markdown_drift(source, local_hash, upstream_hash, upstream_last_modified)
         else:
             raw_html, headers = fetch_upstream(
                 source.url, **_validators_for_intact_baseline(source, local_hash)
@@ -1413,6 +1491,110 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
         )
 
 
+def _sync_pdf_markdown(
+    source: SourceEntry,
+    target_path: Path,
+    raw_bytes: bytes,
+    headers: dict[str, str],
+    today: str,
+    dry_run: bool,
+) -> tuple[bool, str]:
+    """Convert the PDF and write the Markdown and its audit only when the audit passes."""
+    markdown, audit = convert_pdf_to_markdown(raw_bytes, target_path.stem)
+    substantive = extract_substantive_body(markdown)
+    if not substantive:
+        return False, "PDF conversion produced no substantive content"
+    new_hash = compute_content_hash(substantive)
+    if dry_run:
+        logger.info(f"[DRY-RUN] Would write {source.path} (hash: {new_hash[:8]})")
+        return True, new_hash
+    header = format_provenance_header(
+        title=target_path.stem.replace("_", " "),
+        url=source.url,
+        upstream_last_modified=headers.get("last-modified"),
+        ingestion_date=today,
+    )
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_text(header + substantive + "\n", encoding="utf-8")
+    target_path.with_suffix(".integrity.md").write_text(audit, encoding="utf-8")
+    source.content_hash = new_hash
+    source.source_hash = hashlib.sha256(raw_bytes).hexdigest()
+    source.last_synced = today
+    source.extraction_fingerprint = extraction_fingerprint(source)
+    _store_validators(source, headers)
+    logger.info(f"Updated {source.path} (hash: {new_hash[:8]})")
+    return True, new_hash
+
+
+@dataclass
+class ShadowResult:
+    path: str
+    url: str
+    status: str  # "PARITY", "MISMATCH", "SKIPPED", "ERROR", "UNREACHABLE"
+    local_words: int = 0
+    upstream_words: int = 0
+    first_difference: int | None = None
+    error: str | None = None
+
+
+def _first_difference(local: list[str], upstream: list[str]) -> int | None:
+    """Index of the first differing word, or None when the lists are equal."""
+    for index, (a, b) in enumerate(zip(local, upstream)):
+        if a != b:
+            return index
+    if len(local) != len(upstream):
+        return min(len(local), len(upstream))
+    return None
+
+
+def shadow_verify_source(source: SourceEntry, repo_root: Path) -> ShadowResult:
+    """Compare text extracted from the remote URL with the committed file, word for word.
+
+    Words are normalized with pdf_to_md.clean_for_integrity_check. Read-only:
+    nothing is written or deleted.
+    """
+    from pdf_to_md import clean_for_integrity_check
+
+    if not source.url:
+        return ShadowResult(source.path, source.url, "SKIPPED", error="No remote URL")
+    local_file = repo_root / source.path
+    if local_file.suffix.lower() == ".pdf":
+        return ShadowResult(source.path, source.url, "SKIPPED", error="Committed file is a PDF")
+    try:
+        local_text = local_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        return ShadowResult(source.path, source.url, "ERROR", error=f"Local file unreadable: {e}")
+    try:
+        raw, _ = fetch_upstream(source.url, is_binary=True)
+        if _is_valid_pdf_payload(raw):
+            upstream_text = extract_pdf_text(raw)
+        elif source.type in ("bclaws", "html_selector"):
+            _, upstream_text = extract_content(
+                raw.decode("utf-8", errors="replace"), source.type, source.selector, source.part
+            )
+            upstream_text = extract_substantive_body(upstream_text)
+        else:
+            return ShadowResult(
+                source.path, source.url, "SKIPPED", error="Remote is not a PDF and has no HTML extractor"
+            )
+    except Exception as e:
+        if _is_network_error(e):
+            return ShadowResult(source.path, source.url, "UNREACHABLE", error=f"Network error: {e}")
+        return ShadowResult(source.path, source.url, "ERROR", error=str(e))
+
+    local_words = clean_for_integrity_check(extract_substantive_body(local_text)).split()
+    upstream_words = clean_for_integrity_check(upstream_text).split()
+    diff = _first_difference(local_words, upstream_words)
+    return ShadowResult(
+        path=source.path,
+        url=source.url,
+        status="PARITY" if diff is None else "MISMATCH",
+        local_words=len(local_words),
+        upstream_words=len(upstream_words),
+        first_difference=diff,
+    )
+
+
 def sync_source(
     source: SourceEntry,
     repo_root: Path,
@@ -1450,6 +1632,8 @@ def sync_source(
                 return False, "Upstream response is not a valid PDF payload"
 
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            if _is_pdf_markdown(source):
+                return _sync_pdf_markdown(source, target_path, raw_bytes, headers, today, dry_run)
             new_hash = hashlib.sha256(raw_bytes).hexdigest()
 
             if not dry_run:
@@ -1592,6 +1776,11 @@ def main() -> int:
         help="Simulate sync without writing files",
     )
     parser.add_argument(
+        "--shadow-verify",
+        action="store_true",
+        help="Compare remote text with committed files word for word, without writing",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Output check results in JSON format",
@@ -1613,6 +1802,8 @@ def main() -> int:
 
     if args.check and args.sync:
         parser.error("--check and --sync are mutually exclusive: --check reads only, --sync writes.")
+    if args.shadow_verify and (args.sync or args.check or args.dry_run):
+        parser.error("--shadow-verify runs alone: it reads only.")
 
     try:
         return _run(args)
@@ -1632,6 +1823,9 @@ def _run(args: argparse.Namespace) -> int:
     if args.filter:
         entries = [e for e in registry if args.filter in e.path or args.filter in e.url]
         logger.info(f"Filtered to {len(entries)} source(s)")
+
+    if getattr(args, "shadow_verify", False):
+        return _run_shadow_verify(entries, args.json)
 
     if args.check or (not args.sync and not args.dry_run):
         # Run drift check
@@ -1712,6 +1906,30 @@ def _run(args: argparse.Namespace) -> int:
         return 0
 
     return 0
+
+
+def _run_shadow_verify(entries: list[SourceEntry], as_json: bool) -> int:
+    """Print a word-parity report. Exit bits match --check: 1 mismatch, 2 error, 4 unreachable."""
+    results = [shadow_verify_source(entry, _REPO_ROOT) for entry in entries]
+    if as_json:
+        print(json.dumps([asdict(r) for r in results], indent=2))
+    else:
+        print("\n" + "=" * 60)
+        print("SHADOW PARITY REPORT")
+        print("=" * 60)
+        for r in results:
+            print(f"[{r.status}] {r.path}")
+            if r.status == "MISMATCH":
+                print(f"    Words local/upstream: {r.local_words}/{r.upstream_words}")
+                print(f"    First difference at word {r.first_difference}")
+            elif r.error:
+                print(f"    {r.error}")
+    statuses = {r.status for r in results}
+    return (
+        (EXIT_DRIFT if "MISMATCH" in statuses else 0)
+        | (EXIT_CHECK_ERROR if "ERROR" in statuses else 0)
+        | (EXIT_UNREACHABLE if "UNREACHABLE" in statuses else 0)
+    )
 
 
 if __name__ == "__main__":
