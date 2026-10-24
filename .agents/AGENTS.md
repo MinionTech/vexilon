@@ -70,6 +70,8 @@ To prevent accidental regression and "downgrades" that frustrate the team, the f
   - Ingestion types:
     - `manual`: In-repo Markdown files. `url` is optional. Drift detection verifies local SHA-256 baseline; skips network requests.
     - `html_selector` | `bclaws` | `pdf`: Network-backed documents. `url` is mandatory.
+    - `pdf` with a `.md` path: `--sync` converts the PDF with `scripts/pdf_to_md.py` (needs `HF_TOKEN`) and writes the file and its `.integrity.md` only when the audit records 100% word parity. `source_hash` records the PDF bytes.
+  - `--shadow-verify`: Read-only. Compares remote text with each committed file word for word and reports parity. Do not delete a committed file until its entry reports `PARITY`.
 - **Document Ingestion Lifecycle**:
   Every document addition or modification MUST complete the following sequence:
   1. **Stage**: Place Markdown in `app/data/01_primary/`, `02_statutory/`, `03_resources/`, `04_jurisprudence/`, or `forms/`.
