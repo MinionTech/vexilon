@@ -2610,9 +2610,10 @@ def _pdf_md_entry() -> SourceEntry:
     )
 
 
+@patch("pdf_to_md.extract_raw_text", return_value=["Agreement", "Article 1 Recognition"])
 @patch("pdf_to_md.convert_to_md")
 @patch("scripts.sync_sources.fetch_upstream")
-def test_sync_pdf_markdown_writes_md_and_audit(mock_fetch, mock_convert, tmp_path):
+def test_sync_pdf_markdown_writes_md_and_audit(mock_fetch, mock_convert, _raw, tmp_path):
     """A pdf entry with a .md path is converted in staging and written with its audit."""
     mock_fetch.return_value = (PDF_MD_BYTES, {"etag": '"v1"'})
     mock_convert.side_effect = _fake_convert(
@@ -2624,7 +2625,7 @@ def test_sync_pdf_markdown_writes_md_and_audit(mock_fetch, mock_convert, tmp_pat
 
     assert success is True
     target = tmp_path / entry.path
-    assert "Article 1 Recognition" in target.read_text(encoding="utf-8")
+    assert target.read_text(encoding="utf-8") == "# Agreement\n\nArticle 1 Recognition\n"
     assert "100% parity" in target.with_suffix(".integrity.md").read_text(encoding="utf-8")
     assert entry.content_hash == detail == _local_substantive_hash(entry, tmp_path)
     assert entry.source_hash == hashlib.sha256(PDF_MD_BYTES).hexdigest()
@@ -2652,10 +2653,30 @@ def test_sync_pdf_markdown_failed_audit_writes_nothing(mock_fetch, mock_convert,
     assert entry.content_hash is None
 
 
+@patch("pdf_to_md.extract_raw_text", return_value=["Agreement", "Article 1 Recognition Article 2"])
+@patch("pdf_to_md.convert_to_md")
+@patch("scripts.sync_sources.fetch_upstream")
+def test_sync_pdf_markdown_omitted_words_write_nothing(mock_fetch, mock_convert, _raw, tmp_path):
+    """A passing audit is not enough: words missing from the Markdown fail the sync."""
+    mock_fetch.return_value = (PDF_MD_BYTES, {})
+    mock_convert.side_effect = _fake_convert(
+        "✅ **SUCCESS:** Forensic word-integrity check passed with 100% parity.\n"
+    )
+    entry = _pdf_md_entry()
+
+    with patch.object(sync_sources.logger, "error"):
+        success, detail = sync_source(entry, tmp_path)
+
+    assert success is False
+    assert "differ from the PDF at word 4" in detail
+    assert not (tmp_path / entry.path).exists()
+
+
 @pytest.mark.parametrize(
     ("source_hash_bytes", "local_body", "expected", "error"),
     [
         (PDF_MD_BYTES, "Article 1\n", "MATCH", None),
+        (None, "Article 1\n", "DRIFT_DETECTED", "No PDF baseline recorded"),
         (b"%PDF-1.4 older", "Article 1\n", "DRIFT_DETECTED", "Upstream PDF changed"),
         (PDF_MD_BYTES, "Edited\n", "DRIFT_DETECTED", "Local content modified relative to registry baseline"),
     ],
@@ -2669,7 +2690,7 @@ def test_check_pdf_markdown_drift(mock_fetch, tmp_path, source_hash_bytes, local
     target.parent.mkdir(parents=True)
     target.write_text("# Agreement\n\nArticle 1\n", encoding="utf-8")
     entry.content_hash = _local_substantive_hash(entry, tmp_path)
-    entry.source_hash = hashlib.sha256(source_hash_bytes).hexdigest()
+    entry.source_hash = hashlib.sha256(source_hash_bytes).hexdigest() if source_hash_bytes else None
     target.write_text("# Agreement\n\n" + local_body, encoding="utf-8")
 
     res = check_source_drift(entry, tmp_path)
@@ -2731,6 +2752,30 @@ def test_shadow_verify_manual_html_skipped(mock_fetch, tmp_path):
     (tmp_path / "m.md").write_text("text\n", encoding="utf-8")
 
     assert sync_sources.shadow_verify_source(entry, tmp_path).status == "SKIPPED"
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_shadow_verify_pdf_entry_html_is_error(mock_fetch, tmp_path):
+    """A pdf entry that gets HTML back fails the check instead of being skipped."""
+    mock_fetch.return_value = (b"<html></html>", {})
+    entry = _pdf_md_entry()
+    (tmp_path / entry.path).parent.mkdir(parents=True)
+    (tmp_path / entry.path).write_text("text\n", encoding="utf-8")
+
+    assert sync_sources.shadow_verify_source(entry, tmp_path).status == "ERROR"
+
+
+def test_extract_pdf_text_progress_goes_to_stderr(capsys):
+    """Extractor progress must not mix into --shadow-verify --json output."""
+    def fake_extract(path):
+        print("[*] Extracting")
+        return ["word"]
+
+    with patch("pdf_to_md.extract_raw_text", side_effect=fake_extract):
+        assert sync_sources.extract_pdf_text(PDF_MD_BYTES) == "word"
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Extracting" in captured.err
 
 
 @patch("scripts.sync_sources.fetch_upstream")

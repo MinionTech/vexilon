@@ -12,6 +12,7 @@ and drift detection.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import logging
@@ -1006,6 +1007,9 @@ def _local_substantive_hash(source: SourceEntry, repo_root: Path) -> str | None:
         text = local_file.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return None
+    if _is_pdf_markdown(source):
+        # Converted PDFs carry no provenance header, so the whole file is the body.
+        return compute_content_hash(text)
     return compute_content_hash(extract_substantive_body(text))
 
 
@@ -1028,6 +1032,16 @@ def _is_pdf_markdown(source: SourceEntry) -> bool:
 PDF_INTEGRITY_PASS = "Forensic word-integrity check passed with 100% parity"
 
 
+def _first_difference(local: list[str], upstream: list[str]) -> int | None:
+    """Index of the first differing word, or None when the lists are equal."""
+    for index, (a, b) in enumerate(zip(local, upstream)):
+        if a != b:
+            return index
+    if len(local) != len(upstream):
+        return min(len(local), len(upstream))
+    return None
+
+
 class PdfIntegrityError(Exception):
     """pdf_to_md did not record a passing word-integrity audit."""
 
@@ -1036,7 +1050,9 @@ def convert_pdf_to_markdown(raw_bytes: bytes, stem: str) -> tuple[str, str]:
     """Convert PDF bytes in a temporary staging folder with pdf_to_md.
 
     Returns the Markdown and its ``.integrity.md`` audit. Raises
-    ``PdfIntegrityError`` when the audit does not record 100% word parity.
+    ``PdfIntegrityError`` when the audit is not a pass, or when the normalized
+    words of the Markdown differ from the words PyMuPDF extracts from the PDF.
+    The audit alone does not catch omitted or reordered words.
     """
     import pdf_to_md
 
@@ -1049,7 +1065,13 @@ def convert_pdf_to_markdown(raw_bytes: bytes, stem: str) -> tuple[str, str]:
         audit = audit_path.read_text(encoding="utf-8") if audit_path.is_file() else ""
         if PDF_INTEGRITY_PASS not in audit:
             raise PdfIntegrityError(f"Word-integrity audit did not pass for {stem}")
-        return md_path.read_text(encoding="utf-8"), audit
+        markdown = md_path.read_text(encoding="utf-8")
+        pdf_words = pdf_to_md.clean_for_integrity_check("\n".join(pdf_to_md.extract_raw_text(pdf_path))).split()
+        md_words = pdf_to_md.clean_for_integrity_check(markdown).split()
+        diff = _first_difference(md_words, pdf_words)
+        if diff is not None:
+            raise PdfIntegrityError(f"Converted words differ from the PDF at word {diff} for {stem}")
+        return markdown, audit
 
 
 def extract_pdf_text(raw_bytes: bytes) -> str:
@@ -1059,7 +1081,9 @@ def extract_pdf_text(raw_bytes: bytes) -> str:
     with tempfile.TemporaryDirectory() as staging:
         pdf_path = Path(staging) / "source.pdf"
         pdf_path.write_bytes(raw_bytes)
-        return "\n".join(pdf_to_md.extract_raw_text(pdf_path))
+        # Progress lines go to stderr so --shadow-verify --json stays valid JSON.
+        with contextlib.redirect_stdout(sys.stderr):
+            return "\n".join(pdf_to_md.extract_raw_text(pdf_path))
 
 
 def extraction_fingerprint(source: SourceEntry) -> str:
@@ -1193,12 +1217,16 @@ def _pdf_markdown_drift(
     with ``content_hash``, so a local edit is drift as well.
     """
     error = None
-    if source.source_hash and upstream_hash != source.source_hash:
+    if not source.source_hash:
+        error = "No PDF baseline recorded"
+    elif upstream_hash != source.source_hash:
         error = "Upstream PDF changed"
     elif local_hash is None:
         error = "Local file is absent"
     elif local_hash != source.content_hash:
         error = "Local content modified relative to registry baseline"
+    elif source.extraction_fingerprint and not _extraction_fingerprint_matches(source):
+        error = "Extraction inputs changed"
     return DriftResult(
         path=source.path,
         url=source.url,
@@ -1501,21 +1529,16 @@ def _sync_pdf_markdown(
 ) -> tuple[bool, str]:
     """Convert the PDF and write the Markdown and its audit only when the audit passes."""
     markdown, audit = convert_pdf_to_markdown(raw_bytes, target_path.stem)
-    substantive = extract_substantive_body(markdown)
-    if not substantive:
+    if not markdown.strip():
         return False, "PDF conversion produced no substantive content"
-    new_hash = compute_content_hash(substantive)
+    # Written as converted, headings included: provenance lives in sources.yaml
+    # and the audit, so hashing and shadow checks read the same words.
+    new_hash = compute_content_hash(markdown)
     if dry_run:
         logger.info(f"[DRY-RUN] Would write {source.path} (hash: {new_hash[:8]})")
         return True, new_hash
-    header = format_provenance_header(
-        title=target_path.stem.replace("_", " "),
-        url=source.url,
-        upstream_last_modified=headers.get("last-modified"),
-        ingestion_date=today,
-    )
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    target_path.write_text(header + substantive + "\n", encoding="utf-8")
+    target_path.write_text(markdown, encoding="utf-8")
     target_path.with_suffix(".integrity.md").write_text(audit, encoding="utf-8")
     source.content_hash = new_hash
     source.source_hash = hashlib.sha256(raw_bytes).hexdigest()
@@ -1535,16 +1558,6 @@ class ShadowResult:
     upstream_words: int = 0
     first_difference: int | None = None
     error: str | None = None
-
-
-def _first_difference(local: list[str], upstream: list[str]) -> int | None:
-    """Index of the first differing word, or None when the lists are equal."""
-    for index, (a, b) in enumerate(zip(local, upstream)):
-        if a != b:
-            return index
-    if len(local) != len(upstream):
-        return min(len(local), len(upstream))
-    return None
 
 
 def shadow_verify_source(source: SourceEntry, repo_root: Path) -> ShadowResult:
@@ -1573,6 +1586,8 @@ def shadow_verify_source(source: SourceEntry, repo_root: Path) -> ShadowResult:
                 raw.decode("utf-8", errors="replace"), source.type, source.selector, source.part
             )
             upstream_text = extract_substantive_body(upstream_text)
+        elif source.type == "pdf":
+            return ShadowResult(source.path, source.url, "ERROR", error="Upstream response is not a valid PDF payload")
         else:
             return ShadowResult(
                 source.path, source.url, "SKIPPED", error="Remote is not a PDF and has no HTML extractor"
@@ -1582,7 +1597,8 @@ def shadow_verify_source(source: SourceEntry, repo_root: Path) -> ShadowResult:
             return ShadowResult(source.path, source.url, "UNREACHABLE", error=f"Network error: {e}")
         return ShadowResult(source.path, source.url, "ERROR", error=str(e))
 
-    local_words = clean_for_integrity_check(extract_substantive_body(local_text)).split()
+    local_body = local_text if _is_pdf_markdown(source) else extract_substantive_body(local_text)
+    local_words = clean_for_integrity_check(local_body).split()
     upstream_words = clean_for_integrity_check(upstream_text).split()
     diff = _first_difference(local_words, upstream_words)
     return ShadowResult(
