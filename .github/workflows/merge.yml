@@ -80,10 +80,11 @@ jobs:
 
       - name: Notify Owners on Failure
         if: failure()
-        uses: bcgov/actions/workflow-notifier@77e7b21eda7c99a2230a6dfb4db3b33947678307 # v0.11.0
+        uses: bcgov/actions/workflow-notifier@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "TEST Deployment Failure: Vexilon"
+          labels: "failure,deployment,test"
 
   deploy-prod:
     name: Deploy to HF PROD
@@ -135,10 +136,11 @@ jobs:
 
       - name: Notify Owners on Failure
         if: failure()
-        uses: bcgov/actions/workflow-notifier@77e7b21eda7c99a2230a6dfb4db3b33947678307 # v0.11.0
+        uses: bcgov/actions/workflow-notifier@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "PROD Deployment Failure: Agreement Navigator (AgNav)"
+          labels: "critical,deployment,prod"
 
   notify-cancelled:
     name: Notify on Timeout or Cancellation
@@ -153,7 +155,8 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Notify on timeout or cancellation
-        uses: bcgov/actions/workflow-notifier@77e7b21eda7c99a2230a6dfb4db3b33947678307 # v0.11.0
+        uses: bcgov/actions/workflow-notifier@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "${{ needs.deploy-test.result == 'cancelled' && 'TEST' || 'PROD' }} Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
+          labels: "failure,deployment,${{ needs.deploy-test.result == 'cancelled' && 'test' || 'prod' }}"
