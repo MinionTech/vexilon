@@ -44,9 +44,9 @@ jobs:
       - name: Resolve image
         id: resolve
         if: ${{ !inputs.image_tag }}
-        uses: bcgov/actions/image-tracker@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/image-tracker@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
-          package: agnav
+          packages: agnav
           revision: ${{ github.sha }}
           max_depth: 20
 
@@ -80,7 +80,7 @@ jobs:
 
       - name: Notify Owners on Failure
         if: failure()
-        uses: bcgov/actions/workflow-notifier@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/workflow-notifier@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "TEST Deployment Failure: Vexilon"
@@ -136,7 +136,7 @@ jobs:
 
       - name: Notify Owners on Failure
         if: failure()
-        uses: bcgov/actions/workflow-notifier@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/workflow-notifier@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "PROD Deployment Failure: Agreement Navigator (AgNav)"
@@ -155,7 +155,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Notify on timeout or cancellation
-        uses: bcgov/actions/workflow-notifier@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/workflow-notifier@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "${{ needs.deploy-test.result == 'cancelled' && 'TEST' || 'PROD' }} Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
