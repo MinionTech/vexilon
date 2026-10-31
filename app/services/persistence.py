@@ -6,6 +6,7 @@ import chainlit as cl
 
 from core.config import MAX_INPUT_LENGTH, _get_active_main
 from core.security import _rate_limiter
+from services.analytics import track
 
 logger = logging.getLogger(__name__)
 
@@ -172,10 +173,12 @@ async def trigger_session_save(client_id: str = "default") -> None:
             elements=[cl.File(name=filename, content=markdown_content, display="inline", mime="text/markdown")]
         )
         await msg.send()
+        track("Export", result="success")
 
         logger.info(f"[save] Conversation saved by {client_id} ({len(history)} messages)")
     except Exception as e:
         logger.error(f"[save] Failed to save conversation: {e}")
+        track("Export", result="failure")
         await cl.Message(content=f"Error saving conversation: {e}", author="System").send()
 
 
@@ -214,15 +217,19 @@ async def trigger_session_load(file_content: str, client_id: str = "default") ->
             msg_obj.metadata = {"restored": True, "readonly": True}
             await msg_obj.send()
 
+        track("Import", result="success")
         logger.info(f"[load] Conversation loaded by {client_id} ({len(messages)} messages)")
     except json.JSONDecodeError as e:
         logger.error(f"[load] Invalid JSON in file: {e}")
+        track("Import", result="failure")
         await cl.Message(content="Invalid conversation file format. Expected JSON.", author="System").send()
     except ValueError as e:
         logger.error(f"[load] Conversation validation error: {e}")
+        track("Import", result="failure")
         await cl.Message(content=f"Conversation file is invalid: {e}", author="System").send()
     except Exception as e:
         logger.error(f"[load] Failed to load conversation: {e}")
+        track("Import", result="failure")
         await cl.Message(content=f"Error loading conversation: {e}", author="System").send()
 
 
@@ -243,4 +250,5 @@ async def ask_for_session_file(client_id: str = "default") -> None:
             await trigger_session_load(file_content, client_id=client_id)
     except Exception as e:
         logger.error(f"[load] AskFileMessage background task failed: {e}")
+        track("Import", result="failure")
         await cl.Message(content="Failed to load session file.", author="System").send()
