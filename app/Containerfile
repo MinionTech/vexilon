@@ -1,5 +1,5 @@
 # ─── Stage 0: Base System & Package Manager ───────────────────────────────────
-FROM python:3.14-slim AS base
+FROM python:3.15-slim AS base
 
 # System paths, Hugging Face configurations, and environment variables
 ENV HF_HOME=/hf_cache \
@@ -31,7 +31,7 @@ HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=10 \
 # ─── Stage 1: Model Fetcher ──────────────────────────────────────────────────
 # Downloads heavy embedding model weights separately to leverage build caches.
 # Inherits directly from python:3.14-slim to avoid dependency cache busts from base.
-FROM python:3.14-slim AS model_fetcher
+FROM python:3.15-slim AS model_fetcher
 
 # renovate: datasource=pypi depName=huggingface-hub
 RUN --mount=type=cache,target=/root/.cache/pip \
