@@ -83,6 +83,7 @@ COPY core/ ./core/
 COPY services/ ./services/
 COPY middleware/ ./middleware/
 COPY main.py ./
+COPY starters.py ./
 COPY patches.py ./
 COPY brand.py ./
 COPY conftest.py ./
