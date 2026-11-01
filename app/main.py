@@ -56,6 +56,7 @@ from core.config import (  # noqa: F401
     _ALL_SIMPLE_KEYWORDS,
     _get_default_model,
 )
+from starters import apply_starter_persona, chainlit_starters
 from core.security import (  # noqa: F401
     _rate_limiter,
     _parse_client_uuid,
@@ -105,6 +106,7 @@ async def setup_agent(settings):
 
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
+<<<<<<< HEAD
     general_starters = [
         cl.Starter(label="Discipline Just Cause", message=EXAMPLES[0]),
         cl.Starter(label="Steward Rights", message=EXAMPLES[1]),
@@ -114,6 +116,9 @@ async def chat_profiles(user: cl.User):
     grieve_starters = general_starters + [
         cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
     ]
+=======
+    all_starters = chainlit_starters()
+>>>>>>> f4762ec (fix(ui): starter CTAs as mode how-tos with persona switch)
     return [
         cl.ChatProfile(
             name="Lookup",
@@ -235,6 +240,10 @@ async def on_message(message: cl.Message) -> None:
     msg_str = (message.content or "").strip()
     if not msg_str:
         return
+
+    starter_persona = await apply_starter_persona(msg_str)
+    if starter_persona:
+        logger.info(f"[chat] Starter activated persona: {starter_persona}")
 
     prev_msg = cl.user_session.get("last_assistant_message")
     if prev_msg:

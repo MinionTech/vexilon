@@ -52,13 +52,30 @@ async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
 
 @pytest.mark.asyncio
 async def test_chat_profiles_all_starters_preserved():
+<<<<<<< HEAD
     """Grieve keeps the Builder starter; Lookup/Manage keep four general starters."""
+=======
+    """Each persona profile shares the same mode how-to and Lookup starter chips."""
+>>>>>>> f4762ec (fix(ui): starter CTAs as mode how-tos with persona switch)
     profiles = await app.chat_profiles(None)
     assert len(profiles) == 3
+    expected_labels = [
+        "Discipline Just Cause",
+        "Steward Rights",
+        "Grievance Builder",
+        "Management Guide",
+    ]
     for p in profiles:
         assert p.starters is not None
+<<<<<<< HEAD
         expected = 5 if p.name == "Grieve" else 4
         assert len(p.starters) == expected, f"Profile '{p.name}' had {len(p.starters)} starters; expected {expected}"
+=======
+        assert len(p.starters) == len(expected_labels), (
+            f"Profile '{p.name}' had {len(p.starters)} starters; expected {len(expected_labels)}"
+        )
+        assert [s.label for s in p.starters] == expected_labels
+>>>>>>> f4762ec (fix(ui): starter CTAs as mode how-tos with persona switch)
         for starter in p.starters:
             assert isinstance(starter.label, str) and starter.label.strip()
             assert isinstance(starter.message, str) and starter.message.strip()
