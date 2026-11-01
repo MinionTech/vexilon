@@ -18,6 +18,13 @@ from core.config import *  # noqa: F401, F403
 from core.security import *  # noqa: F401, F403
 from services.llm import *  # noqa: F401, F403
 from services.persistence import *  # noqa: F401, F403
+from services.grievance_builder import (  # noqa: F401
+    WIZARD_SESSION_KEY,
+    default_wizard_state,
+    process_wizard_message,
+    wizard_intro_message,
+    should_activate_wizard,
+)
 from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
     _get_source_name,
@@ -82,7 +89,12 @@ if os.getenv("AGNAV_PASSWORD"):
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    cl.user_session.set("persona", settings["Persona"])
+    prev = cl.user_session.get("persona")
+    persona = settings["Persona"]
+    cl.user_session.set("persona", persona)
+    if persona == "Grieve" and prev != "Grieve":
+        cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+        await cl.Message(content=wizard_intro_message(), author="System").send()
 
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
@@ -104,7 +116,10 @@ async def chat_profiles(user: cl.User):
         cl.ChatProfile(
             name="Grieve",
             icon="",
-            markdown_description="Strategic guidance and forensic auditing for grievance filing.",
+            markdown_description=(
+                "Grievance Builder: step-by-step intake, partially filled forms, "
+                "and contract-backed drafts (steward review required before filing)."
+            ),
             starters=all_starters,
         ),
         cl.ChatProfile(
@@ -131,8 +146,13 @@ async def on_chat_start():
     ).send()
 
     cl.user_session.set("history", [])
-    cl.user_session.set("persona", "Lookup")
+    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    cl.user_session.set("persona", profile)
     cl.user_session.set("selected_model", get_default_model_setting())
+
+    if profile == "Grieve":
+        cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+        await cl.Message(content=wizard_intro_message(), author="System").send()
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
@@ -224,6 +244,34 @@ async def on_message(message: cl.Message) -> None:
 
     persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     history: list[dict] = cl.user_session.get("history") or []
+
+    wizard = cl.user_session.get(WIZARD_SESSION_KEY)
+    if persona == "Grieve" and wizard and wizard.get("active"):
+        new_state, turn = process_wizard_message(sanitized, wizard)
+        cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+        if turn.handled:
+            if turn.assistant_message:
+                await cl.Message(content=turn.assistant_message, author="System").send()
+            history.append({"role": "user", "content": sanitized})
+            if turn.assistant_message:
+                history.append({"role": "assistant", "content": turn.assistant_message})
+            cl.user_session.set("history", history)
+            if not turn.generate_draft:
+                return
+            sanitized = turn.draft_query
+    elif persona == "Grieve" and should_activate_wizard(persona, sanitized, wizard):
+        fresh = default_wizard_state()
+        new_state, turn = process_wizard_message(sanitized, fresh)
+        cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+        if turn.assistant_message:
+            await cl.Message(content=turn.assistant_message, author="System").send()
+        history.append({"role": "user", "content": sanitized})
+        if turn.assistant_message:
+            history.append({"role": "assistant", "content": turn.assistant_message})
+        cl.user_session.set("history", history)
+        if not turn.generate_draft:
+            return
+        sanitized = turn.draft_query
 
     out = cl.Message(content="")
     await out.send()

@@ -55,6 +55,21 @@ from indexing import (
 
 logger = logging.getLogger(__name__)
 
+PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+
+
+def _read_prompt_file(filename: str) -> str:
+    path = PROMPTS_DIR / filename
+    if not path.is_file():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
+def get_case_builder_instructions() -> str:
+    """Load Grievance Builder persona text from prompts/case_builder.txt."""
+    raw = _read_prompt_file("case_builder.txt")
+    return raw.replace("{manifest}", "").replace("{verify_message}", "").strip()
+
 # ─── Global State ───────────────────────────────────────────────────────────
 _chunks: list[dict] = []
 _index: "faiss.IndexFlatIP | None" = None
@@ -102,10 +117,10 @@ def get_persona_prompt(persona_key: str) -> str:
         persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework. Provide precise, fact-based answers using the provided context."
     elif persona_key == "Grieve":
         rules = UNION_MANDATORY_RULES
-        persona = (
-            "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
-            "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
-            "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
+        builder = get_case_builder_instructions()
+        persona = builder or (
+            "You are a Senior BCGEU Staff Rep acting as a Grievance Builder. "
+            "Guide stewards through fact intake and produce partial grievance form drafts for human review."
         )
     elif persona_key == "Train":
         rules = UNION_MANDATORY_RULES
@@ -718,7 +733,20 @@ async def rag_review_stream(
                 audit_rules += f"Criteria:\n{test.content}\n"
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
-        system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        wizard_block = ""
+        if persona_mode == "Grieve" and has_chainlit_context():
+            from services.grievance_builder import format_facts_block
+
+            wiz = cl.user_session.get("grieve_wizard")
+            if wiz and wiz.get("facts"):
+                wizard_block = (
+                    "\n\n--- GRIEVANCE BUILDER FACTS (wizard) ---\n"
+                    f"{format_facts_block(wiz['facts'])}\n"
+                )
+        system = (
+            f"{master_rules}\n\n{base_persona}\n\n{audit_rules}{wizard_block}\n\n"
+            f"--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        )
 
         capped = []
         for h in history[-2:]:
