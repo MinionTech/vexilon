@@ -14,8 +14,11 @@ from services.grievance_builder import (
 
 
 def test_is_builder_kickoff():
-    assert is_builder_kickoff("I need to file a grievance for a member")
-    assert not is_builder_kickoff("What is Article 14?")
+    assert is_builder_kickoff("start grievance builder")
+    assert is_builder_kickoff(
+        "I need to file a grievance for a member—start the Grievance Builder wizard and outline the steps."
+    )
+    assert not is_builder_kickoff("What is Article 14 for filing a grievance?")
 
 
 def test_wizard_intro_lists_step_one():
@@ -54,11 +57,27 @@ def test_exit_wizard_deactivates():
     assert state["active"] is False
 
 
+def test_kickoff_does_not_store_issue_summary():
+    state = default_wizard_state()
+    state, turn = process_wizard_message("start grievance builder", state)
+    assert turn.handled
+    assert state["step"] == 0
+    assert "issue_summary" not in state.get("facts", {})
+
+
+def test_required_step_rejects_skip():
+    state = default_wizard_state()
+    state, _ = process_wizard_message("Manager denied vacation", state)
+    state, turn = process_wizard_message("skip", state)
+    assert turn.handled
+    assert "required" in turn.assistant_message.lower()
+
+
 def test_format_facts_block_skips_skip_values():
     facts = {"issue_summary": "Overtime denied", "articles": "skip", "remedy": "Pay owed hours"}
     block = format_facts_block(facts)
     assert "Overtime denied" in block
-    assert "skip" not in block.lower() or "articles" not in block.lower()
+    assert "**Contract articles:**" not in block
 
 
 def test_should_activate_wizard_when_active():
@@ -67,10 +86,11 @@ def test_should_activate_wizard_when_active():
 
 
 def test_grieve_persona_loads_case_builder_prompt():
-    prompt = app.get_persona_prompt("Grieve")
-    assert "Grievance Builder" in prompt
-    assert "Partial Form Fields" in prompt
-    assert "Human review required" in prompt or "human review" in prompt.lower()
+    draft_prompt = app.get_persona_prompt("Grieve", grieve_draft=True)
+    assert "Grievance Builder" in draft_prompt
+    assert "Partial Form Fields" in draft_prompt
+    freeform = app.get_persona_prompt("Grieve")
+    assert "Forensic Auditor" in freeform
 
 
 def test_build_draft_query_includes_all_step_titles():

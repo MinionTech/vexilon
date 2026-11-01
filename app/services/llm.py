@@ -56,6 +56,13 @@ from indexing import (
 logger = logging.getLogger(__name__)
 
 PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+_case_builder_instructions_cache: str | None = None
+
+GRIEVE_FREEFORM_PERSONA = (
+    "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
+    "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
+    "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
+)
 
 
 def _read_prompt_file(filename: str) -> str:
@@ -67,8 +74,12 @@ def _read_prompt_file(filename: str) -> str:
 
 def get_case_builder_instructions() -> str:
     """Load Grievance Builder persona text from prompts/case_builder.txt."""
+    global _case_builder_instructions_cache
+    if _case_builder_instructions_cache is not None:
+        return _case_builder_instructions_cache
     raw = _read_prompt_file("case_builder.txt")
-    return raw.replace("{manifest}", "").replace("{verify_message}", "").strip()
+    _case_builder_instructions_cache = raw.replace("{manifest}", "").replace("{verify_message}", "").strip()
+    return _case_builder_instructions_cache
 
 # ─── Global State ───────────────────────────────────────────────────────────
 _chunks: list[dict] = []
@@ -110,18 +121,21 @@ MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
-def get_persona_prompt(persona_key: str) -> str:
+def get_persona_prompt(persona_key: str, *, grieve_draft: bool = False) -> str:
     """Return the combined mandatory rules and persona guidelines."""
     if persona_key == "Manage":
         rules = MANAGER_MANDATORY_RULES
         persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework. Provide precise, fact-based answers using the provided context."
     elif persona_key == "Grieve":
         rules = UNION_MANDATORY_RULES
-        builder = get_case_builder_instructions()
-        persona = builder or (
-            "You are a Senior BCGEU Staff Rep acting as a Grievance Builder. "
-            "Guide stewards through fact intake and produce partial grievance form drafts for human review."
-        )
+        if grieve_draft:
+            builder = get_case_builder_instructions()
+            persona = builder or (
+                "You are a Senior BCGEU Staff Rep acting as a Grievance Builder. "
+                "Guide stewards through fact intake and produce partial grievance form drafts for human review."
+            )
+        else:
+            persona = GRIEVE_FREEFORM_PERSONA
     elif persona_key == "Train":
         rules = UNION_MANDATORY_RULES
         persona = (
@@ -712,7 +726,8 @@ async def rag_review_stream(
     history: list[dict],
     persona_mode: str = "Lookup",
     context: str | None = None,
-    queries: list[str] | None = None
+    queries: list[str] | None = None,
+    grieve_draft: bool = False,
 ) -> AsyncIterator[str]:
     try:
         main_mod = _get_active_main()
@@ -722,7 +737,7 @@ async def rag_review_stream(
             context = context or c_new
             queries = queries or q_new
 
-        base_persona = get_persona_prompt(persona_mode)
+        base_persona = get_persona_prompt(persona_mode, grieve_draft=grieve_draft)
         audit_rules = ""
         if persona_mode in ("Grieve", "Manage"):
             registry = _get_active_test_registry()
@@ -734,7 +749,7 @@ async def rag_review_stream(
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
         wizard_block = ""
-        if persona_mode == "Grieve" and has_chainlit_context():
+        if persona_mode == "Grieve" and grieve_draft and has_chainlit_context():
             from services.grievance_builder import format_facts_block
 
             wiz = cl.user_session.get("grieve_wizard")

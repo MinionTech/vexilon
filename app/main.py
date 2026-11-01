@@ -20,6 +20,7 @@ from services.llm import *  # noqa: F401, F403
 from services.persistence import *  # noqa: F401, F403
 from services.grievance_builder import (  # noqa: F401
     WIZARD_SESSION_KEY,
+    WIZARD_STEPS,
     default_wizard_state,
     process_wizard_message,
     wizard_intro_message,
@@ -98,11 +99,13 @@ async def setup_agent(settings):
 
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
-    all_starters = [
+    general_starters = [
         cl.Starter(label="Discipline Just Cause", message=EXAMPLES[0]),
         cl.Starter(label="Steward Rights", message=EXAMPLES[1]),
         cl.Starter(label="Nexus Off-Duty Test", message=EXAMPLES[2]),
         cl.Starter(label="Harassment Threshold", message=EXAMPLES[3]),
+    ]
+    grieve_starters = general_starters + [
         cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
     ]
     return [
@@ -111,7 +114,7 @@ async def chat_profiles(user: cl.User):
             icon="",
             default=True,
             markdown_description="Forensic lookup of labor law excerpts.",
-            starters=all_starters,
+            starters=general_starters,
         ),
         cl.ChatProfile(
             name="Grieve",
@@ -120,13 +123,13 @@ async def chat_profiles(user: cl.User):
                 "Grievance Builder: step-by-step intake, partially filled forms, "
                 "and contract-backed drafts (steward review required before filing)."
             ),
-            starters=all_starters,
+            starters=grieve_starters,
         ),
         cl.ChatProfile(
             name="Manage",
             icon="",
             markdown_description="Strategic management consulting.",
-            starters=all_starters,
+            starters=general_starters,
         ),
     ]
 
@@ -134,13 +137,16 @@ async def chat_profiles(user: cl.User):
 async def on_chat_start():
     await _ensure_startup()
 
+    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    persona_index = PERSONAS.index(profile) if profile in PERSONAS else 0
+
     await cl.ChatSettings(
         [
             cl.input_widget.Select(
                 id="Persona",
                 label="Navigator Persona",
                 values=["Lookup", "Grieve", "Manage"],
-                initial_index=0,
+                initial_index=persona_index,
             ),
         ]
     ).send()
@@ -244,6 +250,7 @@ async def on_message(message: cl.Message) -> None:
 
     persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     history: list[dict] = cl.user_session.get("history") or []
+    grieve_draft = False
 
     wizard = cl.user_session.get(WIZARD_SESSION_KEY)
     if persona == "Grieve" and wizard and wizard.get("active"):
@@ -258,6 +265,7 @@ async def on_message(message: cl.Message) -> None:
             cl.user_session.set("history", history)
             if not turn.generate_draft:
                 return
+            grieve_draft = True
             sanitized = turn.draft_query
     elif persona == "Grieve" and should_activate_wizard(persona, sanitized, wizard):
         fresh = default_wizard_state()
@@ -271,6 +279,7 @@ async def on_message(message: cl.Message) -> None:
         cl.user_session.set("history", history)
         if not turn.generate_draft:
             return
+        grieve_draft = True
         sanitized = turn.draft_query
 
     out = cl.Message(content="")
@@ -286,7 +295,14 @@ async def on_message(message: cl.Message) -> None:
         out.elements = []
 
         first_token_received = False
-        async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
+        async for chunk in rag_review_stream(
+            sanitized,
+            history,
+            persona,
+            context=context,
+            queries=queries,
+            grieve_draft=grieve_draft,
+        ):
             if not chunk:
                 continue
             if not first_token_received:
@@ -321,6 +337,12 @@ async def on_message(message: cl.Message) -> None:
     history.append({"role": "assistant", "content": accumulated})
     cl.user_session.set("history", history)
     cl.user_session.set("last_assistant_message", out)
+
+    if grieve_draft:
+        cl.user_session.set(
+            WIZARD_SESSION_KEY,
+            {"active": False, "step": len(WIZARD_STEPS), "facts": {}},
+        )
 
     await clear_active_status_steps()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")

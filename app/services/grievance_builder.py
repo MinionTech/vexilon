@@ -2,18 +2,27 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 WIZARD_SESSION_KEY = "grieve_wizard"
 
 BUILDER_KICKOFF_PHRASES = (
-    "file a grievance",
     "grievance builder",
     "start grievance builder",
     "build a grievance",
-    "grievance fact sheet",
 )
+
+BUILDER_KICKOFF_EXACT = frozenset(
+    {
+        "grievance builder",
+        "start grievance builder",
+        "build a grievance",
+        "start the grievance builder wizard",
+    }
+)
+
+OPTIONAL_WIZARD_STEP_IDS = frozenset({"articles", "management_response", "witnesses_evidence"})
 
 WIZARD_STEPS: tuple[dict[str, str], ...] = (
     {
@@ -92,7 +101,11 @@ def default_wizard_state() -> dict[str, Any]:
 
 def is_builder_kickoff(message: str) -> bool:
     lower = (message or "").strip().lower()
-    return any(phrase in lower for phrase in BUILDER_KICKOFF_PHRASES)
+    if lower in BUILDER_KICKOFF_EXACT:
+        return True
+    if lower.startswith("i need to file a grievance") and "builder" in lower:
+        return True
+    return any(lower == phrase for phrase in BUILDER_KICKOFF_PHRASES)
 
 
 def should_activate_wizard(persona: str, message: str, wizard: dict[str, Any] | None) -> bool:
@@ -145,6 +158,16 @@ def build_draft_query(facts: dict[str, str]) -> str:
     )
 
 
+def has_required_facts(facts: dict[str, str]) -> bool:
+    for step in WIZARD_STEPS:
+        if step["id"] in OPTIONAL_WIZARD_STEP_IDS:
+            continue
+        val = (facts.get(step["id"]) or "").strip().lower()
+        if not val or val == "skip":
+            return False
+    return True
+
+
 def process_wizard_message(message: str, wizard: dict[str, Any] | None) -> tuple[dict[str, Any], WizardTurnResult]:
     """Advance wizard state from a user message. Pure function (no Chainlit)."""
     state = dict(wizard) if wizard else default_wizard_state()
@@ -175,8 +198,22 @@ def process_wizard_message(message: str, wizard: dict[str, Any] | None) -> tuple
 
     step_def = WIZARD_STEPS[step]
     if step == 0 and is_builder_kickoff(msg):
-        facts[step_def["id"]] = msg
-        step = 1
+        return state, WizardTurnResult(
+            handled=True,
+            assistant_message=_step_prompt(0),
+        )
+
+    if lower == "skip":
+        if step_def["id"] not in OPTIONAL_WIZARD_STEP_IDS:
+            return state, WizardTurnResult(
+                handled=True,
+                assistant_message=(
+                    f"**{step_def['title']}** is required for a useful draft. "
+                    "Please provide an answer, or type **exit wizard** for freeform chat."
+                ),
+            )
+        facts[step_def["id"]] = "skip"
+        step += 1
     else:
         if not msg:
             return state, WizardTurnResult(
@@ -190,6 +227,16 @@ def process_wizard_message(message: str, wizard: dict[str, Any] | None) -> tuple
     state["step"] = step
 
     if step >= len(WIZARD_STEPS):
+        if not has_required_facts(facts):
+            state["facts"] = facts
+            state["step"] = 0
+            return state, WizardTurnResult(
+                handled=True,
+                assistant_message=(
+                    "Required facts are missing for a draft. "
+                    + _step_prompt(0)
+                ),
+            )
         state["active"] = False
         return state, WizardTurnResult(
             handled=True,
