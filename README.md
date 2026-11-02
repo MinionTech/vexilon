@@ -96,7 +96,7 @@ The app is ready immediately on page load — no dropdown, no Load button.
 3. Responses include a plain-language explanation followed by verbatim quotes with citations
 4. **Persona Mode**: Toggle between operational modes to receive tactical guidance:
    - **Lookup**: Standard research mode for finding specific clauses.
-   - **Grieve (Grievance Builder):** Wizard-style intake with partially filled forms and fact sheet drafts (steward review required before filing). After a failed draft, facts are kept—use **retry draft**, **restart**, or **exit wizard**.
+   - **Grieve (Grievance Builder):** Wizard intake with downloadable, editable partially filled BCGEU PDF forms (A/B/C) plus analysis. After a failed draft, facts are kept—use **retry draft**, **restart**, or **exit wizard**.
    - **Manage**: Strategic Consultant mode for risk mitigation and compliance analysis.
 
 > **Note:** Informational purposes only. Consult your BCGEU representative or a legal advisor as appropriate.

@@ -491,16 +491,19 @@ def is_error_assistant_response(accumulated: str) -> bool:
 
 
 def is_successful_grieve_draft_response(accumulated: str) -> bool:
-    """True when a grievance draft stream produced substantive content (not only reference links)."""
+    """True when a grievance draft stream produced substantive analysis (not only reference links)."""
     if is_error_assistant_response(accumulated):
         return False
     main_part = accumulated.split("### 📄 Reference Documents", 1)[0].strip()
-    required_fields = (
-        "Form A — Grievor Case",
-        "Form B — Notify Designates",
-        "Form C — Steward Fact Sheet",
+    if len(main_part) < 40:
+        return False
+    lower = main_part.lower()
+    return (
+        "draft statement" in lower
+        or "### 📝" in main_part
+        or "the union grieves" in lower
+        or "doctrinal logic audit" in lower
     )
-    return len(main_part) >= 40 and all(field in main_part for field in required_fields)
 
 
 async def trigger_verification_task(

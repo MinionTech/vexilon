@@ -77,9 +77,9 @@ WIZARD_STEPS: tuple[dict[str, str], ...] = (
 
 WIZARD_INTRO = """## Grievance Builder (Grieve mode)
 
-This wizard helps you collect facts and produce **partially filled grievance forms** and a **fact sheet** grounded in the collective agreement.
+This wizard helps you collect facts and produce **editable, partially filled BCGEU grievance PDFs** (Forms A, B when applicable, and C) plus contract-backed analysis.
 
-**Important:** Outputs are draft working copies for **steward review only**. They are **not** ready to file until a human steward and BCGEU staff rep review them.
+**Important:** Downloads are draft working copies for **steward review only**. They are **not** ready to file until a human steward and BCGEU staff rep review them. Member contact fields are left blank for you to complete.
 
 Commands at any step: **restart** (start over), **exit wizard** (switch to freeform Grieve chat).
 
@@ -163,11 +163,9 @@ def build_draft_query(facts: dict[str, str]) -> str:
         "- Doctrinal Logic Audit\n"
         "- Redress Sought\n"
         "- Contract & Statutory Authority with verbatim quotes\n\n"
-        "Also include **### 📋 Partial Form Fields (Steward Review Required)** with subsections:\n"
-        "- **Form A — Grievor Case (draft fields):** incident date, draft statement, articles, remedy\n"
-        "- **Form B — Notify Designates (draft notes):** Step 1/2 notification timeline reminders\n"
-        "- **Form C — Steward Fact Sheet (draft fields):** witnesses, evidence, management response summary\n\n"
-        "State clearly that these are partial drafts requiring human review before filing."
+        "The application will attach partially filled official BCGEU PDF forms (A/B/C) "
+        "for download after this analysis. Do not invent member contact information.\n\n"
+        "State clearly that outputs are drafts for steward review before filing."
     )
 
 

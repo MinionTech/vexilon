@@ -48,7 +48,7 @@ def test_process_wizard_advances_through_steps():
             assert not turn.generate_draft
         else:
             assert turn.generate_draft
-            assert "Partial Form Fields" in turn.draft_query
+            assert "Draft Statement" in turn.draft_query or "BCGEU PDF" in turn.draft_query
             assert "Make the member whole" in turn.draft_query
 
 
@@ -90,13 +90,12 @@ def test_should_activate_wizard_when_active():
 def test_grieve_persona_loads_case_builder_prompt():
     draft_prompt = app.get_persona_prompt("Grieve", grieve_draft=True)
     assert "Grievance Builder" in draft_prompt
-    assert "Partial Form Fields" in draft_prompt
+    assert "PDF forms" in draft_prompt or "PDF" in draft_prompt
     freeform = app.get_persona_prompt("Grieve")
     assert "Forensic Auditor" in freeform
 
 
-def test_build_draft_query_includes_all_step_titles():
+def test_build_draft_query_includes_pdf_attachment_hint():
     facts = {step["id"]: f"value-{step['id']}" for step in WIZARD_STEPS}
     query = build_draft_query(facts)
-    assert "Form A" in query
-    assert "Form C" in query
+    assert "PDF" in query

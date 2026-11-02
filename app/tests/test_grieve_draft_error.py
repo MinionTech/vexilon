@@ -90,11 +90,9 @@ async def test_on_message_clears_wizard_facts_after_successful_draft(monkeypatch
 
     async def mock_ok_stream(*args, **kwargs):
         yield (
-            "### 📝 Draft Statement of Grievance\nExample\n\n"
-            "### 📋 Partial Form Fields (Steward Review Required)\n"
-            "- **Form A — Grievor Case:** draft\n"
-            "- **Form B — Notify Designates:** notes\n"
-            "- **Form C — Steward Fact Sheet:** witnesses\n"
+            "### 📝 Draft Statement of Grievance\n"
+            "The Union grieves that management violated Article 27.\n\n"
+            "### ⚖️ Doctrinal Logic Audit\nSummary.\n"
         )
 
     monkeypatch.setattr(app, "rag_review_stream", mock_ok_stream)
@@ -236,7 +234,7 @@ async def test_pending_draft_does_not_hijack_freeform_question(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_draft_fields_variant_counts_as_successful(monkeypatch):
+async def test_draft_analysis_variant_counts_as_successful(monkeypatch):
     monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
     monkeypatch.setattr(app, "_rate_limiter", MagicMock(is_allowed=MagicMock(return_value=(True, ""))))
     monkeypatch.setattr(app, "sanitize_input", lambda s: (s, False))
@@ -249,10 +247,9 @@ async def test_draft_fields_variant_counts_as_successful(monkeypatch):
 
     async def mock_stream(*args, **kwargs):
         yield (
-            "### 📋 Partial Form Fields (Steward Review Required)\n"
-            "- **Form A — Grievor Case (draft fields):** incident\n"
-            "- **Form B — Notify Designates (draft notes):** step 2\n"
-            "- **Form C — Steward Fact Sheet (draft fields):** witnesses\n"
+            "### 📝 Draft Statement of Grievance\n"
+            "The Union grieves that management violated Article 8.\n\n"
+            "### ⚖️ Doctrinal Logic Audit\nApplied Millhaven factors.\n"
         )
 
     monkeypatch.setattr(app, "rag_review_stream", mock_stream)
