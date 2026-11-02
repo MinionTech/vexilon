@@ -495,7 +495,12 @@ def is_successful_grieve_draft_response(accumulated: str) -> bool:
     if is_error_assistant_response(accumulated):
         return False
     main_part = accumulated.split("### 📄 Reference Documents", 1)[0].strip()
-    return len(main_part) >= 40
+    required_fields = (
+        "- **Form A — Grievor Case:",
+        "- **Form B — Notify Designates:",
+        "- **Form C — Steward Fact Sheet:",
+    )
+    return len(main_part) >= 40 and all(field in main_part for field in required_fields)
 
 
 async def trigger_verification_task(

@@ -18,6 +18,13 @@ BUILDER_KICKOFF_EXACT = frozenset(
 
 OPTIONAL_WIZARD_STEP_IDS = frozenset({"articles", "management_response", "witnesses_evidence"})
 
+DRAFT_RETRY_COMMANDS = frozenset({"retry draft", "retry", "generate draft"})
+
+PENDING_DRAFT_HELP = (
+    "Draft generation did not complete. Your intake facts are saved.\n\n"
+    "Type **retry draft** to try again, **restart** to re-enter facts, or **exit wizard** for freeform chat."
+)
+
 WIZARD_STEPS: tuple[dict[str, str], ...] = (
     {
         "id": "issue_summary",

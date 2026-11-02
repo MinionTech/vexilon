@@ -28,6 +28,8 @@ from services.grievance_builder import (  # noqa: F401
     should_activate_wizard,
     wizard_state_after_failed_draft,
     wizard_state_after_successful_draft,
+    PENDING_DRAFT_HELP,
+    DRAFT_RETRY_COMMANDS,
 )
 from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
@@ -270,8 +272,9 @@ async def on_message(message: cl.Message) -> None:
             if turn.assistant_message:
                 await cl.Message(content=turn.assistant_message, author="System").send()
             return
-        grieve_draft = True
-        sanitized = build_draft_query(wizard.get("facts") or {})
+        if lower in DRAFT_RETRY_COMMANDS:
+            grieve_draft = True
+            sanitized = build_draft_query(wizard.get("facts") or {})
     elif persona == "Grieve" and wizard and wizard.get("active"):
         new_state, turn = process_wizard_message(sanitized, wizard)
         cl.user_session.set(WIZARD_SESSION_KEY, new_state)
@@ -364,6 +367,7 @@ async def on_message(message: cl.Message) -> None:
             cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_successful_draft())
         else:
             cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
+            await cl.Message(content=PENDING_DRAFT_HELP, author="System").send()
 
     await clear_active_status_steps()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
