@@ -68,6 +68,7 @@ service and explicit pytest path.
 |---|---|
 | `test_ui_enter_submit.py` | Enter submits; Shift+Enter newline; empty submit guard (#644) |
 | `test_chat_controls_a11y.py` | Composer aria-labels (#641); stop button during streaming |
+| `test_chat_profiles_regression.py` | Welcome `#chat-profiles` control; `/project/settings` chatProfiles |
 | `test_knowledge_base_button_a11y.py` | Knowledge Base button label in name (#643) |
 | `test_knowledge_base_drawer.py` | Drawer opens with expected sections and document links |
 | `test_knowledge_base_drawer_contrast_a11y.py` | Drawer link contrast in dark theme (#642) |
