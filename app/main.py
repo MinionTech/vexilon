@@ -365,25 +365,31 @@ async def on_message(message: cl.Message) -> None:
         wiz = cl.user_session.get(WIZARD_SESSION_KEY) or {}
         facts = dict(wiz.get("facts") or {})
         if is_successful_grieve_draft_response(accumulated):
+            form_section = f"\n\n{DRAFT_FORM_NOTICE}"
+            accumulated += form_section
+            await out.stream_token(form_section)
+            pdf_generated = False
             try:
                 downloads = build_filled_grievance_downloads(facts, rag_analysis=accumulated)
                 out.elements = [
                     cl.File(name=filename, content=content, mime=mime, display="inline")
                     for filename, mime, content in downloads
                 ]
-                form_section = f"\n\n{DRAFT_FORM_NOTICE}"
-                accumulated += form_section
-                await out.stream_token(form_section)
+                pdf_generated = True
             except Exception as exc:
                 logger.error(f"[grieve] Failed to build grievance PDFs: {exc}", exc_info=True)
                 err_note = (
                     "\n\n⚠️ Could not generate editable PDF forms. "
-                    "Use the blank templates under **Reference Documents** / Forms."
+                    "Your intake facts are saved — type **retry draft** to try again."
                 )
                 accumulated += err_note
                 await out.stream_token(err_note)
-            cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_successful_draft())
             await out.update()
+            if pdf_generated:
+                cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_successful_draft())
+            else:
+                cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
+                await cl.Message(content=PENDING_DRAFT_HELP, author="System").send()
         else:
             cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
             await cl.Message(content=PENDING_DRAFT_HELP, author="System").send()

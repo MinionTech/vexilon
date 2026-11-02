@@ -5,11 +5,14 @@ from pathlib import Path
 import pymupdf
 
 from services.grievance_forms import (
+    ARTICLE_ONE_PATTERN,
     TEMPLATE_A,
     TEMPLATE_B,
     TEMPLATE_C,
+    _format_articles,
     build_filled_grievance_downloads,
     count_pdf_form_fields,
+    extract_draft_statement,
     fill_acroform_pdf,
     map_wizard_facts_to_pdf_fields,
 )
@@ -22,6 +25,38 @@ SAMPLE_FACTS = {
     "witnesses_evidence": "Coworker on shift saw the denial; timesheet for that week",
     "remedy": "Make the member whole for the denied leave.",
 }
+
+
+def test_format_articles_does_not_match_article_10_as_article_1():
+    result = _format_articles("Article 12 discipline")
+    assert "Article 12" in result
+    assert ARTICLE_ONE_PATTERN.search("Article 12 discipline") is None
+    assert "Article 1 and all other" in result
+
+
+def test_format_articles_skips_none():
+    facts = dict(SAMPLE_FACTS)
+    facts["articles"] = "none"
+    mapped = map_wizard_facts_to_pdf_fields(facts)
+    assert mapped["A"]["Article(s) Allegedly Violated"] == ""
+
+
+def test_extract_draft_statement_empty_section_falls_back():
+    rag = "### 📝 Draft Statement of Grievance\n\n### 🛡️ Rebuttal\nMgmt wrong."
+    assert extract_draft_statement(rag) == ""
+
+
+def test_form_c_includes_management_response_in_pdf():
+    mapped = map_wizard_facts_to_pdf_fields(SAMPLE_FACTS)
+    filled = fill_acroform_pdf(TEMPLATE_C, mapped["C"])
+    doc = pymupdf.open(stream=filled, filetype="pdf")
+    values = {}
+    for page in doc:
+        for widget in page.widgets() or []:
+            if widget.field_name:
+                values[widget.field_name] = widget.field_value
+    doc.close()
+    assert values.get("Part 2 - Employer response to grievance:\r") == SAMPLE_FACTS["management_response"]
 
 
 def test_map_wizard_facts_to_form_a_fields():
@@ -81,6 +116,13 @@ def test_build_filled_grievance_downloads_includes_b_with_data():
     downloads = build_filled_grievance_downloads(SAMPLE_FACTS)
     names = [name for name, _, _ in downloads]
     assert "Grievance_-_B_-_Notify_Designates_DRAFT.pdf" in names
+
+
+def test_is_successful_grieve_draft_rejects_heading_only():
+    from services.llm import is_successful_grieve_draft_response
+
+    text = "### 📝 Draft Statement of Grievance\n\n### 🛡️ Rebuttal\nShort"
+    assert is_successful_grieve_draft_response(text) is False
 
 
 def test_templates_exist():

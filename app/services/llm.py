@@ -491,18 +491,24 @@ def is_error_assistant_response(accumulated: str) -> bool:
 
 
 def is_successful_grieve_draft_response(accumulated: str) -> bool:
-    """True when a grievance draft stream produced substantive analysis (not only reference links)."""
+    """True when RAG produced substantive grievance analysis (not only reference links)."""
     if is_error_assistant_response(accumulated):
         return False
     main_part = accumulated.split("### 📄 Reference Documents", 1)[0].strip()
-    if len(main_part) < 40:
+    from services.grievance_forms import extract_draft_statement
+
+    statement = extract_draft_statement(main_part)
+    if len(statement) < 25:
         return False
     lower = main_part.lower()
-    return (
-        "draft statement" in lower
-        or "### 📝" in main_part
-        or "the union grieves" in lower
-        or "doctrinal logic audit" in lower
+    return any(
+        token in lower
+        for token in (
+            "rebuttal",
+            "redress sought",
+            "doctrinal logic audit",
+            "contract & statutory",
+        )
     )
 
 

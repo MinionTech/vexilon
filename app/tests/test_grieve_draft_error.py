@@ -85,14 +85,20 @@ async def test_on_message_clears_wizard_facts_after_successful_draft(monkeypatch
     monkeypatch.setattr(app, "trigger_verification_task", AsyncMock())
     monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
     monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+    monkeypatch.setattr(
+        "chainlit.File",
+        lambda name, content, mime, display: MagicMock(name=name, content=content, mime=mime),
+    )
 
     facts = _sample_facts()
 
     async def mock_ok_stream(*args, **kwargs):
         yield (
             "### 📝 Draft Statement of Grievance\n"
-            "The Union grieves that management violated Article 27.\n\n"
-            "### ⚖️ Doctrinal Logic Audit\nSummary.\n"
+            "The Union grieves that management violated Article 27 without just cause.\n\n"
+            "### 🛡️ Rebuttal of Management Claims\n"
+            "Management lacks progressive discipline.\n\n"
+            "### 🛠️ Redress Sought\nMake whole.\n"
         )
 
     monkeypatch.setattr(app, "rag_review_stream", mock_ok_stream)
@@ -242,13 +248,17 @@ async def test_draft_analysis_variant_counts_as_successful(monkeypatch):
     monkeypatch.setattr(app, "trigger_verification_task", AsyncMock())
     monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
     monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+    monkeypatch.setattr(
+        "chainlit.File",
+        lambda name, content, mime, display: MagicMock(name=name, content=content, mime=mime),
+    )
 
     facts = _sample_facts()
 
     async def mock_stream(*args, **kwargs):
         yield (
             "### 📝 Draft Statement of Grievance\n"
-            "The Union grieves that management violated Article 8.\n\n"
+            "The Union grieves that management violated Article 8 without just cause.\n\n"
             "### ⚖️ Doctrinal Logic Audit\nApplied Millhaven factors.\n"
         )
 

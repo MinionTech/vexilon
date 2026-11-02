@@ -21,34 +21,19 @@ DRAFT_FORM_NOTICE = (
     "member contact fields and signatures before filing. Blank fields were left empty intentionally."
 )
 
-# Fields that must never be auto-filled (PII / signatures / office use).
-NEVER_AUTO_FILL_SUBSTRINGS = (
-    "name",
-    "address",
-    "phone",
-    "email",
-    "signature",
-    "postal",
-    "city",
-    "local",
-    "employer",
-    "branch",
-    "bcgeu office",
-    "clear",
-    "print",
-    "seniority",
-    "job class",
-    "work address",
-    "designate name",
-    "steward name",
-    "steward email",
-    "steward cell",
+EMPTY_FACT_VALUES = frozenset({"skip", "none", "n/a", "na", "not sure", "unknown"})
+
+ARTICLE_ONE_PATTERN = re.compile(r"\barticle\s*1\b", re.IGNORECASE)
+
+DRAFT_STATEMENT_HEADINGS = (
+    re.compile(r"^###\s*📝\s*Draft Statement of Grievance\s*$", re.IGNORECASE),
+    re.compile(r"^###\s*Draft Statement of Grievance\s*$", re.IGNORECASE),
 )
 
 
 def _clean_fact(facts: dict[str, str], key: str) -> str:
     value = (facts.get(key) or "").strip()
-    if not value or value.lower() == "skip":
+    if not value or value.lower() in EMPTY_FACT_VALUES:
         return ""
     return value
 
@@ -57,8 +42,10 @@ def _format_articles(articles: str) -> str:
     if not articles:
         return ""
     lower = articles.lower()
-    if "article 1" in lower and "other relevant" in lower:
+    if "other relevant" in lower:
         return articles
+    if ARTICLE_ONE_PATTERN.search(articles):
+        return f"{articles}; and all other relevant articles"
     return f"{articles}; Article 1 and all other relevant articles"
 
 
@@ -66,28 +53,19 @@ def extract_draft_statement(rag_text: str) -> str:
     """Pull draft statement section from RAG analysis when present."""
     if not rag_text:
         return ""
-    match = re.search(
-        r"###\s*📝\s*Draft Statement of Grievance\s*\n(.*?)(?=\n###|\Z)",
-        rag_text,
-        re.DOTALL | re.IGNORECASE,
-    )
-    if match:
-        return match.group(1).strip()
-    match = re.search(
-        r"###\s*Draft Statement of Grievance\s*\n(.*?)(?=\n###|\Z)",
-        rag_text,
-        re.DOTALL | re.IGNORECASE,
-    )
-    if match:
-        return match.group(1).strip()
-    return ""
-
-
-def _parse_witness_lines(text: str) -> list[str]:
-    if not text:
-        return []
-    lines = [ln.strip() for ln in re.split(r"[\n;]+", text) if ln.strip()]
-    return lines[:3]
+    lines = rag_text.splitlines()
+    capture = False
+    collected: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if any(pattern.match(stripped) for pattern in DRAFT_STATEMENT_HEADINGS):
+            capture = True
+            continue
+        if capture:
+            if stripped.startswith("###"):
+                break
+            collected.append(line)
+    return "\n".join(collected).strip()
 
 
 def map_wizard_facts_to_pdf_fields(
@@ -103,7 +81,6 @@ def map_wizard_facts_to_pdf_fields(
     remedy = _clean_fact(facts, "remedy")
 
     details = extract_draft_statement(rag_analysis) or issue
-    witness_lines = _parse_witness_lines(witnesses_raw)
 
     form_a = {
         "Date of violation": incident,
@@ -123,21 +100,8 @@ def map_wizard_facts_to_pdf_fields(
         "Part 2 - Employer response to grievance:\r": management,
         "Any Related Information\r": witnesses_raw,
     }
-    witness_field_map = (
-        ("Witness 1 - what they witnessed", 0),
-        ("Witness 2 - what they witnessed", 1),
-        ("Witness 3 - what they witnessed", 2),
-    )
-    for field_name, idx in witness_field_map:
-        if idx < len(witness_lines):
-            form_c[field_name] = witness_lines[idx]
 
     return {"A": form_a, "B": form_b, "C": form_c}
-
-
-def _field_allowed(name: str) -> bool:
-    lower = (name or "").lower()
-    return not any(token in lower for token in NEVER_AUTO_FILL_SUBSTRINGS)
 
 
 def fill_acroform_pdf(template_path: Path, field_values: dict[str, str]) -> bytes:
@@ -149,7 +113,7 @@ def fill_acroform_pdf(template_path: Path, field_values: dict[str, str]) -> byte
             if not name or name not in field_values:
                 continue
             value = field_values[name]
-            if not value or not _field_allowed(name):
+            if not value:
                 continue
             widget.field_value = value
             widget.update()
