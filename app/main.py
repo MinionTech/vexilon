@@ -365,17 +365,18 @@ async def on_message(message: cl.Message) -> None:
         wiz = cl.user_session.get(WIZARD_SESSION_KEY) or {}
         facts = dict(wiz.get("facts") or {})
         if is_successful_grieve_draft_response(accumulated):
-            form_section = f"\n\n{DRAFT_FORM_NOTICE}"
-            accumulated += form_section
-            await out.stream_token(form_section)
+            rag_snapshot = accumulated
             pdf_generated = False
             try:
-                downloads = build_filled_grievance_downloads(facts, rag_analysis=accumulated)
+                downloads = build_filled_grievance_downloads(facts, rag_analysis=rag_snapshot)
                 out.elements = [
                     cl.File(name=filename, content=content, mime=mime, display="inline")
                     for filename, mime, content in downloads
                 ]
                 pdf_generated = True
+                form_section = f"\n\n{DRAFT_FORM_NOTICE}"
+                accumulated += form_section
+                await out.stream_token(form_section)
             except Exception as exc:
                 logger.error(f"[grieve] Failed to build grievance PDFs: {exc}", exc_info=True)
                 err_note = (
