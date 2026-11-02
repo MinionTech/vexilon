@@ -28,6 +28,11 @@ def test_grievance_builder_is_not_legacy_example_question():
     assert grievance.assistant_reply and "Grieve" in grievance.assistant_reply
 
 
+def test_grievance_builder_starter_starts_wizard():
+    grievance = next(s for s in starters.STARTER_SPECS if s.label == "Grievance Builder")
+    assert grievance.starts_wizard is True
+
+
 def test_management_guide_targets_manage():
     guide = next(s for s in starters.STARTER_SPECS if s.label == "Management Guide")
     assert guide.target_persona == "Manage"

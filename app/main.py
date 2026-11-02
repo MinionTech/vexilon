@@ -244,9 +244,16 @@ async def on_message(message: cl.Message) -> None:
                 ).send()
                 return
             reply_content = starter_spec.assistant_reply
-            if starter_spec.label == "Grievance Builder":
-                cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
-                reply_content = wizard_intro_message()
+            if starter_spec.starts_wizard:
+                existing = cl.user_session.get(WIZARD_SESSION_KEY) or {}
+                if existing.get("active") or existing.get("pending_draft"):
+                    reply_content = (
+                        "Your grievance intake is still in progress. "
+                        "Continue below, or type **restart** to begin again."
+                    )
+                else:
+                    cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+                    reply_content = wizard_intro_message()
             reply = cl.Message(content=reply_content)
             await reply.send()
             history: list[dict] = cl.user_session.get("history") or []

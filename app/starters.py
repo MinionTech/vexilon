@@ -19,6 +19,7 @@ class StarterSpec:
     target_persona: str
     informational: bool = False
     assistant_reply: str | None = None
+    starts_wizard: bool = False
 
 
 GRIEVANCE_BUILDER_GUIDE = (
@@ -52,6 +53,7 @@ STARTER_SPECS: tuple[StarterSpec, ...] = (
         target_persona="Grieve",
         informational=True,
         assistant_reply=GRIEVANCE_BUILDER_GUIDE,
+        starts_wizard=True,
     ),
     StarterSpec(
         label="Management Guide",
