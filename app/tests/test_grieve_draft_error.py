@@ -235,6 +235,58 @@ async def test_pending_draft_does_not_hijack_freeform_question(monkeypatch):
     assert session_store[WIZARD_SESSION_KEY]["facts"] == facts
 
 
+@pytest.mark.asyncio
+async def test_draft_fields_variant_counts_as_successful(monkeypatch):
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", MagicMock(is_allowed=MagicMock(return_value=(True, ""))))
+    monkeypatch.setattr(app, "sanitize_input", lambda s: (s, False))
+    monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=(["query"], "ctx", [])))
+    monkeypatch.setattr(app, "trigger_verification_task", AsyncMock())
+    monkeypatch.setattr(app, "clear_active_status_steps", AsyncMock())
+    monkeypatch.setattr(app, "has_chainlit_context", lambda: False)
+
+    facts = _sample_facts()
+
+    async def mock_stream(*args, **kwargs):
+        yield (
+            "### 📋 Partial Form Fields (Steward Review Required)\n"
+            "- **Form A — Grievor Case (draft fields):** incident\n"
+            "- **Form B — Notify Designates (draft notes):** step 2\n"
+            "- **Form C — Steward Fact Sheet (draft fields):** witnesses\n"
+        )
+
+    monkeypatch.setattr(app, "rag_review_stream", mock_stream)
+
+    session_store = {
+        "persona": "Grieve",
+        "history": [],
+        WIZARD_SESSION_KEY: {
+            "active": True,
+            "step": len(WIZARD_STEPS),
+            "facts": facts,
+            "pending_draft": True,
+        },
+    }
+    monkeypatch.setattr("chainlit.user_session.set", lambda k, v: session_store.__setitem__(k, v))
+    monkeypatch.setattr("chainlit.user_session.get", lambda k, default=None: session_store.get(k, default))
+
+    mock_msg_instance = MagicMock()
+    mock_msg_instance.send = AsyncMock()
+    mock_msg_instance.stream_token = AsyncMock()
+    mock_msg_instance.update = AsyncMock()
+    mock_msg_instance.actions = []
+    mock_msg_instance.content = ""
+    monkeypatch.setattr("chainlit.Message", MagicMock(return_value=mock_msg_instance))
+
+    msg = MagicMock()
+    msg.content = "retry draft"
+    msg.elements = []
+    await app.on_message(msg)
+    await asyncio.sleep(0.01)
+
+    assert session_store[WIZARD_SESSION_KEY].get("facts") == {}
+
+
 def test_wizard_state_after_failed_draft():
     facts = _sample_facts()
     state = wizard_state_after_failed_draft(facts)
