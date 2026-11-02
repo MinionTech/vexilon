@@ -71,6 +71,10 @@ for _spec in STARTER_SPECS:
         )
     if _spec.informational and not (_spec.assistant_reply or "").strip():
         raise ValueError(f"Informational starter '{_spec.label}' requires assistant_reply")
+    if _spec.starts_wizard and (not _spec.informational or _spec.target_persona != "Grieve"):
+        raise ValueError(
+            f"Starter '{_spec.label}' starts a wizard but is not informational/Grieve"
+        )
 
 STARTER_BY_MESSAGE: dict[str, StarterSpec] = {spec.message: spec for spec in STARTER_SPECS}
 
