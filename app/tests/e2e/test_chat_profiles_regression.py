@@ -27,7 +27,7 @@ def test_project_settings_exposes_registered_chat_profiles(
             "(Chainlit watch reload regression, 2026-11-01)"
         )
         names = [profile["name"] for profile in profiles]
-        assert set(names) == set(EXPECTED_PERSONAS), names
+        assert sorted(names) == sorted(EXPECTED_PERSONAS), names
         for profile in profiles:
             starters = profile.get("starters") or []
             assert starters, (
