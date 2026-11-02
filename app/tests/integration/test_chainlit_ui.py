@@ -6,8 +6,12 @@ Verifies that importing main registers the Chainlit lifecycle hooks
 (personas, examples). Does not boot the Chainlit server.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import chainlit as cl
 import main as app
+import pytest
+import starters
 
 
 def test_main_registers_required_handlers(monkeypatch, mock_llm_client):
@@ -34,9 +38,6 @@ def test_personas_and_examples_exposed():
     assert all(isinstance(q, str) and q for q in app.EXAMPLES)
 
 
-import pytest
-
-
 @pytest.mark.asyncio
 async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
     """chat_profiles must yield one cl.ChatProfile per persona, with starters."""
@@ -52,14 +53,121 @@ async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
 
 @pytest.mark.asyncio
 async def test_chat_profiles_all_starters_preserved():
-    """Grieve keeps the Builder starter; Lookup/Manage keep four general starters."""
+    """Each persona profile shares the same mode how-to and Lookup starter chips."""
     profiles = await app.chat_profiles(None)
     assert len(profiles) == 3
+    expected_labels = [
+        "Discipline Just Cause",
+        "Steward Rights",
+        "Grievance Builder",
+        "Management Guide",
+    ]
     for p in profiles:
         assert p.starters is not None
-        expected = 5 if p.name == "Grieve" else 4
-        assert len(p.starters) == expected, f"Profile '{p.name}' had {len(p.starters)} starters; expected {expected}"
+        assert len(p.starters) == len(expected_labels), (
+            f"Profile '{p.name}' had {len(p.starters)} starters; expected {len(expected_labels)}"
+        )
+        assert [s.label for s in p.starters] == expected_labels
         for starter in p.starters:
             assert isinstance(starter.label, str) and starter.label.strip()
             assert isinstance(starter.message, str) and starter.message.strip()
+
+
+@pytest.mark.asyncio
+async def test_on_message_informational_starter_skips_rag(monkeypatch, mock_llm_client):
+    """Mode how-to chips return a fixed guide without invoking RAG."""
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
+    monkeypatch.setattr(app, "_index", "not-none")
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", type("RL", (), {"is_allowed": lambda self, _: (True, None)})())
+
+    store: dict = {"persona": "Lookup", "history": []}
+    user_session = MagicMock()
+    user_session.get = lambda key, default=None: store.get(key, default)
+    user_session.set = lambda key, value: store.__setitem__(key, value)
+    monkeypatch.setattr(app.cl, "user_session", user_session)
+
+    sent_messages: list = []
+
+    class _Msg:
+        def __init__(self, content="", author=None):
+            self.content = content
+            self.author = author
+            self.actions = []
+            self.elements = []
+
+        async def send(self):
+            sent_messages.append(self)
+            return self
+
+        async def update(self):
+            return self
+
+    monkeypatch.setattr(app.cl, "Message", _Msg)
+
+    rag_called = {"value": False}
+
+    async def _fail_rag(*_args, **_kwargs):
+        rag_called["value"] = True
+        yield "should not run"
+
+    monkeypatch.setattr(app, "rag_review_stream", _fail_rag)
+    monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=([], "", [])))
+
+    settings = MagicMock()
+    settings.refresh = AsyncMock()
+    monkeypatch.setattr(starters, "build_persona_settings", lambda idx: settings)
+
+    await app.on_message(app.cl.Message(content="Grievance Builder"))
+
+    assert rag_called["value"] is False
+    assert len(sent_messages) == 1
+    assert store[app.WIZARD_SESSION_KEY]["active"] is True
+    assert store[app.WIZARD_SESSION_KEY]["step"] == 0
+    assert sent_messages[0].content == app.wizard_intro_message()
+    assert store["persona"] == "Grieve"
+    assert len(store["history"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_on_message_grievance_builder_chip_preserves_active_wizard(monkeypatch, mock_llm_client):
+    """Clicking the chip must not reset an in-progress intake."""
+    monkeypatch.setattr(app, "get_llm_client", lambda: mock_llm_client)
+    monkeypatch.setattr(app, "_index", "not-none")
+    monkeypatch.setattr(app, "_ensure_startup", AsyncMock())
+    monkeypatch.setattr(app, "_rate_limiter", type("RL", (), {"is_allowed": lambda self, _: (True, None)})())
+
+    in_progress = {"active": True, "step": 3, "facts": {"issue_summary": "written warning"}, "pending_draft": False}
+    store: dict = {"persona": "Grieve", "history": [], app.WIZARD_SESSION_KEY: dict(in_progress)}
+    user_session = MagicMock()
+    user_session.get = lambda key, default=None: store.get(key, default)
+    user_session.set = lambda key, value: store.__setitem__(key, value)
+    monkeypatch.setattr(app.cl, "user_session", user_session)
+
+    sent_messages: list = []
+
+    class _Msg:
+        def __init__(self, content="", author=None):
+            self.content = content
+            self.author = author
+            self.actions = []
+            self.elements = []
+
+        async def send(self):
+            sent_messages.append(self)
+            return self
+
+        async def update(self):
+            return self
+
+    monkeypatch.setattr(app.cl, "Message", _Msg)
+    settings = MagicMock()
+    settings.refresh = AsyncMock()
+    monkeypatch.setattr(starters, "build_persona_settings", lambda idx: settings)
+
+    await app.on_message(app.cl.Message(content="Grievance Builder"))
+
+    assert store[app.WIZARD_SESSION_KEY]["facts"]["issue_summary"] == "written warning"
+    assert store[app.WIZARD_SESSION_KEY]["step"] == 3
+    assert "in progress" in sent_messages[0].content.lower()
 

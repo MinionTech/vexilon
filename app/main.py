@@ -56,6 +56,7 @@ from core.config import (  # noqa: F401
     _ALL_SIMPLE_KEYWORDS,
     _get_default_model,
 )
+from starters import apply_starter_persona, build_persona_settings, chainlit_starters
 from core.security import (  # noqa: F401
     _rate_limiter,
     _parse_client_uuid,
@@ -105,22 +106,14 @@ async def setup_agent(settings):
 
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
-    general_starters = [
-        cl.Starter(label="Discipline Just Cause", message=EXAMPLES[0]),
-        cl.Starter(label="Steward Rights", message=EXAMPLES[1]),
-        cl.Starter(label="Nexus Off-Duty Test", message=EXAMPLES[2]),
-        cl.Starter(label="Harassment Threshold", message=EXAMPLES[3]),
-    ]
-    grieve_starters = general_starters + [
-        cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
-    ]
+    all_starters = chainlit_starters()
     return [
         cl.ChatProfile(
             name="Lookup",
             icon="",
             default=True,
             markdown_description="Forensic lookup of labor law excerpts.",
-            starters=general_starters,
+            starters=all_starters,
         ),
         cl.ChatProfile(
             name="Grieve",
@@ -129,13 +122,13 @@ async def chat_profiles(user: cl.User):
                 "Grievance Builder: step-by-step intake, editable partially filled BCGEU PDF forms, "
                 "and contract-backed analysis (steward review required before filing)."
             ),
-            starters=grieve_starters,
+            starters=all_starters,
         ),
         cl.ChatProfile(
             name="Manage",
             icon="",
             markdown_description="Strategic management consulting.",
-            starters=general_starters,
+            starters=all_starters,
         ),
     ]
 
@@ -146,16 +139,7 @@ async def on_chat_start():
     profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     persona_index = PERSONAS.index(profile) if profile in PERSONAS else 0
 
-    await cl.ChatSettings(
-        [
-            cl.input_widget.Select(
-                id="Persona",
-                label="Navigator Persona",
-                values=["Lookup", "Grieve", "Manage"],
-                initial_index=persona_index,
-            ),
-        ]
-    ).send()
+    await build_persona_settings(initial_index=persona_index).send()
 
     cl.user_session.set("history", [])
     profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
@@ -243,6 +227,41 @@ async def on_message(message: cl.Message) -> None:
             await prev_msg.update()
         except Exception:
             pass
+
+    starter_spec = await apply_starter_persona(msg_str)
+    if starter_spec:
+        logger.info(
+            "[chat] Starter '%s' activated persona: %s",
+            starter_spec.label,
+            cl.user_session.get("persona"),
+        )
+        if starter_spec.informational and starter_spec.assistant_reply:
+            allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
+            if not allowed:
+                await cl.Message(
+                    content=rate_msg
+                    or "⚠️ Rate limit exceeded. Please wait before sending another message."
+                ).send()
+                return
+            reply_content = starter_spec.assistant_reply
+            if starter_spec.starts_wizard:
+                existing = cl.user_session.get(WIZARD_SESSION_KEY) or {}
+                if existing.get("active") or existing.get("pending_draft"):
+                    reply_content = (
+                        "Your grievance intake is still in progress. "
+                        "Continue below, or type **restart** to begin again."
+                    )
+                else:
+                    cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+                    reply_content = wizard_intro_message()
+            reply = cl.Message(content=reply_content)
+            await reply.send()
+            history: list[dict] = cl.user_session.get("history") or []
+            history.append({"role": "user", "content": msg_str})
+            history.append({"role": "assistant", "content": reply_content})
+            cl.user_session.set("history", history)
+            cl.user_session.set("last_assistant_message", reply)
+            return
 
     allowed, rate_msg = _rate_limiter.is_allowed(_client_id())
     if not allowed:
