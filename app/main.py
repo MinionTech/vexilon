@@ -21,10 +21,13 @@ from services.persistence import *  # noqa: F401, F403
 from services.grievance_builder import (  # noqa: F401
     WIZARD_SESSION_KEY,
     WIZARD_STEPS,
+    build_draft_query,
     default_wizard_state,
     process_wizard_message,
     wizard_intro_message,
     should_activate_wizard,
+    wizard_state_after_failed_draft,
+    wizard_state_after_successful_draft,
 )
 from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
@@ -253,7 +256,23 @@ async def on_message(message: cl.Message) -> None:
     grieve_draft = False
 
     wizard = cl.user_session.get(WIZARD_SESSION_KEY)
-    if persona == "Grieve" and wizard and wizard.get("active"):
+    if persona == "Grieve" and wizard and wizard.get("pending_draft"):
+        lower = sanitized.strip().lower()
+        if lower == "restart":
+            new_state, turn = process_wizard_message("restart", wizard)
+            cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+            if turn.assistant_message:
+                await cl.Message(content=turn.assistant_message, author="System").send()
+            return
+        if lower in {"exit wizard", "freeform", "exit"}:
+            new_state, turn = process_wizard_message(sanitized, wizard)
+            cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+            if turn.assistant_message:
+                await cl.Message(content=turn.assistant_message, author="System").send()
+            return
+        grieve_draft = True
+        sanitized = build_draft_query(wizard.get("facts") or {})
+    elif persona == "Grieve" and wizard and wizard.get("active"):
         new_state, turn = process_wizard_message(sanitized, wizard)
         cl.user_session.set(WIZARD_SESSION_KEY, new_state)
         if turn.handled:
@@ -339,10 +358,12 @@ async def on_message(message: cl.Message) -> None:
     cl.user_session.set("last_assistant_message", out)
 
     if grieve_draft:
-        cl.user_session.set(
-            WIZARD_SESSION_KEY,
-            {"active": False, "step": len(WIZARD_STEPS), "facts": {}},
-        )
+        wiz = cl.user_session.get(WIZARD_SESSION_KEY) or {}
+        facts = dict(wiz.get("facts") or {})
+        if is_error_assistant_response(accumulated):
+            cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
+        else:
+            cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_successful_draft())
 
     await clear_active_status_steps()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")

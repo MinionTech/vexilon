@@ -480,6 +480,16 @@ async def verify_response(assistant_response: str, context: str) -> str:
             return "⚠️ Verification unavailable due to high traffic."
         return f"⚠️ Verification unavailable: {exc}"
 
+def is_error_assistant_response(accumulated: str) -> bool:
+    """True when the assistant output is a user-facing error instead of a substantive answer."""
+    if not (accumulated or "").strip():
+        return True
+    return any(
+        err in accumulated
+        for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
+    )
+
+
 async def trigger_verification_task(
     accumulated: str,
     context: str,
@@ -487,9 +497,7 @@ async def trigger_verification_task(
     background_tasks: set[asyncio.Task],
 ) -> None:
     """Launch async background verification task if verification is enabled."""
-    is_error_response = any(
-        err in accumulated for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
-    )
+    is_error_response = is_error_assistant_response(accumulated)
     main_mod = _get_active_main()
     effective_verify_enabled = getattr(main_mod, "VERIFY_ENABLED", VERIFY_ENABLED)
     if effective_verify_enabled and accumulated and not is_error_response:
@@ -748,18 +756,8 @@ async def rag_review_stream(
                 audit_rules += f"Criteria:\n{test.content}\n"
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
-        wizard_block = ""
-        if persona_mode == "Grieve" and grieve_draft and has_chainlit_context():
-            from services.grievance_builder import format_facts_block
-
-            wiz = cl.user_session.get("grieve_wizard")
-            if wiz and wiz.get("facts"):
-                wizard_block = (
-                    "\n\n--- GRIEVANCE BUILDER FACTS (wizard) ---\n"
-                    f"{format_facts_block(wiz['facts'])}\n"
-                )
         system = (
-            f"{master_rules}\n\n{base_persona}\n\n{audit_rules}{wizard_block}\n\n"
+            f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n"
             f"--- KNOWLEDGE BASE CONTEXT ---\n{context}"
         )
 

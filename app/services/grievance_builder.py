@@ -7,12 +7,6 @@ from typing import Any
 
 WIZARD_SESSION_KEY = "grieve_wizard"
 
-BUILDER_KICKOFF_PHRASES = (
-    "grievance builder",
-    "start grievance builder",
-    "build a grievance",
-)
-
 BUILDER_KICKOFF_EXACT = frozenset(
     {
         "grievance builder",
@@ -103,9 +97,21 @@ def is_builder_kickoff(message: str) -> bool:
     lower = (message or "").strip().lower()
     if lower in BUILDER_KICKOFF_EXACT:
         return True
-    if lower.startswith("i need to file a grievance") and "builder" in lower:
-        return True
-    return any(lower == phrase for phrase in BUILDER_KICKOFF_PHRASES)
+    return lower.startswith("i need to file a grievance") and "builder" in lower
+
+
+def wizard_state_after_failed_draft(facts: dict[str, str]) -> dict[str, Any]:
+    """Retryable wizard session after draft generation failed."""
+    return {
+        "active": True,
+        "step": len(WIZARD_STEPS),
+        "facts": dict(facts),
+        "pending_draft": True,
+    }
+
+
+def wizard_state_after_successful_draft() -> dict[str, Any]:
+    return {"active": False, "step": len(WIZARD_STEPS), "facts": {}, "pending_draft": False}
 
 
 def should_activate_wizard(persona: str, message: str, wizard: dict[str, Any] | None) -> bool:
