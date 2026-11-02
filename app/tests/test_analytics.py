@@ -97,13 +97,15 @@ def test_missing_session_never_raises(monkeypatch, caplog):
     monkeypatch.setattr(analytics, "PLAUSIBLE_DOMAIN", "vexilon.example")
     monkeypatch.setattr(analytics.cl, "context", None, raising=False)
     with caplog.at_level(logging.WARNING, logger=analytics.logger.name):
-        analytics.track("Export", result="success")  # no running loop, no session
+        analytics.track("Export", result="success")  # missing Chainlit session context
     assert "Event skipped" in caplog.text
 
 
 async def test_track_does_not_block(plausible):
     """The HTTP call runs in a background thread; track() returns immediately."""
     import threading
+
+    await _drain()
     release = threading.Event()
     plausible.side_effect = lambda *a, **k: release.wait(5)
     analytics.track("Export", result="success")

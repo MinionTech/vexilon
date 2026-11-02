@@ -101,7 +101,8 @@ async def setup_agent(settings):
     prev = cl.user_session.get("persona")
     persona = settings["Persona"]
     cl.user_session.set("persona", persona)
-    track("Persona Selected", persona=persona)
+    if persona != prev:
+        track("Persona Selected", persona=persona)
     if persona == "Grieve" and prev != "Grieve":
         cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
         await cl.Message(content=wizard_intro_message(), author="System").send()
@@ -138,14 +139,13 @@ async def chat_profiles(user: cl.User):
 async def on_chat_start():
     await _ensure_startup()
 
-    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    chat_profile = cl.user_session.get("chat_profile")
+    profile = chat_profile or DEFAULT_PERSONA
     persona_index = PERSONAS.index(profile) if profile in PERSONAS else 0
 
     await build_persona_settings(initial_index=persona_index).send()
 
     cl.user_session.set("history", [])
-    chat_profile = cl.user_session.get("chat_profile")
-    profile = chat_profile or DEFAULT_PERSONA
     cl.user_session.set("persona", profile)
     cl.user_session.set("selected_model", get_default_model_setting())
 
@@ -169,8 +169,9 @@ async def on_window_message(data):
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
-    if persona:
+    if persona and persona != cl.user_session.get("persona"):
         cl.user_session.set("persona", persona)
+        track("Persona Selected", persona=persona)
 
 @cl.action_callback("starter_query")
 async def on_action(action: cl.Action):

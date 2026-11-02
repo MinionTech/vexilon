@@ -138,6 +138,8 @@
                     url: location.origin + location.pathname,
                     referrer: null,
                 }),
+            }).then((res) => {
+                if (!res.ok) throw new Error(`Plausible ${res.status}`);
             });
         })
         .catch(() => {});

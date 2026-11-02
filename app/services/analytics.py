@@ -51,8 +51,8 @@ def _visitor_headers() -> tuple[dict[str, str], str]:
     These are passed straight through to Plausible and are never logged or stored.
     """
     environ = cl.context.session.environ or {}
-    # The last X-Forwarded-For entry is the one the proxy in front of the app
-    # appended. Earlier entries come from the client and can be forged.
+    # With a single trusted reverse proxy, the last X-Forwarded-For entry is the
+    # address that proxy appended. Earlier entries may be client-supplied.
     forwarded = [part.strip() for part in environ.get("HTTP_X_FORWARDED_FOR", "").split(",") if part.strip()]
     ip = forwarded[-1] if forwarded else environ.get("REMOTE_ADDR", "")
     headers = {
@@ -68,9 +68,11 @@ def _visitor_headers() -> tuple[dict[str, str], str]:
 
 def _post(payload: dict, headers: dict[str, str]) -> None:
     try:
-        requests.post(
+        response = requests.post(
             f"{PLAUSIBLE_API_HOST}/api/event", json=payload, headers=headers, timeout=TIMEOUT_SECONDS
         )
+        if not response.ok:
+            logger.warning(f"[analytics] Plausible rejected event: HTTP {response.status_code}")
     except Exception as e:
         logger.warning(f"[analytics] Plausible event not sent: {type(e).__name__}")
 
