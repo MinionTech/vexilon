@@ -490,6 +490,14 @@ def is_error_assistant_response(accumulated: str) -> bool:
     )
 
 
+def is_successful_grieve_draft_response(accumulated: str) -> bool:
+    """True when a grievance draft stream produced substantive content (not only reference links)."""
+    if is_error_assistant_response(accumulated):
+        return False
+    main_part = accumulated.split("### 📄 Reference Documents", 1)[0].strip()
+    return len(main_part) >= 40
+
+
 async def trigger_verification_task(
     accumulated: str,
     context: str,

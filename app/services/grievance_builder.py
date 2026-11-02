@@ -90,7 +90,7 @@ class WizardTurnResult:
 
 
 def default_wizard_state() -> dict[str, Any]:
-    return {"active": True, "step": 0, "facts": {}}
+    return {"active": True, "step": 0, "facts": {}, "pending_draft": False}
 
 
 def is_builder_kickoff(message: str) -> bool:
@@ -180,24 +180,29 @@ def process_wizard_message(message: str, wizard: dict[str, Any] | None) -> tuple
     facts: dict[str, str] = dict(state.get("facts") or {})
     step = int(state.get("step", 0))
     msg = (message or "").strip()
+    lower = msg.lower()
+
+    if lower in {"exit wizard", "freeform", "exit"}:
+        if state.get("active") or state.get("pending_draft"):
+            state["active"] = False
+            state["pending_draft"] = False
+            return state, WizardTurnResult(
+                handled=True,
+                assistant_message=(
+                    "Exited Grievance Builder wizard. You can continue in freeform **Grieve** mode "
+                    "for forensic analysis and contract research."
+                ),
+            )
+        return state, WizardTurnResult(handled=False)
+
+    if lower == "restart":
+        if state.get("active") or state.get("pending_draft"):
+            fresh = default_wizard_state()
+            return fresh, WizardTurnResult(handled=True, assistant_message=WIZARD_INTRO + _step_prompt(0))
+        return state, WizardTurnResult(handled=False)
 
     if not state.get("active", True):
         return state, WizardTurnResult(handled=False)
-
-    lower = msg.lower()
-    if lower in {"exit wizard", "freeform", "exit"}:
-        state["active"] = False
-        return state, WizardTurnResult(
-            handled=True,
-            assistant_message=(
-                "Exited Grievance Builder wizard. You can continue in freeform **Grieve** mode "
-                "for forensic analysis and contract research."
-            ),
-        )
-
-    if lower == "restart":
-        fresh = default_wizard_state()
-        return fresh, WizardTurnResult(handled=True, assistant_message=WIZARD_INTRO + _step_prompt(0))
 
     if step >= len(WIZARD_STEPS):
         return state, WizardTurnResult(handled=False)

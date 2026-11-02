@@ -360,10 +360,10 @@ async def on_message(message: cl.Message) -> None:
     if grieve_draft:
         wiz = cl.user_session.get(WIZARD_SESSION_KEY) or {}
         facts = dict(wiz.get("facts") or {})
-        if is_error_assistant_response(accumulated):
-            cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
-        else:
+        if is_successful_grieve_draft_response(accumulated):
             cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_successful_draft())
+        else:
+            cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
 
     await clear_active_status_steps()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")
