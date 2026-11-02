@@ -18,6 +18,20 @@ from core.config import *  # noqa: F401, F403
 from core.security import *  # noqa: F401, F403
 from services.llm import *  # noqa: F401, F403
 from services.persistence import *  # noqa: F401, F403
+from services.grievance_forms import build_filled_grievance_downloads, DRAFT_FORM_NOTICE
+from services.grievance_builder import (  # noqa: F401
+    WIZARD_SESSION_KEY,
+    WIZARD_STEPS,
+    build_draft_query,
+    default_wizard_state,
+    process_wizard_message,
+    wizard_intro_message,
+    should_activate_wizard,
+    wizard_state_after_failed_draft,
+    wizard_state_after_successful_draft,
+    PENDING_DRAFT_HELP,
+    DRAFT_RETRY_COMMANDS,
+)
 from middleware.cookies import *  # noqa: F401, F403
 from indexing import (  # noqa: F401
     _get_source_name,
@@ -82,15 +96,22 @@ if os.getenv("AGNAV_PASSWORD"):
 
 @cl.on_settings_update
 async def setup_agent(settings):
-    cl.user_session.set("persona", settings["Persona"])
+    prev = cl.user_session.get("persona")
+    persona = settings["Persona"]
+    cl.user_session.set("persona", persona)
+    if persona == "Grieve" and prev != "Grieve":
+        cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+        await cl.Message(content=wizard_intro_message(), author="System").send()
 
 @cl.set_chat_profiles
 async def chat_profiles(user: cl.User):
-    all_starters = [
+    general_starters = [
         cl.Starter(label="Discipline Just Cause", message=EXAMPLES[0]),
         cl.Starter(label="Steward Rights", message=EXAMPLES[1]),
         cl.Starter(label="Nexus Off-Duty Test", message=EXAMPLES[2]),
         cl.Starter(label="Harassment Threshold", message=EXAMPLES[3]),
+    ]
+    grieve_starters = general_starters + [
         cl.Starter(label="Grievance Builder", message=EXAMPLES[4]),
     ]
     return [
@@ -99,19 +120,22 @@ async def chat_profiles(user: cl.User):
             icon="",
             default=True,
             markdown_description="Forensic lookup of labor law excerpts.",
-            starters=all_starters,
+            starters=general_starters,
         ),
         cl.ChatProfile(
             name="Grieve",
             icon="",
-            markdown_description="Strategic guidance and forensic auditing for grievance filing.",
-            starters=all_starters,
+            markdown_description=(
+                "Grievance Builder: step-by-step intake, editable partially filled BCGEU PDF forms, "
+                "and contract-backed analysis (steward review required before filing)."
+            ),
+            starters=grieve_starters,
         ),
         cl.ChatProfile(
             name="Manage",
             icon="",
             markdown_description="Strategic management consulting.",
-            starters=all_starters,
+            starters=general_starters,
         ),
     ]
 
@@ -119,20 +143,28 @@ async def chat_profiles(user: cl.User):
 async def on_chat_start():
     await _ensure_startup()
 
+    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    persona_index = PERSONAS.index(profile) if profile in PERSONAS else 0
+
     await cl.ChatSettings(
         [
             cl.input_widget.Select(
                 id="Persona",
                 label="Navigator Persona",
                 values=["Lookup", "Grieve", "Manage"],
-                initial_index=0,
+                initial_index=persona_index,
             ),
         ]
     ).send()
 
     cl.user_session.set("history", [])
-    cl.user_session.set("persona", "Lookup")
+    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
+    cl.user_session.set("persona", profile)
     cl.user_session.set("selected_model", get_default_model_setting())
+
+    if profile == "Grieve":
+        cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+        await cl.Message(content=wizard_intro_message(), author="System").send()
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
@@ -224,6 +256,54 @@ async def on_message(message: cl.Message) -> None:
 
     persona = cl.user_session.get("persona") or cl.user_session.get("chat_profile") or DEFAULT_PERSONA
     history: list[dict] = cl.user_session.get("history") or []
+    grieve_draft = False
+
+    wizard = cl.user_session.get(WIZARD_SESSION_KEY)
+    if persona == "Grieve" and wizard and wizard.get("pending_draft"):
+        lower = sanitized.strip().lower()
+        if lower == "restart":
+            new_state, turn = process_wizard_message("restart", wizard)
+            cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+            if turn.assistant_message:
+                await cl.Message(content=turn.assistant_message, author="System").send()
+            return
+        if lower in {"exit wizard", "freeform", "exit"}:
+            new_state, turn = process_wizard_message(sanitized, wizard)
+            cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+            if turn.assistant_message:
+                await cl.Message(content=turn.assistant_message, author="System").send()
+            return
+        if lower in DRAFT_RETRY_COMMANDS:
+            grieve_draft = True
+            sanitized = build_draft_query(wizard.get("facts") or {})
+    elif persona == "Grieve" and wizard and wizard.get("active"):
+        new_state, turn = process_wizard_message(sanitized, wizard)
+        cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+        if turn.handled:
+            if turn.assistant_message:
+                await cl.Message(content=turn.assistant_message, author="System").send()
+            history.append({"role": "user", "content": sanitized})
+            if turn.assistant_message:
+                history.append({"role": "assistant", "content": turn.assistant_message})
+            cl.user_session.set("history", history)
+            if not turn.generate_draft:
+                return
+            grieve_draft = True
+            sanitized = turn.draft_query
+    elif persona == "Grieve" and should_activate_wizard(persona, sanitized, wizard):
+        fresh = default_wizard_state()
+        new_state, turn = process_wizard_message(sanitized, fresh)
+        cl.user_session.set(WIZARD_SESSION_KEY, new_state)
+        if turn.assistant_message:
+            await cl.Message(content=turn.assistant_message, author="System").send()
+        history.append({"role": "user", "content": sanitized})
+        if turn.assistant_message:
+            history.append({"role": "assistant", "content": turn.assistant_message})
+        cl.user_session.set("history", history)
+        if not turn.generate_draft:
+            return
+        grieve_draft = True
+        sanitized = turn.draft_query
 
     out = cl.Message(content="")
     await out.send()
@@ -238,7 +318,14 @@ async def on_message(message: cl.Message) -> None:
         out.elements = []
 
         first_token_received = False
-        async for chunk in rag_review_stream(sanitized, history, persona, context=context, queries=queries):
+        async for chunk in rag_review_stream(
+            sanitized,
+            history,
+            persona,
+            context=context,
+            queries=queries,
+            grieve_draft=grieve_draft,
+        ):
             if not chunk:
                 continue
             if not first_token_received:
@@ -273,6 +360,40 @@ async def on_message(message: cl.Message) -> None:
     history.append({"role": "assistant", "content": accumulated})
     cl.user_session.set("history", history)
     cl.user_session.set("last_assistant_message", out)
+
+    if grieve_draft:
+        wiz = cl.user_session.get(WIZARD_SESSION_KEY) or {}
+        facts = dict(wiz.get("facts") or {})
+        if is_successful_grieve_draft_response(accumulated):
+            rag_snapshot = accumulated
+            pdf_generated = False
+            try:
+                downloads = build_filled_grievance_downloads(facts, rag_analysis=rag_snapshot)
+                out.elements = [
+                    cl.File(name=filename, content=content, mime=mime, display="inline")
+                    for filename, mime, content in downloads
+                ]
+                pdf_generated = True
+                form_section = f"\n\n{DRAFT_FORM_NOTICE}"
+                accumulated += form_section
+                await out.stream_token(form_section)
+            except Exception as exc:
+                logger.error(f"[grieve] Failed to build grievance PDFs: {exc}", exc_info=True)
+                err_note = (
+                    "\n\n⚠️ Could not generate editable PDF forms. "
+                    "Your intake facts are saved — type **retry draft** to try again."
+                )
+                accumulated += err_note
+                await out.stream_token(err_note)
+            await out.update()
+            if pdf_generated:
+                cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_successful_draft())
+            else:
+                cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
+                await cl.Message(content=PENDING_DRAFT_HELP, author="System").send()
+        else:
+            cl.user_session.set(WIZARD_SESSION_KEY, wizard_state_after_failed_draft(facts))
+            await cl.Message(content=PENDING_DRAFT_HELP, author="System").send()
 
     await clear_active_status_steps()
     logger.info(f"[chat] Stream completed. Total length: {len(accumulated)}")

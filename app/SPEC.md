@@ -34,7 +34,7 @@ To reduce the "Information Gap" for union stewards by providing a mobile-first, 
 Agreement Navigator features three operational personas that adapt the AI's "brain" to the steward's current situation:
 
 1. **Lookup (Default):** The "Forensic Navigator." Focuses on literal interpretation, clause-finding, and cross-referencing.
-2. **Grieve:** The "Forensic Auditor." Acts as a Senior Staff Rep, building air-tight grievance cases by identifying contract violations and suggesting specific evidence to gather.
+2. **Grieve (Grievance Builder):** Step-by-step intake wizard that produces **editable, partially filled BCGEU grievance PDFs** (Forms A, B when applicable, C) plus contract-backed analysis. Acts as a Senior Staff Rep assistant; downloads are drafts for human review—not ready to file without steward and staff rep sign-off. If draft generation fails, intake facts are retained; stewards can type **retry draft**, **restart**, or **exit wizard** to continue.
 3. **Manage:** The "Strategic Consultant." Focuses on compliance, risk mitigation, and management-steward meeting preparation.
 
 ---
@@ -132,11 +132,12 @@ The Agreement Navigator is successful when:
 ## 12. Future Roadmap
 
 1. **Multi-Agreement Support:** Allow stewards to select their specific Component agreement.
-2. **Grievance Builder:** A wizard-style interface for generating a "Grievance Fact Sheet" based on retrieved clauses.
-3. **Arbitration Awards:** Indexing a library of BC labour arbitration awards for jurisprudence context.
-4. **Member-Only Auth:** Integration with union member portals for secure access.
-5. **Granular Incremental Indexing:** Per-document chunk and float32 vector embedding caching (`.npy`) in `/data/cache/embeddings/` to eliminate full re-indexing passes when individual documents change.
-6. **Link-Driven Knowledge Base Hydration:** Expanding `sources.yaml` to support upstream PDF extraction and conditional HTTP syncs (`ETag` / `304 Not Modified`), transitioning from committed static files to build-time declarative hydration.
+2. **Arbitration Awards:** Indexing a library of BC labour arbitration awards for jurisprudence context.
+3. **Member-Only Auth:** Integration with union member portals for secure access.
+4. **Granular Incremental Indexing:** Per-document chunk and float32 vector embedding caching (`.npy`) in `/data/cache/embeddings/` to eliminate full re-indexing passes when individual documents change.
+5. **Link-Driven Knowledge Base Hydration:** Expanding `sources.yaml` to support upstream PDF extraction and conditional HTTP syncs (`ETag` / `304 Not Modified`), transitioning from committed static files to build-time declarative hydration.
+
+*(Grievance Builder wizard — formerly roadmap item — is delivered via **Grieve** persona mode.)*
 
 
 ---

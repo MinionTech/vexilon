@@ -55,6 +55,32 @@ from indexing import (
 
 logger = logging.getLogger(__name__)
 
+PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+_case_builder_instructions_cache: str | None = None
+
+GRIEVE_FREEFORM_PERSONA = (
+    "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
+    "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
+    "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
+)
+
+
+def _read_prompt_file(filename: str) -> str:
+    path = PROMPTS_DIR / filename
+    if not path.is_file():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
+def get_case_builder_instructions() -> str:
+    """Load Grievance Builder persona text from prompts/case_builder.txt."""
+    global _case_builder_instructions_cache
+    if _case_builder_instructions_cache is not None:
+        return _case_builder_instructions_cache
+    raw = _read_prompt_file("case_builder.txt")
+    _case_builder_instructions_cache = raw.replace("{manifest}", "").replace("{verify_message}", "").strip()
+    return _case_builder_instructions_cache
+
 # ─── Global State ───────────────────────────────────────────────────────────
 _chunks: list[dict] = []
 _index: "faiss.IndexFlatIP | None" = None
@@ -95,18 +121,21 @@ MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
 6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
 """
 
-def get_persona_prompt(persona_key: str) -> str:
+def get_persona_prompt(persona_key: str, *, grieve_draft: bool = False) -> str:
     """Return the combined mandatory rules and persona guidelines."""
     if persona_key == "Manage":
         rules = MANAGER_MANDATORY_RULES
         persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework. Provide precise, fact-based answers using the provided context."
     elif persona_key == "Grieve":
         rules = UNION_MANDATORY_RULES
-        persona = (
-            "You are a Senior BCGEU Staff Rep acting as a Forensic Auditor to build air-tight grievance cases. "
-            "Analyze the provided context and history to suggest a strategic grievance path, identify contract violations, "
-            "and recommend specific evidence to gather. Maintain a supportive, analytical, and professional tone."
-        )
+        if grieve_draft:
+            builder = get_case_builder_instructions()
+            persona = builder or (
+                "You are a Senior BCGEU Staff Rep acting as a Grievance Builder. "
+                "Guide stewards through fact intake and produce partial grievance form drafts for human review."
+            )
+        else:
+            persona = GRIEVE_FREEFORM_PERSONA
     elif persona_key == "Train":
         rules = UNION_MANDATORY_RULES
         persona = (
@@ -451,6 +480,38 @@ async def verify_response(assistant_response: str, context: str) -> str:
             return "⚠️ Verification unavailable due to high traffic."
         return f"⚠️ Verification unavailable: {exc}"
 
+def is_error_assistant_response(accumulated: str) -> bool:
+    """True when the assistant output is a user-facing error instead of a substantive answer."""
+    if not (accumulated or "").strip():
+        return True
+    return any(
+        err in accumulated
+        for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
+    )
+
+
+def is_successful_grieve_draft_response(accumulated: str) -> bool:
+    """True when RAG produced substantive grievance analysis (not only reference links)."""
+    if is_error_assistant_response(accumulated):
+        return False
+    main_part = accumulated.split("### 📄 Reference Documents", 1)[0].strip()
+    from services.grievance_forms import extract_draft_statement
+
+    statement = extract_draft_statement(main_part)
+    if len(statement) < 25:
+        return False
+    lower = main_part.lower()
+    return any(
+        token in lower
+        for token in (
+            "rebuttal",
+            "redress sought",
+            "doctrinal logic audit",
+            "contract & statutory",
+        )
+    )
+
+
 async def trigger_verification_task(
     accumulated: str,
     context: str,
@@ -458,9 +519,7 @@ async def trigger_verification_task(
     background_tasks: set[asyncio.Task],
 ) -> None:
     """Launch async background verification task if verification is enabled."""
-    is_error_response = any(
-        err in accumulated for err in (HIGH_TRAFFIC_MESSAGE, GENERIC_ERROR_MESSAGE, "⚠️ API error:")
-    )
+    is_error_response = is_error_assistant_response(accumulated)
     main_mod = _get_active_main()
     effective_verify_enabled = getattr(main_mod, "VERIFY_ENABLED", VERIFY_ENABLED)
     if effective_verify_enabled and accumulated and not is_error_response:
@@ -697,7 +756,8 @@ async def rag_review_stream(
     history: list[dict],
     persona_mode: str = "Lookup",
     context: str | None = None,
-    queries: list[str] | None = None
+    queries: list[str] | None = None,
+    grieve_draft: bool = False,
 ) -> AsyncIterator[str]:
     try:
         main_mod = _get_active_main()
@@ -707,7 +767,7 @@ async def rag_review_stream(
             context = context or c_new
             queries = queries or q_new
 
-        base_persona = get_persona_prompt(persona_mode)
+        base_persona = get_persona_prompt(persona_mode, grieve_draft=grieve_draft)
         audit_rules = ""
         if persona_mode in ("Grieve", "Manage"):
             registry = _get_active_test_registry()
@@ -718,7 +778,10 @@ async def rag_review_stream(
                 audit_rules += f"Criteria:\n{test.content}\n"
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
-        system = f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        system = (
+            f"{master_rules}\n\n{base_persona}\n\n{audit_rules}\n\n"
+            f"--- KNOWLEDGE BASE CONTEXT ---\n{context}"
+        )
 
         capped = []
         for h in history[-2:]:

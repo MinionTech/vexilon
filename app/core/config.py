@@ -115,7 +115,7 @@ EXAMPLES = [
     "What are my rights as a steward during an investigation meeting?",
     "What is the nexus test for establishing a link in off-duty conduct cases?",
     "Show me the Harassment Threshold test.",
-    "I need to file a grievance for a member. What steps should I take?",
+    "I need to file a grievance for a member—start the Grievance Builder wizard and outline the steps.",
 ]
 
 TESTS_DIR = DATA_DIR / "test_fixtures"
