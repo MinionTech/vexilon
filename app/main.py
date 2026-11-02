@@ -169,9 +169,8 @@ async def on_window_message(data):
 
 async def on_persona_action(action: cl.Action):
     persona = action.payload.get("value")
-    if persona and persona != cl.user_session.get("persona"):
+    if persona:
         cl.user_session.set("persona", persona)
-        track("Persona Selected", persona=persona)
 
 @cl.action_callback("starter_query")
 async def on_action(action: cl.Action):

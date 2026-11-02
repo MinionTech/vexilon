@@ -142,7 +142,7 @@
                 if (!res.ok) throw new Error(`Plausible ${res.status}`);
             });
         })
-        .catch(() => {});
+        .catch((err) => console.debug("Plausible pageview skipped:", err));
 
     // ── Brand Configuration ────────────────────────────────────────────────────
 
