@@ -126,7 +126,7 @@ async def test_on_message_informational_starter_skips_rag(monkeypatch, mock_llm_
 
     assert rag_called["value"] is False
     assert len(sent_messages) == 1
-    assert "Grieve" in sent_messages[0].content
+    assert "Grieve" in sent_messages[0].content or "Grievance Builder" in sent_messages[0].content
     assert store["persona"] == "Grieve"
     assert len(store["history"]) == 2
 

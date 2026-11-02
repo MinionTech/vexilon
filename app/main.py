@@ -243,11 +243,15 @@ async def on_message(message: cl.Message) -> None:
                     or "⚠️ Rate limit exceeded. Please wait before sending another message."
                 ).send()
                 return
-            reply = cl.Message(content=starter_spec.assistant_reply)
+            reply_content = starter_spec.assistant_reply
+            if starter_spec.label == "Grievance Builder":
+                cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
+                reply_content = wizard_intro_message()
+            reply = cl.Message(content=reply_content)
             await reply.send()
             history: list[dict] = cl.user_session.get("history") or []
             history.append({"role": "user", "content": msg_str})
-            history.append({"role": "assistant", "content": starter_spec.assistant_reply})
+            history.append({"role": "assistant", "content": reply_content})
             cl.user_session.set("history", history)
             cl.user_session.set("last_assistant_message", reply)
             return
