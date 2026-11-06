@@ -108,11 +108,14 @@ async def apply_starter_persona(message: str) -> StarterSpec | None:
 
     current = cl.user_session.get("persona") or "Lookup"
     if spec.target_persona != current:
+        from services.analytics import track
+
         try:
             await _sync_persona_selector(spec.target_persona)
         except Exception as exc:
             logger.warning("[starters] persona sync failed for '%s': %s", spec.label, exc)
             cl.user_session.set("persona", spec.target_persona)
+        track("Persona Selected", persona=spec.target_persona)
     return spec
 
 
