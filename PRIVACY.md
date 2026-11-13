@@ -2,6 +2,10 @@
 
 This app is built with a "Privacy-by-Design" architecture, specifically aligned with the British Columbia [**Personal Information Protection Act (PIPA)**](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03063_01). As a tool designed for union stewards, we recognize the high sensitivity of labour relations data and the legal requirements for protecting personal information.
 
+## Analytics
+
+We count how the app is used with [Plausible Analytics](https://plausible.io/data-policy). We count unique visitors, imports and exports of saved conversations (and whether each succeeded or failed), and which persona or mode is selected. It is anonymous: no cookies are set, and no raw IP addresses are stored. To count unique visitors, the app passes your IP address and browser User-Agent to Plausible with each event, and Plausible uses them only to compute a daily rotating, salted hash before discarding them. Page addresses are sent without any query string, no referring address is sent, and no content, file names, questions, answers, or anything you type is ever sent. Plausible hosts this data in the EU, and the app itself stores none of it.
+
 ## The 10 PIPA Principles in this Application
 
 ### 1. Accountability
@@ -11,7 +15,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 
 ### 2. Identifying Purposes
 *   **Purpose**: This application processes user queries for the sole purpose of providing context-aware answers in real-time. 
-*   **Tracking**: We only track non-sensitive metadata (query counts and token consumption) for system health and API billing.
+*   **Tracking**: When `PLAUSIBLE_DOMAIN` is configured, anonymous usage counts are sent to Plausible as described in **Analytics** above (pageviews, import/export outcomes, persona selection). Separately, the app records non-sensitive metadata (query counts and token consumption) for system health and API billing. Neither path sends conversation content.
 *   **Pseudonymous Client ID**: The browser generates a random UUID (via `crypto.randomUUID()`) and stores it in that browser's local storage. On each session the browser sends this ID to the backend, where it is held in server-side session state (in-memory only, tied to that session — no database) to distinguish discrete sessions for rate-limiting integrity, and it may appear in the operational log lines described in Principle 5. It is generated entirely client-side from randomness — never derived from IP address, device fingerprint, or any other real-world identifying information — and is not linked to a user's real-world identity. This satisfies PIPA's allowance for identifying *discrete* users without identifying *who* they are.
 *   **No Secondary Use**: Data is never used for marketing, profiling, or tracking individual users.
 
@@ -20,8 +24,8 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 *   **Notification**: The UI footer explicitly states that chats are ephemeral and not saved.
 
 ### 4. Limiting Collection
-*   **Minimal Metrics**: Our collection is strictly limited to non-sensitive performance metrics: **query count** and **token consumption**.
-*   **Content-Blind**: The application does not collect user IP addresses (except for active session rate-limiting in memory), device fingerprints, or location data. The pseudonymous client ID described in Principle 2 does not change this — its *value* is randomly generated, not derived from any IP address, device fingerprint, or other data collected from the user's device (though the ID token itself is sent to and briefly held by the server, as described in Principle 2).
+*   **Minimal Metrics**: In-app collection is limited to non-sensitive performance metrics (**query count** and **token consumption**) plus the optional Plausible events in **Analytics** (enumerated event names and properties only; no content).
+*   **Content-Blind**: The application does not persist user IP addresses or store them in a database. IP addresses may be held in memory only for active session rate-limiting, and when analytics is enabled they are forwarded to Plausible solely to compute a daily rotating hash (see **Analytics**). We do not collect device fingerprints or location data. The pseudonymous client ID described in Principle 2 does not change this — its *value* is randomly generated, not derived from any IP address, device fingerprint, or other data collected from the user's device (though the ID token itself is sent to and briefly held by the server, as described in Principle 2).
 *   **No PII**: We do not require registration or any Personally Identifiable Information (PII) to function.
 
 ### 5. Limiting Use, Disclosure, and Retention
