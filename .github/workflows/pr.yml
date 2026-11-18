@@ -34,7 +34,7 @@ jobs:
         with:
           lfs: true
       - id: diff
-        uses: bcgov/actions/diff-triggers@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/diff-triggers@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           filters: |
             workflows:
@@ -74,7 +74,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Validate PR & Lint Workflows
-        uses: bcgov/actions/pr-validate@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/pr-validate@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
 
   prepare-tests:
     name: Prepare Test Cache
@@ -357,7 +357,7 @@ jobs:
     steps:
       - name: Build and Push
         id: builder
-        uses: bcgov/actions/builder@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/builder@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           package: agnav
           context: app
@@ -384,6 +384,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+      - uses: bcgov/actions/workflow-results@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           needs: ${{ toJson(needs) }}
