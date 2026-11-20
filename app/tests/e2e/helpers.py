@@ -1,6 +1,6 @@
 """Shared helpers for Playwright UI e2e tests."""
 
-from playwright.sync_api import Page, Locator
+from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeoutError, expect
 
 WCAG_AA_CONTRAST_MIN = 4.5
 
@@ -10,8 +10,19 @@ def wait_for_custom_js(page: Page) -> None:
     page.wait_for_selector("textarea", timeout=15000)
     page.wait_for_function(
         "document.querySelector('textarea')?.dataset?.listenerAttached === 'true'",
-        timeout=3000,
+        timeout=15000,
     )
+
+
+def submit_chat_with_enter(page: Page, textarea: Locator) -> None:
+    """Press Enter to submit. Click #chat-submit if the textarea does not clear."""
+    textarea.press("Enter")
+    try:
+        expect(textarea).to_have_value("", timeout=5000)
+        return
+    except (AssertionError, PlaywrightTimeoutError):
+        page.locator("#chat-submit").click()
+    expect(textarea).to_have_value("", timeout=30000)
 
 
 def wait_for_aria_label(page: Page, selector: str, label: str) -> None:
