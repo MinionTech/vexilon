@@ -1,10 +1,10 @@
 # Labour Relations Code
 
 **Source:** [Labour Relations Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:30 GMT  
-**Ingestion Date:** 2026-09-27  
+**Upstream Last Modified:** Fri, 20 Nov 2026 16:44:57 GMT  
+**Ingestion Date:** 2026-11-20  
 
-This Act is current to September 22, 2026
+This Act is current to November 17, 2026
 
 See the [Tables of Legislative Changes](/civix/content/complete/statreg/76470131/96244/tlc96244_f/?xsl=/templates/browse.xsl) for this Act’s legislative history, including any changes not in force.
 
@@ -16,403 +16,403 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/76470131
 
 [Part 1 — Introductory Provisions](#part1)
 
-[1](#section1) [Definitions](#section1)
+[1](#definitions) [Definitions](#definitions)
 
-[2](#section2) [Duties under this Code](#section2)
+[2](#duties-under-this-code) [Duties under this Code](#duties-under-this-code)
 
-[3](#section3) [Continuing review of the Code](#section3)
+[3](#continuing-review-of-the-code) [Continuing review of the Code](#continuing-review-of-the-code)
 
 [Part 2 — Rights, Duties and Unfair Labour Practices](#part2)
 
-[4](#section4) [Rights of employers and employees](#section4)
+[4](#rights-of-employers-and-employees) [Rights of employers and employees](#rights-of-employers-and-employees)
 
-[5](#section5) [Prohibition against dismissals, etc., for exercising employee rights](#section5)
+[5](#prohibition-against-dismissals-etc-for-exercising-employee-rights) [Prohibition against dismissals, etc., for exercising employee rights](#prohibition-against-dismissals-etc-for-exercising-employee-rights)
 
-[6](#section6) [Unfair labour practices](#section6)
+[6](#unfair-labour-practices) [Unfair labour practices](#unfair-labour-practices)
 
-[7](#section7) [Limitation on activities of trade unions](#section7)
+[7](#limitation-on-activities-of-trade-unions) [Limitation on activities of trade unions](#limitation-on-activities-of-trade-unions)
 
-[8](#section8) [Right to communicate](#section8)
+[8](#right-to-communicate) [Right to communicate](#right-to-communicate)
 
-[9](#section9) [Coercion and intimidation prohibited](#section9)
+[9](#coercion-and-intimidation-prohibited) [Coercion and intimidation prohibited](#coercion-and-intimidation-prohibited)
 
-[10](#section10) [Internal union affairs](#section10)
+[10](#internal-union-affairs) [Internal union affairs](#internal-union-affairs)
 
-[11](#section11) [Requirement to bargain in good faith](#section11)
+[11](#requirement-to-bargain-in-good-faith) [Requirement to bargain in good faith](#requirement-to-bargain-in-good-faith)
 
-[12](#section12) [Duty of fair representation](#section12)
+[12](#duty-of-fair-representation) [Duty of fair representation](#duty-of-fair-representation)
 
-[13](#section13) [Procedure for fair representation complaint](#section13)
+[13](#procedure-for-fair-representation-complaint) [Procedure for fair representation complaint](#procedure-for-fair-representation-complaint)
 
-[14](#section14) [Inquiry into unfair labour practice](#section14)
+[14](#inquiry-into-unfair-labour-practice) [Inquiry into unfair labour practice](#inquiry-into-unfair-labour-practice)
 
-[15](#section15) [Collective agreement may provide for union membership](#section15)
+[15](#collective-agreement-may-provide-for-union-membership) [Collective agreement may provide for union membership](#collective-agreement-may-provide-for-union-membership)
 
-[16](#section16) [Assignment of fees and dues](#section16)
+[16](#assignment-of-fees-and-dues) [Assignment of fees and dues](#assignment-of-fees-and-dues)
 
-[17](#section17) [Religious objections](#section17)
+[17](#religious-objections) [Religious objections](#religious-objections)
 
 [Part 3 — Acquisition and Termination of Bargaining Rights](#part3)
 
 [Division 1 — Acquisition of Bargaining Rights](#division_d2e1463)
 
-[18](#section18) [Acquisition of bargaining rights](#section18)
+[18](#acquisition-of-bargaining-rights) [Acquisition of bargaining rights](#acquisition-of-bargaining-rights)
 
-[19](#section19) [Change in union representation](#section19)
+[19](#change-in-union-representation) [Change in union representation](#change-in-union-representation)
 
-[20](#section20) [Joint application](#section20)
+[20](#joint-application) [Joint application](#joint-application)
 
-[21](#section21) [Craft unions](#section21)
+[21](#craft-unions) [Craft unions](#craft-unions)
 
-[22](#section22) [Process relating to application](#section22)
+[22](#process-relating-to-application) [Process relating to application](#process-relating-to-application)
 
-[22.1](#section22.1) [Determination of appropriate unit](#section22.1)
+[22.1](#determination-of-appropriate-unit) [Determination of appropriate unit](#determination-of-appropriate-unit)
 
-[23](#section23) [Certification](#section23)
+[23](#certification) [Certification](#certification)
 
-[24](#section24) [Representation vote ordered by board](#section24)
+[24](#representation-vote-ordered-by-board) [Representation vote ordered by board](#representation-vote-ordered-by-board)
 
-[25](#section25) [Outcome of representation vote](#section25)
+[25](#outcome-of-representation-vote) [Outcome of representation vote](#outcome-of-representation-vote)
 
-[26](#section26) [Request for representation vote](#section26)
+[26](#request-for-representation-vote) [Request for representation vote](#request-for-representation-vote)
 
-[27](#section27) [Effect of certification](#section27)
+[27](#effect-of-certification) [Effect of certification](#effect-of-certification)
 
-[27.1](#section27.1) [Order for expiry of collective agreement](#section27.1)
+[27.1](#order-for-expiry-of-collective-agreement) [Order for expiry of collective agreement](#order-for-expiry-of-collective-agreement)
 
-[28](#section28) [Dependent contractors](#section28)
+[28](#dependent-contractors) [Dependent contractors](#dependent-contractors)
 
-[29](#section29) [Unit partly supervisory](#section29)
+[29](#unit-partly-supervisory) [Unit partly supervisory](#unit-partly-supervisory)
 
-[30](#section30) [Repeated applications for certification](#section30)
+[30](#repeated-applications-for-certification) [Repeated applications for certification](#repeated-applications-for-certification)
 
-[31](#section31) [Prohibited employee associations](#section31)
+[31](#prohibited-employee-associations) [Prohibited employee associations](#prohibited-employee-associations)
 
-[32](#section32) [No change during certification](#section32)
+[32](#no-change-during-certification) [No change during certification](#no-change-during-certification)
 
 [Division 2 — Revocation of Bargaining Rights](#division_d2e2085)
 
-[33](#section33) [Revocation of bargaining rights](#section33)
+[33](#revocation-of-bargaining-rights) [Revocation of bargaining rights](#revocation-of-bargaining-rights)
 
-[34](#section34) [Revocation of voluntarily recognized bargaining rights](#section34)
+[34](#revocation-of-voluntarily-recognized-bargaining-rights) [Revocation of voluntarily recognized bargaining rights](#revocation-of-voluntarily-recognized-bargaining-rights)
 
 [Division 3 — Successor Rights and Obligations](#division_d2e2301)
 
-[35](#section35) [Successor rights and obligations](#section35)
+[35](#successor-rights-and-obligations) [Successor rights and obligations](#successor-rights-and-obligations)
 
-[36](#section36) [Federal-Provincial successorship](#section36)
+[36](#federal-provincial-successorship) [Federal-Provincial successorship](#federal-provincial-successorship)
 
-[37](#section37) [Merger or amalgamation](#section37)
+[37](#merger-or-amalgamation) [Merger or amalgamation](#merger-or-amalgamation)
 
-[38](#section38) [Several businesses treated as one employer](#section38)
+[38](#several-businesses-treated-as-one-employer) [Several businesses treated as one employer](#several-businesses-treated-as-one-employer)
 
 [Division 4 — Voting](#division_d2e2494)
 
-[39](#section39) [Voting requirements](#section39)
+[39](#voting-requirements) [Voting requirements](#voting-requirements)
 
-[40](#section40) [Additional voting requirements](#section40)
+[40](#additional-voting-requirements) [Additional voting requirements](#additional-voting-requirements)
 
 [Division 5 — Councils of Trade Unions](#division_d2e2628)
 
-[41](#section41) [Certification of councils of trade unions](#section41)
+[41](#certification-of-councils-of-trade-unions) [Certification of councils of trade unions](#certification-of-councils-of-trade-unions)
 
-[41.1](#section41.1) [Bargaining council](#section41.1)
+[41.1](#bargaining-council) [Bargaining council](#bargaining-council)
 
-[42](#section42) [Dissolution of councils of trade unions](#section42)
+[42](#dissolution-of-councils-of-trade-unions) [Dissolution of councils of trade unions](#dissolution-of-councils-of-trade-unions)
 
 [Division 6 — Employers' Organizations](#division_d2e2896)
 
-[43](#section43) [Accreditation of employers' organization](#section43)
+[43](#accreditation-of-employers-organization) [Accreditation of employers' organization](#accreditation-of-employers-organization)
 
-[44](#section44) [Employers' organization membership and fees](#section44)
+[44](#employers-organization-membership-and-fees) [Employers' organization membership and fees](#employers-organization-membership-and-fees)
 
 [Part 4 — Collective Bargaining Procedures](#part4)
 
 [Division 1 — General](#division_d2e3101)
 
-[45](#section45) [Notice to bargain collectively](#section45)
+[45](#notice-to-bargain-collectively) [Notice to bargain collectively](#notice-to-bargain-collectively)
 
-[46](#section46) [Notice before expiry of agreement](#section46)
+[46](#notice-before-expiry-of-agreement) [Notice before expiry of agreement](#notice-before-expiry-of-agreement)
 
-[47](#section47) [Collective bargaining](#section47)
+[47](#collective-bargaining) [Collective bargaining](#collective-bargaining)
 
-[48](#section48) [Parties bound by collective agreement](#section48)
+[48](#parties-bound-by-collective-agreement) [Parties bound by collective agreement](#parties-bound-by-collective-agreement)
 
-[49](#section49) [Terms of collective agreement to be carried out](#section49)
+[49](#terms-of-collective-agreement-to-be-carried-out) [Terms of collective agreement to be carried out](#terms-of-collective-agreement-to-be-carried-out)
 
-[50](#section50) [Agreement for less than one year](#section50)
+[50](#agreement-for-less-than-one-year) [Agreement for less than one year](#agreement-for-less-than-one-year)
 
-[51](#section51) [Copies of collective agreements to be filed](#section51)
+[51](#copies-of-collective-agreements-to-be-filed) [Copies of collective agreements to be filed](#copies-of-collective-agreements-to-be-filed)
 
-[52](#section52) [Extraprovincial companies](#section52)
+[52](#extraprovincial-companies) [Extraprovincial companies](#extraprovincial-companies)
 
 [Division 2 — Joint Consultation and Adjustment Plans](#division_d2e3547)
 
-[53](#section53) [Joint consultation](#section53)
+[53](#joint-consultation) [Joint consultation](#joint-consultation)
 
-[54](#section54) [Adjustment plan](#section54)
+[54](#adjustment-plan) [Adjustment plan](#adjustment-plan)
 
 [Division 3 — First Collective Agreement](#division_d2e3731)
 
-[55](#section55) [First collective agreement](#section55)
+[55](#first-collective-agreement) [First collective agreement](#first-collective-agreement)
 
 [Part 4.1](#part4.1)
 
-[55.1-55.26](#section55.1t55.26) [Repealed](#section55.1t55.26)
+[55.1-55.26](#repealed) [Repealed](#repealed)
 
 [Part 5 — Strikes, Lockouts and Picketing](#part5)
 
-[56](#section56) [Definition](#section56)
+[56](#definition) [Definition](#definition)
 
-[57](#section57) [Strikes and lockouts prohibited during term of collective agreement](#section57)
+[57](#strikes-and-lockouts-prohibited-during-term-of-collective-agreement) [Strikes and lockouts prohibited during term of collective agreement](#strikes-and-lockouts-prohibited-during-term-of-collective-agreement)
 
-[58](#section58) [Honouring of agreement](#section58)
+[58](#honouring-of-agreement) [Honouring of agreement](#honouring-of-agreement)
 
-[59](#section59) [Strikes and lockouts prohibited before bargaining and vote](#section59)
+[59](#strikes-and-lockouts-prohibited-before-bargaining-and-vote) [Strikes and lockouts prohibited before bargaining and vote](#strikes-and-lockouts-prohibited-before-bargaining-and-vote)
 
-[60](#section60) [Pre-strike vote and notice](#section60)
+[60](#pre-strike-vote-and-notice) [Pre-strike vote and notice](#pre-strike-vote-and-notice)
 
-[61](#section61) [Pre-lockout vote and notice](#section61)
+[61](#pre-lockout-vote-and-notice) [Pre-lockout vote and notice](#pre-lockout-vote-and-notice)
 
-[62](#section62) [Continuation of benefits](#section62)
+[62](#continuation-of-benefits) [Continuation of benefits](#continuation-of-benefits)
 
-[63](#section63) [Rights preserved](#section63)
+[63](#rights-preserved) [Rights preserved](#rights-preserved)
 
-[64](#section64) [Information](#section64)
+[64](#information) [Information](#information)
 
-[65](#section65) [Picketing](#section65)
+[65](#picketing) [Picketing](#picketing)
 
-[66](#section66) [Actions](#section66)
+[66](#actions) [Actions](#actions)
 
-[67](#section67) [Picketing restricted](#section67)
+[67](#picketing-restricted) [Picketing restricted](#picketing-restricted)
 
-[68](#section68) [Replacement workers](#section68)
+[68](#replacement-workers) [Replacement workers](#replacement-workers)
 
-[69](#section69) [Other acts not actionable](#section69)
+[69](#other-acts-not-actionable) [Other acts not actionable](#other-acts-not-actionable)
 
-[70](#section70) [Declaratory opinion](#section70)
+[70](#declaratory-opinion) [Declaratory opinion](#declaratory-opinion)
 
-[71](#section71) [Refusal of order](#section71)
+[71](#refusal-of-order) [Refusal of order](#refusal-of-order)
 
 [Part 6 — Essential Services](#part6)
 
-[72](#section72) [Essential services](#section72)
+[72](#essential-services) [Essential services](#essential-services)
 
-[73](#section73) [Return to work](#section73)
+[73](#return-to-work) [Return to work](#return-to-work)
 
 [Part 7 — Mediation and Disputes Resolution](#part7)
 
 [Division 1 — Mediation and Fact Finding](#division_d2e5280)
 
-[74](#section74) [Mediation officer and services](#section74)
+[74](#mediation-officer-and-services) [Mediation officer and services](#mediation-officer-and-services)
 
-[75](#section75) [Notice of strike or lockout](#section75)
+[75](#notice-of-strike-or-lockout) [Notice of strike or lockout](#notice-of-strike-or-lockout)
 
-[76](#section76) [Special mediator](#section76)
+[76](#special-mediator) [Special mediator](#special-mediator)
 
-[77](#section77) [Fact finding](#section77)
+[77](#fact-finding) [Fact finding](#fact-finding)
 
-[78](#section78) [Last offer votes](#section78)
+[78](#last-offer-votes) [Last offer votes](#last-offer-votes)
 
 [Division 2 — Commissions and Councils](#division_d2e5594)
 
-[79](#section79) [Industrial inquiry commission](#section79)
+[79](#industrial-inquiry-commission) [Industrial inquiry commission](#industrial-inquiry-commission)
 
-[80](#section80) [Industry councils](#section80)
+[80](#industry-councils) [Industry councils](#industry-councils)
 
 [Part 8 — Arbitration Procedures](#part8)
 
 [Division 1 — Definitions and Purpose](#division_d2e5710)
 
-[81](#section81) [Definitions](#section81)
+[81](#definitions-1) [Definitions](#definitions-1)
 
-[82](#section82) [Purpose of Part](#section82)
+[82](#purpose-of-part) [Purpose of Part](#purpose-of-part)
 
 [Division 2 — Collective Agreement Arbitration Bureau](#division_d2e5828)
 
-[83](#section83) [Collective Agreement Arbitration Bureau](#section83)
+[83](#collective-agreement-arbitration-bureau) [Collective Agreement Arbitration Bureau](#collective-agreement-arbitration-bureau)
 
 [Division 3 — Collective Agreement Provisions](#division_d2e5951)
 
-[84](#section84) [Dismissal or arbitration provision](#section84)
+[84](#dismissal-or-arbitration-provision) [Dismissal or arbitration provision](#dismissal-or-arbitration-provision)
 
-[85](#section85) [Unworkable provision](#section85)
+[85](#unworkable-provision) [Unworkable provision](#unworkable-provision)
 
-[86](#section86) [Failure to appoint arbitration board](#section86)
+[86](#failure-to-appoint-arbitration-board) [Failure to appoint arbitration board](#failure-to-appoint-arbitration-board)
 
-[87](#section87) [Settlement officer](#section87)
+[87](#settlement-officer) [Settlement officer](#settlement-officer)
 
-[88](#section88) [Action by Labour Relations Board](#section88)
+[88](#action-by-labour-relations-board) [Action by Labour Relations Board](#action-by-labour-relations-board)
 
-[88.1](#section88.1) [Case management conference](#section88.1)
+[88.1](#case-management-conference) [Case management conference](#case-management-conference)
 
-[89](#section89) [Authority of arbitration board](#section89)
+[89](#authority-of-arbitration-board) [Authority of arbitration board](#authority-of-arbitration-board)
 
-[90](#section90) [Fees and costs](#section90)
+[90](#fees-and-costs) [Fees and costs](#fees-and-costs)
 
-[91](#section91) [Delay by arbitration board](#section91)
+[91](#delay-by-arbitration-board) [Delay by arbitration board](#delay-by-arbitration-board)
 
-[92](#section92) [Powers of arbitration board](#section92)
+[92](#powers-of-arbitration-board) [Powers of arbitration board](#powers-of-arbitration-board)
 
-[93](#section93) [Summons to testify](#section93)
+[93](#summons-to-testify) [Summons to testify](#summons-to-testify)
 
-[94](#section94) [Decision of arbitration board](#section94)
+[94](#decision-of-arbitration-board) [Decision of arbitration board](#decision-of-arbitration-board)
 
-[95](#section95) [Effect of decision](#section95)
+[95](#effect-of-decision) [Effect of decision](#effect-of-decision)
 
-[96](#section96) [Filing decision](#section96)
+[96](#filing-decision) [Filing decision](#filing-decision)
 
-[97](#section97) [Act not to apply](#section97)
+[97](#act-not-to-apply) [Act not to apply](#act-not-to-apply)
 
-[98](#section98) [Reference to Labour Relations Board](#section98)
+[98](#reference-to-labour-relations-board) [Reference to Labour Relations Board](#reference-to-labour-relations-board)
 
-[99](#section99) [Appeal jurisdiction of Labour Relations Board](#section99)
+[99](#appeal-jurisdiction-of-labour-relations-board) [Appeal jurisdiction of Labour Relations Board](#appeal-jurisdiction-of-labour-relations-board)
 
-[100](#section100) [Appeal jurisdiction of Court of Appeal](#section100)
+[100](#appeal-jurisdiction-of-court-of-appeal) [Appeal jurisdiction of Court of Appeal](#appeal-jurisdiction-of-court-of-appeal)
 
-[101](#section101) [Decision final](#section101)
+[101](#decision-final) [Decision final](#decision-final)
 
-[102](#section102) [Enforcement](#section102)
+[102](#enforcement) [Enforcement](#enforcement)
 
-[103](#section103) [Repealed](#section103)
+[103](#repealed-1) [Repealed](#repealed-1)
 
 [Division 4 — Expedited Arbitration](#division_d2e6673)
 
-[104](#section104) [Expedited arbitration](#section104)
+[104](#expedited-arbitration) [Expedited arbitration](#expedited-arbitration)
 
-[105](#section105) [Consensual mediation-arbitration](#section105)
+[105](#consensual-mediation-arbitration) [Consensual mediation-arbitration](#consensual-mediation-arbitration)
 
 [Division 5 — Special Officer](#division_d2e6979)
 
-[106](#section106) [Special officer](#section106)
+[106](#special-officer) [Special officer](#special-officer)
 
-[107](#section107) [Effect of order](#section107)
+[107](#effect-of-order) [Effect of order](#effect-of-order)
 
-[108](#section108) [Interim order](#section108)
+[108](#interim-order) [Interim order](#interim-order)
 
-[109](#section109) [Powers](#section109)
+[109](#powers) [Powers](#powers)
 
-[110](#section110) [Evidence](#section110)
+[110](#evidence) [Evidence](#evidence)
 
-[111](#section111) [Frequency of appointment](#section111)
+[111](#frequency-of-appointment) [Frequency of appointment](#frequency-of-appointment)
 
-[112](#section112) [Form of order](#section112)
+[112](#form-of-order) [Form of order](#form-of-order)
 
-[113](#section113) [Notice of appointment to be sent to board](#section113)
+[113](#notice-of-appointment-to-be-sent-to-board) [Notice of appointment to be sent to board](#notice-of-appointment-to-be-sent-to-board)
 
-[114](#section114) [Other provisions to apply](#section114)
+[114](#other-provisions-to-apply) [Other provisions to apply](#other-provisions-to-apply)
 
 [Part 9 — Labour Relations Board](#part9)
 
-[115](#section115) [Labour Relations Board](#section115)
+[115](#labour-relations-board) [Labour Relations Board](#labour-relations-board)
 
-[115.1](#section115.1) [Application of Administrative Tribunals Act](#section115.1)
+[115.1](#application-of-administrative-tribunals-act) [Application of Administrative Tribunals Act](#application-of-administrative-tribunals-act)
 
-[116](#section116) [Divisions and officers of the Labour Relations Board](#section116)
+[116](#divisions-and-officers-of-the-labour-relations-board) [Divisions and officers of the Labour Relations Board](#divisions-and-officers-of-the-labour-relations-board)
 
-[117](#section117) [Panels](#section117)
+[117](#panels) [Panels](#panels)
 
-[118](#section118) [Quorum](#section118)
+[118](#quorum) [Quorum](#quorum)
 
-[119](#section119) [Proceedings](#section119)
+[119](#proceedings) [Proceedings](#proceedings)
 
-[120](#section120) [Question of law](#section120)
+[120](#question-of-law) [Question of law](#question-of-law)
 
-[121](#section121) [Delegation](#section121)
+[121](#delegation) [Delegation](#delegation)
 
-[122](#section122) [Employees of the board](#section122)
+[122](#employees-of-the-board) [Employees of the board](#employees-of-the-board)
 
-[123](#section123) [Repealed](#section123)
+[123](#repealed-2) [Repealed](#repealed-2)
 
-[123.1](#section123.1) [Display or provision of information](#section123.1)
+[123.1](#display-or-provision-of-information) [Display or provision of information](#display-or-provision-of-information)
 
-[124](#section124) [Evidence](#section124)
+[124](#evidence-1) [Evidence](#evidence-1)
 
-[125](#section125) [Summons and discovery of documents](#section125)
+[125](#summons-and-discovery-of-documents) [Summons and discovery of documents](#summons-and-discovery-of-documents)
 
-[126](#section126) [Practice and procedure](#section126)
+[126](#practice-and-procedure) [Practice and procedure](#practice-and-procedure)
 
-[127](#section127) [Offices of the board](#section127)
+[127](#offices-of-the-board) [Offices of the board](#offices-of-the-board)
 
-[128](#section128) [Timing and publication of decisions](#section128)
+[128](#timing-and-publication-of-decisions) [Timing and publication of decisions](#timing-and-publication-of-decisions)
 
-[129](#section129) [Oath of office](#section129)
+[129](#oath-of-office) [Oath of office](#oath-of-office)
 
-[130-131](#section130t131) [Repealed](#section130t131)
+[130-131](#repealed-3) [Repealed](#repealed-3)
 
-[132](#section132) [General guidelines](#section132)
+[132](#general-guidelines) [General guidelines](#general-guidelines)
 
-[133](#section133) [Hearing of complaint](#section133)
+[133](#hearing-of-complaint) [Hearing of complaint](#hearing-of-complaint)
 
-[134](#section134) [Conditions and undertakings](#section134)
+[134](#conditions-and-undertakings) [Conditions and undertakings](#conditions-and-undertakings)
 
-[135](#section135) [Filing order in Supreme Court](#section135)
+[135](#filing-order-in-supreme-court) [Filing order in Supreme Court](#filing-order-in-supreme-court)
 
-[136](#section136) [Jurisdiction of board](#section136)
+[136](#jurisdiction-of-board) [Jurisdiction of board](#jurisdiction-of-board)
 
-[137](#section137) [Jurisdiction of court](#section137)
+[137](#jurisdiction-of-court) [Jurisdiction of court](#jurisdiction-of-court)
 
-[138](#section138) [Finality of decisions and orders](#section138)
+[138](#finality-of-decisions-and-orders) [Finality of decisions and orders](#finality-of-decisions-and-orders)
 
-[139](#section139) [Jurisdiction of board to decide certain questions](#section139)
+[139](#jurisdiction-of-board-to-decide-certain-questions) [Jurisdiction of board to decide certain questions](#jurisdiction-of-board-to-decide-certain-questions)
 
-[140](#section140) [General powers of board](#section140)
+[140](#general-powers-of-board) [General powers of board](#general-powers-of-board)
 
-[141](#section141) [Reconsideration of decisions](#section141)
+[141](#reconsideration-of-decisions) [Reconsideration of decisions](#reconsideration-of-decisions)
 
-[142](#section142) [Variation and continuation of certification or accreditation](#section142)
+[142](#variation-and-continuation-of-certification-or-accreditation) [Variation and continuation of certification or accreditation](#variation-and-continuation-of-certification-or-accreditation)
 
-[143](#section143) [Declaratory opinion](#section143)
+[143](#declaratory-opinion-1) [Declaratory opinion](#declaratory-opinion-1)
 
 [Part 10 — Miscellaneous](#part10)
 
-[144](#section144) [Powers of minister](#section144)
+[144](#powers-of-minister) [Powers of minister](#powers-of-minister)
 
-[145](#section145) [Power to enter and inspect](#section145)
+[145](#power-to-enter-and-inspect) [Power to enter and inspect](#power-to-enter-and-inspect)
 
-[145.1](#section145.1) [Power to compel persons to answer questions and order disclosure](#section145.1)
+[145.1](#power-to-compel-persons-to-answer-questions-and-order-disclosure) [Power to compel persons to answer questions and order disclosure](#power-to-compel-persons-to-answer-questions-and-order-disclosure)
 
-[145.2](#section145.2) [Maintenance of order at hearings](#section145.2)
+[145.2](#maintenance-of-order-at-hearings) [Maintenance of order at hearings](#maintenance-of-order-at-hearings)
 
-[145.3](#section145.3) [Contempt proceeding for uncooperative person](#section145.3)
+[145.3](#contempt-proceeding-for-uncooperative-person) [Contempt proceeding for uncooperative person](#contempt-proceeding-for-uncooperative-person)
 
-[145.4](#section145.4) [Immunity protection](#section145.4)
+[145.4](#immunity-protection) [Immunity protection](#immunity-protection)
 
-[146](#section146) [Information confidential](#section146)
+[146](#information-confidential) [Information confidential](#information-confidential)
 
-[147](#section147) [Payment of members of tribunals](#section147)
+[147](#payment-of-members-of-tribunals) [Payment of members of tribunals](#payment-of-members-of-tribunals)
 
-[148](#section148) [Execution of documents](#section148)
+[148](#execution-of-documents) [Execution of documents](#execution-of-documents)
 
-[149](#section149) [Board may require returns](#section149)
+[149](#board-may-require-returns) [Board may require returns](#board-may-require-returns)
 
-[150](#section150) [Trusteeship over local unions](#section150)
+[150](#trusteeship-over-local-unions) [Trusteeship over local unions](#trusteeship-over-local-unions)
 
-[151](#section151) [Financial statements](#section151)
+[151](#financial-statements) [Financial statements](#financial-statements)
 
-[152](#section152) [Mailed notice presumed received](#section152)
+[152](#mailed-notice-presumed-received) [Mailed notice presumed received](#mailed-notice-presumed-received)
 
-[153](#section153) [Service of documents](#section153)
+[153](#service-of-documents) [Service of documents](#service-of-documents)
 
-[154](#section154) [Legal entity](#section154)
+[154](#legal-entity) [Legal entity](#legal-entity)
 
-[155](#section155) [Evidentiary effect of documents](#section155)
+[155](#evidentiary-effect-of-documents) [Evidentiary effect of documents](#evidentiary-effect-of-documents)
 
-[156](#section156) [Technicalities not to invalidate proceedings](#section156)
+[156](#technicalities-not-to-invalidate-proceedings) [Technicalities not to invalidate proceedings](#technicalities-not-to-invalidate-proceedings)
 
-[157](#section157) [Reports](#section157)
+[157](#reports) [Reports](#reports)
 
-[158](#section158) [Penalty](#section158)
+[158](#penalty) [Penalty](#penalty)
 
-[158.1](#section158.1) [Offence](#section158.1)
+[158.1](#offence) [Offence](#offence)
 
-[159](#section159) [Lieutenant Governor in Council's power to make regulations](#section159)
+[159](#lieutenant-governor-in-councils-power-to-make-regulations) [Lieutenant Governor in Council's power to make regulations](#lieutenant-governor-in-councils-power-to-make-regulations)
 
-[159.1](#section159.1) [Minister's power to make regulations](#section159.1)
+[159.1](#ministers-power-to-make-regulations) [Minister's power to make regulations](#ministers-power-to-make-regulations)
 
 [Part 11 — Transitional Provision](#part11)
 
-[160](#section160) [Transitional](#section160)
+[160](#transitional) [Transitional](#transitional)
 
 Part 1 — Introductory Provisions
 
