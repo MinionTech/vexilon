@@ -1,10 +1,14 @@
 {
-  "generated_at": "2026-10-19T00:09:37.552242+00:00",
+  "generated_at": "2026-11-20T17:48:52.233032+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_20th_Main_Agreement.md": {
       "hash": "dba6be199d4b71e0fc373b4867e1a38ba3d0dc9d4f9bbdc1a7319bfb9391f83b",
       "size_bytes": 616311
+    },
+    "01_primary/BCGEU_20th_Social_Information_Health_Component_Agreement.md": {
+      "hash": "dd3e60e3492e9cb2384c47a2736639544b0f074dcdd718f5466c1002ef173931",
+      "size_bytes": 81463
     },
     "01_primary/Gov_BC_Social_Media_Guidelines_for_Personal_Use.md": {
       "hash": "bc9703914ce1445e84b4d9d7e6d4318a2d0f96c6f31df80e63be27c1df18affb",
