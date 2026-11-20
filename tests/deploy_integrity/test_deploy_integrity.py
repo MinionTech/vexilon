@@ -205,6 +205,40 @@ def test_primary_authority_20th_agreement_present():
     )
 
 
+
+def test_social_information_health_component_agreement_present():
+    """The SIH component agreement is indexed and the drawer links the signed PDF, not a rendered copy."""
+    import hashlib
+    import json
+    stem = "BCGEU_20th_Social_Information_Health_Component_Agreement"
+    manifest = json.loads((REPO_ROOT / "app" / "data" / "manifest.json").read_text(encoding="utf-8"))
+    assert f"01_primary/{stem}.md" in manifest.get("sources", {})
+
+    chainlit_md = (REPO_ROOT / "app" / "chainlit.md").read_text(encoding="utf-8")
+    assert f"* [BCGEU 20th Social Information Health Component Agreement](/public/docs/{stem}.pdf)" in chainlit_md
+
+    hosted_pdf = REPO_ROOT / "app" / "public" / "docs" / f"{stem}.pdf"
+    assert hashlib.sha256(hosted_pdf.read_bytes()).hexdigest() == (
+        "5d6854650ba808402af1a0b937f3eb2f8fa6d6f7d60cfbe345126f2469fe274b"
+    ), "Hosted SIH component PDF is not the signed agreement from agreements.bcgeu.ca"
+
+
+def test_main_agreement_wage_scales_present():
+    """The wage scales are indexed and the drawer links the excerpt of the public draft PDF."""
+    import hashlib
+    import json
+    stem = "BCGEU_20th_Main_Agreement_Wage_Scales"
+    manifest = json.loads((REPO_ROOT / "app" / "data" / "manifest.json").read_text(encoding="utf-8"))
+    assert f"01_primary/{stem}.md" in manifest.get("sources", {})
+
+    chainlit_md = (REPO_ROOT / "app" / "chainlit.md").read_text(encoding="utf-8")
+    assert f"* [BCGEU 20th Main Agreement Wage Scales](/public/docs/{stem}.pdf)" in chainlit_md
+
+    hosted_pdf = REPO_ROOT / "app" / "public" / "docs" / f"{stem}.pdf"
+    assert hashlib.sha256(hosted_pdf.read_bytes()).hexdigest() == (
+        "0feeab2f6c6c3fd6af8297b3f8a9955bc91ca51aa1f447ef432bf6782a5b74dd"
+    ), "Hosted wage scales PDF is not the Appendix 3 excerpt of the agreements.bcgeu.ca draft"
+
 def test_default_model_alignment_with_spec():
     """Ensures that the default Hugging Face model in the code matches the flagship model in SPEC.md."""
     config_path = REPO_ROOT / "app" / "core" / "config.py"
