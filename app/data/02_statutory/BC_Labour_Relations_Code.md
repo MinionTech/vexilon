@@ -1,7 +1,7 @@
 # Labour Relations Code
 
 **Source:** [Labour Relations Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96244_01)  
-**Upstream Last Modified:** Fri, 20 Nov 2026 16:44:57 GMT  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:07 GMT  
 **Ingestion Date:** 2026-11-20  
 
 This Act is current to November 17, 2026

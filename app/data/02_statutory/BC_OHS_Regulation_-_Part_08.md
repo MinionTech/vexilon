@@ -1,7 +1,7 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_06)  
-**Upstream Last Modified:** Fri, 20 Nov 2026 16:45:04 GMT  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:15 GMT  
 **Ingestion Date:** 2026-11-20  
 
 B.C. Reg. 296/97

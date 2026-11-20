@@ -1,7 +1,7 @@
 # Employment Standards Act
 
 **Source:** [Employment Standards Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01)  
-**Upstream Last Modified:** Fri, 20 Nov 2026 16:44:58 GMT  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:08 GMT  
 **Ingestion Date:** 2026-11-20  
 
 This Act is current to November 17, 2026
