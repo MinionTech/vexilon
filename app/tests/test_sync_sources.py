@@ -1536,6 +1536,29 @@ def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_
     assert entry.etag == '"v1"'
 
 
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_reason_is_unknown_without_extraction_fingerprint(mock_fetch, tmp_path):
+    """A baseline with no stored fingerprint can't tell an upstream change from an extractor change."""
+    body = "# Title\n\nOriginal body.\n"
+    _target, digest = _write_doc(tmp_path, body)
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Title</h1><p>Rewritten body.</p></div></body></html>",
+        {"etag": '"v2"'},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.error == "Upstream content or extraction changed (no extraction fingerprint recorded)"
+
+
 def _entry_with_validators(digest: str) -> SourceEntry:
     return SourceEntry(
         path="app/data/doc.md",
@@ -2131,6 +2154,7 @@ def test_check_source_drift_pdf_detected(mock_fetch, tmp_path):
         type="pdf",
         category="primary",
         content_hash=local_hash,
+        extraction_fingerprint="stale",
     )
     mock_fetch.return_value = (remote_content, {"last-modified": "Thu, 02 Oct 2026 12:00:00 GMT"})
 
@@ -2138,6 +2162,7 @@ def test_check_source_drift_pdf_detected(mock_fetch, tmp_path):
     assert res.status == "DRIFT_DETECTED"
     assert res.local_hash == local_hash
     assert res.upstream_hash == remote_hash
+    assert res.error == "Upstream content changed"
 
 
 @patch("scripts.sync_sources.fetch_upstream")

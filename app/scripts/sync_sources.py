@@ -1442,7 +1442,11 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
         if registry_hash and upstream_hash != registry_hash:
             if local_hash is None:
                 reason = "Local file is absent"
-            elif source.extraction_fingerprint and not _extraction_fingerprint_matches(source):
+            elif source.type == "pdf":
+                reason = "Upstream content changed"
+            elif not source.extraction_fingerprint:
+                reason = "Upstream content or extraction changed (no extraction fingerprint recorded)"
+            elif not _extraction_fingerprint_matches(source):
                 reason = "Extraction inputs changed"
             else:
                 reason = "Upstream content changed"
