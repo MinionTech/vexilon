@@ -1,10 +1,10 @@
 # Employment Standards Act
 
 **Source:** [Employment Standards Act](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96113_01)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 04:03:33 GMT  
-**Ingestion Date:** 2026-09-27  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:08 GMT  
+**Ingestion Date:** 2026-11-20  
 
-This Act is current to September 22, 2026
+This Act is current to November 17, 2026
 
 See the [Tables of Legislative Changes](/civix/content/complete/statreg/414786120/96113/tlc96113_f/?xsl=/templates/browse.xsl) for this Act’s legislative history, including any changes not in force.
 
@@ -16,345 +16,345 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/41478612
 
 [Part 1 — Introductory Provisions](#part1)
 
-[1](#section1) [Definitions](#section1)
+[1](#definitions) [Definitions](#definitions)
 
-[2](#section2) [Purposes of this Act](#section2)
+[2](#purposes-of-this-act) [Purposes of this Act](#purposes-of-this-act)
 
-[3](#section3) [Scope of this Act](#section3)
+[3](#scope-of-this-act) [Scope of this Act](#scope-of-this-act)
 
-[3.1](#section3.1) [Online platform workers](#section3.1)
+[3.1](#online-platform-workers) [Online platform workers](#online-platform-workers)
 
-[4](#section4) [Requirements of this Act cannot be waived](#section4)
+[4](#requirements-of-this-act-cannot-be-waived) [Requirements of this Act cannot be waived](#requirements-of-this-act-cannot-be-waived)
 
-[5](#section5) [Promoting awareness of employment standards](#section5)
+[5](#promoting-awareness-of-employment-standards) [Promoting awareness of employment standards](#promoting-awareness-of-employment-standards)
 
-[6](#section6) [Informing employees of their rights](#section6)
+[6](#informing-employees-of-their-rights) [Informing employees of their rights](#informing-employees-of-their-rights)
 
-[7](#section7) [Repealed](#section7)
+[7](#repealed) [Repealed](#repealed)
 
 [Part 2 — Hiring Employees](#part2)
 
-[8](#section8) [No false representations](#section8)
+[8](#no-false-representations) [No false representations](#no-false-representations)
 
-[9](#section9) [Hiring children — under 16 years of age](#section9)
+[9](#hiring-children--under-16-years-of-age) [Hiring children — under 16 years of age](#hiring-children--under-16-years-of-age)
 
-[9.1](#section9.1) [Hiring children — hazardous industry or hazardous work](#section9.1)
+[9.1](#hiring-children--hazardous-industry-or-hazardous-work) [Hiring children — hazardous industry or hazardous work](#hiring-children--hazardous-industry-or-hazardous-work)
 
-[10](#section10) [No charge for hiring or providing information](#section10)
+[10](#no-charge-for-hiring-or-providing-information) [No charge for hiring or providing information](#no-charge-for-hiring-or-providing-information)
 
-[11](#section11) [No fees to other persons](#section11)
+[11](#no-fees-to-other-persons) [No fees to other persons](#no-fees-to-other-persons)
 
-[12](#section12) [Employment and talent agencies must be licensed](#section12)
+[12](#employment-and-talent-agencies-must-be-licensed) [Employment and talent agencies must be licensed](#employment-and-talent-agencies-must-be-licensed)
 
-[13](#section13) [Farm labour contractors must be licensed](#section13)
+[13](#farm-labour-contractors-must-be-licensed) [Farm labour contractors must be licensed](#farm-labour-contractors-must-be-licensed)
 
-[14](#section14) [Written employment contract required for domestic workers](#section14)
+[14](#written-employment-contract-required-for-domestic-workers) [Written employment contract required for domestic workers](#written-employment-contract-required-for-domestic-workers)
 
-[15](#section15) [Register of employees working in residences](#section15)
+[15](#register-of-employees-working-in-residences) [Register of employees working in residences](#register-of-employees-working-in-residences)
 
 [Part 3 — Wages, Special Clothing, Records and Gratuities](#part3)
 
-[16](#section16) [Employers required to pay minimum wage](#section16)
+[16](#employers-required-to-pay-minimum-wage) [Employers required to pay minimum wage](#employers-required-to-pay-minimum-wage)
 
-[16.1](#section16.1) [Minimum wage](#section16.1)
+[16.1](#minimum-wage) [Minimum wage](#minimum-wage)
 
-[16.2](#section16.2) [Annual adjustment of minimum wage](#section16.2)
+[16.2](#annual-adjustment-of-minimum-wage) [Annual adjustment of minimum wage](#annual-adjustment-of-minimum-wage)
 
-[17](#section17) [Paydays](#section17)
+[17](#paydays) [Paydays](#paydays)
 
-[18](#section18) [If employment is terminated](#section18)
+[18](#if-employment-is-terminated) [If employment is terminated](#if-employment-is-terminated)
 
-[19](#section19) [If employee cannot be located](#section19)
+[19](#if-employee-cannot-be-located) [If employee cannot be located](#if-employee-cannot-be-located)
 
-[20](#section20) [How wages are paid](#section20)
+[20](#how-wages-are-paid) [How wages are paid](#how-wages-are-paid)
 
-[21](#section21) [Deductions](#section21)
+[21](#deductions) [Deductions](#deductions)
 
-[22](#section22) [Assignments](#section22)
+[22](#assignments) [Assignments](#assignments)
 
-[23](#section23) [Employer's duty to make assigned payments](#section23)
+[23](#employers-duty-to-make-assigned-payments) [Employer's duty to make assigned payments](#employers-duty-to-make-assigned-payments)
 
-[24](#section24) [How an assignment is cancelled](#section24)
+[24](#how-an-assignment-is-cancelled) [How an assignment is cancelled](#how-an-assignment-is-cancelled)
 
-[25](#section25) [Special clothing](#section25)
+[25](#special-clothing) [Special clothing](#special-clothing)
 
-[26](#section26) [Payments by employer to funds, insurers or others](#section26)
+[26](#payments-by-employer-to-funds-insurers-or-others) [Payments by employer to funds, insurers or others](#payments-by-employer-to-funds-insurers-or-others)
 
-[27](#section27) [Wage statements](#section27)
+[27](#wage-statements) [Wage statements](#wage-statements)
 
-[28](#section28) [Payroll records](#section28)
+[28](#payroll-records) [Payroll records](#payroll-records)
 
-[29](#section29) [Repealed](#section29)
+[29](#repealed-1) [Repealed](#repealed-1)
 
-[30](#section30) [Producer and farm labour contractor are liable for unpaid wages](#section30)
+[30](#producer-and-farm-labour-contractor-are-liable-for-unpaid-wages) [Producer and farm labour contractor are liable for unpaid wages](#producer-and-farm-labour-contractor-are-liable-for-unpaid-wages)
 
-[30.1](#section30.1) [Liability of farm labour contractor for transportation costs](#section30.1)
+[30.1](#liability-of-farm-labour-contractor-for-transportation-costs) [Liability of farm labour contractor for transportation costs](#liability-of-farm-labour-contractor-for-transportation-costs)
 
-[30.2](#section30.2) [Enforcement of administrative fee](#section30.2)
+[30.2](#enforcement-of-administrative-fee) [Enforcement of administrative fee](#enforcement-of-administrative-fee)
 
-[30.3](#section30.3) [Gratuities](#section30.3)
+[30.3](#gratuities) [Gratuities](#gratuities)
 
-[30.4](#section30.4) [Redistribution of gratuities](#section30.4)
+[30.4](#redistribution-of-gratuities) [Redistribution of gratuities](#redistribution-of-gratuities)
 
 [Part 4 — Hours of Work and Overtime](#part4)
 
-[31](#section31) [Repealed](#section31)
+[31](#repealed-2) [Repealed](#repealed-2)
 
-[32](#section32) [Meal breaks](#section32)
+[32](#meal-breaks) [Meal breaks](#meal-breaks)
 
-[33](#section33) [Split shifts](#section33)
+[33](#split-shifts) [Split shifts](#split-shifts)
 
-[34](#section34) [Minimum daily hours](#section34)
+[34](#minimum-daily-hours) [Minimum daily hours](#minimum-daily-hours)
 
-[35](#section35) [Maximum hours of work before overtime applies](#section35)
+[35](#maximum-hours-of-work-before-overtime-applies) [Maximum hours of work before overtime applies](#maximum-hours-of-work-before-overtime-applies)
 
-[36](#section36) [Hours free from work](#section36)
+[36](#hours-free-from-work) [Hours free from work](#hours-free-from-work)
 
-[37](#section37) [Agreements to average hours of work](#section37)
+[37](#agreements-to-average-hours-of-work) [Agreements to average hours of work](#agreements-to-average-hours-of-work)
 
-[38](#section38) [Repealed](#section38)
+[38](#repealed-3) [Repealed](#repealed-3)
 
-[39](#section39) [No excessive hours](#section39)
+[39](#no-excessive-hours) [No excessive hours](#no-excessive-hours)
 
-[40](#section40) [Overtime wages for employees not working under an averaging agreement](#section40)
+[40](#overtime-wages-for-employees-not-working-under-an-averaging-agreement) [Overtime wages for employees not working under an averaging agreement](#overtime-wages-for-employees-not-working-under-an-averaging-agreement)
 
-[41](#section41) [Repealed](#section41)
+[41](#repealed-4) [Repealed](#repealed-4)
 
-[42](#section42) [Banking of overtime wages](#section42)
+[42](#banking-of-overtime-wages) [Banking of overtime wages](#banking-of-overtime-wages)
 
-[43](#section43) [Repealed](#section43)
+[43](#repealed-5) [Repealed](#repealed-5)
 
 [Part 5 — Statutory Holidays](#part5)
 
-[44](#section44) [Entitlement to statutory holiday](#section44)
+[44](#entitlement-to-statutory-holiday) [Entitlement to statutory holiday](#entitlement-to-statutory-holiday)
 
-[45](#section45) [Statutory holiday pay](#section45)
+[45](#statutory-holiday-pay) [Statutory holiday pay](#statutory-holiday-pay)
 
-[46](#section46) [If employee is required to work on statutory holiday](#section46)
+[46](#if-employee-is-required-to-work-on-statutory-holiday) [If employee is required to work on statutory holiday](#if-employee-is-required-to-work-on-statutory-holiday)
 
-[47](#section47) [Repealed](#section47)
+[47](#repealed-6) [Repealed](#repealed-6)
 
-[48](#section48) [Substituting another day for a statutory holiday](#section48)
+[48](#substituting-another-day-for-a-statutory-holiday) [Substituting another day for a statutory holiday](#substituting-another-day-for-a-statutory-holiday)
 
-[49](#section49) [Repealed](#section49)
+[49](#repealed-7) [Repealed](#repealed-7)
 
 [Part 6 — Leaves and Jury Duty](#part6)
 
-[49.01](#section49.01) [Serious personal illness or injury — up to 27 weeks unpaid leave](#section49.01)
+[49.01](#serious-personal-illness-or-injury--up-to-27-weeks-unpaid-leave) [Serious personal illness or injury — up to 27 weeks unpaid leave](#serious-personal-illness-or-injury--up-to-27-weeks-unpaid-leave)
 
-[49.1](#section49.1) [Illness or injury leave](#section49.1)
+[49.1](#illness-or-injury-leave) [Illness or injury leave](#illness-or-injury-leave)
 
-[49.2](#section49.2) [Sick note not required](#section49.2)
+[49.2](#sick-note-not-required) [Sick note not required](#sick-note-not-required)
 
-[50](#section50) [Maternity leave](#section50)
+[50](#maternity-leave) [Maternity leave](#maternity-leave)
 
-[51](#section51) [Parental leave](#section51)
+[51](#parental-leave) [Parental leave](#parental-leave)
 
-[52](#section52) [Family responsibility leave](#section52)
+[52](#family-responsibility-leave) [Family responsibility leave](#family-responsibility-leave)
 
-[52.1](#section52.1) [Compassionate care leave](#section52.1)
+[52.1](#compassionate-care-leave) [Compassionate care leave](#compassionate-care-leave)
 
-[52.11](#section52.11) [Critical illness or injury leave](#section52.11)
+[52.11](#critical-illness-or-injury-leave) [Critical illness or injury leave](#critical-illness-or-injury-leave)
 
-[52.12](#section52.12) [COVID-19-related leave](#section52.12)
+[52.12](#covid-19-related-leave) [COVID-19-related leave](#covid-19-related-leave)
 
-[52.121](#section52.121) [Repealed](#section52.121)
+[52.121](#repealed-8) [Repealed](#repealed-8)
 
-[52.13](#section52.13) [Leave for COVID-19 vaccination](#section52.13)
+[52.13](#leave-for-covid-19-vaccination) [Leave for COVID-19 vaccination](#leave-for-covid-19-vaccination)
 
-[52.2](#section52.2) [Reservists' leave](#section52.2)
+[52.2](#reservists-leave) [Reservists' leave](#reservists-leave)
 
-[52.3](#section52.3) [Leave respecting disappearance of child](#section52.3)
+[52.3](#leave-respecting-disappearance-of-child) [Leave respecting disappearance of child](#leave-respecting-disappearance-of-child)
 
-[52.4](#section52.4) [Leave respecting death of child](#section52.4)
+[52.4](#leave-respecting-death-of-child) [Leave respecting death of child](#leave-respecting-death-of-child)
 
-[52.5](#section52.5) [Leave respecting domestic or sexual violence](#section52.5)
+[52.5](#leave-respecting-domestic-or-sexual-violence) [Leave respecting domestic or sexual violence](#leave-respecting-domestic-or-sexual-violence)
 
-[53](#section53) [Bereavement leave](#section53)
+[53](#bereavement-leave) [Bereavement leave](#bereavement-leave)
 
-[54](#section54) [Duties of employer](#section54)
+[54](#duties-of-employer) [Duties of employer](#duties-of-employer)
 
-[55](#section55) [Jury duty](#section55)
+[55](#jury-duty) [Jury duty](#jury-duty)
 
-[56](#section56) [Employment deemed continuous while employee on leave or jury duty](#section56)
+[56](#employment-deemed-continuous-while-employee-on-leave-or-jury-duty) [Employment deemed continuous while employee on leave or jury duty](#employment-deemed-continuous-while-employee-on-leave-or-jury-duty)
 
 [Part 7 — Annual Vacation](#part7)
 
-[57](#section57) [Entitlement to annual vacation](#section57)
+[57](#entitlement-to-annual-vacation) [Entitlement to annual vacation](#entitlement-to-annual-vacation)
 
-[58](#section58) [Vacation pay](#section58)
+[58](#vacation-pay) [Vacation pay](#vacation-pay)
 
-[59](#section59) [Other payments or benefits do not affect vacation rights](#section59)
+[59](#other-payments-or-benefits-do-not-affect-vacation-rights) [Other payments or benefits do not affect vacation rights](#other-payments-or-benefits-do-not-affect-vacation-rights)
 
-[60](#section60) [Common date for calculating vacation entitlement](#section60)
+[60](#common-date-for-calculating-vacation-entitlement) [Common date for calculating vacation entitlement](#common-date-for-calculating-vacation-entitlement)
 
-[61](#section61) [Repealed](#section61)
+[61](#repealed-9) [Repealed](#repealed-9)
 
 [Part 8 — Termination of Employment](#part8)
 
-[62](#section62) [Definition](#section62)
+[62](#definition) [Definition](#definition)
 
-[63](#section63) [Liability resulting from length of service](#section63)
+[63](#liability-resulting-from-length-of-service) [Liability resulting from length of service](#liability-resulting-from-length-of-service)
 
-[64](#section64) [Group terminations](#section64)
+[64](#group-terminations) [Group terminations](#group-terminations)
 
-[65](#section65) [Exceptions](#section65)
+[65](#exceptions) [Exceptions](#exceptions)
 
-[66](#section66) [Director may determine employment has been terminated](#section66)
+[66](#director-may-determine-employment-has-been-terminated) [Director may determine employment has been terminated](#director-may-determine-employment-has-been-terminated)
 
-[67](#section67) [Rules about notice](#section67)
+[67](#rules-about-notice) [Rules about notice](#rules-about-notice)
 
-[68](#section68) [Rules about payments](#section68)
+[68](#rules-about-payments) [Rules about payments](#rules-about-payments)
 
-[69-70](#section69t70) [Repealed](#section69t70)
+[69-70](#repealed-10) [Repealed](#repealed-10)
 
-[71](#section71) [Adjustment committee](#section71)
+[71](#adjustment-committee) [Adjustment committee](#adjustment-committee)
 
 [Part 9 — Variances](#part9)
 
-[72](#section72) [Application for variance](#section72)
+[72](#application-for-variance) [Application for variance](#application-for-variance)
 
-[73](#section73) [Power to grant variance](#section73)
+[73](#power-to-grant-variance) [Power to grant variance](#power-to-grant-variance)
 
 [Part 10 — Investigations, Complaints and Determinations](#part10)
 
-[73.1](#section73.1) [Investigations initiated by director](#section73.1)
+[73.1](#investigations-initiated-by-director) [Investigations initiated by director](#investigations-initiated-by-director)
 
-[74](#section74) [Complaint and time limit](#section74)
+[74](#complaint-and-time-limit) [Complaint and time limit](#complaint-and-time-limit)
 
-[75](#section75) [If complainant requests identity be kept confidential](#section75)
+[75](#if-complainant-requests-identity-be-kept-confidential) [If complainant requests identity be kept confidential](#if-complainant-requests-identity-be-kept-confidential)
 
-[76](#section76) [Review and investigation of complaints](#section76)
+[76](#review-and-investigation-of-complaints) [Review and investigation of complaints](#review-and-investigation-of-complaints)
 
-[76.1](#section76.1) [Complaint resolution process during investigation](#section76.1)
+[76.1](#complaint-resolution-process-during-investigation) [Complaint resolution process during investigation](#complaint-resolution-process-during-investigation)
 
-[77](#section77) [Opportunity to respond](#section77)
+[77](#opportunity-to-respond) [Opportunity to respond](#opportunity-to-respond)
 
-[77.1](#section77.1) [Oral hearing not required](#section77.1)
+[77.1](#oral-hearing-not-required) [Oral hearing not required](#oral-hearing-not-required)
 
-[78](#section78) [Settlement agreements](#section78)
+[78](#settlement-agreements) [Settlement agreements](#settlement-agreements)
 
-[78.1](#section78.1) [Report may be prepared and served](#section78.1)
+[78.1](#report-may-be-prepared-and-served) [Report may be prepared and served](#report-may-be-prepared-and-served)
 
-[78.2](#section78.2) [Repealed](#section78.2)
+[78.2](#repealed-11) [Repealed](#repealed-11)
 
-[79](#section79) [Determinations and consequences](#section79)
+[79](#determinations-and-consequences) [Determinations and consequences](#determinations-and-consequences)
 
-[80](#section80) [Limit on amount of wages required to be paid](#section80)
+[80](#limit-on-amount-of-wages-required-to-be-paid) [Limit on amount of wages required to be paid](#limit-on-amount-of-wages-required-to-be-paid)
 
-[81](#section81) [Notifying others of determination](#section81)
+[81](#notifying-others-of-determination) [Notifying others of determination](#notifying-others-of-determination)
 
-[82](#section82) [No other proceedings](#section82)
+[82](#no-other-proceedings) [No other proceedings](#no-other-proceedings)
 
-[83](#section83) [Employee not to be mistreated because of complaint or investigation](#section83)
+[83](#employee-not-to-be-mistreated-because-of-complaint-or-investigation) [Employee not to be mistreated because of complaint or investigation](#employee-not-to-be-mistreated-because-of-complaint-or-investigation)
 
-[84](#section84) [Power to compel persons to answer questions and order disclosure](#section84)
+[84](#power-to-compel-persons-to-answer-questions-and-order-disclosure) [Power to compel persons to answer questions and order disclosure](#power-to-compel-persons-to-answer-questions-and-order-disclosure)
 
-[84.1](#section84.1) [Maintenance of order at hearings](#section84.1)
+[84.1](#maintenance-of-order-at-hearings) [Maintenance of order at hearings](#maintenance-of-order-at-hearings)
 
-[84.2](#section84.2) [Contempt proceeding for uncooperative person](#section84.2)
+[84.2](#contempt-proceeding-for-uncooperative-person) [Contempt proceeding for uncooperative person](#contempt-proceeding-for-uncooperative-person)
 
-[84.3](#section84.3) [Immunity protection](#section84.3)
+[84.3](#immunity-protection) [Immunity protection](#immunity-protection)
 
-[85](#section85) [Entry and inspection powers](#section85)
+[85](#entry-and-inspection-powers) [Entry and inspection powers](#entry-and-inspection-powers)
 
-[86](#section86) [Power to reconsider](#section86)
+[86](#power-to-reconsider) [Power to reconsider](#power-to-reconsider)
 
-[86.1](#section86.1) [No jurisdiction to determine constitutional question](#section86.1)
+[86.1](#no-jurisdiction-to-determine-constitutional-question) [No jurisdiction to determine constitutional question](#no-jurisdiction-to-determine-constitutional-question)
 
-[86.2](#section86.2) [Director without jurisdiction to apply the Human Rights Code](#section86.2)
+[86.2](#director-without-jurisdiction-to-apply-the-human-rights-code) [Director without jurisdiction to apply the Human Rights Code](#director-without-jurisdiction-to-apply-the-human-rights-code)
 
 [Part 11 — Enforcement](#part11)
 
-[87](#section87) [Lien for unpaid wages](#section87)
+[87](#lien-for-unpaid-wages) [Lien for unpaid wages](#lien-for-unpaid-wages)
 
-[88](#section88) [Payment of interest](#section88)
+[88](#payment-of-interest) [Payment of interest](#payment-of-interest)
 
-[89](#section89) [Demand on third party](#section89)
+[89](#demand-on-third-party) [Demand on third party](#demand-on-third-party)
 
-[90](#section90) [Failure to comply with demand](#section90)
+[90](#failure-to-comply-with-demand) [Failure to comply with demand](#failure-to-comply-with-demand)
 
-[91](#section91) [Determination or order may be filed and enforced as judgment](#section91)
+[91](#determination-or-order-may-be-filed-and-enforced-as-judgment) [Determination or order may be filed and enforced as judgment](#determination-or-order-may-be-filed-and-enforced-as-judgment)
 
-[92](#section92) [Seizure of assets](#section92)
+[92](#seizure-of-assets) [Seizure of assets](#seizure-of-assets)
 
-[93](#section93) [Release of assets](#section93)
+[93](#release-of-assets) [Release of assets](#release-of-assets)
 
-[94](#section94) [Wrongful removal of seized assets](#section94)
+[94](#wrongful-removal-of-seized-assets) [Wrongful removal of seized assets](#wrongful-removal-of-seized-assets)
 
-[95](#section95) [Associated employers](#section95)
+[95](#associated-employers) [Associated employers](#associated-employers)
 
-[96](#section96) [Corporate officer's liability for unpaid wages](#section96)
+[96](#corporate-officers-liability-for-unpaid-wages) [Corporate officer's liability for unpaid wages](#corporate-officers-liability-for-unpaid-wages)
 
-[97](#section97) [Sale of business](#section97)
+[97](#sale-of-business) [Sale of business](#sale-of-business)
 
-[98](#section98) [Monetary penalties](#section98)
+[98](#monetary-penalties) [Monetary penalties](#monetary-penalties)
 
-[99](#section99) [If money is paid to director](#section99)
+[99](#if-money-is-paid-to-director) [If money is paid to director](#if-money-is-paid-to-director)
 
-[100](#section100) [Security to ensure compliance](#section100)
+[100](#security-to-ensure-compliance) [Security to ensure compliance](#security-to-ensure-compliance)
 
-[101](#section101) [Publication of violators' names](#section101)
+[101](#publication-of-violators-names) [Publication of violators' names](#publication-of-violators-names)
 
-[101.1](#section101.1) [Searching of records](#section101.1)
+[101.1](#searching-of-records) [Searching of records](#searching-of-records)
 
 [Part 12 — Employment Standards Tribunal](#part12)
 
-[102](#section102) [Employment Standards Tribunal continued](#section102)
+[102](#employment-standards-tribunal-continued) [Employment Standards Tribunal continued](#employment-standards-tribunal-continued)
 
-[103](#section103) [Application of Administrative Tribunals Act](#section103)
+[103](#application-of-administrative-tribunals-act) [Application of Administrative Tribunals Act](#application-of-administrative-tribunals-act)
 
-[104](#section104) [Chair may delegate authority](#section104)
+[104](#chair-may-delegate-authority) [Chair may delegate authority](#chair-may-delegate-authority)
 
-[105](#section105) [Employees](#section105)
+[105](#employees) [Employees](#employees)
 
-[106](#section106) [Organization of tribunal](#section106)
+[106](#organization-of-tribunal) [Organization of tribunal](#organization-of-tribunal)
 
-[107-108](#section107t108) [Repealed](#section107t108)
+[107-108](#repealed-12) [Repealed](#repealed-12)
 
-[109](#section109) [Other powers of tribunal](#section109)
+[109](#other-powers-of-tribunal) [Other powers of tribunal](#other-powers-of-tribunal)
 
-[110](#section110) [Exclusive jurisdiction of tribunal](#section110)
+[110](#exclusive-jurisdiction-of-tribunal) [Exclusive jurisdiction of tribunal](#exclusive-jurisdiction-of-tribunal)
 
-[111](#section111) [Repealed](#section111)
+[111](#repealed-13) [Repealed](#repealed-13)
 
 [Part 13 — Appeals](#part13)
 
-[112](#section112) [Appeal of director's determination](#section112)
+[112](#appeal-of-directors-determination) [Appeal of director's determination](#appeal-of-directors-determination)
 
-[113](#section113) [Director's determination may be suspended](#section113)
+[113](#directors-determination-may-be-suspended) [Director's determination may be suspended](#directors-determination-may-be-suspended)
 
-[114](#section114) [After an appeal is requested](#section114)
+[114](#after-an-appeal-is-requested) [After an appeal is requested](#after-an-appeal-is-requested)
 
-[115](#section115) [Tribunal's orders](#section115)
+[115](#tribunals-orders) [Tribunal's orders](#tribunals-orders)
 
-[116](#section116) [Reconsideration of orders and decisions](#section116)
+[116](#reconsideration-of-orders-and-decisions) [Reconsideration of orders and decisions](#reconsideration-of-orders-and-decisions)
 
 [Part 14 — General Provisions](#part14)
 
-[117](#section117) [Director's power to delegate](#section117)
+[117](#directors-power-to-delegate) [Director's power to delegate](#directors-power-to-delegate)
 
-[118](#section118) [Right to sue preserved](#section118)
+[118](#right-to-sue-preserved) [Right to sue preserved](#right-to-sue-preserved)
 
-[119](#section119) [Extraprovincial certificates](#section119)
+[119](#extraprovincial-certificates) [Extraprovincial certificates](#extraprovincial-certificates)
 
-[120](#section120) [Warrant to carry out inspection powers](#section120)
+[120](#warrant-to-carry-out-inspection-powers) [Warrant to carry out inspection powers](#warrant-to-carry-out-inspection-powers)
 
-[121](#section121) [Director cannot be required to give evidence in other proceedings](#section121)
+[121](#director-cannot-be-required-to-give-evidence-in-other-proceedings) [Director cannot be required to give evidence in other proceedings](#director-cannot-be-required-to-give-evidence-in-other-proceedings)
 
-[122](#section122) [Service of determinations, demands, notices and reports](#section122)
+[122](#service-of-determinations-demands-notices-and-reports) [Service of determinations, demands, notices and reports](#service-of-determinations-demands-notices-and-reports)
 
-[123](#section123) [Irregularities](#section123)
+[123](#irregularities) [Irregularities](#irregularities)
 
-[124](#section124) [Limitation period](#section124)
+[124](#limitation-period) [Limitation period](#limitation-period)
 
-[125](#section125) [Offences](#section125)
+[125](#offences) [Offences](#offences)
 
-[126](#section126) [Evidence and burden of proof](#section126)
+[126](#evidence-and-burden-of-proof) [Evidence and burden of proof](#evidence-and-burden-of-proof)
 
-[127](#section127) [Power to make regulations](#section127)
+[127](#power-to-make-regulations) [Power to make regulations](#power-to-make-regulations)
 
-[128-129](#section128t129) [Repealed](#section128t129)
+[128-129](#repealed-14) [Repealed](#repealed-14)
 
 Part 1 — Introductory Provisions
 

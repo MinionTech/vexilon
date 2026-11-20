@@ -5,13 +5,21 @@ Verifies the Readme drawer opens and renders expected markdown sections/links
 from chainlit.md without requiring LLM interaction.
 """
 
+import re
+from pathlib import Path
+
 import pytest
 from playwright.sync_api import Page, expect
 
 from helpers import open_knowledge_base_drawer
 
-# chainlit.md renders 21 drawer links with Chainlit's text-primary class.
-EXPECTED_DRAWER_PRIMARY_LINKS = 21
+_CHAINLIT_MD = Path(__file__).resolve().parents[2] / "chainlit.md"
+_MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+
+
+def expected_drawer_links() -> list[tuple[str, str]]:
+    """Return (text, href) pairs for every markdown link in app/chainlit.md."""
+    return _MARKDOWN_LINK.findall(_CHAINLIT_MD.read_text(encoding="utf-8"))
 
 
 def test_knowledge_base_drawer_opens_with_expected_sections(page: Page, app_url: str):
@@ -32,13 +40,13 @@ def test_knowledge_base_drawer_contains_document_links(page: Page, app_url: str)
 
     dialog = open_knowledge_base_drawer(page)
 
-    expect(dialog.get_by_role("link", name="BCGEU 20th Main Agreement")).to_be_visible()
-    expect(dialog.get_by_role("link", name="Privacy Policy")).to_be_visible()
-    expect(dialog.get_by_role("link", name="BC Labour Relations Code")).to_be_visible()
+    expected = expected_drawer_links()
+    for name, _href in expected:
+        expect(dialog.get_by_role("link", name=name, exact=True)).to_be_visible()
 
     primary_links = dialog.locator("a.text-primary")
-    assert primary_links.count() == EXPECTED_DRAWER_PRIMARY_LINKS, (
-        f"Expected {EXPECTED_DRAWER_PRIMARY_LINKS} indexed document links in drawer"
+    assert primary_links.count() == len(expected), (
+        f"Expected {len(expected)} indexed document links in drawer"
     )
 
 

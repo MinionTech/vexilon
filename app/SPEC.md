@@ -64,6 +64,10 @@ Agreement Navigator moves beyond messy PDF-to-text extraction by using a special
 4. **Declarative Source Registry (`sources.yaml`):** Maps web-sourced documents to canonical upstream URLs, container selectors (`#body`, `#civix-document`), categories, and baseline substantive content hashes.
 5. **Standardized Provenance & Ingestion:** The sync utility (`sync_sources.py`) cleanly extracts body content, prepends standard provenance metadata headers (`# <Title>`, `**Source:**`, `**Upstream Last Modified:**`, `**Ingestion Date:**`), and synchronizes `manifest.json`.
 6. **Scheduled Drift Sentinel:** Weekly CI workflows detect upstream divergence via substantive content hashing, generating deduplicated GitHub Issues for steward review without silent automated updates to legal text.
+7. **Conditional Fetches:** `sync_sources.py` stores each source's `ETag` and `Last-Modified` in `sources.yaml` and sends them as `If-None-Match` / `If-Modified-Since` when the committed file and extraction fingerprint still match the baseline; a `304 Not Modified` response then skips the download. Servers may still answer `200`, and `type: manual` sources are never fetched.
+8. **PDF Sources:** A `type: pdf` entry whose `path` is Markdown is monitored by the SHA-256 of the upstream PDF bytes (`source_hash`) and the content hash of the committed Markdown (`content_hash`). A `type: pdf` entry whose `path` is a `.pdf` stores the PDF-byte hash in `content_hash` only.
+9. **Incremental Indexing:** Chunks and float32 embeddings are cached per document (`<cache>/chunks/<id>.json`, `<cache>/embeddings/<id>.npy`, keyed by path, file content, index config and same-stem page-map PDF). An ordinary rebuild reuses a valid matching cache entry; a document is re-embedded when its key changes or its cache entry is missing or unusable, and a forced rebuild (`--rebuild-index`) re-embeds everything.
+10. **Committed Text Only:** The image build never fetches upstream legal text. Upstream changes land as committed files (Markdown, or the PDF itself for a `type: pdf` entry with a `.pdf` path) through a human-reviewed pull request. The drift sentinel flags changes to network-backed sources (`html_selector`, `bclaws`, `pdf`); `type: manual` sources are checked only against their recorded local hash, so an upstream change to them is not flagged.
 
 
 ---
@@ -134,10 +138,7 @@ The Agreement Navigator is successful when:
 1. **Multi-Agreement Support:** Allow stewards to select their specific Component agreement.
 2. **Arbitration Awards:** Indexing a library of BC labour arbitration awards for jurisprudence context.
 3. **Member-Only Auth:** Integration with union member portals for secure access.
-4. **Granular Incremental Indexing:** Per-document chunk and float32 vector embedding caching (`.npy`) in `/data/cache/embeddings/` to eliminate full re-indexing passes when individual documents change.
-5. **Link-Driven Knowledge Base Hydration:** Expanding `sources.yaml` to support upstream PDF extraction and conditional HTTP syncs (`ETag` / `304 Not Modified`), transitioning from committed static files to build-time declarative hydration.
-
-*(Grievance Builder wizard — formerly roadmap item — is delivered via **Grieve** persona mode.)*
+*(Grievance Builder wizard — formerly roadmap item — is delivered via **Grieve** persona mode. Incremental indexing, conditional fetches and PDF source monitoring are delivered; see Section 6.)*
 
 
 ---

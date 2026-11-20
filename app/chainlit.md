@@ -9,6 +9,8 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 ### Primary Authority
 
 * [BCGEU 20th Main Agreement](/public/docs/BCGEU_20th_Main_Agreement.pdf)
+* [BCGEU 20th Main Agreement Wage Scales](/public/docs/BCGEU_20th_Main_Agreement_Wage_Scales.pdf)
+* [BCGEU 20th Social Information Health Component Agreement](/public/docs/BCGEU_20th_Social_Information_Health_Component_Agreement.pdf)
 
 ### Legislation & Regulations
 

@@ -8,7 +8,7 @@ Uses the real Ollama stack in Compose; asserts lifecycle signals, not LLM qualit
 import pytest
 from playwright.sync_api import Page
 
-from helpers import wait_for_custom_js
+from helpers import submit_chat_with_enter, wait_for_custom_js
 
 
 def test_user_message_and_assistant_response_appear(page: Page, app_url: str):
@@ -19,12 +19,7 @@ def test_user_message_and_assistant_response_appear(page: Page, app_url: str):
     textarea = page.locator("textarea")
     textarea.press_sequentially("What is a steward?", delay=10)
     page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
-    textarea.press("Enter")
-
-    page.wait_for_function(
-        "document.querySelector('textarea').value === ''",
-        timeout=15000,
-    )
+    submit_chat_with_enter(page, textarea)
 
     stop_button = page.locator("#stop-button")
     stop_button.wait_for(state="visible", timeout=60000)

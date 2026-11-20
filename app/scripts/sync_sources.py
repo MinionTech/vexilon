@@ -1440,6 +1440,16 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             upstream_last_modified = headers.get("last-modified")
 
         if registry_hash and upstream_hash != registry_hash:
+            if local_hash is None:
+                reason = "Local file is absent"
+            elif source.type == "pdf":
+                reason = "Upstream content changed"
+            elif not source.extraction_fingerprint:
+                reason = "Upstream content or extraction changed (no extraction fingerprint recorded)"
+            elif not _extraction_fingerprint_matches(source):
+                reason = "Extraction inputs changed"
+            else:
+                reason = "Upstream content changed"
             return DriftResult(
                 path=source.path,
                 url=source.url,
@@ -1447,7 +1457,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 local_hash=local_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
-                error="Local file is absent" if local_hash is None else None,
+                error=reason,
             )
         elif local_hash is not None and upstream_hash != local_hash:
             return DriftResult(
@@ -1457,6 +1467,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 local_hash=local_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
+                error="Local content differs from upstream",
             )
         if local_hash is None and registry_hash:
             return DriftResult(
@@ -1728,15 +1739,18 @@ def format_drift_alert_markdown(results: list[DriftResult]) -> str:
         "",
         "The scheduled upstream drift check detected differences between external sources and the local knowledge base under `app/data/`.",
         "",
-        "| Document Path | Upstream URL | Local Hash | Upstream Hash | Upstream Last Modified |",
-        "| :--- | :--- | :--- | :--- | :--- |",
+        "| Document Path | Upstream URL | Reason | Local Hash | Upstream Hash | Upstream Last Modified |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for d in drifted:
         doc_name = d.path.split("/")[-1]
+        reason = d.error
         local_h = (d.local_hash or "")[:8]
         upstream_h = (d.upstream_hash or "")[:8]
         last_mod = d.upstream_last_modified or "Unknown"
-        lines.append(f"| `{d.path}` | [{doc_name}]({d.url}) | `{local_h}` | `{upstream_h}` | {last_mod} |")
+        lines.append(
+            f"| `{d.path}` | [{doc_name}]({d.url}) | {reason} | `{local_h}` | `{upstream_h}` | {last_mod} |"
+        )
 
     for heading, group in (
         ("Sources That Could Not Be Reached", unreachable),
@@ -1884,6 +1898,7 @@ def _run(args: argparse.Namespace) -> int:
                     status_symbol = "❌"
                 print(f"{status_symbol} [{r.status}] {r.path}")
                 if r.status == "DRIFT_DETECTED":
+                    print(f"    Reason:        {r.error}")
                     print(f"    Local Hash:    {r.local_hash}")
                     print(f"    Upstream Hash: {r.upstream_hash}")
                 elif r.status in ("ERROR", "UNREACHABLE"):

@@ -92,7 +92,7 @@ def test_markdown_edit_refreshes_generated_pdf(tmp_path):
     data_dir.mkdir(parents=True)
     source = data_dir / "BCGEU_20th_Main_Agreement.md"
     source.write_text("Article 1 alpha applies to regular employees.\n", encoding="utf-8")
-    pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
+    pdf_url = "https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/bcgeu_memorandum_settlement_draft_20th_agreement_2025.pdf"
     resolve_document_link(
         "BCGEU_20th_Main_Agreement",
         "01_primary/BCGEU_20th_Main_Agreement.md",
@@ -151,7 +151,7 @@ def test_resolve_document_link_hosts_pdf_instead_of_upstream_url(tmp_path):
         encoding="utf-8",
     )
 
-    pdf_url = "https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf"
+    pdf_url = "https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/bcgeu_memorandum_settlement_draft_20th_agreement_2025.pdf"
     link = resolve_document_link(
         "BCGEU_20th_Main_Agreement",
         "01_primary/BCGEU_20th_Main_Agreement.md",
@@ -203,7 +203,7 @@ def test_generate_knowledge_base_links_registry_pdf(tmp_path):
     (data_dir / "sources.yaml").write_text(
         "sources:\n"
         "- path: app/data/01_primary/BCGEU_20th_Main_Agreement.md\n"
-        "  url: https://www.bcgeu.ca/sites/default/files/2024-04/20th_Main_Agreement.pdf\n"
+        "  url: https://www2.gov.bc.ca/assets/gov/careers/managers-supervisors/managing-employee-labour-relations/bcgeu_memorandum_settlement_draft_20th_agreement_2025.pdf\n"
         "  type: manual\n"
         "  category: agreement\n",
         encoding="utf-8",

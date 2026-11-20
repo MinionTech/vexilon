@@ -828,6 +828,7 @@ def test_check_source_drift_detected(mock_fetch):
     res = check_source_drift(entry, REPO_ROOT)
     assert res.status == "DRIFT_DETECTED"
     assert res.local_hash != res.upstream_hash
+    assert res.error == "Local content differs from upstream"
 
 
 @patch("scripts.sync_sources.fetch_upstream")
@@ -878,6 +879,15 @@ def test_format_drift_alert_markdown():
             local_hash="abcdef123456",
             upstream_hash="789012abcdef",
             upstream_last_modified="Thu, 17 Sep 2026 14:00:00 GMT",
+            error="Upstream content changed",
+        ),
+        DriftResult(
+            path="app/data/02_statutory/BC_OHS_Regulation_-_Part_01.md",
+            url="https://example.com/ohs",
+            status="DRIFT_DETECTED",
+            local_hash="333333444444",
+            upstream_hash="333333444444",
+            error="Extraction inputs changed",
         ),
         DriftResult(
             path="app/data/01_primary/Gov_BC_Standards_of_Conduct.md",
@@ -890,7 +900,9 @@ def test_format_drift_alert_markdown():
 
     alert_md = format_drift_alert_markdown(results)
     assert "## Upstream Document Drift Detected" in alert_md
-    assert "| `app/data/02_statutory/BC_Labour_Relations_Code.md` | [BC_Labour_Relations_Code.md](https://example.com/lrc) | `abcdef12` | `789012ab` | Thu, 17 Sep 2026 14:00:00 GMT |" in alert_md
+    assert "| Document Path | Upstream URL | Reason | Local Hash | Upstream Hash | Upstream Last Modified |" in alert_md
+    assert "| `app/data/02_statutory/BC_Labour_Relations_Code.md` | [BC_Labour_Relations_Code.md](https://example.com/lrc) | Upstream content changed | `abcdef12` | `789012ab` | Thu, 17 Sep 2026 14:00:00 GMT |" in alert_md
+    assert "| `app/data/02_statutory/BC_OHS_Regulation_-_Part_01.md` | [BC_OHS_Regulation_-_Part_01.md](https://example.com/ohs) | Extraction inputs changed | `33333344` | `33333344` | Unknown |" in alert_md
     assert "Gov_BC_Standards_of_Conduct.md" not in alert_md  # Only drifted docs should be listed
     assert "Steward Action Required" in alert_md
     assert "scripts/sync_sources.py --sync" in alert_md
@@ -1093,6 +1105,7 @@ def test_format_drift_alert_markdown_includes_error_entries():
             local_hash="a" * 64,
             upstream_hash="b" * 64,
             upstream_last_modified="Mon, 22 Sep 2026 00:00:00 GMT",
+            error="Upstream content changed",
         ),
         DriftResult(
             path="app/data/01_primary/Some_Policy.md",
@@ -1514,12 +1527,36 @@ def test_check_200_still_compares_hash_when_conditional_request_is_ignored(mock_
     result = check_source_drift(entry, tmp_path)
 
     assert result.status == "DRIFT_DETECTED"
+    assert result.error == "Upstream content changed"
     mock_fetch.assert_called_once_with(
         "https://example.com/doc",
         etag='"v1"',
         upstream_last_modified=_STALE_VALIDATOR,
     )
     assert entry.etag == '"v1"'
+
+
+@patch("scripts.sync_sources.fetch_upstream")
+def test_check_reason_is_unknown_without_extraction_fingerprint(mock_fetch, tmp_path):
+    """A baseline with no stored fingerprint can't tell an upstream change from an extractor change."""
+    body = "# Title\n\nOriginal body.\n"
+    _target, digest = _write_doc(tmp_path, body)
+    mock_fetch.return_value = (
+        "<html><body><div id='body'><h1>Title</h1><p>Rewritten body.</p></div></body></html>",
+        {"etag": '"v2"'},
+    )
+    entry = SourceEntry(
+        path="app/data/doc.md",
+        url="https://example.com/doc",
+        type="html_selector",
+        selector="#body",
+        content_hash=digest,
+    )
+
+    result = check_source_drift(entry, tmp_path)
+
+    assert result.status == "DRIFT_DETECTED"
+    assert result.error == "Upstream content or extraction changed (no extraction fingerprint recorded)"
 
 
 def _entry_with_validators(digest: str) -> SourceEntry:
@@ -1554,6 +1591,7 @@ def test_check_edited_file_is_drift_on_real_200(monkeypatch, tmp_path):
     assert result.local_hash == _digest(edited)
     assert result.upstream_hash == digest
     assert result.local_hash != result.upstream_hash
+    assert result.error == "Local content differs from upstream"
 
 
 def test_check_deleted_file_is_drift_when_upstream_matches_registry(monkeypatch, tmp_path):
@@ -2004,6 +2042,7 @@ def test_check_changed_selector_refetches_and_does_not_match(monkeypatch, tmp_pa
     assert result.status == "DRIFT_DETECTED"
     assert result.status != "MATCH"
     assert result.upstream_hash != digest
+    assert result.error == "Extraction inputs changed"
 
 
 def test_sync_changed_selector_does_not_skip_the_write(monkeypatch, tmp_path):
@@ -2115,6 +2154,7 @@ def test_check_source_drift_pdf_detected(mock_fetch, tmp_path):
         type="pdf",
         category="primary",
         content_hash=local_hash,
+        extraction_fingerprint="stale",
     )
     mock_fetch.return_value = (remote_content, {"last-modified": "Thu, 02 Oct 2026 12:00:00 GMT"})
 
@@ -2122,6 +2162,7 @@ def test_check_source_drift_pdf_detected(mock_fetch, tmp_path):
     assert res.status == "DRIFT_DETECTED"
     assert res.local_hash == local_hash
     assert res.upstream_hash == remote_hash
+    assert res.error == "Upstream content changed"
 
 
 @patch("scripts.sync_sources.fetch_upstream")
