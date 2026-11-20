@@ -2019,6 +2019,7 @@ def test_check_changed_selector_refetches_and_does_not_match(monkeypatch, tmp_pa
     assert result.status == "DRIFT_DETECTED"
     assert result.status != "MATCH"
     assert result.upstream_hash != digest
+    assert result.error == "Extraction inputs changed"
 
 
 def test_sync_changed_selector_does_not_skip_the_write(monkeypatch, tmp_path):

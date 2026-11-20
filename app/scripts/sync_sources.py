@@ -1440,6 +1440,12 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
             upstream_last_modified = headers.get("last-modified")
 
         if registry_hash and upstream_hash != registry_hash:
+            if local_hash is None:
+                reason = "Local file is absent"
+            elif source.extraction_fingerprint and not _extraction_fingerprint_matches(source):
+                reason = "Extraction inputs changed"
+            else:
+                reason = "Upstream content changed"
             return DriftResult(
                 path=source.path,
                 url=source.url,
@@ -1447,7 +1453,7 @@ def check_source_drift(source: SourceEntry, repo_root: Path) -> DriftResult:
                 local_hash=local_hash,
                 upstream_hash=upstream_hash,
                 upstream_last_modified=upstream_last_modified,
-                error="Local file is absent" if local_hash is None else "Upstream content changed",
+                error=reason,
             )
         elif local_hash is not None and upstream_hash != local_hash:
             return DriftResult(
