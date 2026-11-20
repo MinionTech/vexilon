@@ -280,7 +280,7 @@ def _page_map_needle(
     if not stripped.startswith("|"):
         return stripped, pdf_pages, 5
     cells = [cell.strip() for cell in stripped.strip("|").split("|")]
-    needle = " ".join(cell for cell in cells if cell.strip("-: "))
+    needle = " ".join(" ".join(cell for cell in cells if cell.strip("-: ")).split())
     return needle, collapsed_pdf_pages, len(collapsed_pdf_pages)
 
 

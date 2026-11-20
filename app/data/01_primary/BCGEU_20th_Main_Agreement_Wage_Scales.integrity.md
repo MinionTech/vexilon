@@ -31,7 +31,7 @@ The 55 absent words are the repeated per-page table headings (`CLASSIFICATION TI
 
 ## Values printed in error in the source
 
-Values are transcribed as printed. A comparison of the April 6, 2025 and April 5, 2026 grids with the BC Public Service salary grids page (https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/salaries/salarylookuptool/grids) matched 381 of 384 rows exactly. The three that differ are misprints in this PDF:
+Values are transcribed as printed. Each of the three tables below is followed by a quoted line starting `Transcription note, not part of the agreement:` that gives the gov.bc.ca value; those lines are left out of the comparison above. A comparison of the April 6, 2025 and April 5, 2026 grids with the BC Public Service salary grids page (https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/salaries/salarylookuptool/grids) matched 381 of 384 rows exactly. The three that differ are misprints in this PDF:
 
 | Grid | Effective | Step | Column | PDF prints | gov.bc.ca |
 |------|-----------|------|--------|------------|-----------|

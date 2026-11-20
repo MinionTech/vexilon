@@ -164,6 +164,9 @@ def test_page_map_needle_joins_table_cells():
         collapsed,
         9,
     )
+    assert indexing._page_map_needle("| Administrative  Officer | 42,055.17 |", pages, collapsed)[0] == (
+        "Administrative Officer 42,055.17"
+    )
     assert indexing._page_map_needle("|---|---|---|", pages, collapsed) == ("", collapsed, 9)
     assert indexing._page_map_needle("Plain clause text", pages, collapsed) == ("Plain clause text", pages, 5)
 

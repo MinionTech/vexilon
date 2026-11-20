@@ -60,6 +60,8 @@ and industrial equipment; tradespersons, and marine crew and officers.
 | 4 | 46,560.01 | 3,880.00 | 1,784.64 | 25.4949 |
 | 5 | 48,330.17 | 4,027.51 | 1,852.49 | 26.4641 |
 
+> Transcription note, not part of the agreement: the PDF prints the step 1 monthly rate as 3,593,91. The BC Public Service salary grids page (gov.bc.ca) lists it as 3,593.91.
+
 ### Grid Level 3 (Effective April 6, 2025)
 
 | Step | Annual | Monthly | Bi-weekly | Hourly |
@@ -478,6 +480,8 @@ and industrial equipment; tradespersons, and marine crew and officers.
 | 4 | 59,282.72 | 4,940.23 | 2,272.30 | 32.4614 |
 | 5 | 61,647.97 | 5,137.33 | 2,362.96 | 33.7566 |
 
+> Transcription note, not part of the agreement: the PDF prints the step 1 annual rate as 54,864.22. The BC Public Service salary grids page (gov.bc.ca) lists it as 54,684.22.
+
 ### Grid Level 11 (Effective April 5, 2026)
 
 | Step | Annual | Monthly | Bi-weekly | Hourly |
@@ -557,6 +561,8 @@ and industrial equipment; tradespersons, and marine crew and officers.
 | 3 | 71,950.38 | 5,995.87 | 2,757.85 | 39.3979 |
 | 4 | 74.009.08 | 6,167.42 | 2,836.76 | 40.5251 |
 | 5 | 77,100.40 | 6,425.03 | 2,955.25 | 42.2179 |
+
+> Transcription note, not part of the agreement: the PDF prints the step 4 annual rate as 74.009.08. The BC Public Service salary grids page (gov.bc.ca) lists it as 74,009.08.
 
 ### Grid Level 19 (Effective April 5, 2026)
 

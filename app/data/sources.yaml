@@ -43,7 +43,7 @@ sources:
   url: https://agreements.bcgeu.ca/document/cEFYT1pBS1g2NjQ9
   type: manual
   category: agreement
-  content_hash: 862bf510277cd57724fcb640589e19e5519cb8c7cb05050aa9f6d2973d8317ff
+  content_hash: ad0e0397de360ab6175725b10f4a12dd19aaa243f54102317237084ec8ae0df9
   last_synced: '2026-11-20'
 - path: app/data/01_primary/BCGEU_20th_Social_Information_Health_Component_Agreement.md
   url: https://agreements.bcgeu.ca/document/V0hwelFPdW1KQkk9
