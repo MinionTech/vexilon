@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import time
 import hashlib
@@ -265,23 +266,24 @@ def _same_stem_page_map_pdf(md_path: Path) -> Path | None:
     return None
 
 
+_TABLE_SEPARATOR_CELL = re.compile(r"^:?-+:?$")
+
+
 def _page_map_needle(
     stripped: str, pdf_pages: list[str], collapsed_pdf_pages: list[str]
-) -> tuple[str, list[str], int]:
-    """Text to look for, the page texts to look in, and how many pages ahead to look.
+) -> tuple[str, list[str], bool]:
+    """Text to look for, the page texts to look in, and whether it is a table row.
 
-    A line is looked for as written in the current page and the four after it.
-    A Markdown table row is looked for by its cell text joined with single
-    spaces, in whitespace-collapsed page text, through the end of the PDF: a
-    row of figures is specific enough not to match an unrelated page, and the
-    pages before a table (a sideways table, for one) may match no line at all.
-    A separator row has no cell text.
+    A line is looked for as written. A Markdown table row is looked for by its
+    cell text joined with single spaces, in whitespace-collapsed page text. A
+    separator row has no text to look for.
     """
     if not stripped.startswith("|"):
-        return stripped, pdf_pages, 5
+        return stripped, pdf_pages, False
     cells = [cell.strip() for cell in stripped.strip("|").split("|")]
-    needle = " ".join(" ".join(cell for cell in cells if cell.strip("-: ")).split())
-    return needle, collapsed_pdf_pages, len(collapsed_pdf_pages)
+    if all(_TABLE_SEPARATOR_CELL.match(cell) for cell in cells):
+        return "", collapsed_pdf_pages, True
+    return " ".join(" ".join(cells).split()), collapsed_pdf_pages, True
 
 
 def load_md_chunks(md_path: Path) -> list[dict]:
@@ -344,17 +346,26 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         
         page_num: int | None = None
         if pdf_pages and stripped:
-            needle, pages, lookahead = _page_map_needle(stripped, pdf_pages, collapsed_pdf_pages)
+            needle, pages, is_table_row = _page_map_needle(stripped, pdf_pages, collapsed_pdf_pages)
             if len(needle) > 20:
                 found = False
-                for p_idx in range(current_pdf_page, min(current_pdf_page + lookahead, len(pages))):
+                for p_idx in range(current_pdf_page, min(current_pdf_page + 5, len(pages))):
                     if needle in pages[p_idx]:
                         current_pdf_page = p_idx
                         page_num = current_pdf_page + 1
                         found = True
                         break
-                if not found:
-                    page_num = current_pdf_page + 1
+                if not found and is_table_row:
+                    # Pages a table follows may match nothing (a sideways table,
+                    # for one). A row printed on exactly one later page places it.
+                    later = [
+                        p_idx
+                        for p_idx in range(current_pdf_page + 5, len(pages))
+                        if needle in pages[p_idx]
+                    ]
+                    if len(later) == 1:
+                        current_pdf_page = later[0]
+                page_num = current_pdf_page + 1
             else:
                 page_num = current_pdf_page + 1
         elif pdf_pages:
