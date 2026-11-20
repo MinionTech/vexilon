@@ -1,10 +1,10 @@
 # Human Rights Code
 
 **Source:** [Human Rights Code](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/00_96210_01)  
-**Upstream Last Modified:** Sun, 27 Sep 2026 01:59:31 GMT  
-**Ingestion Date:** 2026-09-27  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:09 GMT  
+**Ingestion Date:** 2026-11-20  
 
-This Act is current to September 22, 2026
+This Act is current to November 17, 2026
 
 See the [Tables of Legislative Changes](/civix/content/complete/statreg/712470149/96210/tlc96210_f/?xsl=/templates/browse.xsl) for this Act’s legislative history, including any changes not in force.
 
@@ -14,159 +14,159 @@ See the [Tables of Legislative Changes](/civix/content/complete/statreg/71247014
 
 *Contents*
 
-[1](#section1) [Definitions](#section1)
+[1](#definitions) [Definitions](#definitions)
 
-[2](#section2) [Discrimination and intent](#section2)
+[2](#discrimination-and-intent) [Discrimination and intent](#discrimination-and-intent)
 
-[3](#section3) [Purposes](#section3)
+[3](#purposes) [Purposes](#purposes)
 
-[4](#section4) [Code prevails](#section4)
+[4](#code-prevails) [Code prevails](#code-prevails)
 
-[5-6](#section5t6) [Repealed](#section5t6)
+[5-6](#repealed) [Repealed](#repealed)
 
-[7](#section7) [Discriminatory publication](#section7)
+[7](#discriminatory-publication) [Discriminatory publication](#discriminatory-publication)
 
-[8](#section8) [Discrimination in accommodation, service and facility](#section8)
+[8](#discrimination-in-accommodation-service-and-facility) [Discrimination in accommodation, service and facility](#discrimination-in-accommodation-service-and-facility)
 
-[9](#section9) [Discrimination in purchase of property](#section9)
+[9](#discrimination-in-purchase-of-property) [Discrimination in purchase of property](#discrimination-in-purchase-of-property)
 
-[10](#section10) [Discrimination in tenancy premises](#section10)
+[10](#discrimination-in-tenancy-premises) [Discrimination in tenancy premises](#discrimination-in-tenancy-premises)
 
-[11](#section11) [Discrimination in employment advertisements](#section11)
+[11](#discrimination-in-employment-advertisements) [Discrimination in employment advertisements](#discrimination-in-employment-advertisements)
 
-[12](#section12) [Discrimination in wages](#section12)
+[12](#discrimination-in-wages) [Discrimination in wages](#discrimination-in-wages)
 
-[13](#section13) [Discrimination in employment](#section13)
+[13](#discrimination-in-employment) [Discrimination in employment](#discrimination-in-employment)
 
-[14](#section14) [Discrimination by unions and associations](#section14)
+[14](#discrimination-by-unions-and-associations) [Discrimination by unions and associations](#discrimination-by-unions-and-associations)
 
-[15-20](#section15t20) [Repealed](#section15t20)
+[15-20](#repealed-1) [Repealed](#repealed-1)
 
-[21](#section21) [Complaints](#section21)
+[21](#complaints) [Complaints](#complaints)
 
-[22](#section22) [Time limit for filing a complaint](#section22)
+[22](#time-limit-for-filing-a-complaint) [Time limit for filing a complaint](#time-limit-for-filing-a-complaint)
 
-[22.1](#section22.1) [Commissioner and other intervenors](#section22.1)
+[22.1](#commissioner-and-other-intervenors) [Commissioner and other intervenors](#commissioner-and-other-intervenors)
 
-[23-24](#section23t24) [Repealed](#section23t24)
+[23-24](#repealed-2) [Repealed](#repealed-2)
 
-[25](#section25) [Deferral of a complaint](#section25)
+[25](#deferral-of-a-complaint) [Deferral of a complaint](#deferral-of-a-complaint)
 
-[26](#section26) [Repealed](#section26)
+[26](#repealed-3) [Repealed](#repealed-3)
 
-[27](#section27) [Dismissal of a complaint](#section27)
+[27](#dismissal-of-a-complaint) [Dismissal of a complaint](#dismissal-of-a-complaint)
 
-[27.1](#section27.1) [Assignment of complaints](#section27.1)
+[27.1](#assignment-of-complaints) [Assignment of complaints](#assignment-of-complaints)
 
-[27.2](#section27.2) [Evidence](#section27.2)
+[27.2](#evidence) [Evidence](#evidence)
 
-[27.3](#section27.3) [Powers to make rules and orders respecting practice and procedure](#section27.3)
+[27.3](#powers-to-make-rules-and-orders-respecting-practice-and-procedure) [Powers to make rules and orders respecting practice and procedure](#powers-to-make-rules-and-orders-respecting-practice-and-procedure)
 
-[27.4](#section27.4) [Repealed](#section27.4)
+[27.4](#repealed-4) [Repealed](#repealed-4)
 
-[27.5](#section27.5) [Dismissal for failure to pursue complaint](#section27.5)
+[27.5](#dismissal-for-failure-to-pursue-complaint) [Dismissal for failure to pursue complaint](#dismissal-for-failure-to-pursue-complaint)
 
-[27.6](#section27.6) [Assisting parties to settle](#section27.6)
+[27.6](#assisting-parties-to-settle) [Assisting parties to settle](#assisting-parties-to-settle)
 
-[28-29](#section28t29) [Repealed](#section28t29)
+[28-29](#repealed-5) [Repealed](#repealed-5)
 
-[30](#section30) [Enforcement of settlement agreements](#section30)
+[30](#enforcement-of-settlement-agreements) [Enforcement of settlement agreements](#enforcement-of-settlement-agreements)
 
-[31](#section31) [Human Rights Tribunal](#section31)
+[31](#human-rights-tribunal) [Human Rights Tribunal](#human-rights-tribunal)
 
-[31.1](#section31.1) [Repealed](#section31.1)
+[31.1](#repealed-6) [Repealed](#repealed-6)
 
-[32](#section32) [Application of Administrative Tribunals Act to tribunal](#section32)
+[32](#application-of-administrative-tribunals-act-to-tribunal) [Application of Administrative Tribunals Act to tribunal](#application-of-administrative-tribunals-act-to-tribunal)
 
-[33](#section33) [Staff of the tribunal](#section33)
+[33](#staff-of-the-tribunal) [Staff of the tribunal](#staff-of-the-tribunal)
 
-[34](#section34) [Repealed](#section34)
+[34](#repealed-7) [Repealed](#repealed-7)
 
-[34.1](#section34.1) [Repealed](#section34.1)
+[34.1](#repealed-8) [Repealed](#repealed-8)
 
-[35-36](#section35t36) [Repealed](#section35t36)
+[35-36](#repealed-9) [Repealed](#repealed-9)
 
-[37](#section37) [Remedies](#section37)
+[37](#remedies) [Remedies](#remedies)
 
-[38](#section38) [Modification of orders](#section38)
+[38](#modification-of-orders) [Modification of orders](#modification-of-orders)
 
-[38.1](#section38.1) [Repealed](#section38.1)
+[38.1](#repealed-10) [Repealed](#repealed-10)
 
-[39](#section39) [Enforcement of remedies](#section39)
+[39](#enforcement-of-remedies) [Enforcement of remedies](#enforcement-of-remedies)
 
-[39.1](#section39.1) [Annual report](#section39.1)
+[39.1](#annual-report) [Annual report](#annual-report)
 
-[40](#section40) [Disclosure](#section40)
+[40](#disclosure) [Disclosure](#disclosure)
 
-[41](#section41) [Exemptions](#section41)
+[41](#exemptions) [Exemptions](#exemptions)
 
-[42](#section42) [Special programs](#section42)
+[42](#special-programs) [Special programs](#special-programs)
 
-[43](#section43) [Protection](#section43)
+[43](#protection) [Protection](#protection)
 
-[44](#section44) [Style of cause for proceedings](#section44)
+[44](#style-of-cause-for-proceedings) [Style of cause for proceedings](#style-of-cause-for-proceedings)
 
-[45](#section45) [Technical defects](#section45)
+[45](#technical-defects) [Technical defects](#technical-defects)
 
-[46](#section46) [Delegation of powers](#section46)
+[46](#delegation-of-powers) [Delegation of powers](#delegation-of-powers)
 
-[47](#section47) [Time limits](#section47)
+[47](#time-limits) [Time limits](#time-limits)
 
-[47.01](#section47.01) [Human Rights Commissioner](#section47.01)
+[47.01](#human-rights-commissioner) [Human Rights Commissioner](#human-rights-commissioner)
 
-[47.02](#section47.02) [Resignation, suspension or removal of commissioner](#section47.02)
+[47.02](#resignation-suspension-or-removal-of-commissioner) [Resignation, suspension or removal of commissioner](#resignation-suspension-or-removal-of-commissioner)
 
-[47.03](#section47.03) [Acting commissioner](#section47.03)
+[47.03](#acting-commissioner) [Acting commissioner](#acting-commissioner)
 
-[47.04](#section47.04) [Salary, expenses and benefits of commissioner](#section47.04)
+[47.04](#salary-expenses-and-benefits-of-commissioner) [Salary, expenses and benefits of commissioner](#salary-expenses-and-benefits-of-commissioner)
 
-[47.05](#section47.05) [Oath of commissioner](#section47.05)
+[47.05](#oath-of-commissioner) [Oath of commissioner](#oath-of-commissioner)
 
-[47.06](#section47.06) [Staff of commissioner](#section47.06)
+[47.06](#staff-of-commissioner) [Staff of commissioner](#staff-of-commissioner)
 
-[47.07](#section47.07) [Delegation by commissioner](#section47.07)
+[47.07](#delegation-by-commissioner) [Delegation by commissioner](#delegation-by-commissioner)
 
-[47.08](#section47.08) [Advisory council](#section47.08)
+[47.08](#advisory-council) [Advisory council](#advisory-council)
 
-[47.09](#section47.09) [Restrictions on disclosure by commissioner and staff](#section47.09)
+[47.09](#restrictions-on-disclosure-by-commissioner-and-staff) [Restrictions on disclosure by commissioner and staff](#restrictions-on-disclosure-by-commissioner-and-staff)
 
-[47.10](#section47.10) [Non-compellability of commissioner and staff](#section47.10)
+[47.10](#non-compellability-of-commissioner-and-staff) [Non-compellability of commissioner and staff](#non-compellability-of-commissioner-and-staff)
 
-[47.11](#section47.11) [Personal liability protection of commissioner and staff](#section47.11)
+[47.11](#personal-liability-protection-of-commissioner-and-staff) [Personal liability protection of commissioner and staff](#personal-liability-protection-of-commissioner-and-staff)
 
-[47.12](#section47.12) [Powers of commissioner](#section47.12)
+[47.12](#powers-of-commissioner) [Powers of commissioner](#powers-of-commissioner)
 
-[47.13](#section47.13) [Provision of tribunal records to commissioner](#section47.13)
+[47.13](#provision-of-tribunal-records-to-commissioner) [Provision of tribunal records to commissioner](#provision-of-tribunal-records-to-commissioner)
 
-[47.14](#section47.14) [Referrals](#section47.14)
+[47.14](#referrals) [Referrals](#referrals)
 
-[47.15](#section47.15) [Commissioner's inquiry](#section47.15)
+[47.15](#commissioners-inquiry) [Commissioner's inquiry](#commissioners-inquiry)
 
-[47.16](#section47.16) [Commissioner's order powers for inquiries](#section47.16)
+[47.16](#commissioners-order-powers-for-inquiries) [Commissioner's order powers for inquiries](#commissioners-order-powers-for-inquiries)
 
-[47.17](#section47.17) [Expenses reimbursement](#section47.17)
+[47.17](#expenses-reimbursement) [Expenses reimbursement](#expenses-reimbursement)
 
-[47.18](#section47.18) [Cabinet information protected](#section47.18)
+[47.18](#cabinet-information-protected) [Cabinet information protected](#cabinet-information-protected)
 
-[47.19](#section47.19) [Enforcement of commissioner's orders](#section47.19)
+[47.19](#enforcement-of-commissioners-orders) [Enforcement of commissioner's orders](#enforcement-of-commissioners-orders)
 
-[47.20](#section47.20) [Commissioner's inquiry reports](#section47.20)
+[47.20](#commissioners-inquiry-reports) [Commissioner's inquiry reports](#commissioners-inquiry-reports)
 
-[47.21](#section47.21) [Protection](#section47.21)
+[47.21](#protection-1) [Protection](#protection-1)
 
-[47.22](#section47.22) [Offences](#section47.22)
+[47.22](#offences) [Offences](#offences)
 
-[47.23](#section47.23) [Annual report of commissioner](#section47.23)
+[47.23](#annual-report-of-commissioner) [Annual report of commissioner](#annual-report-of-commissioner)
 
-[47.24](#section47.24) [Special reports of commissioner](#section47.24)
+[47.24](#special-reports-of-commissioner) [Special reports of commissioner](#special-reports-of-commissioner)
 
-[48](#section48) [Offence Act](#section48)
+[48](#offence-act) [Offence Act](#offence-act)
 
-[49](#section49) [Power to make regulations](#section49)
+[49](#power-to-make-regulations) [Power to make regulations](#power-to-make-regulations)
 
-[50](#section50) [Repealed](#section50)
+[50](#repealed-11) [Repealed](#repealed-11)
 
-[50.1](#section50.1) [Review of sections 47.01 to 47.24](#section50.1)
+[50.1](#review-of-sections-4701-to-4724) [Review of sections 47.01 to 47.24](#review-of-sections-4701-to-4724)
 
 #### Definitions
 

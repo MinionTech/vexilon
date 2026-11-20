@@ -2,23 +2,23 @@
 
 **Source:** [Standards of Conduct for BC Public Service employees - Province of British Columbia](https://www2.gov.bc.ca/gov/content/careers-myhr/about-the-bc-public-service/ethics-standards-of-conduct/standards-of-conduct)  
 **Upstream Last Modified:** Unknown  
-**Ingestion Date:** 2026-09-27  
+**Ingestion Date:** 2026-11-20  
 
 ## On this page
 
-- [Human resources policy 09](#hr09)
+- [Human resources policy 09](#standards-of-conduct-for-public-service-employees---human-resources-policy-09)
 - [Loyalty](#loyalty)
 - [Confidentiality](#confidentiality)
 - [Public comments](#public-comments)
 - [Political activity](#political-activity)
-- [Service to the public](#service)
+- [Service to the public](#service-to-the-public)
 - [Workplace behaviour](#workplace-behaviour)
-- [Conflicts of interest](#conflicts)
-- [Allegations of wrongdoing](#wrongdoing)
-- [Legal proceedings](#legal)
-- [Working relationships](#relationships)
-- [Human resource decisions](#decisions)
-- [Outside remunerative and volunteer work](#outside)
+- [Conflicts of interest](#conflicts-of-interest)
+- [Allegations of wrongdoing](#allegations-of-wrongdoing)
+- [Legal proceedings](#legal-proceedings)
+- [Working relationships](#working-relationships)
+- [Human resource decisions](#human-resource-decisions)
+- [Outside remunerative and volunteer work](#outside-remunerative-and-volunteer-work)
 - [Responsibilities](#responsibilities)
 - [Resources](#resources)
 - [Contact us](#contact-us)
@@ -45,7 +45,7 @@ Confidential information, in any form, that employees receive through their empl
 
 The proper handling and protection of confidential information is applicable both within and outside of government and continues to apply after the employment relationship ends.
 
-Confidential information that employees receive through their employment must not be used by an employee for the purpose of furthering any private interest, or as a means of making personal gains. (See the [Conflicts of Interest](#conflicts) section of this policy statement for details.)
+Confidential information that employees receive through their employment must not be used by an employee for the purpose of furthering any private interest, or as a means of making personal gains. (See the [Conflicts of Interest](#conflicts-of-interest) section of this policy statement for details.)
 
 ## Public comments
 

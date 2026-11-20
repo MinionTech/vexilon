@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_24)  
-**Upstream Last Modified:** Wed, 07 Oct 2026 03:05:10 GMT  
-**Ingestion Date:** 2026-10-07  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:32 GMT  
+**Ingestion Date:** 2026-11-20  
 
 Part 31 — Firefighting
 

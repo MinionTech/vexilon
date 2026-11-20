@@ -1,8 +1,8 @@
 # Occupational Health and Safety Regulation
 
 **Source:** [Occupational Health and Safety Regulation](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/296_97_21)  
-**Upstream Last Modified:** Wed, 07 Oct 2026 03:05:08 GMT  
-**Ingestion Date:** 2026-10-07  
+**Upstream Last Modified:** Fri, 20 Nov 2026 22:01:29 GMT  
+**Ingestion Date:** 2026-11-20  
 
 Part 26 — Forestry Operations and Similar Activities
 
@@ -196,8 +196,7 @@ General Requirements
 
 [en. B.C. Reg. 20/2008, App. A, s. 4.]
 
-#### Planning and conducting activities involving trees
-other than a forestry operation or tree-climbing activities
+#### Planning and conducting activities involving trees other than a forestry operation or tree-climbing activities
 
 **26.2.1** (1) The employer must ensure that work activities at the workplace that involve pruning, repairing, maintaining, bucking or manually falling trees, taking down trees in pieces or taking down parts of trees are
 
