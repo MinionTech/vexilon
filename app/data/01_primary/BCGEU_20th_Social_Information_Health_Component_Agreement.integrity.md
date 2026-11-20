@@ -22,7 +22,7 @@ Normalized words (lowercase, punctuation removed) of the PDF body (all pages exc
 
 | Metric | PDF body | Markdown |
 |--------|----------|----------|
-| Words | 12855 | 12855 |
+| Words | 12859 | 12859 |
 | Words in PDF absent from Markdown | 0 | — |
 | Words in Markdown absent from PDF | — | 0 |
 | Word-order similarity | 0.9960 | |

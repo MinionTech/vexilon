@@ -1,4 +1,5 @@
 import pytest
+import fitz
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 import indexing
@@ -153,3 +154,43 @@ def test_load_md_chunks_handles_missing_file(tmp_path):
     """MD loader should raise FileNotFoundError if file missing."""
     with pytest.raises(FileNotFoundError):
         indexing.load_md_chunks(tmp_path / "missing.md")
+
+
+def test_page_map_needle_joins_table_cells():
+    """A table row is looked up by its cells in reading order, a separator row by nothing."""
+    pages, collapsed = ["a  b"] * 9, ["a b"] * 9
+    assert indexing._page_map_needle("| 1 | 42,055.17 | 3,504.60 |", pages, collapsed) == (
+        "1 42,055.17 3,504.60",
+        collapsed,
+        9,
+    )
+    assert indexing._page_map_needle("|---|---|---|", pages, collapsed) == ("", collapsed, 9)
+    assert indexing._page_map_needle("Plain clause text", pages, collapsed) == ("Plain clause text", pages, 5)
+
+
+def test_load_md_chunks_maps_table_rows_to_pdf_pages(tmp_path, monkeypatch):
+    """Rows of a Markdown table take the page of the PDF that prints their cells."""
+    monkeypatch.setattr(indexing, "CHUNK_SIZE", 30)
+    monkeypatch.setattr(indexing, "CHUNK_OVERLAP", 0)
+    monkeypatch.setattr(indexing, "DATA_DIR", tmp_path)
+
+    pdf = fitz.open()
+    pdf.new_page().insert_text((72, 72), "Effective April 6, 2025 the wage scale is as follows.")
+    page = pdf.new_page()
+    for i, cell in enumerate(["Step", "Annual", "Monthly", "Bi-weekly", "Hourly", "1", "42,055.17", "3,504.60", "1,611.97", "23.0281"]):
+        page.insert_text((72, 72 + 14 * i), cell)
+    pdf.save(tmp_path / "grid.pdf")
+
+    md_file = tmp_path / "grid.md"
+    md_file.write_text(
+        "# WAGE SCALE\n"
+        "Effective April 6, 2025 the wage scale is as follows.\n\n"
+        "| Step | Annual | Monthly | Bi-weekly | Hourly |\n"
+        "|---|---|---|---|---|\n"
+        "| 1 | 42,055.17 | 3,504.60 | 1,611.97 | 23.0281 |\n"
+    )
+
+    chunks = indexing.load_md_chunks(md_file)
+    row_chunks = [c for c in chunks if "42,055.17" in c["text"] and "Effective" not in c["text"]]
+    assert row_chunks
+    assert {c["page"] for c in row_chunks} == {2}

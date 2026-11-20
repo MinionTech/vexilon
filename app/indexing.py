@@ -75,7 +75,7 @@ EMBED_DIM = int(os.getenv("EMBED_DIM", "384"))
 # Bump when chunking, citation prefixes, or vector normalization change.
 # Document-cache identity includes this value. A chunking change that does not
 # bump it keeps serving stale chunks.
-CACHE_PIPELINE_VERSION = "v2"
+CACHE_PIPELINE_VERSION = "v3"
 SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", 40))
 # Document score boosting weights
 TIER1_BOOST = float(os.getenv("AGNAV_TIER1_BOOST", "1.2"))
@@ -265,6 +265,25 @@ def _same_stem_page_map_pdf(md_path: Path) -> Path | None:
     return None
 
 
+def _page_map_needle(
+    stripped: str, pdf_pages: list[str], collapsed_pdf_pages: list[str]
+) -> tuple[str, list[str], int]:
+    """Text to look for, the page texts to look in, and how many pages ahead to look.
+
+    A line is looked for as written in the current page and the four after it.
+    A Markdown table row is looked for by its cell text joined with single
+    spaces, in whitespace-collapsed page text, through the end of the PDF: a
+    row of figures is specific enough not to match an unrelated page, and the
+    pages before a table (a sideways table, for one) may match no line at all.
+    A separator row has no cell text.
+    """
+    if not stripped.startswith("|"):
+        return stripped, pdf_pages, 5
+    cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+    needle = " ".join(cell for cell in cells if cell.strip("-: "))
+    return needle, collapsed_pdf_pages, len(collapsed_pdf_pages)
+
+
 def load_md_chunks(md_path: Path) -> list[dict]:
     content = md_path.read_text(encoding="utf-8").strip()
     if not content:
@@ -285,6 +304,8 @@ def load_md_chunks(md_path: Path) -> list[dict]:
                     pdf_pages.append(page.get_text().replace("\n", " "))
         except Exception as exc:
             raise PageMapUnreadable(pdf_path) from exc
+    # A table row's cells sit on the page in reading order with only whitespace between them.
+    collapsed_pdf_pages = [" ".join(page.split()) for page in pdf_pages]
             
     
     sections = []
@@ -323,10 +344,11 @@ def load_md_chunks(md_path: Path) -> list[dict]:
         
         page_num: int | None = None
         if pdf_pages and stripped:
-            if len(stripped) > 20:
+            needle, pages, lookahead = _page_map_needle(stripped, pdf_pages, collapsed_pdf_pages)
+            if len(needle) > 20:
                 found = False
-                for p_idx in range(current_pdf_page, min(current_pdf_page + 5, len(pdf_pages))):
-                    if stripped in pdf_pages[p_idx]:
+                for p_idx in range(current_pdf_page, min(current_pdf_page + lookahead, len(pages))):
+                    if needle in pages[p_idx]:
                         current_pdf_page = p_idx
                         page_num = current_pdf_page + 1
                         found = True

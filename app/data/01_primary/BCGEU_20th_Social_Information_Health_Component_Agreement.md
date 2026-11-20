@@ -309,11 +309,15 @@ actual time worked shall be maintained.
 
 (5) In accordance with operational requirements and subject to (c)(6) below, the surplus
 and/or lieu days off will be scheduled by mutual agreement by the following methods:
-Scheduled into the roster which may be attached to the normal days of rest;
-Scheduled into the roster which may not be attached to the normal days of rest;
-Block of days attached to annual vacations and scheduled as per
+
+(i) Scheduled into the roster which may be attached to the normal days of rest;
+
+(ii) Scheduled into the roster which may not be attached to the normal days of rest;
+
+(iii) Block of days attached to annual vacations and scheduled as per
 Articles 8 - Annual Vacations for Employees and 11 - Auxiliary Employees;
-Block of days not attached to annual vacations;
+
+(iv) Block of days not attached to annual vacations;
 
 (v) Random days which may or may not be attached to days of rest;
 
