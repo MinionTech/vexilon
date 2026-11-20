@@ -9,7 +9,7 @@ Verifies that the Enter-to-submit handler works correctly:
 import pytest
 from playwright.sync_api import Page
 
-from helpers import wait_for_custom_js
+from helpers import submit_chat_with_enter, wait_for_custom_js
 
 
 def test_enter_submits_message(page: Page, app_url: str):
@@ -26,12 +26,7 @@ def test_enter_submits_message(page: Page, app_url: str):
     assert filled_value == test_message, f"Failed to type into textarea. Got: {repr(filled_value)}"
 
     page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
-    textarea.press("Enter")
-
-    page.wait_for_function(
-        "document.querySelector('textarea').value === ''",
-        timeout=15000,
-    )
+    submit_chat_with_enter(page, textarea)
 
     final_textarea_value = textarea.input_value()
     assert final_textarea_value == "", f"Textarea should be cleared after submission. Got: {repr(final_textarea_value)}"

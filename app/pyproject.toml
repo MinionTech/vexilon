@@ -35,6 +35,7 @@ dev = [
     "pytest-cov>=6.0.0",            # Coverage reporting
     "pytest-mock>=3.14.0",          # Mocking fixtures (mocker)
     "pytest-playwright>=0.10.0",     # Playwright for e2e UI tests
+    "pytest-rerunfailures>=16.7",    # One retry for flaky UI e2e only
     "watchfiles>=0.21.0",           # Hot-reload engine
     "httpx>=0.27.0",                # Async HTTP client for smoke tests
 ]
