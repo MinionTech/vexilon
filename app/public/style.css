@@ -160,6 +160,13 @@ body {
 .dark #chat-input:focus-visible {
     box-shadow: 0 0 0 2px #212121, 0 0 0 4px #f5145f !important;
 }
+@media (forced-colors: active) {
+    #chat-input:focus-visible {
+        outline: 3px solid Highlight !important;
+        outline-offset: 2px !important;
+        box-shadow: none !important;
+    }
+}
 
 /* 9. Primary action contrast (WCAG 1.4.3) */
 /* White text on Chainlit's --primary #f5145f is 4.08:1, below the 4.5:1 AA

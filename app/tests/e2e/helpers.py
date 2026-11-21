@@ -150,7 +150,8 @@ def axe_core_path() -> Path:
     cache_dir.mkdir(parents=True, exist_ok=True)
     dest = cache_dir / f"axe.min.{AXE_CORE_VERSION}.js"
     if not dest.exists() or hashlib.sha256(dest.read_bytes()).hexdigest() != AXE_CORE_SHA256:
-        urllib.request.urlretrieve(AXE_CORE_URL, dest)
+        with urllib.request.urlopen(AXE_CORE_URL, timeout=30) as response:
+            dest.write_bytes(response.read())
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
     if digest != AXE_CORE_SHA256:
         raise AssertionError(
