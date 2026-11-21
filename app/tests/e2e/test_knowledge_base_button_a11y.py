@@ -18,6 +18,7 @@ def test_knowledge_base_button_accessible_name(page: Page, app_url: str):
     readme_button = wait_for_knowledge_base_button(page)
 
     expect(readme_button).to_have_accessible_name("Knowledge Base")
+    assert "Knowledge Base" in readme_button.inner_text()
 
     visible_label = page.evaluate(
         """() => getComputedStyle(document.querySelector('#readme-button'), '::after').content"""

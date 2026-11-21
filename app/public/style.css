@@ -150,3 +150,26 @@ body {
 .dark [role="dialog"][data-knowledge-base-drawer] > button {
     background-color: #212121 !important;
 }
+
+/* 8. Visible keyboard focus on the composer textarea (WCAG 2.4.7) */
+/* Chainlit sets focus-visible:ring-0 / outline-none on #chat-input. */
+#chat-input:focus-visible {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #f5145f !important;
+    outline: none !important;
+}
+.dark #chat-input:focus-visible {
+    box-shadow: 0 0 0 2px #212121, 0 0 0 4px #f5145f !important;
+}
+
+/* 9. Primary action contrast (WCAG 1.4.3) */
+/* White text on Chainlit's --primary #f5145f is 4.08:1, below the 4.5:1 AA
+   minimum for normal-size text. #e7135a is the same hue, 4.53:1 on white. */
+#confirm,
+button.bg-primary {
+    background-color: #e7135a !important;
+    color: #ffffff !important;
+}
+#confirm:hover,
+button.bg-primary:hover {
+    background-color: #c8104e !important;
+}

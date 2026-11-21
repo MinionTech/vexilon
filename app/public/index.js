@@ -33,13 +33,17 @@
     }
 
     // ── Knowledge Base button a11y (WCAG 2.5.3 Label in Name) ────────────────
-    // CSS in style.css relabels the visible text; aria-label keeps the
-    // accessible name in sync for screen readers and voice control.
+    // Keep the visible label, aria-label, and inner text in sync as
+    // "Knowledge Base" (Chainlit's default visible text is "Readme").
 
     function labelKnowledgeBaseButton() {
         const btn = document.querySelector("#readme-button");
-        if (!btn || btn.dataset.knowledgeBaseLabeled) return;
+        if (!btn) return;
         btn.setAttribute("aria-label", "Knowledge Base");
+        const label = btn.querySelector("span");
+        if (label && label.textContent.trim() !== "Knowledge Base") {
+            label.textContent = "Knowledge Base";
+        }
         btn.dataset.knowledgeBaseLabeled = "true";
     }
 
@@ -59,8 +63,33 @@
     function labelChatControls() {
         for (const [id, label] of Object.entries(CHAT_CONTROL_LABELS)) {
             const el = document.getElementById(id);
-            if (!el || el.getAttribute("aria-label") === label) continue;
-            el.setAttribute("aria-label", label);
+            if (!el) continue;
+            // Chainlit marks the upload control as presentational, which
+            // hides it from assistive tech and makes aria-label invalid.
+            if (el.getAttribute("role") === "presentation") {
+                el.removeAttribute("role");
+            }
+            if (el.getAttribute("aria-label") !== label) {
+                el.setAttribute("aria-label", label);
+            }
+        }
+    }
+
+    function labelChatInput() {
+        const input = document.getElementById("chat-input");
+        if (!input) return;
+        if (!input.getAttribute("aria-label") && !input.getAttribute("aria-labelledby")) {
+            input.setAttribute("aria-label", "Type your message");
+        }
+    }
+
+    function labelLandmarks() {
+        const header = document.getElementById("header");
+        if (header && header.getAttribute("role") !== "banner") {
+            header.setAttribute("role", "banner");
+        }
+        if (!document.querySelector("main, [role='main']") && header && header.nextElementSibling) {
+            header.nextElementSibling.setAttribute("role", "main");
         }
     }
 
@@ -165,6 +194,8 @@
         setupEnterToSubmit();
         labelKnowledgeBaseButton();
         labelChatControls();
+        labelChatInput();
+        labelLandmarks();
         hideReadmeDrawerTitle();
         labelKnowledgeBaseDrawer();
         setupKnowledgeBaseDrawerLabel();
@@ -175,6 +206,8 @@
     setupEnterToSubmit();
     labelKnowledgeBaseButton();
     labelChatControls();
+    labelChatInput();
+    labelLandmarks();
     hideReadmeDrawerTitle();
     setupKnowledgeBaseDrawerLabel();
     labelKnowledgeBaseDrawer();
