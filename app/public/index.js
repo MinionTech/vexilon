@@ -69,8 +69,27 @@
             if (el.getAttribute("role") === "presentation") {
                 el.removeAttribute("role");
             }
+            // The upload node can briefly render as #upload-button-loading first;
+            // never leave the visible attach control hidden from assistive tech.
+            if (el.getAttribute("aria-hidden") === "true") {
+                el.removeAttribute("aria-hidden");
+            }
             if (el.getAttribute("aria-label") !== label) {
                 el.setAttribute("aria-label", label);
+            }
+        }
+
+        // Distinct loading indicator (not the attach button itself).
+        const loading = document.getElementById("upload-button-loading");
+        const upload = document.getElementById("upload-button");
+        if (loading && loading !== upload) {
+            if (loading.getAttribute("role") === "presentation") {
+                loading.removeAttribute("role");
+            }
+            if (loading.tagName !== "BUTTON") {
+                loading.setAttribute("aria-hidden", "true");
+            } else if (!loading.getAttribute("aria-label") && !loading.getAttribute("aria-labelledby")) {
+                loading.setAttribute("aria-label", "Uploading");
             }
         }
     }

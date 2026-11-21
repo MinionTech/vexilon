@@ -28,6 +28,13 @@ def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: s
     for theme in ("light", "dark"):
         set_chainlit_theme(page, theme)
         wait_for_knowledge_base_button(page)
+        page.wait_for_function(
+            """() => {
+                const el = document.getElementById('upload-button-loading');
+                return !el || el.getAttribute('aria-hidden') === 'true' || el.getAttribute('role') !== 'presentation';
+            }""",
+            timeout=5000,
+        )
         results = run_axe(page, rules=list(AXE_ENFORCED_RULES))
         violations = axe_violations(results, AXE_ENFORCED_RULES)
         assert violations == [], (
