@@ -46,8 +46,12 @@ def test_goatcounter_script_follows_server_config(page: Page, app_url: str):
     blocked = _block_goatcounter_hits(page)
     with page.expect_response("**/api/goatcounter") as resp_info:
         page.goto(app_url, wait_until="domcontentloaded")
-    payload = resp_info.value.json()
-    code = payload.get("goatcounter_code") if isinstance(payload, dict) else None
+    response = resp_info.value
+    assert response.status == 200
+    payload = response.json()
+    assert isinstance(payload, dict)
+    assert "goatcounter_code" in payload
+    code = payload["goatcounter_code"]
 
     script = page.locator(f'script[src="{GOATCOUNTER_SCRIPT}"]')
     if code:
