@@ -1,9 +1,11 @@
 """
 tests/e2e/test_goatcounter.py — E2E: optional GoatCounter script loading
 
-The CI app leaves GOATCOUNTER_CODE unset. The "set" case stubs /api/goatcounter
-so the same app can exercise script injection. Requests to GoatCounter are
-aborted so CI never sends hits.
+CI leaves GOATCOUNTER_CODE unset, so the real-server test expects the script
+to be absent. A local app with the code set is also accepted: the test reads
+the live /api/goatcounter response and checks the matching page state. The
+"set" case stubs that endpoint so the same app can still exercise script
+injection. Requests to GoatCounter are aborted so CI never sends hits.
 """
 
 import json
@@ -39,14 +41,27 @@ def _wait_for_goatcounter_state(page: Page, state: str) -> None:
     )
 
 
-def test_goatcounter_script_absent_when_unset(page: Page, app_url: str):
-    """Default CI app has no site code, so the script never loads."""
+def test_goatcounter_script_follows_server_config(page: Page, app_url: str):
+    """The script tag follows the real /api/goatcounter response (not stubbed)."""
     blocked = _block_goatcounter_hits(page)
-    page.goto(app_url, wait_until="domcontentloaded")
-    _wait_for_goatcounter_state(page, "off")
+    with page.expect_response("**/api/goatcounter") as resp_info:
+        page.goto(app_url, wait_until="domcontentloaded")
+    payload = resp_info.value.json()
+    code = payload.get("goatcounter_code") if isinstance(payload, dict) else None
 
-    expect(page.locator(f'script[src="{GOATCOUNTER_SCRIPT}"]')).to_have_count(0)
-    assert blocked == []
+    script = page.locator(f'script[src="{GOATCOUNTER_SCRIPT}"]')
+    if code:
+        _wait_for_goatcounter_state(page, "on")
+        expect(script).to_have_count(1)
+        expect(script).to_have_attribute(
+            "data-goatcounter",
+            f"https://{code}.goatcounter.com/count",
+        )
+        assert all(_is_goatcounter_request(url) for url in blocked)
+    else:
+        _wait_for_goatcounter_state(page, "off")
+        expect(script).to_have_count(0)
+        assert blocked == []
 
 
 def test_goatcounter_script_present_when_set(page: Page, app_url: str):
