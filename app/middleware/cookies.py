@@ -3,7 +3,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.routing import APIRoute
 from fastapi import HTTPException
 
-from core.config import AGNAV_VERSION
+from core.config import AGNAV_VERSION, get_goatcounter_code
 from brand import get_brand as _get_brand
 
 logger = logging.getLogger(__name__)
@@ -20,6 +20,10 @@ class PartitionedCookieMiddleware(BaseHTTPMiddleware):
                     header += "; Partitioned"
                 response.headers.append("set-cookie", header)
         return response
+
+def get_goatcounter_config():
+    code = get_goatcounter_code()
+    return {"goatcounter_code": code or None}
 
 def get_version():
     return {
@@ -54,6 +58,13 @@ version_route = APIRoute(
     include_in_schema=False
 )
 
+goatcounter_route = APIRoute(
+    "/api/goatcounter",
+    endpoint=get_goatcounter_config,
+    methods=["GET"],
+    include_in_schema=False
+)
+
 health_route = APIRoute(
     "/api/health",
     endpoint=get_health,
@@ -76,3 +87,5 @@ def register_routes_and_middleware(app):
         app.router.routes.insert(1, version_route)
     if "/api/health" not in existing_paths:
         app.router.routes.insert(2, health_route)
+    if "/api/goatcounter" not in existing_paths:
+        app.router.routes.insert(3, goatcounter_route)

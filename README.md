@@ -169,6 +169,15 @@ the HF Space.
 |---|---|
 | `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
 
+### Analytics (optional)
+
+Set `GOATCOUNTER_CODE` as a **Variable** (not a Secret) on both Hugging Face Spaces:
+
+- TEST: [bcgeu/navigator-test](https://huggingface.co/spaces/bcgeu/navigator-test/settings)
+- PROD: [bcgeu/navigator](https://huggingface.co/spaces/bcgeu/navigator/settings)
+
+The value is the GoatCounter site code only (for example `yourcode`). It is not secret. When the variable is unset or empty, the GoatCounter script is not loaded and no request is made. Locally, the same variable is passed through `compose.yml` with an empty default.
+
 ---
 
 ## White-Label Customization
