@@ -60,46 +60,6 @@ def test_empty_variable_value_is_allowed():
     assert values == {"GOATCOUNTER_CODE": ""}
 
 
-def test_github_missing_variable_fails():
-    def getter(url: str, token: str) -> int:
-        assert token == "ghs_test"
-        assert url.endswith("/environments/test/variables/GOATCOUNTER_CODE")
-        return 404
-
-    with pytest.raises(settings.ApplyError, match="variable GOATCOUNTER_CODE"):
-        settings.assert_github_environment_items(
-            "MinionTech/vexilon",
-            "test",
-            ["GOATCOUNTER_CODE"],
-            [],
-            "ghs_test",
-            getter=getter,
-        )
-
-
-def test_github_defined_variable_passes():
-    settings.assert_github_environment_items(
-        "MinionTech/vexilon",
-        "prod",
-        ["GOATCOUNTER_CODE"],
-        [],
-        "ghs_test",
-        getter=lambda url, token: 200,
-    )
-
-
-def test_github_api_error_fails():
-    with pytest.raises(settings.ApplyError, match="HTTP 500"):
-        settings.assert_github_environment_items(
-            "MinionTech/vexilon",
-            "test",
-            ["GOATCOUNTER_CODE"],
-            [],
-            "ghs_test",
-            getter=lambda url, token: 500,
-        )
-
-
 def _space():
     return {
         "repo": "bcgeu/navigator-test",
@@ -280,6 +240,8 @@ def test_merge_workflow_applies_settings_for_both_environments():
     assert "requirements-space-settings.txt" in merge
     requirements = (REPO_ROOT / ".github" / "scripts" / "requirements-space-settings.txt").read_text()
     assert "huggingface_hub==2.4.0" in requirements
+    assert 'python-version: "3.14"' in merge
+    assert "pip install --user" not in merge
     # The deploy token stays an Environment secret; it is not synced to the Space.
     assert "vars.GOATCOUNTER_CODE" in merge
 

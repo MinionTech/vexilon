@@ -12,19 +12,15 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 import tomllib
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = REPO_ROOT / ".github" / "spaces.toml"
-GITHUB_API = "https://api.github.com"
 CPU_BASIC_DEFAULT_SLEEP_SECONDS = 172800
 VALID_ENVIRONMENTS = ("test", "prod")
 
@@ -74,65 +70,6 @@ def require_env_values(names: list[str], environ: dict[str, str], kind: str) -> 
     for name in names:
         values[name] = environ[name]
     return values
-
-
-def _github_get(url: str, token: str) -> int:
-    request = urllib.request.Request(
-        url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "vexilon-apply-space-settings",
-        },
-        method="GET",
-    )
-    try:
-        with urllib.request.urlopen(request) as response:
-            return response.status
-    except urllib.error.HTTPError as exc:
-        return exc.code
-
-
-def assert_github_environment_items(
-    repository: str,
-    environment: str,
-    variables: list[str],
-    secrets: list[str],
-    token: str,
-    getter=_github_get,
-) -> None:
-    """Fail if a declared variable or secret is not defined on the GitHub Environment."""
-    missing: list[str] = []
-    for name in variables:
-        url = (
-            f"{GITHUB_API}/repos/{repository}/environments/{environment}/variables/{name}"
-        )
-        status = getter(url, token)
-        if status == 404:
-            missing.append(f"variable {name}")
-        elif status != 200:
-            raise ApplyError(
-                f"GitHub API failed looking up environment variable {name} "
-                f"on {environment} (HTTP {status})"
-            )
-    for name in secrets:
-        url = (
-            f"{GITHUB_API}/repos/{repository}/environments/{environment}/secrets/{name}"
-        )
-        status = getter(url, token)
-        if status == 404:
-            missing.append(f"secret {name}")
-        elif status != 200:
-            raise ApplyError(
-                f"GitHub API failed looking up environment secret {name} "
-                f"on {environment} (HTTP {status})"
-            )
-    if missing:
-        raise ApplyError(
-            "Required GitHub Environment items are not defined on "
-            f"{environment}: {', '.join(missing)}"
-        )
 
 
 def _hardware_name(value: Any) -> str | None:
@@ -293,21 +230,6 @@ def main(argv: list[str] | None = None, environ: dict[str, str] | None = None) -
         hf_token = env.get("HF_TOKEN")
         if not hf_token:
             raise ApplyError("HF_TOKEN is required unless --dry-run is set")
-
-        github_token = env.get("GITHUB_TOKEN") or env.get("GH_TOKEN")
-        repository = env.get("GITHUB_REPOSITORY")
-        if not github_token or not repository:
-            raise ApplyError(
-                "GITHUB_TOKEN and GITHUB_REPOSITORY are required to verify "
-                "Environment variables and secrets exist"
-            )
-        assert_github_environment_items(
-            repository,
-            args.env,
-            space["variables"],
-            space["secrets"],
-            github_token,
-        )
 
         from huggingface_hub import HfApi
 
