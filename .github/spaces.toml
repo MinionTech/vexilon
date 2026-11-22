@@ -1,0 +1,28 @@
+# Desired state for the Hugging Face Spaces this repo deploys.
+#
+# Variable and secret *values* come from the GitHub Environment of the same
+# name (`test` or `prod`). This file lists the names to manage.
+#
+# Declared values are upserted on deploy. Variables or secrets that already
+# exist on the Space but are not listed here are left alone.
+#
+# Visibility, hardware, and sleep match the live Spaces as of 2026-11-21:
+# both are public, cpu-basic, and use the free-tier default sleep of 48 hours
+# (172800 seconds). Custom sleep is only applied on upgraded hardware; the
+# API does not allow changing sleep on cpu-basic.
+
+[spaces.test]
+repo = "bcgeu/navigator-test"
+visibility = "public"
+hardware = "cpu-basic"
+sleep_seconds = 172800
+variables = ["GOATCOUNTER_CODE"]
+secrets = []
+
+[spaces.prod]
+repo = "bcgeu/navigator"
+visibility = "public"
+hardware = "cpu-basic"
+sleep_seconds = 172800
+variables = ["GOATCOUNTER_CODE"]
+secrets = []
