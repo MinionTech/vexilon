@@ -124,6 +124,21 @@ def test_plan_rejects_custom_sleep_on_cpu_basic():
         settings.plan_changes(space, current, {"GOATCOUNTER_CODE": ""}, [])
 
 
+def test_plan_rejects_custom_sleep_when_downgrading_to_cpu_basic():
+    """Desired cpu-basic + non-default sleep is invalid even if live sleep already matches."""
+    space = _space()
+    space["sleep_seconds"] = 3600
+    current = {
+        "visibility": "public",
+        "hardware": "cpu-upgrade",
+        "requested_hardware": "cpu-upgrade",
+        "sleep_seconds": 3600,
+        "variables": {"GOATCOUNTER_CODE": ""},
+    }
+    with pytest.raises(settings.ApplyError, match="cpu-basic"):
+        settings.plan_changes(space, current, {"GOATCOUNTER_CODE": ""}, [])
+
+
 def test_plan_sets_sleep_on_upgraded_hardware():
     space = _space()
     space["hardware"] = "cpu-upgrade"

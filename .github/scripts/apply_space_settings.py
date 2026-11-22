@@ -130,19 +130,16 @@ def plan_changes(
 
     current_sleep = None if current is None else current.get("sleep_seconds")
     sleep_matches = current is not None and current_sleep == sleep_seconds
-    if not sleep_matches:
-        if not upgraded:
-            if sleep_seconds != CPU_BASIC_DEFAULT_SLEEP_SECONDS:
-                raise ApplyError(
-                    f"Cannot set sleep_seconds={sleep_seconds} on cpu-basic "
-                    f"({space['repo']}); free hardware is fixed at "
-                    f"{CPU_BASIC_DEFAULT_SLEEP_SECONDS} seconds"
-                )
-            # Desired sleep is the fixed cpu-basic default; nothing to apply.
-        else:
-            actions.append(
-                {"op": "sleep", "value": sleep_seconds, "repo": space["repo"]}
-            )
+    if not upgraded and sleep_seconds != CPU_BASIC_DEFAULT_SLEEP_SECONDS:
+        raise ApplyError(
+            f"Cannot set sleep_seconds={sleep_seconds} on cpu-basic "
+            f"({space['repo']}); free hardware is fixed at "
+            f"{CPU_BASIC_DEFAULT_SLEEP_SECONDS} seconds"
+        )
+    if not sleep_matches and upgraded:
+        actions.append(
+            {"op": "sleep", "value": sleep_seconds, "repo": space["repo"]}
+        )
 
     current_vars = {} if current is None else current.get("variables") or {}
     for name, value in variable_values.items():
