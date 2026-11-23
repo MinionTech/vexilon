@@ -1,4 +1,4 @@
-"""Tests for applying Hugging Face Space settings from .github/spaces.toml."""
+"""Tests for applying Hugging Face Space settings from GitHub Environments."""
 
 from __future__ import annotations
 
@@ -16,254 +16,150 @@ if str(SCRIPT_DIR) not in sys.path:
 import apply_space_settings as settings  # noqa: E402
 
 
-CONFIG = REPO_ROOT / ".github" / "spaces.toml"
+class FakeApi:
+    def __init__(self, *, visibility="public", hardware="cpu-basic", sleep=172800, variables=None):
+        self.visibility = visibility
+        self.hardware = hardware
+        self.sleep = sleep
+        self.variables = variables if variables is not None else {"GOATCOUNTER_CODE": ""}
+        self.calls: list[tuple[str, dict]] = []
+
+    def space_info(self, repo_id):
+        return SimpleNamespace(private=(self.visibility == "private"), visibility=self.visibility)
+
+    def get_space_runtime(self, repo_id):
+        return SimpleNamespace(
+            hardware=SimpleNamespace(value=self.hardware),
+            requested_hardware=SimpleNamespace(value=self.hardware),
+            sleep_time=None,
+            raw={"gcTimeout": self.sleep},
+        )
+
+    def get_space_variables(self, repo_id):
+        return {k: SimpleNamespace(value=v) for k, v in self.variables.items()}
+
+    def update_repo_settings(self, **kwargs):
+        self.calls.append(("update_repo_settings", kwargs))
+
+    def request_space_hardware(self, **kwargs):
+        self.calls.append(("request_space_hardware", kwargs))
+
+    def set_space_sleep_time(self, **kwargs):
+        self.calls.append(("set_space_sleep_time", kwargs))
+
+    def add_space_variable(self, **kwargs):
+        self.calls.append(("add_space_variable", kwargs))
+
+    def add_space_secret(self, **kwargs):
+        self.calls.append(("add_space_secret", kwargs))
 
 
-def test_config_declares_live_space_settings():
-    """Desired state matches the live Spaces (public, cpu-basic, 48h sleep)."""
-    config = settings.load_config(CONFIG)
-    for name, repo in (
-        ("test", "bcgeu/navigator-test"),
-        ("prod", "bcgeu/navigator"),
-    ):
-        space = settings.select_space(config, name)
-        assert space["repo"] == repo
-        assert space["visibility"] == "public"
-        assert space["hardware"] == "cpu-basic"
-        assert space["sleep_seconds"] == 172800
-        assert space["variables"] == ["GOATCOUNTER_CODE"]
-        assert space["secrets"] == []
-
-
-def test_env_is_required(capsys):
-    with pytest.raises(SystemExit):
-        settings.parse_args([])
-    with pytest.raises(SystemExit):
-        settings.parse_args(["--dry-run"])
-
-
-def test_unknown_environment_is_rejected():
-    config = settings.load_config(CONFIG)
-    with pytest.raises(settings.ApplyError, match="must be one of"):
-        settings.select_space(config, "staging")
-
-
-def test_missing_process_env_variable_fails():
-    with pytest.raises(settings.ApplyError, match="GOATCOUNTER_CODE"):
-        settings.require_env_values(["GOATCOUNTER_CODE"], {}, "variable")
-
-
-def test_empty_variable_value_is_allowed():
-    values = settings.require_env_values(
-        ["GOATCOUNTER_CODE"], {"GOATCOUNTER_CODE": ""}, "variable"
+def test_noop_when_live_space_matches_and_keeps_undeclared_variables():
+    api = FakeApi(variables={"GOATCOUNTER_CODE": "", "UNRELATED": "keep-me"})
+    applied = settings.apply_space_settings(
+        repo="bcgeu/navigator-test",
+        visibility="public",
+        hardware="cpu-basic",
+        sleep_seconds=172800,
+        required_vars=["GOATCOUNTER_CODE"],
+        secret_names=[],
+        dry_run=False,
+        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
+        api=api,
     )
-    assert values == {"GOATCOUNTER_CODE": ""}
+    assert applied == []
+    assert api.calls == []
 
 
-def _space():
-    return {
-        "repo": "bcgeu/navigator-test",
-        "visibility": "public",
-        "hardware": "cpu-basic",
-        "sleep_seconds": 172800,
-        "variables": ["GOATCOUNTER_CODE"],
-        "secrets": [],
-    }
+def test_applies_only_changed_settings_and_variables():
+    api = FakeApi(visibility="private", variables={})
+    applied = settings.apply_space_settings(
+        repo="bcgeu/navigator",
+        visibility="public",
+        hardware="cpu-basic",
+        sleep_seconds=172800,
+        required_vars=["GOATCOUNTER_CODE"],
+        secret_names=[],
+        dry_run=False,
+        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": "site"}'},
+        api=api,
+    )
+    assert applied == ["visibility=public", "variable:GOATCOUNTER_CODE"]
+    assert api.calls == [
+        ("update_repo_settings", {"repo_id": "bcgeu/navigator", "visibility": "public", "repo_type": "space"}),
+        ("add_space_variable", {"repo_id": "bcgeu/navigator", "key": "GOATCOUNTER_CODE", "value": "site"}),
+    ]
 
 
-def test_plan_is_empty_when_current_matches():
-    current = {
-        "visibility": "public",
-        "hardware": "cpu-basic",
-        "requested_hardware": "cpu-basic",
-        "sleep_seconds": 172800,
-        "variables": {"GOATCOUNTER_CODE": "", "UNRELATED": "keep-me"},
-    }
-    actions = settings.plan_changes(_space(), current, {"GOATCOUNTER_CODE": ""}, [])
-    assert actions == []
-
-
-def test_plan_does_not_delete_undeclared_variables():
-    current = {
-        "visibility": "public",
-        "hardware": "cpu-basic",
-        "requested_hardware": "cpu-basic",
-        "sleep_seconds": 172800,
-        "variables": {"GOATCOUNTER_CODE": "abc", "UNRELATED": "keep-me"},
-    }
-    actions = settings.plan_changes(_space(), current, {"GOATCOUNTER_CODE": "abc"}, [])
-    assert actions == []
-    assert not any(action["op"] == "delete" for action in actions)
-
-
-def test_plan_upserts_changed_variable_and_visibility():
-    current = {
-        "visibility": "private",
-        "hardware": "cpu-basic",
-        "requested_hardware": "cpu-basic",
-        "sleep_seconds": 172800,
-        "variables": {},
-    }
-    actions = settings.plan_changes(_space(), current, {"GOATCOUNTER_CODE": "site"}, [])
-    ops = [(action["op"], action.get("name") or action.get("value")) for action in actions]
-    assert ("visibility", "public") in ops
-    assert ("variable", "GOATCOUNTER_CODE") in ops
-
-
-def test_plan_rejects_custom_sleep_on_cpu_basic():
-    space = _space()
-    space["sleep_seconds"] = 3600
-    current = {
-        "visibility": "public",
-        "hardware": "cpu-basic",
-        "requested_hardware": "cpu-basic",
-        "sleep_seconds": 172800,
-        "variables": {"GOATCOUNTER_CODE": ""},
-    }
+def test_rejects_custom_sleep_on_cpu_basic():
     with pytest.raises(settings.ApplyError, match="cpu-basic"):
-        settings.plan_changes(space, current, {"GOATCOUNTER_CODE": ""}, [])
+        settings.apply_space_settings(
+            repo="bcgeu/navigator-test",
+            visibility="public",
+            hardware="cpu-basic",
+            sleep_seconds=3600,
+            required_vars=[],
+            secret_names=[],
+            dry_run=True,
+            environ={},
+        )
 
 
-def test_plan_rejects_custom_sleep_when_downgrading_to_cpu_basic():
-    """Desired cpu-basic + non-default sleep is invalid even if live sleep already matches."""
-    space = _space()
-    space["sleep_seconds"] = 3600
-    current = {
-        "visibility": "public",
-        "hardware": "cpu-upgrade",
-        "requested_hardware": "cpu-upgrade",
-        "sleep_seconds": 3600,
-        "variables": {"GOATCOUNTER_CODE": ""},
-    }
-    with pytest.raises(settings.ApplyError, match="cpu-basic"):
-        settings.plan_changes(space, current, {"GOATCOUNTER_CODE": ""}, [])
+def test_sets_sleep_on_upgraded_hardware():
+    api = FakeApi()
+    settings.apply_space_settings(
+        repo="bcgeu/navigator-test",
+        visibility="public",
+        hardware="cpu-upgrade",
+        sleep_seconds=3600,
+        required_vars=[],
+        secret_names=[],
+        dry_run=False,
+        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
+        api=api,
+    )
+    assert ("request_space_hardware", {"repo_id": "bcgeu/navigator-test", "hardware": "cpu-upgrade"}) in api.calls
+    assert ("set_space_sleep_time", {"repo_id": "bcgeu/navigator-test", "sleep_time": 3600}) in api.calls
 
 
-def test_plan_sets_sleep_on_upgraded_hardware():
-    space = _space()
-    space["hardware"] = "cpu-upgrade"
-    space["sleep_seconds"] = 3600
-    current = {
-        "visibility": "public",
-        "hardware": "cpu-basic",
-        "requested_hardware": "cpu-basic",
-        "sleep_seconds": 172800,
-        "variables": {"GOATCOUNTER_CODE": ""},
-    }
-    actions = settings.plan_changes(space, current, {"GOATCOUNTER_CODE": ""}, [])
-    assert {"op": "hardware", "value": "cpu-upgrade", "repo": space["repo"]} in actions
-    assert {"op": "sleep", "value": 3600, "repo": space["repo"]} in actions
-
-
-def test_dry_run_exits_zero_and_does_not_need_tokens():
+def test_missing_required_variable_fails_even_in_dry_run(capsys):
     code = settings.main(
-        ["--env", "test", "--dry-run", "--config", str(CONFIG)],
-        environ={"GOATCOUNTER_CODE": "rehearsal"},
+        ["--repo", "bcgeu/navigator", "--require-var", "GOATCOUNTER_CODE", "--dry-run"],
+        environ={"SPACE_VARS_JSON": "{}"},
+    )
+    assert code == 1
+    assert "GOATCOUNTER_CODE" in capsys.readouterr().err
+
+
+def test_empty_required_variable_is_allowed_in_dry_run():
+    code = settings.main(
+        ["--repo", "bcgeu/navigator-test", "--require-var", "GOATCOUNTER_CODE", "--dry-run"],
+        environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
     )
     assert code == 0
 
 
-def test_dry_run_fails_when_variable_missing(capsys):
+def test_live_apply_requires_hf_token(capsys):
     code = settings.main(
-        ["--env", "prod", "--dry-run", "--config", str(CONFIG)],
-        environ={},
-    )
-    assert code == 1
-    err = capsys.readouterr().err
-    assert "GOATCOUNTER_CODE" in err
-
-
-def test_live_apply_without_hf_token_fails(capsys):
-    code = settings.main(
-        ["--env", "test", "--config", str(CONFIG)],
-        environ={"GOATCOUNTER_CODE": ""},
+        ["--repo", "bcgeu/navigator-test", "--require-var", "GOATCOUNTER_CODE"],
+        environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
     )
     assert code == 1
     assert "HF_TOKEN" in capsys.readouterr().err
 
 
-def test_apply_actions_call_expected_api():
-    calls: list[tuple] = []
-
-    class Api:
-        def update_repo_settings(self, **kwargs):
-            calls.append(("update_repo_settings", kwargs))
-
-        def request_space_hardware(self, **kwargs):
-            calls.append(("request_space_hardware", kwargs))
-
-        def set_space_sleep_time(self, **kwargs):
-            calls.append(("set_space_sleep_time", kwargs))
-
-        def add_space_variable(self, **kwargs):
-            calls.append(("add_space_variable", kwargs))
-
-        def add_space_secret(self, **kwargs):
-            calls.append(("add_space_secret", kwargs))
-
-        def delete_space_variable(self, **kwargs):
-            calls.append(("delete_space_variable", kwargs))
-
-    space = _space()
-    actions = [
-        {"op": "visibility", "value": "public", "repo": space["repo"]},
-        {"op": "variable", "name": "GOATCOUNTER_CODE", "repo": space["repo"]},
-    ]
-    settings.apply_actions(
-        Api(), space, actions, {"GOATCOUNTER_CODE": "site"}, {}
+def test_refuses_to_sync_hf_token_as_space_secret(capsys):
+    code = settings.main(
+        ["--repo", "bcgeu/navigator-test", "--secret", "HF_TOKEN", "--dry-run"],
+        environ={"HF_TOKEN": "tok"},
     )
-    assert calls == [
-        (
-            "update_repo_settings",
-            {"repo_id": space["repo"], "visibility": "public", "repo_type": "space"},
-        ),
-        (
-            "add_space_variable",
-            {"repo_id": space["repo"], "key": "GOATCOUNTER_CODE", "value": "site"},
-        ),
-    ]
-    assert not any(name.startswith("delete_") for name, _ in calls)
+    assert code == 1
+    assert "HF_TOKEN" in capsys.readouterr().err
 
 
-def test_current_state_reads_runtime_and_variables():
-    class Api:
-        def space_info(self, repo_id):
-            return SimpleNamespace(private=False, visibility="public")
-
-        def get_space_runtime(self, repo_id):
-            return SimpleNamespace(
-                hardware=SimpleNamespace(value="cpu-basic"),
-                requested_hardware=SimpleNamespace(value="cpu-basic"),
-                sleep_time=None,
-                raw={"gcTimeout": 172800},
-            )
-
-        def get_space_variables(self, repo_id):
-            return {"GOATCOUNTER_CODE": SimpleNamespace(value="")}
-
-    state = settings.current_state(Api(), "bcgeu/navigator-test")
-    assert state["visibility"] == "public"
-    assert state["hardware"] == "cpu-basic"
-    assert state["sleep_seconds"] == 172800
-    assert state["variables"] == {"GOATCOUNTER_CODE": ""}
-
-
-def test_merge_workflow_applies_settings_for_both_environments():
+def test_merge_workflow_wires_vars_json_for_both_spaces():
     merge = (REPO_ROOT / ".github" / "workflows" / "merge.yml").read_text()
-    assert "apply_space_settings.py --env test" in merge
-    assert "apply_space_settings.py --env prod" in merge
-    assert "requirements-space-settings.txt" in merge
-    requirements = (REPO_ROOT / ".github" / "scripts" / "requirements-space-settings.txt").read_text()
-    assert "huggingface_hub==2.4.0" in requirements
-    assert 'python-version: "3.14"' in merge
+    assert "--repo bcgeu/navigator-test" in merge
+    assert "--repo bcgeu/navigator" in merge
+    assert "SPACE_VARS_JSON: ${{ toJSON(vars) }}" in merge
     assert "pip install --user" not in merge
-    # The deploy token stays an Environment secret; it is not synced to the Space.
-    assert "vars.GOATCOUNTER_CODE" in merge
-
-
-def test_managed_secrets_do_not_include_hf_token():
-    config = settings.load_config(CONFIG)
-    for name in ("test", "prod"):
-        space = settings.select_space(config, name)
-        assert "HF_TOKEN" not in space["secrets"]
-        assert "HF_TOKEN" not in space["variables"]

@@ -172,7 +172,7 @@ The `test` and `prod` GitHub Environments each need:
 | `HF_TOKEN` | Environment secret | `test` and `prod` | Deploy and apply Space settings through the Hugging Face API |
 | `GOATCOUNTER_CODE` | Environment variable (not a Secret) | `test` and `prod` | GoatCounter site code for that Space; an empty value leaves analytics off |
 
-Desired Space visibility, hardware, and sleep are declared in [`.github/spaces.toml`](.github/spaces.toml). On each deploy, [`.github/scripts/apply_space_settings.py`](.github/scripts/apply_space_settings.py) upserts the declared variables and settings onto `bcgeu/navigator-test` or `bcgeu/navigator`. It does not delete Space variables or secrets that are not listed in the config. A declared name that is not passed into the apply step, or a Hugging Face API failure, fails the deploy.
+On each deploy, [`.github/workflows/merge.yml`](.github/workflows/merge.yml) runs [`.github/scripts/apply_space_settings.py`](.github/scripts/apply_space_settings.py) to sync Space visibility, hardware, sleep defaults, and GitHub Environment variables (`toJSON(vars)`) onto `bcgeu/navigator-test` or `bcgeu/navigator`. It does not delete undeclared Space variables or secrets. A missing required variable (`GOATCOUNTER_CODE`) or a Hugging Face API failure fails the deploy.
 
 ### One-time setup
 
@@ -182,7 +182,7 @@ Do this before the first deploy that applies Space settings, or that deploy will
 2. **GitHub Environment variable.** On both the [test](https://github.com/MinionTech/vexilon/settings/environments/test) and [prod](https://github.com/MinionTech/vexilon/settings/environments/prod) Environments, add a **variable** (not a Secret) named `GOATCOUNTER_CODE`. The value is the GoatCounter site code only (for example `yourcode`). It is not secret. Leave the value empty to keep GoatCounter off. Create the variable on both Environments even if you leave the value empty; an empty value keeps GoatCounter off.
 3. **Org membership and billing** stay on huggingface.co and are not managed by this repo.
 
-Values changed by hand on the Space will be overwritten on the next deploy for every setting listed in `.github/spaces.toml`.
+Space settings and GitHub Environment variables changed by hand on the Space will be overwritten on the next deploy.
 
 ---
 
