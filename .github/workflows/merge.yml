@@ -61,9 +61,7 @@ jobs:
           SPACE_VARS_JSON: ${{ toJSON(vars) }}
         run: |
           python -m pip install -r .github/scripts/requirements-space-settings.txt
-          python .github/scripts/apply_space_settings.py \
-            --repo bcgeu/navigator-test \
-            --require-var GOATCOUNTER_CODE
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test
 
       - name: Promote and Verify to Hugging Face
         env:
@@ -132,9 +130,7 @@ jobs:
           SPACE_VARS_JSON: ${{ toJSON(vars) }}
         run: |
           python -m pip install -r .github/scripts/requirements-space-settings.txt
-          python .github/scripts/apply_space_settings.py \
-            --repo bcgeu/navigator \
-            --require-var GOATCOUNTER_CODE
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator
 
       - name: Promote and Verify to Hugging Face
         env:

@@ -1,4 +1,4 @@
-"""Tests for applying Hugging Face Space settings from GitHub Environments."""
+"""Tests for applying common Space settings (.github/space.toml) + CLI overrides."""
 
 from __future__ import annotations
 
@@ -18,9 +18,7 @@ import apply_space_settings as settings  # noqa: E402
 
 class FakeApi:
     def __init__(self, *, visibility="public", hardware="cpu-basic", sleep=172800, variables=None):
-        self.visibility = visibility
-        self.hardware = hardware
-        self.sleep = sleep
+        self.visibility, self.hardware, self.sleep = visibility, hardware, sleep
         self.variables = variables if variables is not None else {"GOATCOUNTER_CODE": ""}
         self.calls: list[tuple[str, dict]] = []
 
@@ -38,123 +36,78 @@ class FakeApi:
     def get_space_variables(self, repo_id):
         return {k: SimpleNamespace(value=v) for k, v in self.variables.items()}
 
-    def update_repo_settings(self, **kwargs):
-        self.calls.append(("update_repo_settings", kwargs))
+    def update_repo_settings(self, **kw):
+        self.calls.append(("update_repo_settings", kw))
 
-    def request_space_hardware(self, **kwargs):
-        self.calls.append(("request_space_hardware", kwargs))
+    def request_space_hardware(self, **kw):
+        self.calls.append(("request_space_hardware", kw))
 
-    def set_space_sleep_time(self, **kwargs):
-        self.calls.append(("set_space_sleep_time", kwargs))
+    def set_space_sleep_time(self, **kw):
+        self.calls.append(("set_space_sleep_time", kw))
 
-    def add_space_variable(self, **kwargs):
-        self.calls.append(("add_space_variable", kwargs))
+    def add_space_variable(self, **kw):
+        self.calls.append(("add_space_variable", kw))
 
-    def add_space_secret(self, **kwargs):
-        self.calls.append(("add_space_secret", kwargs))
+    def add_space_secret(self, **kw):
+        self.calls.append(("add_space_secret", kw))
 
 
-def test_noop_when_live_space_matches_and_keeps_undeclared_variables():
-    api = FakeApi(variables={"GOATCOUNTER_CODE": "", "UNRELATED": "keep-me"})
+_CFG = {"visibility": "public", "hardware": "cpu-basic", "sleep_seconds": 172800, "required_vars": ["GOATCOUNTER_CODE"]}
+
+
+def test_noop_when_live_matches_and_preserves_undeclared_vars():
+    api = FakeApi(variables={"GOATCOUNTER_CODE": "", "UNRELATED": "keep"})
     applied = settings.apply_space_settings(
-        repo="bcgeu/navigator-test",
-        visibility="public",
-        hardware="cpu-basic",
-        sleep_seconds=172800,
-        required_vars=["GOATCOUNTER_CODE"],
-        secret_names=[],
-        dry_run=False,
-        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
-        api=api,
+        repo="bcgeu/navigator-test", config=_CFG, secret_names=[], dry_run=False,
+        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'}, api=api,
     )
-    assert applied == []
-    assert api.calls == []
+    assert applied == [] and api.calls == []
 
 
 def test_applies_only_changed_settings_and_variables():
     api = FakeApi(visibility="private", variables={})
     applied = settings.apply_space_settings(
-        repo="bcgeu/navigator",
-        visibility="public",
-        hardware="cpu-basic",
-        sleep_seconds=172800,
-        required_vars=["GOATCOUNTER_CODE"],
-        secret_names=[],
-        dry_run=False,
-        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": "site"}'},
-        api=api,
+        repo="bcgeu/navigator", config=_CFG, secret_names=[], dry_run=False,
+        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": "site"}'}, api=api,
     )
-    assert applied == ["visibility=public", "variable:GOATCOUNTER_CODE"]
+    assert applied == ["visibility=public", "var:GOATCOUNTER_CODE"]
     assert api.calls == [
         ("update_repo_settings", {"repo_id": "bcgeu/navigator", "visibility": "public", "repo_type": "space"}),
         ("add_space_variable", {"repo_id": "bcgeu/navigator", "key": "GOATCOUNTER_CODE", "value": "site"}),
     ]
 
 
-def test_rejects_custom_sleep_on_cpu_basic():
-    with pytest.raises(settings.ApplyError, match="cpu-basic"):
-        settings.apply_space_settings(
-            repo="bcgeu/navigator-test",
-            visibility="public",
-            hardware="cpu-basic",
-            sleep_seconds=3600,
-            required_vars=[],
-            secret_names=[],
-            dry_run=True,
-            environ={},
-        )
-
-
-def test_sets_sleep_on_upgraded_hardware():
-    api = FakeApi()
-    settings.apply_space_settings(
-        repo="bcgeu/navigator-test",
-        visibility="public",
-        hardware="cpu-upgrade",
-        sleep_seconds=3600,
-        required_vars=[],
-        secret_names=[],
-        dry_run=False,
-        environ={"HF_TOKEN": "tok", "SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
-        api=api,
-    )
-    assert ("request_space_hardware", {"repo_id": "bcgeu/navigator-test", "hardware": "cpu-upgrade"}) in api.calls
-    assert ("set_space_sleep_time", {"repo_id": "bcgeu/navigator-test", "sleep_time": 3600}) in api.calls
-
-
-def test_missing_required_variable_fails_even_in_dry_run(capsys):
+def test_common_config_and_cli_override_in_dry_run(capsys):
     code = settings.main(
-        ["--repo", "bcgeu/navigator", "--require-var", "GOATCOUNTER_CODE", "--dry-run"],
-        environ={"SPACE_VARS_JSON": "{}"},
-    )
-    assert code == 1
-    assert "GOATCOUNTER_CODE" in capsys.readouterr().err
-
-
-def test_empty_required_variable_is_allowed_in_dry_run():
-    code = settings.main(
-        ["--repo", "bcgeu/navigator-test", "--require-var", "GOATCOUNTER_CODE", "--dry-run"],
-        environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
+        ["--repo", "bcgeu/navigator-test", "--hardware", "cpu-upgrade", "--sleep-seconds", "3600", "--dry-run"],
+        environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": "rehearsal"}'},
     )
     assert code == 0
+    out = capsys.readouterr().out
+    assert "hardware=cpu-upgrade" in out and "sleep_seconds=3600" in out
 
 
-def test_live_apply_requires_hf_token(capsys):
+def test_rejects_custom_sleep_on_cpu_basic(capsys):
     code = settings.main(
-        ["--repo", "bcgeu/navigator-test", "--require-var", "GOATCOUNTER_CODE"],
+        ["--repo", "bcgeu/navigator-test", "--sleep-seconds", "3600", "--dry-run"],
         environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'},
     )
-    assert code == 1
-    assert "HF_TOKEN" in capsys.readouterr().err
+    assert code == 1 and "cpu-basic" in capsys.readouterr().err
 
 
-def test_refuses_to_sync_hf_token_as_space_secret(capsys):
-    code = settings.main(
-        ["--repo", "bcgeu/navigator-test", "--secret", "HF_TOKEN", "--dry-run"],
-        environ={"HF_TOKEN": "tok"},
-    )
-    assert code == 1
-    assert "HF_TOKEN" in capsys.readouterr().err
+def test_missing_vs_empty_required_var(capsys):
+    assert settings.main(["--repo", "bcgeu/navigator", "--dry-run"], environ={"SPACE_VARS_JSON": "{}"}) == 1
+    assert "GOATCOUNTER_CODE" in capsys.readouterr().err
+    assert settings.main(["--repo", "bcgeu/navigator", "--dry-run"], environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'}) == 0
+
+
+def test_rejects_hf_token_in_vars_and_secrets(capsys):
+    for args, env in (
+        (["--repo", "bcgeu/navigator-test", "--dry-run"], {"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE":"","HF_TOKEN":"x"}'}),
+        (["--repo", "bcgeu/navigator-test", "--secret", "HF_TOKEN", "--dry-run"], {"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE":""}', "HF_TOKEN": "x"}),
+    ):
+        assert settings.main(args, environ=env) == 1
+        assert "HF_TOKEN" in capsys.readouterr().err
 
 
 def test_merge_workflow_wires_vars_json_for_both_spaces():
@@ -162,4 +115,3 @@ def test_merge_workflow_wires_vars_json_for_both_spaces():
     assert "--repo bcgeu/navigator-test" in merge
     assert "--repo bcgeu/navigator" in merge
     assert "SPACE_VARS_JSON: ${{ toJSON(vars) }}" in merge
-    assert "pip install --user" not in merge

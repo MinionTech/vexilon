@@ -45,6 +45,7 @@ jobs:
               - compose.yml
               - .github/workflows/**
               - .github/scripts/**
+              - .github/space.toml
             container:
               - app/**
               - tests/**
@@ -141,8 +142,8 @@ jobs:
         env:
           SPACE_VARS_JSON: '{"GOATCOUNTER_CODE":"rehearsal"}'
         run: |
-          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test --require-var GOATCOUNTER_CODE --dry-run
-          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator --require-var GOATCOUNTER_CODE --dry-run
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test --dry-run
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator --dry-run
 
       - name: Run Local Unit & Streaming Tests
         env:

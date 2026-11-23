@@ -172,7 +172,7 @@ The `test` and `prod` GitHub Environments each need:
 | `HF_TOKEN` | Environment secret | `test` and `prod` | Deploy and apply Space settings through the Hugging Face API |
 | `GOATCOUNTER_CODE` | Environment variable (not a Secret) | `test` and `prod` | GoatCounter site code for that Space; an empty value leaves analytics off |
 
-On each deploy, [`.github/workflows/merge.yml`](.github/workflows/merge.yml) runs [`.github/scripts/apply_space_settings.py`](.github/scripts/apply_space_settings.py) to sync Space visibility, hardware, sleep defaults, and GitHub Environment variables (`toJSON(vars)`) onto `bcgeu/navigator-test` or `bcgeu/navigator`. It does not delete undeclared Space variables or secrets. A missing required variable (`GOATCOUNTER_CODE`) or a Hugging Face API failure fails the deploy.
+Common Space defaults live in [`.github/space.toml`](.github/space.toml), with per-environment overrides passed on the command line in [`.github/workflows/merge.yml`](.github/workflows/merge.yml). On each deploy, [`.github/scripts/apply_space_settings.py`](.github/scripts/apply_space_settings.py) syncs those settings and GitHub Environment variables (`toJSON(vars)`) onto `bcgeu/navigator-test` or `bcgeu/navigator`. It does not delete undeclared Space variables or secrets. A missing required variable (`GOATCOUNTER_CODE`) or a Hugging Face API failure fails the deploy.
 
 ### One-time setup
 

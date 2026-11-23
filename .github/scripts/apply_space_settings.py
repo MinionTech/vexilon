@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Apply Hugging Face Space settings and GitHub Environment variables/secrets.
-
-Variables are passed via SPACE_VARS_JSON (e.g. from GitHub Actions `toJSON(vars)`).
-Secrets are named with --secret and read from the process environment.
-Undeclared Space variables and secrets are left untouched.
-"""
+"""Apply common Hugging Face Space settings (.github/space.toml) + CLI overrides."""
 
 from __future__ import annotations
 
@@ -12,191 +7,139 @@ import argparse
 import json
 import os
 import sys
+import tomllib
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
+DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "space.toml"
 CPU_BASIC_DEFAULT_SLEEP_SECONDS = 172800
 
 
 class ApplyError(Exception):
-    """A required input is missing or invalid."""
+    """A required input or Space setting is invalid."""
 
 
-def _parse_vars_json(raw: str | None) -> dict[str, str]:
-    if not raw:
-        return {}
+def _load_inputs(environ: Mapping[str, str], required_vars: list[str], secret_names: list[str]) -> tuple[dict[str, str], dict[str, str]]:
+    raw = environ.get("SPACE_VARS_JSON") or "{}"
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise ApplyError(f"SPACE_VARS_JSON is not valid JSON: {exc}") from exc
     if not isinstance(parsed, dict):
         raise ApplyError("SPACE_VARS_JSON must be a JSON object")
-    return {str(k): "" if v is None else str(v) for k, v in parsed.items()}
 
+    variables = {str(k): "" if v is None else str(v) for k, v in parsed.items()}
+    if "HF_TOKEN" in variables or "HF_TOKEN" in secret_names:
+        raise ApplyError("HF_TOKEN is the deploy credential and cannot be synced to the Space")
 
-def _collect_inputs(
-    environ: Mapping[str, str],
-    required_vars: list[str],
-    secret_names: list[str],
-) -> tuple[dict[str, str], dict[str, str]]:
-    variables = _parse_vars_json(environ.get("SPACE_VARS_JSON"))
     missing_vars = [name for name in required_vars if name not in variables]
     if missing_vars:
-        raise ApplyError(
-            "Required Space variable(s) missing from GitHub Environment: "
-            + ", ".join(missing_vars)
-        )
-
-    if "HF_TOKEN" in secret_names:
-        raise ApplyError("HF_TOKEN is the deploy credential and cannot be synced to the Space")
+        raise ApplyError("Missing GitHub Environment variable(s): " + ", ".join(missing_vars))
 
     missing_secrets = [name for name in secret_names if name not in environ]
     if missing_secrets:
-        raise ApplyError(
-            "Required Space secret(s) missing from process environment: "
-            + ", ".join(missing_secrets)
-        )
-    secrets = {name: environ[name] for name in secret_names}
-    return variables, secrets
+        raise ApplyError("Missing Space secret(s) in environment: " + ", ".join(missing_secrets))
+
+    return variables, {name: environ[name] for name in secret_names}
 
 
-def _hardware_name(value: Any) -> str | None:
-    if value is None:
-        return None
-    return value.value if hasattr(value, "value") else str(value)
-
-
-def _current_state(api: Any, repo: str) -> dict[str, Any]:
-    info = api.space_info(repo_id=repo)
-    runtime = api.get_space_runtime(repo_id=repo)
-    visibility = getattr(info, "visibility", None)
-    if visibility is None:
-        visibility = "private" if getattr(info, "private", False) else "public"
-    current_hw = _hardware_name(getattr(runtime, "hardware", None))
-    requested_hw = _hardware_name(getattr(runtime, "requested_hardware", None))
-    sleep_time = getattr(runtime, "sleep_time", None)
-    if sleep_time is None and hasattr(runtime, "raw") and isinstance(runtime.raw, dict):
-        sleep_time = runtime.raw.get("gcTimeout")
-    raw_vars = api.get_space_variables(repo_id=repo)
-    current_vars = {
-        key: (var if isinstance(var, str) else getattr(var, "value", ""))
-        for key, var in raw_vars.items()
-    }
-    return {
-        "visibility": visibility,
-        "hardware": requested_hw or current_hw,
-        "sleep_seconds": sleep_time,
-        "variables": current_vars,
-    }
+def _hw_name(value: Any) -> str | None:
+    return value.value if hasattr(value, "value") else (None if value is None else str(value))
 
 
 def apply_space_settings(
     *,
     repo: str,
-    visibility: str,
-    hardware: str,
-    sleep_seconds: int,
-    required_vars: list[str],
+    config: dict[str, Any],
     secret_names: list[str],
     dry_run: bool,
     environ: Mapping[str, str],
     api: Any = None,
 ) -> list[str]:
-    if hardware == "cpu-basic" and sleep_seconds != CPU_BASIC_DEFAULT_SLEEP_SECONDS:
-        raise ApplyError(
-            f"Cannot set sleep_seconds={sleep_seconds} on cpu-basic ({repo}); "
-            f"free hardware is fixed at {CPU_BASIC_DEFAULT_SLEEP_SECONDS} seconds"
-        )
-
-    variables, secrets = _collect_inputs(environ, required_vars, secret_names)
+    visibility = config["visibility"]
+    hardware = config["hardware"]
+    sleep_seconds = int(config["sleep_seconds"])
+    required_vars = list(config.get("required_vars") or [])
     upgraded = hardware != "cpu-basic"
 
+    if not upgraded and sleep_seconds != CPU_BASIC_DEFAULT_SLEEP_SECONDS:
+        raise ApplyError(f"Cannot set sleep_seconds={sleep_seconds} on cpu-basic ({repo}); fixed at {CPU_BASIC_DEFAULT_SLEEP_SECONDS}")
+
+    variables, secrets = _load_inputs(environ, required_vars, secret_names)
     if dry_run:
-        summary = [
-            f"visibility={visibility}",
-            f"hardware={hardware}",
-            *(["sleep_seconds=" + str(sleep_seconds)] if upgraded else []),
-            *(f"variable:{k}" for k in sorted(variables)),
-            *(f"secret:{k}" for k in sorted(secrets)),
-        ]
-        print(f"Dry-run for {repo}: {', '.join(summary)}")
-        return summary
+        items = [f"visibility={visibility}", f"hardware={hardware}", *(f"var:{k}" for k in sorted(variables)), *(f"secret:{k}" for k in sorted(secrets))]
+        if upgraded:
+            items.insert(2, f"sleep_seconds={sleep_seconds}")
+        print(f"Dry-run for {repo}: {', '.join(items)}")
+        return items
 
     if api is None:
-        hf_token = environ.get("HF_TOKEN")
-        if not hf_token:
+        token = environ.get("HF_TOKEN")
+        if not token:
             raise ApplyError("HF_TOKEN is required unless --dry-run is set")
         from huggingface_hub import HfApi
 
-        api = HfApi(token=hf_token)
+        api = HfApi(token=token)
 
-    current = _current_state(api, repo)
+    info = api.space_info(repo_id=repo)
+    runtime = api.get_space_runtime(repo_id=repo)
+    cur_vis = getattr(info, "visibility", None) or ("private" if getattr(info, "private", False) else "public")
+    cur_hw = _hw_name(getattr(runtime, "requested_hardware", None)) or _hw_name(getattr(runtime, "hardware", None))
+    cur_sleep = getattr(runtime, "sleep_time", None)
+    if cur_sleep is None and isinstance(getattr(runtime, "raw", None), dict):
+        cur_sleep = runtime.raw.get("gcTimeout")
+    cur_vars = {k: (v if isinstance(v, str) else getattr(v, "value", "")) for k, v in api.get_space_variables(repo_id=repo).items()}
+
     applied: list[str] = []
-
-    if current["visibility"] != visibility:
+    if cur_vis != visibility:
         api.update_repo_settings(repo_id=repo, visibility=visibility, repo_type="space")
         applied.append(f"visibility={visibility}")
-
-    if current["hardware"] != hardware:
+    if cur_hw != hardware:
         api.request_space_hardware(repo_id=repo, hardware=hardware)
         applied.append(f"hardware={hardware}")
-
-    if upgraded and current["sleep_seconds"] != sleep_seconds:
+    if upgraded and cur_sleep != sleep_seconds:
         api.set_space_sleep_time(repo_id=repo, sleep_time=sleep_seconds)
         applied.append(f"sleep_seconds={sleep_seconds}")
-
     for name, value in sorted(variables.items()):
-        if current["variables"].get(name) != value:
+        if cur_vars.get(name) != value:
             api.add_space_variable(repo_id=repo, key=name, value=value)
-            applied.append(f"variable:{name}")
-
-    # Space secrets cannot be read back from HF, so declared secrets are always upserted.
+            applied.append(f"var:{name}")
     for name, value in sorted(secrets.items()):
         api.add_space_secret(repo_id=repo, key=name, value=value)
         applied.append(f"secret:{name}")
 
-    if applied:
-        print(f"Applied to {repo}: {', '.join(applied)}")
-    else:
-        print(f"No Space setting changes for {repo}; already at desired state.")
+    print(f"Applied to {repo}: {', '.join(applied)}" if applied else f"No Space setting changes for {repo}.")
     return applied
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", required=True, help="Target HF Space repo (e.g. bcgeu/navigator-test)")
-    parser.add_argument("--visibility", choices=("public", "private"), default="public")
-    parser.add_argument("--hardware", default="cpu-basic")
-    parser.add_argument("--sleep-seconds", type=int, default=CPU_BASIC_DEFAULT_SLEEP_SECONDS)
-    parser.add_argument(
-        "--require-var",
-        action="append",
-        default=[],
-        help="Variable name that must exist in SPACE_VARS_JSON (repeatable)",
-    )
-    parser.add_argument(
-        "--secret",
-        action="append",
-        default=[],
-        help="Secret env var name to upsert onto the Space (repeatable)",
-    )
-    parser.add_argument("--dry-run", action="store_true", help="Validate inputs without calling HF API")
-    return parser.parse_args(argv)
-
-
 def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None) -> int:
-    args = parse_args(argv)
-    env = environ if environ is not None else os.environ
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo", required=True)
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--visibility", choices=("public", "private"))
+    parser.add_argument("--hardware")
+    parser.add_argument("--sleep-seconds", type=int)
+    parser.add_argument("--require-var", action="append", default=[])
+    parser.add_argument("--secret", action="append", default=[])
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
     try:
+        if not args.config.is_file():
+            raise ApplyError(f"Config file not found: {args.config}")
+        with args.config.open("rb") as fh:
+            config = tomllib.load(fh)
+        for key, val in (("visibility", args.visibility), ("hardware", args.hardware), ("sleep_seconds", args.sleep_seconds)):
+            if val is not None:
+                config[key] = val
+        if args.require_var:
+            config["required_vars"] = list(dict.fromkeys([*config.get("required_vars", []), *args.require_var]))
         apply_space_settings(
             repo=args.repo,
-            visibility=args.visibility,
-            hardware=args.hardware,
-            sleep_seconds=args.sleep_seconds,
-            required_vars=args.require_var,
+            config=config,
             secret_names=args.secret,
             dry_run=args.dry_run,
-            environ=env,
+            environ=environ if environ is not None else os.environ,
         )
         return 0
     except ApplyError as exc:
