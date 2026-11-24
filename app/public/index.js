@@ -39,18 +39,23 @@
     function labelKnowledgeBaseButton() {
         const btn = document.querySelector("#readme-button");
         if (!btn) return;
-        btn.setAttribute("aria-label", "Knowledge Base");
+        if (btn.getAttribute("aria-label") !== "Knowledge Base") {
+            btn.setAttribute("aria-label", "Knowledge Base");
+        }
         const label = btn.querySelector("span");
         if (label && label.textContent.trim() !== "Knowledge Base") {
             label.textContent = "Knowledge Base";
         }
-        btn.dataset.knowledgeBaseLabeled = "true";
+        if (btn.dataset.knowledgeBaseLabeled !== "true") {
+            btn.dataset.knowledgeBaseLabeled = "true";
+        }
     }
 
     // ── Core chat control a11y (WCAG 4.1.2 Name, Role, Value) ───────────────
     // Chainlit renders icon-only controls with no accessible name; set
     // aria-label directly so axe button-name passes and screen readers announce
-    // purpose. Re-applied via setInterval when React re-renders the composer.
+    // purpose. Re-applied via MutationObserver and setInterval when React
+    // mounts or re-renders the composer.
 
     const CHAT_CONTROL_LABELS = {
         "chat-profiles": "Choose persona",
@@ -86,10 +91,24 @@
             if (loading.getAttribute("role") === "presentation") {
                 loading.removeAttribute("role");
             }
-            if (loading.tagName !== "BUTTON") {
-                loading.setAttribute("aria-hidden", "true");
-            } else if (!loading.getAttribute("aria-label") && !loading.getAttribute("aria-labelledby")) {
-                loading.setAttribute("aria-label", "Uploading");
+            const isInteractive =
+                loading.tagName === "BUTTON" ||
+                Boolean(loading.querySelector("button, [role='button']"));
+            if (!isInteractive) {
+                if (loading.getAttribute("aria-hidden") !== "true") {
+                    loading.setAttribute("aria-hidden", "true");
+                }
+            } else {
+                if (loading.getAttribute("aria-hidden") === "true") {
+                    loading.removeAttribute("aria-hidden");
+                }
+                if (
+                    loading.tagName === "BUTTON" &&
+                    !loading.getAttribute("aria-label") &&
+                    !loading.getAttribute("aria-labelledby")
+                ) {
+                    loading.setAttribute("aria-label", "Uploading");
+                }
             }
         }
     }
@@ -248,8 +267,7 @@
         }
     }
 
-    // Poll for React-rendered elements that appear/disappear on navigation.
-    setInterval(() => {
+    function applyDomPatches() {
         setupEnterToSubmit();
         labelKnowledgeBaseButton();
         labelChatControls();
@@ -260,18 +278,33 @@
         setupKnowledgeBaseDrawerLabel();
         replaceBuildSha();
         manageWelcomeTitle();
-    }, 500);
+    }
 
-    setupEnterToSubmit();
-    labelKnowledgeBaseButton();
-    labelChatControls();
-    labelChatInput();
-    labelLandmarks();
-    hideReadmeDrawerTitle();
-    setupKnowledgeBaseDrawerLabel();
-    labelKnowledgeBaseDrawer();
-    replaceBuildSha();
-    manageWelcomeTitle();
+    // Re-apply immediately when React mounts or updates composer/header nodes
+    // so accessible names and landmarks are never missing between poll ticks.
+    const observerTarget = document.body || document.documentElement;
+    const observerConfig = {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["id", "role", "aria-hidden", "aria-label", "aria-labelledby"],
+    };
+    const domObserver = new MutationObserver(() => {
+        domObserver.disconnect();
+        try {
+            applyDomPatches();
+        } finally {
+            domObserver.observe(observerTarget, observerConfig);
+        }
+    });
+
+    applyDomPatches();
+    if (observerTarget) {
+        domObserver.observe(observerTarget, observerConfig);
+    }
+
+    // Fallback poll for React-rendered elements that appear/disappear on navigation.
+    setInterval(applyDomPatches, 500);
 
     // ── Pseudonymous client ID ──────────────────────────────────────────────
     // Random, client-generated UUID persisted in localStorage. Not derived

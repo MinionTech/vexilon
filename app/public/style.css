@@ -22,9 +22,12 @@ body {
     display: none !important;
 }
 
-/* 3. Rename "Readme" → "Knowledge Base" visually (aria-label set in index.js) */
+/* 3. Rename "Readme" → "Knowledge Base" visually (aria-label and span synced in index.js) */
 #readme-button {
     font-size: 0;
+}
+#readme-button span {
+    font-size: 0 !important;
 }
 #readme-button::after {
     content: "Knowledge Base";

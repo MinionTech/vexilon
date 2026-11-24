@@ -14,6 +14,7 @@ from helpers import (
     format_axe_violations,
     run_axe,
     set_chainlit_theme,
+    wait_for_aria_label,
     wait_for_custom_js,
     wait_for_knowledge_base_button,
 )
@@ -28,6 +29,9 @@ def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: s
     for theme in ("light", "dark"):
         set_chainlit_theme(page, theme)
         wait_for_knowledge_base_button(page)
+        wait_for_aria_label(page, "#chat-settings-open-modal", "Open chat settings")
+        wait_for_aria_label(page, "#upload-button", "Attach file")
+        wait_for_aria_label(page, "#chat-submit", "Send message")
         page.wait_for_function(
             """() => {
                 const el = document.getElementById('upload-button-loading');
@@ -124,3 +128,39 @@ def test_welcome_landmarks_and_labels(page: Page, app_url: str):
     expect(page.locator("#chat-input")).to_have_attribute("aria-label", "Type your message")
     expect(page.locator("#readme-button")).to_have_accessible_name("Knowledge Base")
     assert "Knowledge Base" in page.locator("#readme-button").inner_text()
+
+
+def test_upload_loading_transitions_expose_interactive_controls(page: Page, app_url: str):
+    """Non-interactive upload loader is hidden; interactive controls clear aria-hidden."""
+    page.goto(app_url, wait_until="domcontentloaded")
+    wait_for_custom_js(page)
+
+    page.evaluate(
+        """() => {
+            const loader = document.createElement('div');
+            loader.id = 'upload-button-loading';
+            loader.setAttribute('role', 'presentation');
+            document.body.appendChild(loader);
+        }"""
+    )
+    page.wait_for_function(
+        """() => {
+            const el = document.getElementById('upload-button-loading');
+            return el && el.getAttribute('aria-hidden') === 'true' && !el.hasAttribute('role');
+        }""",
+        timeout=5000,
+    )
+
+    page.evaluate(
+        """() => {
+            const loader = document.getElementById('upload-button-loading');
+            loader.appendChild(document.createElement('button'));
+        }"""
+    )
+    page.wait_for_function(
+        """() => {
+            const el = document.getElementById('upload-button-loading');
+            return el && !el.hasAttribute('aria-hidden');
+        }""",
+        timeout=5000,
+    )
