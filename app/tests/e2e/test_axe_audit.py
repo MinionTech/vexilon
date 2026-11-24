@@ -1,20 +1,20 @@
 """
 tests/e2e/test_axe_audit.py — E2E: axe-core scan of the main UI surfaces
 
-Runs a pinned axe-core (WCAG 2.1 A/AA) audit against the welcome screen
-and settings dialog, and asserts the #401 quick-fix rules stay clean.
+Runs a pinned axe-core (WCAG 2.1 A/AA) audit against the welcome screen,
+settings dialog, Knowledge Base drawer, and post-message conversation view.
 """
 
 from playwright.sync_api import Page, expect
 
 from helpers import (
-    AXE_ENFORCED_RULES,
     WCAG_AA_CONTRAST_MIN,
     axe_violations,
     format_axe_violations,
     open_knowledge_base_drawer,
     run_axe,
     set_chainlit_theme,
+    submit_chat_with_enter,
     wait_for_aria_label,
     wait_for_custom_js,
     wait_for_knowledge_base_button,
@@ -34,8 +34,8 @@ def _wait_for_settled(page: Page, selector: str = "[role='dialog']") -> None:
     )
 
 
-def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: str):
-    """Welcome screen has no enforced-rule axe violations in light or dark theme."""
+def test_welcome_screen_axe_light_and_dark(page: Page, app_url: str):
+    """Welcome screen has no WCAG 2.1 A/AA axe violations in light or dark theme."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
     wait_for_knowledge_base_button(page)
@@ -54,15 +54,15 @@ def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: s
             timeout=5000,
         )
         _wait_for_settled(page, ".welcome-screen")
-        results = run_axe(page, rules=list(AXE_ENFORCED_RULES))
-        violations = axe_violations(results, AXE_ENFORCED_RULES)
+        results = run_axe(page)
+        violations = axe_violations(results)
         assert violations == [], (
             f"{theme} theme axe violations:\n{format_axe_violations(violations)}"
         )
 
 
 def test_settings_dialog_axe_and_primary_button_contrast(page: Page, app_url: str):
-    """Settings dialog passes axe (including contrast) and Confirm meets 4.5:1 AA."""
+    """Settings dialog passes WCAG 2.1 A/AA axe and Confirm meets 4.5:1 AA."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
@@ -73,8 +73,8 @@ def test_settings_dialog_axe_and_primary_button_contrast(page: Page, app_url: st
         confirm.wait_for(timeout=8000)
         _wait_for_settled(page)
 
-        results = run_axe(page, context_selector="[role='dialog']", rules=list(AXE_ENFORCED_RULES))
-        violations = axe_violations(results, AXE_ENFORCED_RULES)
+        results = run_axe(page, context_selector="[role='dialog']")
+        violations = axe_violations(results)
         assert violations == [], (
             f"{theme} settings dialog axe violations:\n{format_axe_violations(violations)}"
         )
@@ -115,7 +115,7 @@ def test_settings_dialog_axe_and_primary_button_contrast(page: Page, app_url: st
 
 
 def test_knowledge_base_drawer_axe_light_and_dark(page: Page, app_url: str):
-    """Knowledge Base drawer passes enforced axe rules (including link-in-text-block)."""
+    """Knowledge Base drawer passes WCAG 2.1 A/AA axe in light and dark themes."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
@@ -126,16 +126,50 @@ def test_knowledge_base_drawer_axe_light_and_dark(page: Page, app_url: str):
         _wait_for_settled(page, drawer_sel)
 
         assert page.locator(drawer_sel).get_attribute("aria-describedby") is None
-        results = run_axe(page, context_selector=drawer_sel, rules=list(AXE_ENFORCED_RULES))
-        violations = axe_violations(results, AXE_ENFORCED_RULES)
+        results = run_axe(page, context_selector=drawer_sel)
+        violations = axe_violations(results)
         assert violations == [], (
             f"{theme} drawer axe violations:\n{format_axe_violations(violations)}"
         )
         page.keyboard.press("Escape")
 
 
+def test_conversation_view_axe_light_and_dark(page: Page, app_url: str):
+    """Active conversation view passes WCAG 2.1 A/AA axe after sending a message."""
+    page.goto(app_url, wait_until="domcontentloaded")
+    wait_for_custom_js(page)
+
+    for theme in ("light", "dark"):
+        set_chainlit_theme(page, theme)
+        wait_for_knowledge_base_button(page)
+        textarea = page.locator("#chat-input")
+        textarea.press_sequentially("What is a steward?", delay=10)
+        page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
+        submit_chat_with_enter(page, textarea)
+
+        page.wait_for_function(
+            """() => {
+                if (document.getElementById('stop-button')) return false;
+                const bubbles = document.querySelectorAll(
+                    '.message, [class*="message"]:not(.message-list):not([class*="actions"])'
+                );
+                return Array.from(bubbles).some(
+                    (m) => m.textContent.trim().length > 0 && m.textContent.trim() !== 'What is a steward?'
+                );
+            }""",
+            timeout=120000,
+        )
+        wait_for_aria_label(page, "#chat-submit", "Send message")
+        wait_for_aria_label(page, "#upload-button", "Attach file")
+        results = run_axe(page)
+        violations = axe_violations(results)
+        assert violations == [], (
+            f"{theme} conversation axe violations:\n{format_axe_violations(violations)}"
+        )
+
+
 def test_chat_input_has_visible_focus_indicator(page: Page, app_url: str):
-    """#chat-input shows a visible focus ring when focused from the keyboard."""
+    """#chat-input shows a visible focus ring, plus a forced-colors outline fallback."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
@@ -150,6 +184,15 @@ def test_chat_input_has_visible_focus_indicator(page: Page, app_url: str):
     assert "4px" in (shadow or ""), (
         f"Expected a visible 4px focus ring on #chat-input, got boxShadow={shadow}"
     )
+
+    page.emulate_media(forced_colors="active")
+    forced = page.evaluate(
+        """() => {
+            const s = getComputedStyle(document.querySelector('#chat-input'));
+            return { outlineStyle: s.outlineStyle, outlineWidth: s.outlineWidth, boxShadow: s.boxShadow };
+        }"""
+    )
+    assert forced == {"outlineStyle": "solid", "outlineWidth": "3px", "boxShadow": "none"}
 
 
 def test_welcome_landmarks_and_labels(page: Page, app_url: str):

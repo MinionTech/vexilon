@@ -116,6 +116,18 @@
                 }
             }
         }
+
+        // Chainlit's message copy button renders svg.lucide-copy with no label.
+        document.querySelectorAll("button").forEach((btn) => {
+            if (
+                !btn.textContent.trim() &&
+                !btn.getAttribute("aria-label") &&
+                !btn.getAttribute("aria-labelledby") &&
+                btn.querySelector("svg.lucide-copy")
+            ) {
+                btn.setAttribute("aria-label", "Copy message");
+            }
+        });
     }
 
     function labelChatInput() {
