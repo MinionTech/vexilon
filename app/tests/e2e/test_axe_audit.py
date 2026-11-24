@@ -21,13 +21,13 @@ from helpers import (
 )
 
 
-def _wait_for_dialog_settled(page: Page, selector: str = "[role='dialog']") -> None:
-    """Wait until Radix dialog opacity transition completes before sampling colors."""
+def _wait_for_settled(page: Page, selector: str = "[role='dialog']") -> None:
+    """Wait until an element's opacity transition completes before sampling colors."""
     page.wait_for_function(
         """(sel) => {
-            const dlg = document.querySelector(sel);
-            if (!dlg || getComputedStyle(dlg).opacity !== '1') return false;
-            return dlg.getAnimations().every((a) => a.playState === 'finished');
+            const el = document.querySelector(sel);
+            if (!el || getComputedStyle(el).opacity !== '1') return false;
+            return el.getAnimations().every((a) => a.playState === 'finished');
         }""",
         arg=selector,
         timeout=5000,
@@ -53,6 +53,7 @@ def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: s
             }""",
             timeout=5000,
         )
+        _wait_for_settled(page, ".welcome-screen")
         results = run_axe(page, rules=list(AXE_ENFORCED_RULES))
         violations = axe_violations(results, AXE_ENFORCED_RULES)
         assert violations == [], (
@@ -70,7 +71,7 @@ def test_settings_dialog_axe_and_primary_button_contrast(page: Page, app_url: st
         page.locator("#chat-settings-open-modal").click()
         confirm = page.locator("#confirm")
         confirm.wait_for(timeout=8000)
-        _wait_for_dialog_settled(page)
+        _wait_for_settled(page)
 
         results = run_axe(page, context_selector="[role='dialog']", rules=list(AXE_ENFORCED_RULES))
         violations = axe_violations(results, AXE_ENFORCED_RULES)
@@ -122,7 +123,7 @@ def test_knowledge_base_drawer_axe_light_and_dark(page: Page, app_url: str):
         set_chainlit_theme(page, theme)
         open_knowledge_base_drawer(page)
         drawer_sel = '[role="dialog"][data-knowledge-base-drawer]'
-        _wait_for_dialog_settled(page, drawer_sel)
+        _wait_for_settled(page, drawer_sel)
 
         assert page.locator(drawer_sel).get_attribute("aria-describedby") is None
         results = run_axe(page, context_selector=drawer_sel, rules=list(AXE_ENFORCED_RULES))
