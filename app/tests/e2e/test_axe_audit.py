@@ -160,7 +160,8 @@ def test_upload_loading_transitions_expose_interactive_controls(page: Page, app_
     page.wait_for_function(
         """() => {
             const el = document.getElementById('upload-button-loading');
-            return el && !el.hasAttribute('aria-hidden');
+            const btn = el && el.querySelector('button');
+            return el && !el.hasAttribute('aria-hidden') && btn && btn.getAttribute('aria-label') === 'Uploading';
         }""",
         timeout=5000,
     )

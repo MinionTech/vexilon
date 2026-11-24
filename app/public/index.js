@@ -102,12 +102,17 @@
                 if (loading.getAttribute("aria-hidden") === "true") {
                     loading.removeAttribute("aria-hidden");
                 }
-                if (
-                    loading.tagName === "BUTTON" &&
-                    !loading.getAttribute("aria-label") &&
-                    !loading.getAttribute("aria-labelledby")
-                ) {
-                    loading.setAttribute("aria-label", "Uploading");
+                const controls = loading.matches("button, [role='button']")
+                    ? [loading]
+                    : Array.from(loading.querySelectorAll("button, [role='button']"));
+                for (const control of controls) {
+                    if (
+                        !control.textContent.trim() &&
+                        !control.getAttribute("aria-label") &&
+                        !control.getAttribute("aria-labelledby")
+                    ) {
+                        control.setAttribute("aria-label", "Uploading");
+                    }
                 }
             }
         }
