@@ -18,8 +18,17 @@ def test_knowledge_base_button_accessible_name(page: Page, app_url: str):
     readme_button = wait_for_knowledge_base_button(page)
 
     expect(readme_button).to_have_accessible_name("Knowledge Base")
+    assert "Knowledge Base" in readme_button.inner_text()
 
     visible_label = page.evaluate(
         """() => getComputedStyle(document.querySelector('#readme-button'), '::after').content"""
     )
     assert "Knowledge Base" in visible_label
+
+    span_font_size = page.evaluate(
+        """() => {
+            const span = document.querySelector('#readme-button span');
+            return span ? getComputedStyle(span).fontSize : null;
+        }"""
+    )
+    assert span_font_size in (None, "0px"), f"Expected hidden span, got fontSize={span_font_size}"

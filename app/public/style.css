@@ -22,9 +22,12 @@ body {
     display: none !important;
 }
 
-/* 3. Rename "Readme" → "Knowledge Base" visually (aria-label set in index.js) */
+/* 3. Rename "Readme" → "Knowledge Base" visually (aria-label and span synced in index.js) */
 #readme-button {
     font-size: 0;
+}
+#readme-button span {
+    font-size: 0 !important;
 }
 #readme-button::after {
     content: "Knowledge Base";
@@ -85,9 +88,16 @@ body {
     font-style: italic !important;
 }
 
-/* 6. Knowledge Base drawer: WCAG AA link contrast in dark theme (fixes #642) */
-/* Chainlit default dark --primary (#f5145f) is ~3.94:1 on #212121; lighten for drawer links only. */
-.dark [role="dialog"][data-knowledge-base-drawer] a.text-primary {
+/* 6. Knowledge Base drawer & message links: WCAG AA contrast & non-color distinction (WCAG 1.4.1 / 1.4.3) */
+/* Chainlit default --primary (#f5145f) is 4.08:1 on #ffffff and ~3.94:1 on #212121. */
+[role="dialog"][data-knowledge-base-drawer] a.text-primary,
+[role="main"] a.text-primary {
+    color: #d10d50 !important; /* > 5.0:1 on #ffffff */
+    text-decoration: underline !important;
+    text-underline-offset: 2px;
+}
+.dark [role="dialog"][data-knowledge-base-drawer] a.text-primary,
+.dark [role="main"] a.text-primary {
     color: #ff6b9d !important; /* 6.0:1 on #212121 */
 }
 
@@ -149,4 +159,65 @@ body {
 
 .dark [role="dialog"][data-knowledge-base-drawer] > button {
     background-color: #212121 !important;
+}
+
+/* 8. Visible keyboard focus on the composer textarea (WCAG 2.4.7) */
+/* Chainlit sets focus-visible:ring-0 / outline-none on #chat-input. */
+#chat-input:focus-visible {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #f5145f !important;
+    outline: none !important;
+}
+.dark #chat-input:focus-visible {
+    box-shadow: 0 0 0 2px #212121, 0 0 0 4px #f5145f !important;
+}
+@media (forced-colors: active) {
+    #chat-input:focus-visible {
+        outline: 3px solid Highlight !important;
+        outline-offset: 2px !important;
+        box-shadow: none !important;
+    }
+}
+
+/* 9. Primary action contrast (WCAG 1.4.3) */
+/* White text on Chainlit's --primary #f5145f is 4.08:1, below the 4.5:1 AA
+   minimum for normal-size text. #e7135a is the same hue, 4.53:1 on white. */
+#confirm,
+button.bg-primary {
+    background-color: #e7135a !important;
+    color: #ffffff !important;
+}
+#confirm:hover,
+button.bg-primary:hover {
+    background-color: #c8104e !important;
+}
+
+/* 10. Skip link (WCAG 2.4.1 Bypass Blocks) and 1x1 welcome logo suppression */
+.skip-link {
+    position: fixed;
+    top: -100px;
+    left: 16px;
+    z-index: 100;
+    padding: 8px 14px;
+    background-color: #111827;
+    color: #ffffff;
+    border: 2px solid #f5145f;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.skip-link:focus {
+    top: 12px;
+}
+[role="main"][tabindex="-1"]:focus {
+    outline: none;
+}
+.welcome-screen img[src^="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwC"] {
+    display: none !important;
+}
+
+/* 11. Starter button text contrast in dark theme (WCAG 1.4.3) */
+/* Chainlit's #7c7c7c on #212121 is 3.85:1; #a3a3a3 is 6.34:1. */
+.dark [id^="starter-"] p {
+    color: #a3a3a3 !important;
 }

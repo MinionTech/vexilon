@@ -1,5 +1,8 @@
 """Shared helpers for Playwright UI e2e tests."""
 
+import os
+from pathlib import Path
+
 from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeoutError, expect
 
 WCAG_AA_CONTRAST_MIN = 4.5
@@ -120,3 +123,86 @@ def contrast_ratio_js() -> str:
         return worst;
     }
     """
+
+
+AXE_CORE_VERSION = "4.14.1"
+AXE_CORE_SHA256 = "29348999450cdf2849a8e70b7912fc2da85a849da39c0d0d5394f51d4a9ed95c"
+AXE_CORE_URL = f"https://unpkg.com/axe-core@{AXE_CORE_VERSION}/axe.min.js"
+CHAINLIT_THEME_STORAGE_KEY = "vite-ui-theme"
+
+
+def axe_core_path() -> Path:
+    """Return a local axe-core script, downloading it once if needed."""
+    import hashlib
+    import urllib.request
+
+    cache_dir = Path(os.environ.get("AXE_CACHE_DIR", "/tmp/axe-core"))
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    dest = cache_dir / f"axe.min.{AXE_CORE_VERSION}.js"
+    if not dest.exists() or hashlib.sha256(dest.read_bytes()).hexdigest() != AXE_CORE_SHA256:
+        with urllib.request.urlopen(AXE_CORE_URL, timeout=30) as response:
+            dest.write_bytes(response.read())
+    digest = hashlib.sha256(dest.read_bytes()).hexdigest()
+    if digest != AXE_CORE_SHA256:
+        raise AssertionError(
+            f"axe-core {AXE_CORE_VERSION} sha256 mismatch: {digest}"
+        )
+    return dest
+
+
+def set_chainlit_theme(page: Page, theme: str) -> None:
+    """Persist a Chainlit theme and reload so `.dark` / `.light` is applied."""
+    page.evaluate(
+        f"localStorage.setItem('{CHAINLIT_THEME_STORAGE_KEY}', '{theme}')"
+    )
+    page.reload(wait_until="domcontentloaded")
+    wait_for_custom_js(page)
+    if theme == "dark":
+        page.wait_for_function(
+            "document.documentElement.classList.contains('dark')",
+            timeout=5000,
+        )
+
+
+def run_axe(page: Page, context_selector: str | None = None, rules: list[str] | None = None) -> dict:
+    """Run axe-core on the page or a context element and return the raw results."""
+    page.add_script_tag(path=str(axe_core_path()))
+    return page.evaluate(
+        """async ([contextSelector, ruleIds]) => {
+            const context = contextSelector
+                ? document.querySelector(contextSelector)
+                : document;
+            if (!context) {
+                return { error: `context not found: ${contextSelector}` };
+            }
+            const options = {
+                runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },
+            };
+            if (ruleIds && ruleIds.length) {
+                options.runOnly = { type: "rule", values: ruleIds };
+            }
+            return await axe.run(context, options);
+        }""",
+        [context_selector, list(rules) if rules else None],
+    )
+
+
+def axe_violations(results: dict, rule_ids: tuple[str, ...] | None = None) -> list[dict]:
+    """Return axe violations, optionally filtered to selected rule ids."""
+    if "error" in results:
+        raise AssertionError(results["error"])
+    violations = results.get("violations") or []
+    if rule_ids is None:
+        return violations
+    wanted = set(rule_ids)
+    return [v for v in violations if v.get("id") in wanted]
+
+
+def format_axe_violations(violations: list[dict]) -> str:
+    """Format axe violations for assertion messages."""
+    lines = []
+    for v in violations:
+        lines.append(f"[{v.get('impact')}] {v.get('id')}: {v.get('help')}")
+        for node in (v.get("nodes") or [])[:8]:
+            lines.append(f"  {node.get('target')} {node.get('failureSummary', '')[:200]}")
+    return "\n".join(lines)
