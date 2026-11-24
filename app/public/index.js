@@ -142,6 +142,12 @@
         grieve: "event/persona-grieve",
         manage: "event/persona-manage",
     };
+    const STARTER_PERSONAS = {
+        "starter-discipline-just-cause": "lookup",
+        "starter-steward-rights": "lookup",
+        "starter-grievance-builder": "grieve",
+        "starter-management-guide": "manage",
+    };
 
     let lastChatProfile = null;
     let currentPersona = null;
@@ -179,11 +185,29 @@
             if (!title) return;
             const gc = window.goatcounter;
             if (!gc || typeof gc.count !== "function") return;
-            gc.count({
-                path: eventPath,
-                title: title,
-                event: true,
-            });
+            // GoatCounter's count.js get_data() attaches location.search as `q`.
+            // Strip `q` for feature events so URL query strings are never sent.
+            const origGetData = typeof gc.get_data === "function" ? gc.get_data : null;
+            if (origGetData) {
+                gc.get_data = function (vars) {
+                    const data = origGetData.call(gc, vars);
+                    if (data && typeof data === "object") {
+                        delete data.q;
+                    }
+                    return data;
+                };
+            }
+            try {
+                gc.count({
+                    path: eventPath,
+                    title: title,
+                    event: true,
+                });
+            } finally {
+                if (origGetData) {
+                    gc.get_data = origGetData;
+                }
+            }
         } catch (_err) {
             // Missing, blocked, or failing analytics must never affect the UI.
         }
@@ -227,10 +251,14 @@
     }
 
     function trackErrorToasts() {
+        const state = document.documentElement.dataset.goatcounter;
+        if (!state) return;
         document.querySelectorAll('[data-sonner-toast][data-type="error"]').forEach((toast) => {
             if (toast.dataset.gcTracked) return;
             toast.dataset.gcTracked = "true";
-            trackGoatCounterEvent("event/error-ui");
+            if (state === "on") {
+                trackGoatCounterEvent("event/error-ui");
+            }
         });
     }
 
@@ -252,6 +280,11 @@
             const starterBtn = target.closest('button[id^="starter-"]');
             if (starterBtn && !starterBtn.disabled) {
                 trackGoatCounterEvent("event/chat-submit");
+                const starterPersona = STARTER_PERSONAS[starterBtn.id];
+                if (starterPersona && PERSONA_EVENTS[starterPersona]) {
+                    currentPersona = starterPersona;
+                    trackGoatCounterEvent(PERSONA_EVENTS[starterPersona]);
+                }
                 return;
             }
 
@@ -285,8 +318,14 @@
 
     fetch("/api/goatcounter")
         .then((res) => (res.ok ? res.json() : {}))
-        .then((data) => loadGoatCounter(data && data.goatcounter_code))
-        .catch(() => setGoatCounterState("off"));
+        .then((data) => {
+            loadGoatCounter(data && data.goatcounter_code);
+            trackErrorToasts();
+        })
+        .catch(() => {
+            setGoatCounterState("off");
+            trackErrorToasts();
+        });
 
     // ── Brand Configuration ────────────────────────────────────────────────────
 

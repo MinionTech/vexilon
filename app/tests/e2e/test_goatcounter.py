@@ -260,7 +260,7 @@ def test_goatcounter_chat_submit_and_session_save_events(page: Page, app_url: st
 
 
 def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
-    """Starter clicks emit event/chat-submit and error toasts emit event/error-ui without text."""
+    """Mode-changing starter updates active persona; error toast emits new event/error-ui without text."""
     blocked = _block_goatcounter_hits(page)
     _stub_goatcounter_config(page, TEST_CODE)
     _install_goatcounter_spy(page)
@@ -269,10 +269,23 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     _wait_for_goatcounter_state(page, "on")
     wait_for_custom_js(page)
 
-    starter = page.locator("#starter-discipline-just-cause")
+    # Informational Manage starter switches backend persona to Manage without changing #chat-profiles.
+    starter = page.locator("#starter-management-guide")
     starter.wait_for(state="visible", timeout=15000)
     starter.click()
     _wait_for_event_path(page, "event/chat-submit")
+    _wait_for_event_path(page, "event/persona-manage")
+
+    # Wait for informational reply, then verify a normal submit inherits Manage instead of Lookup.
+    page.get_by_text("Management Guide", exact=False).first.wait_for(state="visible", timeout=15000)
+    page.locator("textarea").wait_for(state="visible", timeout=15000)
+    page.evaluate("() => { window.__gcEvents = []; }")
+    textarea = page.locator("textarea")
+    textarea.press_sequentially("Follow up management question", delay=10)
+    page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
+    submit_chat_with_enter(page, textarea)
+    _wait_for_event_path(page, "event/chat-submit")
+    _wait_for_event_path(page, "event/persona-manage")
 
     stop_button = page.locator("#stop-button")
     try:
@@ -282,7 +295,14 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     except Exception:
         pass
 
-    # Simulate a Chainlit Sonner error toast carrying sensitive text.
+    followup_events = _recorded_events(page)
+    assert [ev["path"] for ev in followup_events] == [
+        "event/chat-submit",
+        "event/persona-manage",
+    ]
+
+    # Require a strictly new error-ui event after injecting the sensitive toast.
+    before_error_count = sum(1 for ev in followup_events if ev["path"] == "event/error-ui")
     page.evaluate(
         """() => {
             const toast = document.createElement("li");
@@ -292,21 +312,74 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
             document.body.appendChild(toast);
         }"""
     )
-    _wait_for_event_path(page, "event/error-ui")
+    page.wait_for_function(
+        "(n) => (window.__gcEvents || []).filter((e) => e && e.path === 'event/error-ui').length > n",
+        arg=before_error_count,
+        timeout=10000,
+    )
 
     events = _recorded_events(page)
-    paths = [ev["path"] for ev in events]
-    assert "event/chat-submit" in paths
-    assert "event/error-ui" in paths
+    assert any(ev["path"] == "event/error-ui" for ev in events)
     _assert_pipa_safe_events(
         events,
         forbidden_substrings=(
-            "Discipline Just Cause",
+            "Management Guide",
+            "Follow up management question",
             "SECRET_ERROR_DETAIL",
             "grievance_123.pdf",
         ),
     )
     assert all(_is_goatcounter_request(url) for url in blocked)
+
+
+def test_goatcounter_feature_events_omit_url_query(page: Page, app_url: str):
+    """Feature events omit page URL query parameters (`q`) even when count.js get_data sets them."""
+    blocked = _block_goatcounter_hits(page)
+    _stub_goatcounter_config(page, TEST_CODE)
+    page.add_init_script(
+        f"""
+        window.goatcounter = {{
+            get_data(vars) {{
+                vars = vars || {{}};
+                return {{
+                    p: vars.path,
+                    t: vars.title,
+                    e: !!vars.event,
+                    q: location.search,
+                }};
+            }},
+            url(vars) {{
+                const data = window.goatcounter.get_data(vars || {{}});
+                const params = new URLSearchParams();
+                for (const [k, v] of Object.entries(data)) {{
+                    if (v !== "" && v !== null && v !== undefined && v !== false) {{
+                        params.set(k, String(v));
+                    }}
+                }}
+                return "{TEST_ENDPOINT}?" + params.toString();
+            }},
+            count(vars) {{
+                const hitUrl = window.goatcounter.url(vars);
+                const img = new Image();
+                img.src = hitUrl;
+            }},
+        }};
+        """
+    )
+
+    page.goto(f"{app_url}/?q=CONFIDENTIAL_URL_QUERY_999", wait_until="domcontentloaded")
+    _wait_for_goatcounter_state(page, "on")
+    wait_for_custom_js(page)
+
+    with page.expect_request("**/*goatcounter.com/count*") as req_info:
+        dialog = open_knowledge_base_drawer(page)
+    expect(dialog).to_be_visible()
+
+    hit_url = req_info.value.url
+    assert "p=event%2Fknowledge-base-open" in hit_url, hit_url
+    assert "q=" not in hit_url, hit_url
+    assert "CONFIDENTIAL_URL_QUERY_999" not in hit_url, hit_url
+    assert any("/count?" in url for url in blocked)
 
 
 def _non_secure_context_filtered(errors: list[str]) -> list[str]:
