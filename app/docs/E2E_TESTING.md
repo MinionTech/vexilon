@@ -73,7 +73,7 @@ service and explicit pytest path.
 | `test_knowledge_base_drawer.py` | Drawer opens with expected sections and document links |
 | `test_knowledge_base_drawer_contrast_a11y.py` | Drawer link contrast in dark theme (#642) |
 | `test_chat_response_smoke.py` | User + assistant message bubbles after send |
-| `test_goatcounter.py` | GoatCounter script follows the live server config; set-path stub; live hits blocked |
+| `test_goatcounter.py` | GoatCounter script config, PIPA-safe feature events, blocked/unset resilience |
 
 ## Selectors and fixtures
 

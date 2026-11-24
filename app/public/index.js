@@ -121,12 +121,30 @@
 
 
     // ── GoatCounter analytics ───────────────────────────────────────────────
-    // Cookieless pageview counting. The script loads only when a valid
-    // GOATCOUNTER_CODE is configured; otherwise nothing is requested.
-    // See PRIVACY.md.
+    // Cookieless pageview and feature-usage counting. The script loads only
+    // when a valid GOATCOUNTER_CODE is configured; otherwise nothing is
+    // requested. Event payloads use a fixed allowlist so query text, filenames,
+    // document titles, and error strings are never sent. See PRIVACY.md.
 
     const GOATCOUNTER_SCRIPT_SRC = "https://gc.zgo.at/count.js";
     const GOATCOUNTER_CODE_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+    const GOATCOUNTER_EVENTS = {
+        "event/chat-submit": "Chat submit",
+        "event/persona-lookup": "Persona: Lookup",
+        "event/persona-grieve": "Persona: Grieve",
+        "event/persona-manage": "Persona: Manage",
+        "event/knowledge-base-open": "Knowledge Base open",
+        "event/session-save": "Session save",
+        "event/error-ui": "UI error",
+    };
+    const PERSONA_EVENTS = {
+        lookup: "event/persona-lookup",
+        grieve: "event/persona-grieve",
+        manage: "event/persona-manage",
+    };
+
+    let lastChatProfile = null;
+    let currentPersona = null;
 
     function setGoatCounterState(state) {
         document.documentElement.dataset.goatcounter = state;
@@ -153,6 +171,117 @@
         }
         setGoatCounterState("on");
     }
+
+    function trackGoatCounterEvent(eventPath) {
+        try {
+            if (document.documentElement.dataset.goatcounter !== "on") return;
+            const title = GOATCOUNTER_EVENTS[eventPath];
+            if (!title) return;
+            const gc = window.goatcounter;
+            if (!gc || typeof gc.count !== "function") return;
+            gc.count({
+                path: eventPath,
+                title: title,
+                event: true,
+            });
+        } catch (_err) {
+            // Missing, blocked, or failing analytics must never affect the UI.
+        }
+    }
+
+    function normalizePersonaKey(text) {
+        const key = (text || "").trim().toLowerCase();
+        return PERSONA_EVENTS[key] ? key : null;
+    }
+
+    function syncChatProfilePersona() {
+        const profileBtn = document.getElementById("chat-profiles");
+        if (!profileBtn) return;
+
+        if (!profileBtn.dataset.gcProfileObserved && typeof MutationObserver === "function") {
+            const observer = new MutationObserver(() => syncChatProfilePersona());
+            observer.observe(profileBtn, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            });
+            profileBtn.dataset.gcProfileObserved = "true";
+        }
+
+        const key = normalizePersonaKey(profileBtn.textContent);
+        if (!key) return;
+
+        if (lastChatProfile === null) {
+            lastChatProfile = key;
+            if (currentPersona === null) {
+                currentPersona = key;
+            }
+            return;
+        }
+
+        if (key !== lastChatProfile) {
+            lastChatProfile = key;
+            currentPersona = key;
+            trackGoatCounterEvent(PERSONA_EVENTS[key]);
+        }
+    }
+
+    function trackErrorToasts() {
+        document.querySelectorAll('[data-sonner-toast][data-type="error"]').forEach((toast) => {
+            if (toast.dataset.gcTracked) return;
+            toast.dataset.gcTracked = "true";
+            trackGoatCounterEvent("event/error-ui");
+        });
+    }
+
+    document.addEventListener(
+        "click",
+        (event) => {
+            const target = event.target instanceof Element ? event.target : null;
+            if (!target) return;
+
+            const submitBtn = target.closest("#chat-submit");
+            if (submitBtn && !submitBtn.disabled) {
+                trackGoatCounterEvent("event/chat-submit");
+                if (currentPersona && PERSONA_EVENTS[currentPersona]) {
+                    trackGoatCounterEvent(PERSONA_EVENTS[currentPersona]);
+                }
+                return;
+            }
+
+            const starterBtn = target.closest('button[id^="starter-"]');
+            if (starterBtn && !starterBtn.disabled) {
+                trackGoatCounterEvent("event/chat-submit");
+                return;
+            }
+
+            const readmeBtn = target.closest("#readme-button");
+            if (readmeBtn && !readmeBtn.disabled) {
+                trackGoatCounterEvent("event/knowledge-base-open");
+                return;
+            }
+
+            const confirmBtn = target.closest("#chat-settings #confirm");
+            if (confirmBtn && !confirmBtn.disabled) {
+                const personaSelect = document.querySelector("#chat-settings #Persona");
+                const key = personaSelect ? normalizePersonaKey(personaSelect.textContent) : null;
+                if (key) {
+                    currentPersona = key;
+                    trackGoatCounterEvent(PERSONA_EVENTS[key]);
+                }
+                return;
+            }
+
+            const actionBtn = target.closest("button");
+            if (actionBtn && !actionBtn.disabled) {
+                const label = (actionBtn.textContent || "").replace(/\s+/g, " ").trim();
+                if (label === "💾 Save Session" || label === "Save Session") {
+                    trackGoatCounterEvent("event/session-save");
+                }
+            }
+        },
+        true,
+    );
 
     fetch("/api/goatcounter")
         .then((res) => (res.ok ? res.json() : {}))
@@ -208,6 +337,8 @@
         hideReadmeDrawerTitle();
         labelKnowledgeBaseDrawer();
         setupKnowledgeBaseDrawerLabel();
+        syncChatProfilePersona();
+        trackErrorToasts();
         replaceBuildSha();
         manageWelcomeTitle();
     }, 500);
@@ -218,6 +349,8 @@
     hideReadmeDrawerTitle();
     setupKnowledgeBaseDrawerLabel();
     labelKnowledgeBaseDrawer();
+    syncChatProfilePersona();
+    trackErrorToasts();
     replaceBuildSha();
     manageWelcomeTitle();
 
