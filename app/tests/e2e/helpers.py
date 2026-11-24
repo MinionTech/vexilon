@@ -129,15 +129,20 @@ AXE_CORE_VERSION = "4.14.1"
 AXE_CORE_SHA256 = "29348999450cdf2849a8e70b7912fc2da85a849da39c0d0d5394f51d4a9ed95c"
 AXE_CORE_URL = f"https://unpkg.com/axe-core@{AXE_CORE_VERSION}/axe.min.js"
 CHAINLIT_THEME_STORAGE_KEY = "vite-ui-theme"
-# Serious/critical rules covered by the #401 quick fixes (and prior a11y PRs).
+# Enforced WCAG 2.1 A/AA rules covered across welcome, settings, and drawer.
 AXE_ENFORCED_RULES = (
     "aria-allowed-role",
     "aria-prohibited-attr",
     "button-name",
+    "bypass",
+    "color-contrast",
+    "image-alt",
     "label",
     "label-content-name-mismatch",
     "landmark-one-main",
+    "link-in-text-block",
     "presentation-role-conflict",
+    "region",
 )
 
 

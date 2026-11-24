@@ -12,12 +12,26 @@ from helpers import (
     WCAG_AA_CONTRAST_MIN,
     axe_violations,
     format_axe_violations,
+    open_knowledge_base_drawer,
     run_axe,
     set_chainlit_theme,
     wait_for_aria_label,
     wait_for_custom_js,
     wait_for_knowledge_base_button,
 )
+
+
+def _wait_for_dialog_settled(page: Page, selector: str = "[role='dialog']") -> None:
+    """Wait until Radix dialog opacity transition completes before sampling colors."""
+    page.wait_for_function(
+        """(sel) => {
+            const dlg = document.querySelector(sel);
+            if (!dlg || getComputedStyle(dlg).opacity !== '1') return false;
+            return dlg.getAnimations().every((a) => a.playState === 'finished');
+        }""",
+        arg=selector,
+        timeout=5000,
+    )
 
 
 def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: str):
@@ -46,8 +60,8 @@ def test_welcome_screen_axe_enforced_rules_light_and_dark(page: Page, app_url: s
         )
 
 
-def test_settings_dialog_primary_button_contrast(page: Page, app_url: str):
-    """Settings Confirm button meets WCAG AA 4.5:1 contrast in both themes."""
+def test_settings_dialog_axe_and_primary_button_contrast(page: Page, app_url: str):
+    """Settings dialog passes axe (including contrast) and Confirm meets 4.5:1 AA."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
@@ -56,6 +70,13 @@ def test_settings_dialog_primary_button_contrast(page: Page, app_url: str):
         page.locator("#chat-settings-open-modal").click()
         confirm = page.locator("#confirm")
         confirm.wait_for(timeout=8000)
+        _wait_for_dialog_settled(page)
+
+        results = run_axe(page, context_selector="[role='dialog']", rules=list(AXE_ENFORCED_RULES))
+        violations = axe_violations(results, AXE_ENFORCED_RULES)
+        assert violations == [], (
+            f"{theme} settings dialog axe violations:\n{format_axe_violations(violations)}"
+        )
 
         result = page.evaluate(
             """() => {
@@ -92,6 +113,26 @@ def test_settings_dialog_primary_button_contrast(page: Page, app_url: str):
         page.keyboard.press("Escape")
 
 
+def test_knowledge_base_drawer_axe_light_and_dark(page: Page, app_url: str):
+    """Knowledge Base drawer passes enforced axe rules (including link-in-text-block)."""
+    page.goto(app_url, wait_until="domcontentloaded")
+    wait_for_custom_js(page)
+
+    for theme in ("light", "dark"):
+        set_chainlit_theme(page, theme)
+        open_knowledge_base_drawer(page)
+        drawer_sel = '[role="dialog"][data-knowledge-base-drawer]'
+        _wait_for_dialog_settled(page, drawer_sel)
+
+        assert page.locator(drawer_sel).get_attribute("aria-describedby") is None
+        results = run_axe(page, context_selector=drawer_sel, rules=list(AXE_ENFORCED_RULES))
+        violations = axe_violations(results, AXE_ENFORCED_RULES)
+        assert violations == [], (
+            f"{theme} drawer axe violations:\n{format_axe_violations(violations)}"
+        )
+        page.keyboard.press("Escape")
+
+
 def test_chat_input_has_visible_focus_indicator(page: Page, app_url: str):
     """#chat-input shows a visible focus ring when focused from the keyboard."""
     page.goto(app_url, wait_until="domcontentloaded")
@@ -118,7 +159,28 @@ def test_welcome_landmarks_and_labels(page: Page, app_url: str):
 
     header = page.locator("#header")
     expect(header).to_have_attribute("role", "banner")
-    expect(page.locator("[role='main']")).to_have_count(1)
+    main = page.locator("[role='main']")
+    expect(main).to_have_count(1)
+
+    skip = page.locator("#skip-to-main")
+    expect(skip).to_have_text("Skip to main content")
+    skip.focus()
+    skip.press("Enter")
+    assert page.evaluate("() => document.activeElement?.getAttribute('role') === 'main'")
+
+    hidden_logo = page.evaluate(
+        """() => {
+            const img = document.querySelector('.welcome-screen img');
+            if (!img) return null;
+            return {
+                display: getComputedStyle(img).display,
+                alt: img.getAttribute('alt'),
+                ariaHidden: img.getAttribute('aria-hidden'),
+            };
+        }"""
+    )
+    if hidden_logo is not None:
+        assert hidden_logo == {"display": "none", "alt": "", "ariaHidden": "true"}
 
     upload = page.locator("#upload-button")
     expect(upload).to_have_accessible_name("Attach file")

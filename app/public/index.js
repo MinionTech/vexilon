@@ -131,9 +131,53 @@
         if (header && header.getAttribute("role") !== "banner") {
             header.setAttribute("role", "banner");
         }
-        if (!document.querySelector("main, [role='main']") && header && header.nextElementSibling) {
-            header.nextElementSibling.setAttribute("role", "main");
+        let main = document.querySelector("main, [role='main']");
+        if (!main && header && header.nextElementSibling) {
+            main = header.nextElementSibling;
+            main.setAttribute("role", "main");
         }
+        if (main) {
+            if (!main.id) {
+                main.id = "main-content";
+            }
+            if (!main.hasAttribute("tabindex")) {
+                main.setAttribute("tabindex", "-1");
+            }
+        }
+        if (header && main && !document.getElementById("skip-to-main")) {
+            const skip = document.createElement("a");
+            skip.id = "skip-to-main";
+            skip.href = `#${main.id}`;
+            skip.className = "skip-link";
+            skip.textContent = "Skip to main content";
+            skip.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = document.getElementById(main.id);
+                if (target) {
+                    target.focus();
+                }
+            });
+            header.prepend(skip);
+        }
+    }
+
+    // ── Decorative 1x1 welcome logo placeholder ──────────────────────────────
+    // config.toml uses a 1x1 transparent PNG to suppress Chainlit's default
+    // logo; hide it from assistive tech as well as layout (style.css).
+
+    function hidePlaceholderWelcomeLogo() {
+        document
+            .querySelectorAll(
+                '.welcome-screen img[src^="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwC"]',
+            )
+            .forEach((img) => {
+                if (img.getAttribute("alt") !== "") {
+                    img.setAttribute("alt", "");
+                }
+                if (img.getAttribute("aria-hidden") !== "true") {
+                    img.setAttribute("aria-hidden", "true");
+                }
+            });
     }
 
     // ── Hide Readme drawer title ──────────────────────────────────────────────
@@ -156,6 +200,10 @@
 
     function labelKnowledgeBaseDrawer() {
         document.querySelectorAll('[role="dialog"]').forEach((dialog) => {
+            const describedBy = dialog.getAttribute("aria-describedby");
+            if (describedBy && !document.getElementById(describedBy)) {
+                dialog.removeAttribute("aria-describedby");
+            }
             if (!dialog.hasAttribute("data-knowledge-base-drawer") && isKnowledgeBaseDrawer(dialog)) {
                 dialog.setAttribute("data-knowledge-base-drawer", "true");
             }
@@ -278,6 +326,7 @@
         labelChatControls();
         labelChatInput();
         labelLandmarks();
+        hidePlaceholderWelcomeLogo();
         hideReadmeDrawerTitle();
         labelKnowledgeBaseDrawer();
         setupKnowledgeBaseDrawerLabel();

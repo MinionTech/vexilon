@@ -1,92 +1,36 @@
 # Accessibility (WCAG 2.1 AA)
 
-Issue #233: Ensure chat interface is accessible
+Vexilon renders on Chainlit (`app/main.py`) with accessibility patches and contrast rules applied in `app/public/index.js` and `app/public/style.css`.
 
-## Compliance Status
+## Implemented Measures
 
-| Requirement | Status | Implementation |
-|-------------|--------|----------------|
-| ✅ Keyboard navigation | Complete | All interactive elements keyboard accessible with visible focus indicators |
-| ✅ Screen reader compatible | Complete | ARIA labels, semantic HTML, descriptive button text |
-| ✅ Color contrast ratios | Complete | 4.5:1 minimum for text, 3:1 for UI components |
-| ✅ Form labels clear | Complete | All inputs have associated labels |
-| ✅ Relative text sizing | Complete | rem units instead of px, respects user font preferences |
+### Landmarks, Skip Link, and Labels (`app/public/index.js`)
+A `MutationObserver` (with a 500ms fallback poll) keeps DOM accessibility attributes intact across React mounts and re-renders:
 
-## Changes Made
+- **Landmarks & Skip Link**: Assigns `role="banner"` to `#header` and `role="main"` (`id="main-content"`, `tabindex="-1"`) to its main sibling, and prepends a visually-hidden-until-focused `#skip-to-main` link inside `#header`.
+- **Chat Controls**: Sets `aria-label` on `#chat-profiles`, `#upload-button`, `#chat-settings-open-modal`, `#chat-submit`, and `#stop-button`, strips Chainlit's `role="presentation"` / `aria-hidden` from `#upload-button`, hides non-interactive `#upload-button-loading` placeholders, and names interactive upload controls `"Uploading"`.
+- **Composer Input**: Sets `aria-label="Type your message"` on `#chat-input` when unlabeled.
+- **Knowledge Base Button**: Keeps `#readme-button`'s `aria-label` and inner `<span>` text synced to `"Knowledge Base"` (WCAG 2.5.3 Label in Name).
+- **Decorative Welcome Placeholder**: Suppresses the 1×1 transparent `logo_file_url` image (`alt=""`, `aria-hidden="true"`, and `display: none`).
+- **Drawer Attributes**: Tags the Knowledge Base dialog with `data-knowledge-base-drawer` and clears dangling Radix `aria-describedby` references when no matching description node exists.
 
-### 1. app.py
+### Focus, Contrast, and Sizing (`app/public/style.css`)
+- **Composer Focus Ring**: Restores a 2px/4px `#f5145f` `box-shadow` focus indicator on `#chat-input:focus-visible` in light and dark themes, with a `3px solid Highlight` outline fallback under `@media (forced-colors: active)` (WCAG 2.4.7).
+- **Primary Action Contrast**: Overrides `#confirm` and `button.bg-primary` background from `#f5145f` to `#e7135a` (hover `#c8104e`) with `#ffffff` text for 4.53:1 contrast (WCAG 1.4.3).
+- **Starter Contrast (Dark Theme)**: Raises `[id^="starter-"] p` text from `#7c7c7c` (3.85:1) to `#a3a3a3` (6.34:1 on `#212121`, WCAG 1.4.3).
+- **Knowledge Base Drawer**: Uses `#d10d50` in light theme and `#ff6b9d` in dark theme with `text-decoration: underline` for `a.text-primary` links (WCAG 1.4.1 / 1.4.3), hides the duplicate `"Knowledge Base"` span visually (`font-size: 0`) so `::after` is the single visible label, and pins a `44×44px` close button with safe-area padding on mobile.
 
-- **Chatbot**: Added `aria_label="Conversation history"` and proper `label`
-- **Persona Selector**: Added descriptive `label="Response Style"`
-- **Reviewer Toggle**: Expanded label to `"Enable Senior Rep Review"` for clarity
-- **Export/Import Buttons**: Changed to descriptive text `"Save Chat"` / `"Load Chat"`
-- **Send Button**: Removed arrow symbol (➤) for cleaner screen reader experience
-- **Message Input**: Added proper `label="Your Question"` (visually hidden but accessible)
+## Verification
 
-### 2. style.css
+Automated Playwright + `axe-core` tests live in `app/tests/e2e/`:
 
-- **Relative Units**: Converted all `px` to `rem` (16px base)
-- **Focus Indicators**: Added `outline: 3px solid` for keyboard navigation
-- **Color Contrast**: Used `--primary-600` instead of `--primary-500` for better contrast
-- **Font Sizing**: Set `font-size: 100%` on html to respect user preferences
-- **Motion Preferences**: Added `prefers-reduced-motion` media query
-- **High Contrast**: Added `prefers-contrast: high` media query support
-- **iOS Zoom Prevention**: Set textarea font-size to 16px to prevent auto-zoom
+- `tests/e2e/test_axe_audit.py`: Enforced WCAG 2.1 A/AA `axe-core` scans across the welcome screen, settings dialog, and Knowledge Base drawer (light and dark themes), computed contrast on `#confirm`, `#chat-input` focus ring, skip link, hidden placeholder logo, and `#upload-button-loading` transitions.
+- `tests/e2e/test_knowledge_base_button_a11y.py`: Verifies `#readme-button` accessible name, `::after` label, and hidden inner `<span>`.
+- `tests/e2e/test_chat_controls_a11y.py`: Verifies composer control labels and `#stop-button` label during streaming.
+- `tests/e2e/test_knowledge_base_drawer_contrast_a11y.py`: Verifies dark-theme link contrast inside the Knowledge Base drawer.
 
-### 3. Keyboard Navigation
+Run the full containerized UI E2E suite from the repository root:
 
-All interactive elements are keyboard accessible:
-- Tab: Navigate between elements
-- Enter/Space: Activate buttons and controls
-- Arrow keys: Navigate radio button groups
-- Escape: Close modals (if applicable)
-
-Focus indicators are clearly visible with 3px outline.
-
-### 4. Screen Reader Support
-
-- Descriptive labels for all form controls
-- ARIA labels where native labels are visually hidden
-- Semantic HTML structure
-- Button text describes action (not just symbols)
-
-## Testing
-
-### Automated Testing
 ```bash
-# Install accessibility testing tools
-npm install -g @axe-core/cli
-
-# Run tests (requires running app)
-axe http://localhost:7860
+podman compose up --build --abort-on-container-exit --exit-code-from test-ui-e2e test-ui-e2e
 ```
-
-### Manual Testing Checklist
-
-- [ ] Navigate entire UI using only keyboard (Tab, Shift+Tab, Enter, Space, Arrows)
-- [ ] Verify focus indicators are visible on all interactive elements
-- [ ] Test with screen reader (NVDA, JAWS, or VoiceOver)
-- [ ] Zoom to 200% and verify layout remains functional
-- [ ] Test with high contrast mode enabled
-- [ ] Disable animations and verify content is still accessible
-
-### Browser Testing
-
-Tested on:
-- [ ] Chrome + NVDA
-- [ ] Firefox + NVDA
-- [ ] Safari + VoiceOver (macOS)
-- [ ] Safari + VoiceOver (iOS)
-- [ ] Edge
-
-## Known Limitations
-
-- Chainlit framework accessibility features are used where available
-- Third-party PDF viewer accessibility depends on browser implementation
-- Copy button in chatbot is provided by Chainlit's standard UI
-
-## Resources
-
-- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
-- [Chainlit Accessibility](https://github.com/Chainlit/chainlit)
-- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
