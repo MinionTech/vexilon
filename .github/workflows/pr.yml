@@ -44,6 +44,8 @@ jobs:
               - tests/**
               - compose.yml
               - .github/workflows/**
+              - .github/scripts/**
+              - .github/space.toml
             container:
               - app/**
               - tests/**
@@ -116,7 +118,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v10.3.3
+        uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
           cache-dependency-glob: "app/uv.lock"
@@ -135,6 +137,13 @@ jobs:
         run: |
           cd app
           uv run pytest ../tests/deploy_integrity/ -v
+
+      - name: Rehearse Space settings apply
+        env:
+          SPACE_VARS_JSON: '{"GOATCOUNTER_CODE":"rehearsal"}'
+        run: |
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test --dry-run
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator --dry-run
 
       - name: Run Local Unit & Streaming Tests
         env:

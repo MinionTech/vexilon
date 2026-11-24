@@ -163,11 +163,26 @@ the HF Space.
 - **TEST:** Every push to `main` deploys to the `bcgeu/navigator-test` Space and verifies `/api/health`.
 - **PROD:** Upon successful verification on TEST, the exact verified image is automatically promoted to the `bcgeu/navigator` Space.
 
-**Required GitHub secret:**
+**Required GitHub Environment secrets and variables:**
 
-| Secret | Value |
-|---|---|
-| `HF_TOKEN` | Hugging Face write-scoped access token ([settings/tokens](https://huggingface.co/settings/tokens)) |
+The `test` and `prod` GitHub Environments each need:
+
+| Name | Type | Where | Purpose |
+|---|---|---|---|
+| `HF_TOKEN` | Environment secret | `test` and `prod` | Deploy and apply Space settings through the Hugging Face API |
+| `GOATCOUNTER_CODE` | Environment variable (not a Secret) | `test` and `prod` | GoatCounter site code for that Space; an empty value leaves analytics off |
+
+Common Space defaults live in [`.github/space.toml`](.github/space.toml), with per-environment overrides passed on the command line in [`.github/workflows/merge.yml`](.github/workflows/merge.yml). On each deploy, [`.github/scripts/apply_space_settings.py`](.github/scripts/apply_space_settings.py) syncs those settings and GitHub Environment variables (`toJSON(vars)`) onto `bcgeu/navigator-test` or `bcgeu/navigator`. It does not delete undeclared Space variables or secrets. A missing required variable (`GOATCOUNTER_CODE`) or a Hugging Face API failure fails the deploy.
+
+### One-time setup
+
+Do this before the first deploy that applies Space settings, or that deploy will fail.
+
+1. **Hugging Face token.** Each Environment already has an `HF_TOKEN` secret used to push to the Space. That token also needs permission to manage Space settings (variables, visibility, hardware, and sleep) on `bcgeu/navigator-test` (for `test`) and `bcgeu/navigator` (for `prod`). A fine-grained token with **Read and Write** access to those Spaces in the `bcgeu` organization is enough; a classic token with the `write` role also works. The token must belong to an account that is a member of `bcgeu` with write access to those Spaces. Create or rotate tokens at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens), then update the `HF_TOKEN` secret on the [test](https://github.com/MinionTech/vexilon/settings/environments/test) and [prod](https://github.com/MinionTech/vexilon/settings/environments/prod) Environments if the existing token is narrower than that.
+2. **GitHub Environment variable.** On both the [test](https://github.com/MinionTech/vexilon/settings/environments/test) and [prod](https://github.com/MinionTech/vexilon/settings/environments/prod) Environments, add a **variable** (not a Secret) named `GOATCOUNTER_CODE`. The value is the GoatCounter site code only (for example `yourcode`). It is not secret. Leave the value empty to keep GoatCounter off. Create the variable on both Environments even if you leave the value empty; an empty value keeps GoatCounter off.
+3. **Org membership and billing** stay on huggingface.co and are not managed by this repo.
+
+Space settings and GitHub Environment variables changed by hand on the Space will be overwritten on the next deploy.
 
 ### Analytics (optional)
 

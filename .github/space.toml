@@ -1,0 +1,6 @@
+# Common Hugging Face Space settings for TEST and PROD.
+# Override any field via CLI flags in .github/workflows/merge.yml.
+visibility = "public"
+hardware = "cpu-basic"
+sleep_seconds = 172800
+required_vars = ["GOATCOUNTER_CODE"]
