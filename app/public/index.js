@@ -253,12 +253,36 @@
 
 
     // ── GoatCounter analytics ───────────────────────────────────────────────
-    // Cookieless pageview counting. The script loads only when a valid
-    // GOATCOUNTER_CODE is configured; otherwise nothing is requested.
-    // See PRIVACY.md.
+    // Cookieless pageview and feature-usage counting. The script loads only
+    // when a valid GOATCOUNTER_CODE is configured; otherwise nothing is
+    // requested. Event payloads use a fixed allowlist so query text, filenames,
+    // document titles, and error strings are never sent. See PRIVACY.md.
 
     const GOATCOUNTER_SCRIPT_SRC = "https://gc.zgo.at/count.js";
     const GOATCOUNTER_CODE_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+    const GOATCOUNTER_EVENTS = {
+        "event/chat-submit": "Chat submit",
+        "event/persona-lookup": "Persona: Lookup",
+        "event/persona-grieve": "Persona: Grieve",
+        "event/persona-manage": "Persona: Manage",
+        "event/knowledge-base-open": "Knowledge Base open",
+        "event/session-save": "Session save",
+        "event/error-ui": "UI error",
+    };
+    const PERSONA_EVENTS = {
+        lookup: "event/persona-lookup",
+        grieve: "event/persona-grieve",
+        manage: "event/persona-manage",
+    };
+    const STARTER_PERSONAS = {
+        "starter-discipline-just-cause": "lookup",
+        "starter-steward-rights": "lookup",
+        "starter-grievance-builder": "grieve",
+        "starter-management-guide": "manage",
+    };
+
+    let lastChatProfile = null;
+    let currentPersona = null;
 
     function setGoatCounterState(state) {
         document.documentElement.dataset.goatcounter = state;
@@ -281,15 +305,166 @@
                 "data-goatcounter-settings",
                 JSON.stringify({ allow_frame: true }),
             );
+            script.addEventListener("load", trackErrorToasts);
             document.head.appendChild(script);
         }
         setGoatCounterState("on");
     }
 
+    function trackGoatCounterEvent(eventPath) {
+        try {
+            if (document.documentElement.dataset.goatcounter !== "on") return false;
+            const title = GOATCOUNTER_EVENTS[eventPath];
+            if (!title) return false;
+            const gc = window.goatcounter;
+            if (!gc || typeof gc.count !== "function") return false;
+            // GoatCounter's count.js get_data() attaches location.search as `q`.
+            // Strip `q` for feature events so URL query strings are never sent.
+            const origGetData = typeof gc.get_data === "function" ? gc.get_data : null;
+            if (origGetData) {
+                gc.get_data = function (vars) {
+                    const data = origGetData.call(gc, vars);
+                    if (data && typeof data === "object") {
+                        delete data.q;
+                    }
+                    return data;
+                };
+            }
+            try {
+                gc.count({
+                    path: eventPath,
+                    title: title,
+                    referrer: "",
+                    event: true,
+                });
+            } finally {
+                if (origGetData) {
+                    gc.get_data = origGetData;
+                }
+            }
+            return true;
+        } catch (_err) {
+            // Missing, blocked, or failing analytics must never affect the UI.
+            return true;
+        }
+    }
+
+    function normalizePersonaKey(text) {
+        const key = (text || "").trim().toLowerCase();
+        return PERSONA_EVENTS[key] ? key : null;
+    }
+
+    function syncChatProfilePersona() {
+        const profileBtn = document.getElementById("chat-profiles");
+        if (!profileBtn) return;
+
+        if (!profileBtn.dataset.gcProfileObserved && typeof MutationObserver === "function") {
+            const observer = new MutationObserver(() => syncChatProfilePersona());
+            observer.observe(profileBtn, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            });
+            profileBtn.dataset.gcProfileObserved = "true";
+        }
+
+        const key = normalizePersonaKey(profileBtn.textContent);
+        if (!key) return;
+
+        if (lastChatProfile === null) {
+            lastChatProfile = key;
+            if (currentPersona === null) {
+                currentPersona = key;
+            }
+            return;
+        }
+
+        if (key !== lastChatProfile) {
+            lastChatProfile = key;
+            currentPersona = key;
+            trackGoatCounterEvent(PERSONA_EVENTS[key]);
+        }
+    }
+
+    function trackErrorToasts() {
+        const state = document.documentElement.dataset.goatcounter;
+        if (!state) return;
+        document.querySelectorAll('[data-sonner-toast][data-type="error"]').forEach((toast) => {
+            if (toast.dataset.gcTracked) return;
+            if (state === "off") {
+                toast.dataset.gcTracked = "true";
+                return;
+            }
+            if (trackGoatCounterEvent("event/error-ui")) {
+                toast.dataset.gcTracked = "true";
+            }
+        });
+    }
+
+    document.addEventListener(
+        "click",
+        (event) => {
+            const target = event.target instanceof Element ? event.target : null;
+            if (!target) return;
+
+            const submitBtn = target.closest("#chat-submit");
+            if (submitBtn && !submitBtn.disabled) {
+                trackGoatCounterEvent("event/chat-submit");
+                if (currentPersona && PERSONA_EVENTS[currentPersona]) {
+                    trackGoatCounterEvent(PERSONA_EVENTS[currentPersona]);
+                }
+                return;
+            }
+
+            const starterBtn = target.closest('button[id^="starter-"]');
+            if (starterBtn && !starterBtn.disabled) {
+                trackGoatCounterEvent("event/chat-submit");
+                const starterPersona = STARTER_PERSONAS[starterBtn.id];
+                if (starterPersona && PERSONA_EVENTS[starterPersona]) {
+                    currentPersona = starterPersona;
+                    trackGoatCounterEvent(PERSONA_EVENTS[starterPersona]);
+                }
+                return;
+            }
+
+            const readmeBtn = target.closest("#readme-button");
+            if (readmeBtn && !readmeBtn.disabled) {
+                trackGoatCounterEvent("event/knowledge-base-open");
+                return;
+            }
+
+            const confirmBtn = target.closest("#chat-settings #confirm");
+            if (confirmBtn && !confirmBtn.disabled) {
+                const personaSelect = document.querySelector("#chat-settings #Persona");
+                const key = personaSelect ? normalizePersonaKey(personaSelect.textContent) : null;
+                if (key) {
+                    currentPersona = key;
+                    trackGoatCounterEvent(PERSONA_EVENTS[key]);
+                }
+                return;
+            }
+
+            const actionBtn = target.closest("button");
+            if (actionBtn && !actionBtn.disabled) {
+                const label = (actionBtn.textContent || "").replace(/\s+/g, " ").trim();
+                if (label === "💾 Save Session" || label === "Save Session") {
+                    trackGoatCounterEvent("event/session-save");
+                }
+            }
+        },
+        true,
+    );
+
     fetch("/api/goatcounter")
         .then((res) => (res.ok ? res.json() : {}))
-        .then((data) => loadGoatCounter(data && data.goatcounter_code))
-        .catch(() => setGoatCounterState("off"));
+        .then((data) => {
+            loadGoatCounter(data && data.goatcounter_code);
+            trackErrorToasts();
+        })
+        .catch(() => {
+            setGoatCounterState("off");
+            trackErrorToasts();
+        });
 
     // ── Brand Configuration ────────────────────────────────────────────────────
 
@@ -342,6 +517,8 @@
         hideReadmeDrawerTitle();
         labelKnowledgeBaseDrawer();
         setupKnowledgeBaseDrawerLabel();
+        syncChatProfilePersona();
+        trackErrorToasts();
         replaceBuildSha();
         manageWelcomeTitle();
     }
