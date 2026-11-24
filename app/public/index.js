@@ -145,6 +145,10 @@
                 "data-goatcounter",
                 `https://${code}.goatcounter.com/count`,
             );
+            script.setAttribute(
+                "data-goatcounter-settings",
+                JSON.stringify({ allow_frame: true }),
+            );
             document.head.appendChild(script);
         }
         setGoatCounterState("on");

@@ -139,11 +139,9 @@ jobs:
           uv run pytest ../tests/deploy_integrity/ -v
 
       - name: Rehearse Space settings apply
-        env:
-          SPACE_VARS_JSON: '{"GOATCOUNTER_CODE":"rehearsal"}'
         run: |
-          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test --dry-run
-          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator --dry-run
+          SPACE_VARS_JSON='{}' python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test --dry-run
+          SPACE_VARS_JSON='{"GOATCOUNTER_CODE":"rehearsal"}' python .github/scripts/apply_space_settings.py --repo bcgeu/navigator --require-var GOATCOUNTER_CODE --dry-run
 
       - name: Run Local Unit & Streaming Tests
         env:

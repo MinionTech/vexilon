@@ -3,4 +3,4 @@
 visibility = "public"
 hardware = "cpu-basic"
 sleep_seconds = 172800
-required_vars = ["GOATCOUNTER_CODE"]
+required_vars = []

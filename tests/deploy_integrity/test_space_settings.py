@@ -96,9 +96,10 @@ def test_rejects_custom_sleep_on_cpu_basic(capsys):
 
 
 def test_missing_vs_empty_required_var(capsys):
-    assert settings.main(["--repo", "bcgeu/navigator", "--dry-run"], environ={"SPACE_VARS_JSON": "{}"}) == 1
+    assert settings.main(["--repo", "bcgeu/navigator-test", "--dry-run"], environ={"SPACE_VARS_JSON": "{}"}) == 0
+    assert settings.main(["--repo", "bcgeu/navigator", "--require-var", "GOATCOUNTER_CODE", "--dry-run"], environ={"SPACE_VARS_JSON": "{}"}) == 1
     assert "GOATCOUNTER_CODE" in capsys.readouterr().err
-    assert settings.main(["--repo", "bcgeu/navigator", "--dry-run"], environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'}) == 0
+    assert settings.main(["--repo", "bcgeu/navigator", "--require-var", "GOATCOUNTER_CODE", "--dry-run"], environ={"SPACE_VARS_JSON": '{"GOATCOUNTER_CODE": ""}'}) == 0
 
 
 def test_rejects_hf_token_in_vars_and_secrets(capsys):
@@ -113,5 +114,5 @@ def test_rejects_hf_token_in_vars_and_secrets(capsys):
 def test_merge_workflow_wires_vars_json_for_both_spaces():
     merge = (REPO_ROOT / ".github" / "workflows" / "merge.yml").read_text()
     assert "--repo bcgeu/navigator-test" in merge
-    assert "--repo bcgeu/navigator" in merge
+    assert "--repo bcgeu/navigator --require-var GOATCOUNTER_CODE" in merge
     assert "SPACE_VARS_JSON: ${{ toJSON(vars) }}" in merge

@@ -61,6 +61,7 @@ def test_goatcounter_script_follows_server_config(page: Page, app_url: str):
             "data-goatcounter",
             f"https://{code}.goatcounter.com/count",
         )
+        assert json.loads(script.get_attribute("data-goatcounter-settings") or "{}") == {"allow_frame": True}
         assert all(_is_goatcounter_request(url) for url in blocked)
     else:
         _wait_for_goatcounter_state(page, "off")
@@ -89,4 +90,5 @@ def test_goatcounter_script_present_when_set(page: Page, app_url: str):
     script = page.locator(f'script[src="{GOATCOUNTER_SCRIPT}"]')
     expect(script).to_have_count(1)
     expect(script).to_have_attribute("data-goatcounter", TEST_ENDPOINT)
+    assert json.loads(script.get_attribute("data-goatcounter-settings") or "{}") == {"allow_frame": True}
     assert all(_is_goatcounter_request(url) for url in blocked)
