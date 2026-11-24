@@ -169,35 +169,44 @@ def test_conversation_view_axe_light_and_dark(page: Page, app_url: str):
 
 
 def test_chat_input_has_visible_focus_indicator(page: Page, app_url: str):
-    """#message-composer shows a rounded focus ring when #chat-input is focused, without an inner box."""
+    """#message-composer shows a rounded focus ring in both themes, plus forced-colors outline."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
-    textarea = page.locator("#chat-input")
-    textarea.wait_for(timeout=15000)
-    textarea.focus()
+    expected_ring_rgb = {
+        "light": "rgb(115, 115, 115)",
+        "dark": "rgb(138, 138, 138)",
+    }
+    for theme, ring_rgb in expected_ring_rgb.items():
+        set_chainlit_theme(page, theme)
+        textarea = page.locator("#chat-input")
+        textarea.wait_for(timeout=15000)
+        textarea.focus()
 
-    styles = page.evaluate(
-        """() => {
-            const composer = getComputedStyle(document.querySelector('#message-composer'));
-            const input = getComputedStyle(document.querySelector('#chat-input'));
-            return {
-                composerShadow: composer.boxShadow,
-                inputShadow: input.boxShadow,
-                inputOutline: input.outlineStyle,
-            };
-        }"""
-    )
-    # Custom CSS uses a 2px page-background ring plus a 4px brand-color ring on the pill container.
-    assert "4px" in (styles["composerShadow"] or ""), (
-        f"Expected a visible 4px focus ring on #message-composer, got boxShadow={styles['composerShadow']}"
-    )
-    assert styles["inputShadow"] == "none", (
-        f"Expected no inner focus box-shadow on #chat-input, got {styles['inputShadow']}"
-    )
-    assert styles["inputOutline"] == "none", (
-        f"Expected no inner outline on #chat-input, got {styles['inputOutline']}"
-    )
+        styles = page.evaluate(
+            """() => {
+                const composer = getComputedStyle(document.querySelector('#message-composer'));
+                const input = getComputedStyle(document.querySelector('#chat-input'));
+                return {
+                    composerShadow: composer.boxShadow,
+                    inputShadow: input.boxShadow,
+                    inputOutline: input.outlineStyle,
+                };
+            }"""
+        )
+        # Custom CSS uses a 2px page-background gap plus a 4px neutral ring on the pill container.
+        assert "4px" in (styles["composerShadow"] or ""), (
+            f"{theme}: expected a visible 4px focus ring on #message-composer, got boxShadow={styles['composerShadow']}"
+        )
+        assert ring_rgb in (styles["composerShadow"] or ""), (
+            f"{theme}: expected {ring_rgb} in #message-composer boxShadow, got {styles['composerShadow']}"
+        )
+        assert styles["inputShadow"] == "none", (
+            f"{theme}: expected no inner focus box-shadow on #chat-input, got {styles['inputShadow']}"
+        )
+        assert styles["inputOutline"] == "none", (
+            f"{theme}: expected no inner outline on #chat-input, got {styles['inputOutline']}"
+        )
 
     page.emulate_media(forced_colors="active")
     forced = page.evaluate(
