@@ -14,6 +14,7 @@ x-app-env: &app-env
   AGNAV_WELCOME_TITLE: ${AGNAV_WELCOME_TITLE:-BCGEU Navigator}
   AGNAV_DATA_DIR: ${AGNAV_DATA_DIR:-/data/sources}
   AGNAV_CACHE_DIR: ${AGNAV_CACHE_DIR:-/data/cache}
+  GOATCOUNTER_CODE: ${GOATCOUNTER_CODE:-}
 
 x-test-env: &test-env
   <<: *app-env

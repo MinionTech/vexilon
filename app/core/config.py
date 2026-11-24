@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -53,6 +54,17 @@ AGNAV_REPO_URL = os.getenv("AGNAV_REPO_URL", "https://github.com/MinionTech/vexi
 GITHUB_DATA_URL = os.getenv(
     "AGNAV_KNOWLEDGE_URL", f"{AGNAV_REPO_URL}/tree/main/app/data"
 )
+
+# Optional GoatCounter site code (subdomain). Unset or invalid means analytics is off.
+_GOATCOUNTER_CODE_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+
+
+def get_goatcounter_code() -> str:
+    """Return a valid GoatCounter site code, or "" when unset or invalid."""
+    raw = (os.getenv("GOATCOUNTER_CODE") or "").strip().lower()
+    if _GOATCOUNTER_CODE_RE.fullmatch(raw):
+        return raw
+    return ""
 
 # Models & Providers
 def get_llm_provider() -> str:

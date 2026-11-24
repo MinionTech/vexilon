@@ -167,6 +167,46 @@
         });
     }
 
+
+    // ── GoatCounter analytics ───────────────────────────────────────────────
+    // Cookieless pageview counting. The script loads only when a valid
+    // GOATCOUNTER_CODE is configured; otherwise nothing is requested.
+    // See PRIVACY.md.
+
+    const GOATCOUNTER_SCRIPT_SRC = "https://gc.zgo.at/count.js";
+    const GOATCOUNTER_CODE_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+    function setGoatCounterState(state) {
+        document.documentElement.dataset.goatcounter = state;
+    }
+
+    function loadGoatCounter(code) {
+        if (!code || !GOATCOUNTER_CODE_RE.test(code)) {
+            setGoatCounterState("off");
+            return;
+        }
+        if (!document.querySelector(`script[src="${GOATCOUNTER_SCRIPT_SRC}"]`)) {
+            const script = document.createElement("script");
+            script.async = true;
+            script.src = GOATCOUNTER_SCRIPT_SRC;
+            script.setAttribute(
+                "data-goatcounter",
+                `https://${code}.goatcounter.com/count`,
+            );
+            script.setAttribute(
+                "data-goatcounter-settings",
+                JSON.stringify({ allow_frame: true }),
+            );
+            document.head.appendChild(script);
+        }
+        setGoatCounterState("on");
+    }
+
+    fetch("/api/goatcounter")
+        .then((res) => (res.ok ? res.json() : {}))
+        .then((data) => loadGoatCounter(data && data.goatcounter_code))
+        .catch(() => setGoatCounterState("off"));
+
     // ── Brand Configuration ────────────────────────────────────────────────────
 
     let welcomeTitle = "BCGEU Navigator";

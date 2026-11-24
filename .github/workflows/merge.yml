@@ -50,6 +50,19 @@ jobs:
           revision: ${{ github.sha }}
           max_depth: 20
 
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Apply Hugging Face Space settings
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE_VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          python -m pip install -r .github/scripts/requirements-space-settings.txt
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator-test
+
       - name: Promote and Verify to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -105,6 +118,19 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Apply Hugging Face Space settings
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE_VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          python -m pip install -r .github/scripts/requirements-space-settings.txt
+          python .github/scripts/apply_space_settings.py --repo bcgeu/navigator --require-var GOATCOUNTER_CODE
 
       - name: Promote and Verify to Hugging Face
         env:

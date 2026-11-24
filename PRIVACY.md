@@ -2,16 +2,20 @@
 
 This app is built with a "Privacy-by-Design" architecture, specifically aligned with the British Columbia [**Personal Information Protection Act (PIPA)**](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03063_01). As a tool designed for union stewards, we recognize the high sensitivity of labour relations data and the legal requirements for protecting personal information.
 
+## Analytics
+
+When `GOATCOUNTER_CODE` is set, the app loads [GoatCounter](https://www.goatcounter.com/)'s cookieless script to count daily unique visitors. GoatCounter records the page, referrer, browser, screen size, and country. It also stores operating system and language as separate daily aggregates. It does not store IP addresses in its database and does not set cookies (or other browser storage) for tracking. To count unique visits, GoatCounter holds the site, IP address, and User-Agent in memory for up to eight hours; that mapping is not written to disk. The app itself stores none of this data. See [GoatCounter's privacy policy](https://www.goatcounter.com/help/privacy). When the site code is unset, the script is not loaded and no request is made to GoatCounter.
+
 ## The 10 PIPA Principles in this Application
 
 ### 1. Accountability
 *   **Designation**: The project maintainer serves as the Privacy Officer.
 *   **Policies**: This document serves as our formal privacy policy.
-*   **Third-Parties**: This application uses Hugging Face Router for processing. All data sent to the LLM provider is subject to their standard data processing agreements.
+*   **Third-Parties**: This application uses Hugging Face Router for processing. All data sent to the LLM provider is subject to their standard data processing agreements. When `GOATCOUNTER_CODE` is set, page-usage counts are processed by GoatCounter as described in **Analytics**.
 
 ### 2. Identifying Purposes
 *   **Purpose**: This application processes user queries for the sole purpose of providing context-aware answers in real-time. 
-*   **Tracking**: We only track non-sensitive metadata (query counts and token consumption) for system health and API billing.
+*   **Tracking**: When `GOATCOUNTER_CODE` is configured, an anonymous pageview request is sent to GoatCounter as described in **Analytics** above (page, referrer, browser, screen size, and country). GoatCounter aggregates these requests. Separately, the app records non-sensitive metadata (query counts and token consumption) for system health and API billing. Neither path sends conversation content.
 *   **Pseudonymous Client ID**: The browser generates a random UUID (via `crypto.randomUUID()`) and stores it in that browser's local storage. On each session the browser sends this ID to the backend, where it is held in server-side session state (in-memory only, tied to that session — no database) to distinguish discrete sessions for rate-limiting integrity, and it may appear in the operational log lines described in Principle 5. It is generated entirely client-side from randomness — never derived from IP address, device fingerprint, or any other real-world identifying information — and is not linked to a user's real-world identity. This satisfies PIPA's allowance for identifying *discrete* users without identifying *who* they are.
 *   **No Secondary Use**: Data is never used for marketing, profiling, or tracking individual users.
 
@@ -20,8 +24,8 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 *   **Notification**: The UI footer explicitly states that chats are ephemeral and not saved.
 
 ### 4. Limiting Collection
-*   **Minimal Metrics**: Our collection is strictly limited to non-sensitive performance metrics: **query count** and **token consumption**.
-*   **Content-Blind**: The application does not collect user IP addresses (except for active session rate-limiting in memory), device fingerprints, or location data. The pseudonymous client ID described in Principle 2 does not change this — its *value* is randomly generated, not derived from any IP address, device fingerprint, or other data collected from the user's device (though the ID token itself is sent to and briefly held by the server, as described in Principle 2).
+*   **Minimal Metrics**: In-app collection is limited to non-sensitive performance metrics (**query count** and **token consumption**). When analytics is enabled, GoatCounter receives a request for each pageview and stores the aggregates described in **Analytics**.
+*   **Content-Blind**: The application does not persist user IP addresses or store them in a database. IP addresses may be held in memory only for active session rate-limiting. When analytics is enabled, GoatCounter derives country from the visitor's IP and may hold the address in memory for up to eight hours to detect repeat visits; it is not stored in the database (see **Analytics**). We do not collect device fingerprints. The pseudonymous client ID described in Principle 2 does not change this — its *value* is randomly generated, not derived from any IP address, device fingerprint, or other data collected from the user's device (though the ID token itself is sent to and briefly held by the server, as described in Principle 2).
 *   **No PII**: We do not require registration or any Personally Identifiable Information (PII) to function.
 
 ### 5. Limiting Use, Disclosure, and Retention
