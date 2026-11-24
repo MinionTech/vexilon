@@ -33,20 +33,29 @@
     }
 
     // ── Knowledge Base button a11y (WCAG 2.5.3 Label in Name) ────────────────
-    // CSS in style.css relabels the visible text; aria-label keeps the
-    // accessible name in sync for screen readers and voice control.
+    // Keep the visible label, aria-label, and inner text in sync as
+    // "Knowledge Base" (Chainlit's default visible text is "Readme").
 
     function labelKnowledgeBaseButton() {
         const btn = document.querySelector("#readme-button");
-        if (!btn || btn.dataset.knowledgeBaseLabeled) return;
-        btn.setAttribute("aria-label", "Knowledge Base");
-        btn.dataset.knowledgeBaseLabeled = "true";
+        if (!btn) return;
+        if (btn.getAttribute("aria-label") !== "Knowledge Base") {
+            btn.setAttribute("aria-label", "Knowledge Base");
+        }
+        const label = btn.querySelector("span");
+        if (label && label.textContent.trim() !== "Knowledge Base") {
+            label.textContent = "Knowledge Base";
+        }
+        if (btn.dataset.knowledgeBaseLabeled !== "true") {
+            btn.dataset.knowledgeBaseLabeled = "true";
+        }
     }
 
     // ── Core chat control a11y (WCAG 4.1.2 Name, Role, Value) ───────────────
     // Chainlit renders icon-only controls with no accessible name; set
     // aria-label directly so axe button-name passes and screen readers announce
-    // purpose. Re-applied via setInterval when React re-renders the composer.
+    // purpose. Re-applied via MutationObserver and setInterval when React
+    // mounts or re-renders the composer.
 
     const CHAT_CONTROL_LABELS = {
         "chat-profiles": "Choose persona",
@@ -59,9 +68,128 @@
     function labelChatControls() {
         for (const [id, label] of Object.entries(CHAT_CONTROL_LABELS)) {
             const el = document.getElementById(id);
-            if (!el || el.getAttribute("aria-label") === label) continue;
-            el.setAttribute("aria-label", label);
+            if (!el) continue;
+            // Chainlit marks the upload control as presentational, which
+            // hides it from assistive tech and makes aria-label invalid.
+            if (el.getAttribute("role") === "presentation") {
+                el.removeAttribute("role");
+            }
+            // The upload node can briefly render as #upload-button-loading first;
+            // never leave the visible attach control hidden from assistive tech.
+            if (el.getAttribute("aria-hidden") === "true") {
+                el.removeAttribute("aria-hidden");
+            }
+            if (el.getAttribute("aria-label") !== label) {
+                el.setAttribute("aria-label", label);
+            }
         }
+
+        // Distinct loading indicator (not the attach button itself).
+        const loading = document.getElementById("upload-button-loading");
+        const upload = document.getElementById("upload-button");
+        if (loading && loading !== upload) {
+            if (loading.getAttribute("role") === "presentation") {
+                loading.removeAttribute("role");
+            }
+            const isInteractive =
+                loading.tagName === "BUTTON" ||
+                Boolean(loading.querySelector("button, [role='button']"));
+            if (!isInteractive) {
+                if (loading.getAttribute("aria-hidden") !== "true") {
+                    loading.setAttribute("aria-hidden", "true");
+                }
+            } else {
+                if (loading.getAttribute("aria-hidden") === "true") {
+                    loading.removeAttribute("aria-hidden");
+                }
+                const controls = loading.matches("button, [role='button']")
+                    ? [loading]
+                    : Array.from(loading.querySelectorAll("button, [role='button']"));
+                for (const control of controls) {
+                    if (
+                        !control.textContent.trim() &&
+                        !control.getAttribute("aria-label") &&
+                        !control.getAttribute("aria-labelledby")
+                    ) {
+                        control.setAttribute("aria-label", "Uploading");
+                    }
+                }
+            }
+        }
+
+        // Chainlit's message copy button renders svg.lucide-copy with no label.
+        document.querySelectorAll("button").forEach((btn) => {
+            if (
+                !btn.textContent.trim() &&
+                !btn.getAttribute("aria-label") &&
+                !btn.getAttribute("aria-labelledby") &&
+                btn.querySelector("svg.lucide-copy")
+            ) {
+                btn.setAttribute("aria-label", "Copy message");
+            }
+        });
+    }
+
+    function labelChatInput() {
+        const input = document.getElementById("chat-input");
+        if (!input) return;
+        if (!input.getAttribute("aria-label") && !input.getAttribute("aria-labelledby")) {
+            input.setAttribute("aria-label", "Type your message");
+        }
+    }
+
+    function labelLandmarks() {
+        const header = document.getElementById("header");
+        if (header && header.getAttribute("role") !== "banner") {
+            header.setAttribute("role", "banner");
+        }
+        let main = document.querySelector("main, [role='main']");
+        if (!main && header && header.nextElementSibling) {
+            main = header.nextElementSibling;
+            main.setAttribute("role", "main");
+        }
+        if (main) {
+            if (!main.id) {
+                main.id = "main-content";
+            }
+            if (!main.hasAttribute("tabindex")) {
+                main.setAttribute("tabindex", "-1");
+            }
+        }
+        if (header && main && !document.getElementById("skip-to-main")) {
+            const skip = document.createElement("a");
+            skip.id = "skip-to-main";
+            skip.href = `#${main.id}`;
+            skip.className = "skip-link";
+            skip.textContent = "Skip to main content";
+            skip.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = document.getElementById(main.id);
+                if (target) {
+                    target.focus();
+                }
+            });
+            header.prepend(skip);
+        }
+    }
+
+    // ── Decorative 1x1 welcome logo placeholder ──────────────────────────────
+    // config.toml uses a 1x1 transparent PNG to suppress Chainlit's default
+    // logo; hide it from assistive tech as well as layout (style.css).
+
+    function hidePlaceholderWelcomeLogo() {
+        document
+            .querySelectorAll(
+                '.welcome-screen img[src^="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwC"]',
+            )
+            .forEach((img) => {
+                if (img.getAttribute("alt") !== "") {
+                    img.setAttribute("alt", "");
+                }
+                if (img.getAttribute("aria-hidden") !== "true") {
+                    img.setAttribute("aria-hidden", "true");
+                }
+            });
     }
 
     // ── Hide Readme drawer title ──────────────────────────────────────────────
@@ -84,6 +212,10 @@
 
     function labelKnowledgeBaseDrawer() {
         document.querySelectorAll('[role="dialog"]').forEach((dialog) => {
+            const describedBy = dialog.getAttribute("aria-describedby");
+            if (describedBy && !document.getElementById(describedBy)) {
+                dialog.removeAttribute("aria-describedby");
+            }
             if (!dialog.hasAttribute("data-knowledge-base-drawer") && isKnowledgeBaseDrawer(dialog)) {
                 dialog.setAttribute("data-knowledge-base-drawer", "true");
             }
@@ -173,6 +305,7 @@
                 "data-goatcounter-settings",
                 JSON.stringify({ allow_frame: true }),
             );
+            script.addEventListener("load", trackErrorToasts);
             document.head.appendChild(script);
         }
         setGoatCounterState("on");
@@ -180,11 +313,11 @@
 
     function trackGoatCounterEvent(eventPath) {
         try {
-            if (document.documentElement.dataset.goatcounter !== "on") return;
+            if (document.documentElement.dataset.goatcounter !== "on") return false;
             const title = GOATCOUNTER_EVENTS[eventPath];
-            if (!title) return;
+            if (!title) return false;
             const gc = window.goatcounter;
-            if (!gc || typeof gc.count !== "function") return;
+            if (!gc || typeof gc.count !== "function") return false;
             // GoatCounter's count.js get_data() attaches location.search as `q`.
             // Strip `q` for feature events so URL query strings are never sent.
             const origGetData = typeof gc.get_data === "function" ? gc.get_data : null;
@@ -208,8 +341,10 @@
                     gc.get_data = origGetData;
                 }
             }
+            return true;
         } catch (_err) {
             // Missing, blocked, or failing analytics must never affect the UI.
+            return true;
         }
     }
 
@@ -255,9 +390,12 @@
         if (!state) return;
         document.querySelectorAll('[data-sonner-toast][data-type="error"]').forEach((toast) => {
             if (toast.dataset.gcTracked) return;
-            toast.dataset.gcTracked = "true";
-            if (state === "on") {
-                trackGoatCounterEvent("event/error-ui");
+            if (state === "off") {
+                toast.dataset.gcTracked = "true";
+                return;
+            }
+            if (trackGoatCounterEvent("event/error-ui")) {
+                toast.dataset.gcTracked = "true";
             }
         });
     }
@@ -368,11 +506,13 @@
         }
     }
 
-    // Poll for React-rendered elements that appear/disappear on navigation.
-    setInterval(() => {
+    function applyDomPatches() {
         setupEnterToSubmit();
         labelKnowledgeBaseButton();
         labelChatControls();
+        labelChatInput();
+        labelLandmarks();
+        hidePlaceholderWelcomeLogo();
         hideReadmeDrawerTitle();
         labelKnowledgeBaseDrawer();
         setupKnowledgeBaseDrawerLabel();
@@ -380,18 +520,33 @@
         trackErrorToasts();
         replaceBuildSha();
         manageWelcomeTitle();
-    }, 500);
+    }
 
-    setupEnterToSubmit();
-    labelKnowledgeBaseButton();
-    labelChatControls();
-    hideReadmeDrawerTitle();
-    setupKnowledgeBaseDrawerLabel();
-    labelKnowledgeBaseDrawer();
-    syncChatProfilePersona();
-    trackErrorToasts();
-    replaceBuildSha();
-    manageWelcomeTitle();
+    // Re-apply immediately when React mounts or updates composer/header nodes
+    // so accessible names and landmarks are never missing between poll ticks.
+    const observerTarget = document.body || document.documentElement;
+    const observerConfig = {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["id", "role", "aria-hidden", "aria-label", "aria-labelledby"],
+    };
+    const domObserver = new MutationObserver(() => {
+        domObserver.disconnect();
+        try {
+            applyDomPatches();
+        } finally {
+            domObserver.observe(observerTarget, observerConfig);
+        }
+    });
+
+    applyDomPatches();
+    if (observerTarget) {
+        domObserver.observe(observerTarget, observerConfig);
+    }
+
+    // Fallback poll for React-rendered elements that appear/disappear on navigation.
+    setInterval(applyDomPatches, 500);
 
     // ── Pseudonymous client ID ──────────────────────────────────────────────
     // Random, client-generated UUID persisted in localStorage. Not derived

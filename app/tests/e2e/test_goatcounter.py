@@ -382,6 +382,43 @@ def test_goatcounter_feature_events_omit_url_query(page: Page, app_url: str):
     assert any("/count?" in url for url in blocked)
 
 
+def test_goatcounter_error_toast_retries_until_count_callable(page: Page, app_url: str):
+    """An error toast shown before count.js finishes loading is retried once count() becomes callable."""
+    _block_goatcounter_hits(page)
+    _stub_goatcounter_config(page, TEST_CODE)
+    page.add_init_script("window.__gcEvents = [];")
+
+    page.goto(app_url, wait_until="domcontentloaded")
+    _wait_for_goatcounter_state(page, "on")
+    wait_for_custom_js(page)
+
+    # Toast appears while window.goatcounter.count is still absent.
+    page.evaluate(
+        """() => {
+            const toast = document.createElement("li");
+            toast.setAttribute("data-sonner-toast", "");
+            toast.setAttribute("data-type", "error");
+            toast.textContent = "Early startup error";
+            document.body.appendChild(toast);
+        }"""
+    )
+    page.wait_for_timeout(600)
+    assert page.evaluate("() => document.querySelector('[data-sonner-toast]')?.dataset?.gcTracked") is None
+
+    # Once count() becomes callable, the next scan counts the toast and marks it tracked.
+    page.evaluate(
+        """() => {
+            window.goatcounter = {
+                count(payload) {
+                    window.__gcEvents.push(payload);
+                },
+            };
+        }"""
+    )
+    _wait_for_event_path(page, "event/error-ui")
+    assert page.evaluate("() => document.querySelector('[data-sonner-toast]')?.dataset?.gcTracked") == "true"
+
+
 def _non_secure_context_filtered(errors: list[str]) -> list[str]:
     """Exclude pre-existing crypto.randomUUID error on non-HTTPS Compose URLs (http://app-ci:7860)."""
     return [err for err in errors if "randomUUID" not in err]
