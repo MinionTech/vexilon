@@ -144,7 +144,7 @@ Agreement Navigator is a "content-blind" application designed for maximum privac
 - **Surgical Query Masking**: We log the occurrence of queries (including technical metadata like word/character counts) to monitor system health, but the **actual content** of user messages and bot responses is never logged.
 - **Anonymized Metrics**: We only track non-sensitive technical metadata to monitor system performance and rate-limiting compliance.
 
-For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see [PRIVACY.md](./PRIVACY.md).
+For full technical disclosure and mapping to the 10 PIPA Fair Information Principles, see [PRIVACY.md](./PRIVACY.md). Aggregate cookieless visitor counts are publicly viewable on the [GoatCounter analytics dashboard](https://vexilon.goatcounter.com).
 
 ---
 
