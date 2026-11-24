@@ -334,6 +334,7 @@
                 gc.count({
                     path: eventPath,
                     title: title,
+                    referrer: "",
                     event: true,
                 });
             } finally {

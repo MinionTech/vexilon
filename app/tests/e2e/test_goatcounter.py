@@ -110,8 +110,9 @@ def _assert_pipa_safe_events(
 ) -> None:
     assert events, "Expected at least one recorded GoatCounter event"
     for ev in events:
-        assert set(ev.keys()) == {"path", "title", "event"}, ev
+        assert set(ev.keys()) == {"path", "title", "referrer", "event"}, ev
         assert ev["event"] is True, ev
+        assert ev["referrer"] == "", ev
         assert ev["path"] in ALLOWED_EVENT_PATHS, ev
         assert isinstance(ev["title"], str) and ev["title"], ev
         combined = f"{ev['path']} {ev['title']}".lower()
@@ -333,7 +334,7 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
 
 
 def test_goatcounter_feature_events_omit_url_query(page: Page, app_url: str):
-    """Feature events omit page URL query parameters (`q`) even when count.js get_data sets them."""
+    """Feature events omit page URL query (`q`) and referrer (`r`) even when count.js get_data runs."""
     blocked = _block_goatcounter_hits(page)
     _stub_goatcounter_config(page, TEST_CODE)
     page.add_init_script(
@@ -341,9 +342,11 @@ def test_goatcounter_feature_events_omit_url_query(page: Page, app_url: str):
         window.goatcounter = {{
             get_data(vars) {{
                 vars = vars || {{}};
+                const r = vars.referrer === undefined ? "https://example.test/?q=SECRET_REFERRER" : vars.referrer;
                 return {{
                     p: vars.path,
                     t: vars.title,
+                    r: r,
                     e: !!vars.event,
                     q: location.search,
                 }};
@@ -378,7 +381,9 @@ def test_goatcounter_feature_events_omit_url_query(page: Page, app_url: str):
     hit_url = req_info.value.url
     assert "p=event%2Fknowledge-base-open" in hit_url, hit_url
     assert "q=" not in hit_url, hit_url
+    assert "r=" not in hit_url, hit_url
     assert "CONFIDENTIAL_URL_QUERY_999" not in hit_url, hit_url
+    assert "SECRET_REFERRER" not in hit_url, hit_url
     assert any("/count?" in url for url in blocked)
 
 
