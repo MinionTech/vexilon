@@ -32,7 +32,7 @@ PREAMBLE = """## Knowledge Base
 
 This [open source](https://github.com/MinionTech/vexilon) tool is designed around the BC [Personal Information Protection Act (PIPA)](https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03063_01).
 
-For more information about our zero-storage model, see our [Privacy Policy](https://github.com/MinionTech/vexilon/blob/main/PRIVACY.md).
+For more information about our zero-storage model, see our [Privacy Policy](https://github.com/MinionTech/vexilon/blob/main/PRIVACY.md) and [public analytics dashboard](https://vexilon.goatcounter.com).
 """
 
 # Ordering preferences for canonical sections

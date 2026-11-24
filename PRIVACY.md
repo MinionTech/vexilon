@@ -4,7 +4,7 @@ This app is built with a "Privacy-by-Design" architecture, specifically aligned 
 
 ## Analytics
 
-When `GOATCOUNTER_CODE` is set, the app loads [GoatCounter](https://www.goatcounter.com/)'s cookieless script to count daily unique visitors. GoatCounter records the page, referrer, browser, screen size, and country. It also stores operating system and language as separate daily aggregates. It does not store IP addresses in its database and does not set cookies (or other browser storage) for tracking. To count unique visits, GoatCounter holds the site, IP address, and User-Agent in memory for up to eight hours; that mapping is not written to disk. The app itself stores none of this data. See [GoatCounter's privacy policy](https://www.goatcounter.com/help/privacy). When the site code is unset, the script is not loaded and no request is made to GoatCounter.
+When `GOATCOUNTER_CODE` is set, the app loads [GoatCounter](https://www.goatcounter.com/)'s cookieless script to count daily unique visitors. GoatCounter records the page, referrer, browser, screen size, and country. It also stores operating system and language as separate daily aggregates. It does not store IP addresses in its database and does not set cookies (or other browser storage) for tracking. To count unique visits, GoatCounter holds the site, IP address, and User-Agent in memory for up to eight hours; that mapping is not written to disk. The app itself stores none of this data. See [GoatCounter's privacy policy](https://www.goatcounter.com/help/privacy) and our [public analytics dashboard](https://vexilon.goatcounter.com). When the site code is unset, the script is not loaded and no request is made to GoatCounter.
 
 ## The 10 PIPA Principles in this Application
 
