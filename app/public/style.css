@@ -161,17 +161,22 @@ body {
     background-color: #212121 !important;
 }
 
-/* 8. Visible keyboard focus on the composer textarea (WCAG 2.4.7) */
-/* Chainlit sets focus-visible:ring-0 / outline-none on #chat-input. */
+/* 8. Visible keyboard focus on the composer (WCAG 2.4.7) */
+/* Chainlit sets focus-visible:ring-0 / outline-none on #chat-input; applying
+   the ring to the rounded #message-composer pill avoids a rectangular box inside it. */
 #chat-input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+#message-composer:has(#chat-input:focus-visible) {
     box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #f5145f !important;
     outline: none !important;
 }
-.dark #chat-input:focus-visible {
+.dark #message-composer:has(#chat-input:focus-visible) {
     box-shadow: 0 0 0 2px #212121, 0 0 0 4px #f5145f !important;
 }
 @media (forced-colors: active) {
-    #chat-input:focus-visible {
+    #message-composer:has(#chat-input:focus-visible) {
         outline: 3px solid Highlight !important;
         outline-offset: 2px !important;
         box-shadow: none !important;

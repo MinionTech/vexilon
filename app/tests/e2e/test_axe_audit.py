@@ -169,7 +169,7 @@ def test_conversation_view_axe_light_and_dark(page: Page, app_url: str):
 
 
 def test_chat_input_has_visible_focus_indicator(page: Page, app_url: str):
-    """#chat-input shows a visible focus ring, plus a forced-colors outline fallback."""
+    """#message-composer shows a rounded focus ring when #chat-input is focused, without an inner box."""
     page.goto(app_url, wait_until="domcontentloaded")
     wait_for_custom_js(page)
 
@@ -177,18 +177,32 @@ def test_chat_input_has_visible_focus_indicator(page: Page, app_url: str):
     textarea.wait_for(timeout=15000)
     textarea.focus()
 
-    shadow = page.evaluate(
-        "() => getComputedStyle(document.querySelector('#chat-input')).boxShadow"
+    styles = page.evaluate(
+        """() => {
+            const composer = getComputedStyle(document.querySelector('#message-composer'));
+            const input = getComputedStyle(document.querySelector('#chat-input'));
+            return {
+                composerShadow: composer.boxShadow,
+                inputShadow: input.boxShadow,
+                inputOutline: input.outlineStyle,
+            };
+        }"""
     )
-    # Custom CSS uses a 2px page-background ring plus a 4px brand-color ring.
-    assert "4px" in (shadow or ""), (
-        f"Expected a visible 4px focus ring on #chat-input, got boxShadow={shadow}"
+    # Custom CSS uses a 2px page-background ring plus a 4px brand-color ring on the pill container.
+    assert "4px" in (styles["composerShadow"] or ""), (
+        f"Expected a visible 4px focus ring on #message-composer, got boxShadow={styles['composerShadow']}"
+    )
+    assert styles["inputShadow"] == "none", (
+        f"Expected no inner focus box-shadow on #chat-input, got {styles['inputShadow']}"
+    )
+    assert styles["inputOutline"] == "none", (
+        f"Expected no inner outline on #chat-input, got {styles['inputOutline']}"
     )
 
     page.emulate_media(forced_colors="active")
     forced = page.evaluate(
         """() => {
-            const s = getComputedStyle(document.querySelector('#chat-input'));
+            const s = getComputedStyle(document.querySelector('#message-composer'));
             return { outlineStyle: s.outlineStyle, outlineWidth: s.outlineWidth, boxShadow: s.boxShadow };
         }"""
     )
