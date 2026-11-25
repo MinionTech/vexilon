@@ -25,7 +25,7 @@ To maintain a clean, high-integrity "Forensic" look, several default Gradio elem
 
 ### Interaction Logic
 - **Enter Key**: Custom JS enables "Enter-to-Submit" behavior while allowing "Shift-Enter" for new lines.
-- **Persona Selector**: The persona dropdown (`Lookup`, `Grieve`, `Manage`) must be pinned to the top for easy mode-switching.
+- **Persona Selector**: Do not add a persona dropdown. Lookup is the single mode; Grievance Builder runs as an in-chat workflow from the starter chip or a kickoff phrase.
 
 ## 3. Streaming & Feedback
 
