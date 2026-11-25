@@ -172,8 +172,7 @@ def test_goatcounter_feature_events_knowledge_base_and_personas(page: Page, app_
     page.goto(app_url, wait_until="domcontentloaded")
     _wait_for_goatcounter_state(page, "on")
     wait_for_custom_js(page)
-    profiles = page.locator("#chat-profiles")
-    profiles.wait_for(state="visible", timeout=15000)
+    page.locator("#starter-grievance-builder").wait_for(state="visible", timeout=15000)
 
     assert _recorded_events(page) == []
 
@@ -185,33 +184,10 @@ def test_goatcounter_feature_events_knowledge_base_and_personas(page: Page, app_
     dialog.locator("> button").click()
     expect(dialog).not_to_be_visible()
 
-    # Persona changes via #chat-profiles emit persona events.
-    for persona in ("Grieve", "Lookup"):
-        profiles.click()
-        page.get_by_role("option", name=persona).click()
-        _wait_for_event_path(page, f"event/persona-{persona.lower()}")
-
     profile_events = _recorded_events(page)
     _assert_pipa_safe_events(profile_events, forbidden_substrings=(first_doc_text, ".pdf", ".md"))
     profile_paths = [ev["path"] for ev in profile_events]
     assert "event/knowledge-base-open" in profile_paths
-    assert "event/persona-grieve" in profile_paths
-    assert "event/persona-lookup" in profile_paths
-
-    # Persona selection via Chat Settings modal emits persona event on Confirm.
-    page.evaluate("() => { window.__gcEvents = []; }")
-    page.locator("#chat-settings-open-modal").click()
-    settings_dialog = page.locator("#chat-settings")
-    settings_dialog.wait_for(state="visible", timeout=5000)
-    settings_dialog.locator("#Persona").click()
-    page.get_by_role("option", name="Grieve").click()
-    settings_dialog.locator("#confirm").click()
-    expect(settings_dialog).not_to_be_visible()
-    _wait_for_event_path(page, "event/persona-grieve")
-
-    settings_events = _recorded_events(page)
-    assert [ev["path"] for ev in settings_events] == ["event/persona-grieve"]
-    _assert_pipa_safe_events(settings_events, forbidden_substrings=(first_doc_text, ".pdf", ".md"))
     assert all(_is_goatcounter_request(url) for url in blocked)
 
 
@@ -268,14 +244,14 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     _wait_for_goatcounter_state(page, "on")
     wait_for_custom_js(page)
 
-    # Informational Grieve starter switches backend persona to Grieve without changing #chat-profiles.
+    # Grievance Builder starter runs inside Lookup mode.
     starter = page.locator("#starter-grievance-builder")
     starter.wait_for(state="visible", timeout=15000)
     starter.click()
     _wait_for_event_path(page, "event/chat-submit")
-    _wait_for_event_path(page, "event/persona-grieve")
+    _wait_for_event_path(page, "event/persona-lookup")
 
-    # Wait for informational reply, then verify a normal submit inherits Grieve instead of Lookup.
+    # Wait for informational reply, then verify a normal submit stays in Lookup.
     page.get_by_text("Grievance Builder", exact=False).first.wait_for(state="visible", timeout=15000)
     page.locator("textarea").wait_for(state="visible", timeout=15000)
     page.evaluate("() => { window.__gcEvents = []; }")
@@ -284,7 +260,7 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
     submit_chat_with_enter(page, textarea)
     _wait_for_event_path(page, "event/chat-submit")
-    _wait_for_event_path(page, "event/persona-grieve")
+    _wait_for_event_path(page, "event/persona-lookup")
 
     stop_button = page.locator("#stop-button")
     try:
@@ -297,7 +273,7 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     followup_events = _recorded_events(page)
     assert [ev["path"] for ev in followup_events] == [
         "event/chat-submit",
-        "event/persona-grieve",
+        "event/persona-lookup",
     ]
 
     # Require a strictly new error-ui event after injecting the sensitive toast.
@@ -457,9 +433,8 @@ def test_goatcounter_disabled_or_blocked_never_breaks_ui(page: Page, app_url: st
         dialog = open_knowledge_base_drawer(blocked_page)
         dialog.locator("> button").click()
         expect(dialog).not_to_be_visible()
-        profiles = blocked_page.locator("#chat-profiles")
-        profiles.click()
-        blocked_page.get_by_role("option", name="Grieve").click()
+        blocked_page.locator("#starter-grievance-builder").click()
+        blocked_page.get_by_text("Grievance Builder", exact=False).first.wait_for(state="visible", timeout=15000)
         assert _non_secure_context_filtered(blocked_errors) == []
     finally:
         blocked_page.close()

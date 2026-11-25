@@ -84,7 +84,9 @@ def test_format_facts_block_skips_skip_values():
 
 def test_should_activate_wizard_when_active():
     state = default_wizard_state()
-    assert should_activate_wizard("Grieve", "anything", state)
+    assert should_activate_wizard("Lookup", "anything", state)
+    assert should_activate_wizard("Lookup", "grievance builder", None)
+    assert not should_activate_wizard("Lookup", "what is just cause?", None)
 
 
 def test_grieve_persona_loads_case_builder_prompt():

@@ -11,9 +11,7 @@ from playwright.sync_api import Page, expect
 from helpers import wait_for_aria_label, wait_for_custom_js
 
 WELCOME_SCREEN_CONTROLS = {
-    "#chat-profiles": "Choose persona",
     "#upload-button": "Attach file",
-    "#chat-settings-open-modal": "Open chat settings",
     "#chat-submit": "Send message",
 }
 

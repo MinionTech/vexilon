@@ -75,13 +75,13 @@ WIZARD_STEPS: tuple[dict[str, str], ...] = (
     },
 )
 
-WIZARD_INTRO = """## Grievance Builder (Grieve mode)
+WIZARD_INTRO = """## Grievance Builder
 
 This wizard helps you collect facts and produce **editable, partially filled BCGEU grievance PDFs** (Forms A, B when applicable, and C) plus contract-backed analysis.
 
 **Important:** Downloads are draft working copies for **steward review only**. They are **not** ready to file until a human steward and BCGEU staff rep review them. Member contact fields are left blank for you to complete.
 
-Commands at any step: **restart** (start over), **exit wizard** (switch to freeform Grieve chat).
+Commands at any step: **restart** (start over), **exit wizard** (return to normal Lookup chat).
 
 ---
 
@@ -122,8 +122,6 @@ def wizard_state_after_successful_draft() -> dict[str, Any]:
 
 
 def should_activate_wizard(persona: str, message: str, wizard: dict[str, Any] | None) -> bool:
-    if persona != "Grieve":
-        return False
     if wizard and wizard.get("active"):
         return True
     return is_builder_kickoff(message)
@@ -194,7 +192,7 @@ def process_wizard_message(message: str, wizard: dict[str, Any] | None) -> tuple
             return state, WizardTurnResult(
                 handled=True,
                 assistant_message=(
-                    "Exited Grievance Builder wizard. You can continue in freeform **Grieve** mode "
+                    "Exited Grievance Builder wizard. You can continue in **Lookup** mode "
                     "for forensic analysis and contract research."
                 ),
             )

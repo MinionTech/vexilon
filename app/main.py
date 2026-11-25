@@ -56,7 +56,7 @@ from core.config import (  # noqa: F401
     _ALL_SIMPLE_KEYWORDS,
     _get_default_model,
 )
-from starters import apply_starter_persona, build_persona_settings, chainlit_starters
+from starters import apply_starter_persona, chainlit_starters
 from core.security import (  # noqa: F401
     _rate_limiter,
     _parse_client_uuid,
@@ -95,54 +95,17 @@ if os.getenv("AGNAV_PASSWORD"):
             return cl.User(identifier=username)
         return None
 
-@cl.on_settings_update
-async def setup_agent(settings):
-    prev = cl.user_session.get("persona")
-    persona = settings["Persona"]
-    cl.user_session.set("persona", persona)
-    if persona == "Grieve" and prev != "Grieve":
-        cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
-        await cl.Message(content=wizard_intro_message(), author="System").send()
-
-@cl.set_chat_profiles
-async def chat_profiles(user: cl.User):
-    all_starters = chainlit_starters()
-    return [
-        cl.ChatProfile(
-            name="Lookup",
-            icon="",
-            default=True,
-            markdown_description="Forensic lookup of labor law excerpts.",
-            starters=all_starters,
-        ),
-        cl.ChatProfile(
-            name="Grieve",
-            icon="",
-            markdown_description=(
-                "Grievance Builder: step-by-step intake, editable partially filled BCGEU PDF forms, "
-                "and contract-backed analysis (steward review required before filing)."
-            ),
-            starters=all_starters,
-        ),
-    ]
+@cl.set_starters
+async def set_starters(user: cl.User | None = None):
+    return chainlit_starters()
 
 @cl.on_chat_start
 async def on_chat_start():
     await _ensure_startup()
 
-    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
-    persona_index = PERSONAS.index(profile) if profile in PERSONAS else 0
-
-    await build_persona_settings(initial_index=persona_index).send()
-
     cl.user_session.set("history", [])
-    profile = cl.user_session.get("chat_profile") or DEFAULT_PERSONA
-    cl.user_session.set("persona", profile)
+    cl.user_session.set("persona", DEFAULT_PERSONA)
     cl.user_session.set("selected_model", get_default_model_setting())
-
-    if profile == "Grieve":
-        cl.user_session.set(WIZARD_SESSION_KEY, default_wizard_state())
-        await cl.Message(content=wizard_intro_message(), author="System").send()
 
     if INTEGRITY_WARNING:
         await cl.Message(content=INTEGRITY_WARNING, author="system").send()
@@ -272,7 +235,7 @@ async def on_message(message: cl.Message) -> None:
     grieve_draft = False
 
     wizard = cl.user_session.get(WIZARD_SESSION_KEY)
-    if persona == "Grieve" and wizard and wizard.get("pending_draft"):
+    if wizard and wizard.get("pending_draft"):
         lower = sanitized.strip().lower()
         if lower == "restart":
             new_state, turn = process_wizard_message("restart", wizard)
@@ -289,7 +252,7 @@ async def on_message(message: cl.Message) -> None:
         if lower in DRAFT_RETRY_COMMANDS:
             grieve_draft = True
             sanitized = build_draft_query(wizard.get("facts") or {})
-    elif persona == "Grieve" and wizard and wizard.get("active"):
+    elif wizard and wizard.get("active"):
         new_state, turn = process_wizard_message(sanitized, wizard)
         cl.user_session.set(WIZARD_SESSION_KEY, new_state)
         if turn.handled:
@@ -303,7 +266,7 @@ async def on_message(message: cl.Message) -> None:
                 return
             grieve_draft = True
             sanitized = turn.draft_query
-    elif persona == "Grieve" and should_activate_wizard(persona, sanitized, wizard):
+    elif should_activate_wizard(persona, sanitized, wizard):
         fresh = default_wizard_state()
         new_state, turn = process_wizard_message(sanitized, fresh)
         cl.user_session.set(WIZARD_SESSION_KEY, new_state)
@@ -334,7 +297,7 @@ async def on_message(message: cl.Message) -> None:
         async for chunk in rag_review_stream(
             sanitized,
             history,
-            persona,
+            "Grieve" if grieve_draft else persona,
             context=context,
             queries=queries,
             grieve_draft=grieve_draft,

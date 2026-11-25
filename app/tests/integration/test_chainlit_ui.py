@@ -24,52 +24,33 @@ def test_main_registers_required_handlers(monkeypatch, mock_llm_client):
         "main.on_message must be defined and decorated with @cl.on_message"
     assert callable(getattr(app, "on_chat_start", None)), \
         "main.on_chat_start must be defined and decorated with @cl.on_chat_start"
-    assert callable(getattr(app, "chat_profiles", None)), \
-        "main.chat_profiles must be defined and decorated with @cl.set_chat_profiles"
+    assert callable(getattr(app, "set_starters", None)), \
+        "main.set_starters must be defined and decorated with @cl.set_starters"
 
 
 def test_personas_and_examples_exposed():
     """The persona list and example questions must remain available."""
-    assert "Lookup" in app.PERSONAS
-    assert "Grieve" in app.PERSONAS
-    assert app.PERSONAS == ["Lookup", "Grieve"]
+    assert app.PERSONAS == ["Lookup"]
     assert app.DEFAULT_PERSONA == "Lookup"
     assert len(app.EXAMPLES) >= 1
     assert all(isinstance(q, str) and q for q in app.EXAMPLES)
 
 
 @pytest.mark.asyncio
-async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
-    """chat_profiles must yield one cl.ChatProfile per persona, with starters."""
-    profiles = await app.chat_profiles(None)
-
-    assert len(profiles) == len(app.PERSONAS)
-    assert [p.name for p in profiles] == app.PERSONAS
-    for p in profiles:
-        assert isinstance(p, cl.ChatProfile)
-        assert p.starters is not None and len(p.starters) >= 1
-    assert sum(1 for p in profiles if p.default) == 1
-
-
-@pytest.mark.asyncio
-async def test_chat_profiles_all_starters_preserved():
-    """Each persona profile shares the same mode how-to and Lookup starter chips."""
-    profiles = await app.chat_profiles(None)
-    assert len(profiles) == 2
+async def test_set_starters_returns_all_starters():
+    """set_starters must yield all mode how-to and Lookup starter chips."""
+    result = await app.set_starters(None)
     expected_labels = [
         "Discipline Just Cause",
         "Steward Rights",
         "Grievance Builder",
     ]
-    for p in profiles:
-        assert p.starters is not None
-        assert len(p.starters) == len(expected_labels), (
-            f"Profile '{p.name}' had {len(p.starters)} starters; expected {len(expected_labels)}"
-        )
-        assert [s.label for s in p.starters] == expected_labels
-        for starter in p.starters:
-            assert isinstance(starter.label, str) and starter.label.strip()
-            assert isinstance(starter.message, str) and starter.message.strip()
+    assert len(result) == len(expected_labels)
+    assert [s.label for s in result] == expected_labels
+    for starter in result:
+        assert isinstance(starter, cl.Starter)
+        assert isinstance(starter.label, str) and starter.label.strip()
+        assert isinstance(starter.message, str) and starter.message.strip()
 
 
 @pytest.mark.asyncio
@@ -113,10 +94,6 @@ async def test_on_message_informational_starter_skips_rag(monkeypatch, mock_llm_
     monkeypatch.setattr(app, "rag_review_stream", _fail_rag)
     monkeypatch.setattr(app, "get_rag_context", AsyncMock(return_value=([], "", [])))
 
-    settings = MagicMock()
-    settings.refresh = AsyncMock()
-    monkeypatch.setattr(starters, "build_persona_settings", lambda idx: settings)
-
     await app.on_message(app.cl.Message(content="Grievance Builder"))
 
     assert rag_called["value"] is False
@@ -124,7 +101,7 @@ async def test_on_message_informational_starter_skips_rag(monkeypatch, mock_llm_
     assert store[app.WIZARD_SESSION_KEY]["active"] is True
     assert store[app.WIZARD_SESSION_KEY]["step"] == 0
     assert sent_messages[0].content == app.wizard_intro_message()
-    assert store["persona"] == "Grieve"
+    assert store["persona"] == "Lookup"
     assert len(store["history"]) == 2
 
 
@@ -160,9 +137,6 @@ async def test_on_message_grievance_builder_chip_preserves_active_wizard(monkeyp
             return self
 
     monkeypatch.setattr(app.cl, "Message", _Msg)
-    settings = MagicMock()
-    settings.refresh = AsyncMock()
-    monkeypatch.setattr(starters, "build_persona_settings", lambda idx: settings)
 
     await app.on_message(app.cl.Message(content="Grievance Builder"))
 
