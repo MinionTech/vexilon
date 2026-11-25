@@ -32,7 +32,7 @@ def test_personas_and_examples_exposed():
     """The persona list and example questions must remain available."""
     assert "Lookup" in app.PERSONAS
     assert "Grieve" in app.PERSONAS
-    assert "Manage" in app.PERSONAS
+    assert app.PERSONAS == ["Lookup", "Grieve"]
     assert app.DEFAULT_PERSONA == "Lookup"
     assert len(app.EXAMPLES) >= 1
     assert all(isinstance(q, str) and q for q in app.EXAMPLES)
@@ -55,12 +55,11 @@ async def test_chat_profiles_returns_chainlit_profiles_for_each_persona():
 async def test_chat_profiles_all_starters_preserved():
     """Each persona profile shares the same mode how-to and Lookup starter chips."""
     profiles = await app.chat_profiles(None)
-    assert len(profiles) == 3
+    assert len(profiles) == 2
     expected_labels = [
         "Discipline Just Cause",
         "Steward Rights",
         "Grievance Builder",
-        "Management Guide",
     ]
     for p in profiles:
         assert p.starters is not None

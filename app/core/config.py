@@ -118,7 +118,7 @@ LLM_MAX_RETRIES = int(os.getenv("AGNAV_LLM_MAX_RETRIES", "3"))
 LLM_RETRY_BASE_DELAY = float(os.getenv("AGNAV_LLM_RETRY_BASE_DELAY", "0.5"))
 LLM_RETRY_MAX_DELAY = float(os.getenv("AGNAV_LLM_RETRY_MAX_DELAY", "8.0"))
 
-PERSONAS = ["Lookup", "Grieve", "Manage"]
+PERSONAS = ["Lookup", "Grieve"]
 DEFAULT_PERSONA = "Lookup"
 VEXILON_SAVE_SENTINEL = "__VEXILON_SAVE__"
 

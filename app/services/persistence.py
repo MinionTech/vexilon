@@ -17,7 +17,7 @@ def serialize_conversation(history: list[dict], persona: str) -> str:
 
     Args:
         history: List of message dicts with 'role' and 'content' keys
-        persona: Current persona (Lookup/Grieve/Manage)
+        persona: Current persona (Lookup/Grieve)
 
     Returns:
         Markdown string with YAML front matter and conversation turns

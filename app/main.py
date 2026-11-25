@@ -124,12 +124,6 @@ async def chat_profiles(user: cl.User):
             ),
             starters=all_starters,
         ),
-        cl.ChatProfile(
-            name="Manage",
-            icon="",
-            markdown_description="Strategic management consulting.",
-            starters=all_starters,
-        ),
     ]
 
 @cl.on_chat_start

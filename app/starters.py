@@ -29,13 +29,6 @@ GRIEVANCE_BUILDER_GUIDE = (
     "are seeking."
 )
 
-MANAGEMENT_GUIDE_TEXT = (
-    "You selected **Management Guide**. You're now in **Manage** mode for "
-    "obligation-focused guidance (duty to accommodate, discipline nexus, hard "
-    "cases)—not management paperwork or forms.\n\n"
-    "Describe the management scenario or question you need help with."
-)
-
 STARTER_SPECS: tuple[StarterSpec, ...] = (
     StarterSpec(
         label="Discipline Just Cause",
@@ -54,13 +47,6 @@ STARTER_SPECS: tuple[StarterSpec, ...] = (
         informational=True,
         assistant_reply=GRIEVANCE_BUILDER_GUIDE,
         starts_wizard=True,
-    ),
-    StarterSpec(
-        label="Management Guide",
-        message="Management Guide",
-        target_persona="Manage",
-        informational=True,
-        assistant_reply=MANAGEMENT_GUIDE_TEXT,
     ),
 )
 

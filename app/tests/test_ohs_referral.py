@@ -10,8 +10,9 @@ def test_ohs_registry_loading():
     assert ohs_test is not None
 
 @pytest.mark.asyncio
-async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
-    """Verify that OHS keywords in the query trigger the OHS referral in the system prompt."""
+@pytest.mark.parametrize("persona_mode", ["Lookup", "Grieve"])
+async def test_rag_review_stream_triggers_ohs_logic(monkeypatch, persona_mode):
+    """Verify that OHS keywords in the query trigger the OHS referral in Lookup and Grieve modes."""
     # Ensure registry is loaded
     _test_registry.load(TESTS_DIR)
     
@@ -43,8 +44,7 @@ async def test_rag_review_stream_triggers_ohs_logic(monkeypatch):
     monkeypatch.setattr("main.get_llm_client", lambda: mock_client)
     
     # Run rag_review_stream with an OHS keyword
-    # persona_mode must be 'Grieve' to trigger Audit Logic
-    async for chunk in rag_review_stream("I need to refuse unsafe work", [], persona_mode="Grieve"):
+    async for chunk in rag_review_stream("I need to refuse unsafe work", [], persona_mode=persona_mode):
         pass
 
     # Verify the system prompt in ANY of the calls contains the OHS referral

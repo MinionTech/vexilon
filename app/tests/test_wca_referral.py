@@ -10,8 +10,9 @@ def test_wca_registry_loading():
     assert wca_test is not None
 
 @pytest.mark.asyncio
-async def test_rag_review_stream_triggers_wca_logic(monkeypatch):
-    """Verify that WCA keywords in the query trigger the WCA claims referral in the system prompt."""
+@pytest.mark.parametrize("persona_mode", ["Lookup", "Grieve"])
+async def test_rag_review_stream_triggers_wca_logic(monkeypatch, persona_mode):
+    """Verify that WCA keywords in the query trigger the WCA claims referral in Lookup and Grieve modes."""
     # Ensure registry is loaded
     _test_registry.load(TESTS_DIR)
     
@@ -43,7 +44,7 @@ async def test_rag_review_stream_triggers_wca_logic(monkeypatch):
     monkeypatch.setattr("main.get_llm_client", lambda: mock_client)
     
     # Run rag_review_stream with a WCA keyword
-    async for chunk in rag_review_stream("I have a back injury and need to file a WCB claim", [], persona_mode="Grieve"):
+    async for chunk in rag_review_stream("I have a back injury and need to file a WCB claim", [], persona_mode=persona_mode):
         pass
 
     # Verify the system prompt in ANY of the calls contains the WCA referral
