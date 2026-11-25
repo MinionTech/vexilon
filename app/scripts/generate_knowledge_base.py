@@ -93,7 +93,11 @@ def _resolve_relative_markdown_links(text: str, source_url: str | None) -> str:
     if parts.scheme not in ("http", "https") or not parts.netloc:
         return text
     origin = f"{parts.scheme}://{parts.netloc}"
-    return re.sub(r"\]\((\/(?!\/)[^)\s]+)\)", rf"]({origin}\1)", text)
+    return re.sub(
+        r"\]\((\/(?!\/)[^)\s]+)(\s*(?:\"[^\"]*\"|'[^']*'|\([^)]*\))?\s*\))",
+        rf"]({origin}\1\2",
+        text,
+    )
 
 
 def _source_fingerprint(source: Path) -> str:

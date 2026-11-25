@@ -280,7 +280,7 @@
     };
 
     let lastChatProfile = null;
-    let currentPersona = null;
+    let currentPersona = "lookup";
 
     function setGoatCounterState(state) {
         document.documentElement.dataset.goatcounter = state;

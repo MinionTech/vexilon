@@ -434,7 +434,8 @@ def test_generate_manifest_invokes_update_knowledge_base_files(tmp_path):
 
 def test_resolve_relative_markdown_links():
     text = (
-        "See [Health](/gov/content/foo), [Anchor](#section), "
+        "See [Health](/gov/content/foo), [Titled](/gov/content/bar \"MyHR Guide\"), "
+        "[Single](/gov/content/baz 'Guide'), [Anchor](#section), "
         "[External](https://other.example/x), [Mail](mailto:a@b.c), "
         "and [Proto](//cdn.example/x)."
     )
@@ -442,7 +443,9 @@ def test_resolve_relative_markdown_links():
         text, "https://www2.gov.bc.ca/gov/content/page"
     )
     assert resolved == (
-        "See [Health](https://www2.gov.bc.ca/gov/content/foo), [Anchor](#section), "
+        "See [Health](https://www2.gov.bc.ca/gov/content/foo), "
+        "[Titled](https://www2.gov.bc.ca/gov/content/bar \"MyHR Guide\"), "
+        "[Single](https://www2.gov.bc.ca/gov/content/baz 'Guide'), [Anchor](#section), "
         "[External](https://other.example/x), [Mail](mailto:a@b.c), "
         "and [Proto](//cdn.example/x)."
     )
