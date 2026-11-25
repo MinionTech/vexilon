@@ -41,6 +41,11 @@ STARTER_SPECS: tuple[StarterSpec, ...] = (
         target_persona="Lookup",
     ),
     StarterSpec(
+        label="Benefits",
+        message="What extended health and dental benefits are covered under my plan?",
+        target_persona="Lookup",
+    ),
+    StarterSpec(
         label="Grievance Builder",
         message="Grievance Builder",
         target_persona="Lookup",
