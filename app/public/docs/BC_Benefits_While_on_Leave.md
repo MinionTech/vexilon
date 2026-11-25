@@ -15,7 +15,7 @@
 
 ## Long term disability coverage
 
-Long Term Disability (LTD) coverage will not be available if you cannot return from your leave due to illness, unless you purchase coverage and meet the [eligibility criteria to qualify](/gov/content/careers-myhr/all-employees/leave-time-off/sick-leave/long-term-disability) for benefits.
+Long Term Disability (LTD) coverage will not be available if you cannot return from your leave due to illness, unless you purchase coverage and meet the [eligibility criteria to qualify](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/leave-time-off/sick-leave/long-term-disability) for benefits.
 
 You need to consider if you want to pay the premiums to have the option of applying for LTD in the event that you need it.
 
@@ -25,7 +25,7 @@ You must make this decision at the beginning of your leave. You cannot retroacti
 
 ## Benefits while on leave with pay
 
-We will continue to fund your benefits coverage while you're on [leave with pay](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/benefits-leave/leave-with-pay), but you will continue to be responsible for the employee portions of any benefits that are employee paid (such as Employee Basic Life Insurance coverage above the employer paid portion; Optional Life Insurance coverage).
+We will continue to fund your benefits coverage while you're on [leave with pay](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/benefits-leave/leave-with-pay), but you will continue to be responsible for the employee portions of any benefits that are employee paid (such as Employee Basic Life Insurance coverage above the employer paid portion; Optional Life Insurance coverage).
 
 ## Benefits while on leave with partial pay
 
@@ -57,7 +57,7 @@ Eligible Employment Standard Act leaves include:
 
 For all other unpaid leaves of absence greater than 30 calendar days, benefits will not be maintained.
 
-[Benefits coverage may be purchased](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/benefits-leave/premiums) for up to 24 months while you're on an approved leave without pay. To maintain coverage:
+[Benefits coverage may be purchased](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/benefits-leave/premiums) for up to 24 months while you're on an approved leave without pay. To maintain coverage:
 
 - Complete and submit the [Option to Continue Employee Benefits While on Leave of Absence Without Pay or Layoff form](https://www2.gov.bc.ca/assets/gov/careers/all-employees/leave-and-time-off/continue_benefits_loa_without_pay_layoff.pdf)
 - Pay the monthly premiums (full payment or monthly postdated cheques) within 30 days of the leave start date.

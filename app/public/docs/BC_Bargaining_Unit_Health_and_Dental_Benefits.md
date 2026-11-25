@@ -57,7 +57,7 @@ It’s recommended that you complete these steps as soon as you arrive in order 
 
 Leaving British Columbia temporarily can impact your continued coverage under MSP. More information related to both temporary and permanent absences from B.C. is available in the [Leaving B.C.](https://www2.gov.bc.ca/assets/gov/health/health-drug-coverage/medical-services-plan/leavingbc_brochure_web.pdf) brochure.
 
-To request MSP account changes (for example: address changes, adding or removing dependants, or re-certifying your child as a full-time student) and/or to submit documentation online, please visit the [Managing Your MSP Account](/gov/content/health/health-drug-coverage/msp/bc-residents/managing-your-msp-account) page.
+To request MSP account changes (for example: address changes, adding or removing dependants, or re-certifying your child as a full-time student) and/or to submit documentation online, please visit the [Managing Your MSP Account](https://www2.gov.bc.ca/gov/content/health/health-drug-coverage/msp/bc-residents/managing-your-msp-account) page.
 
 ### Questions
 
@@ -89,7 +89,7 @@ Unless otherwise stated, you'll be reimbursed at 80% of the first $2,000 paid in
 
 **Before purchasing an item or service, it's your responsibility to confirm it’s covered. A claim for an item or service purchased from a provider that is not approved by Canada Life may be declined.**
 
-[Contact Canada Life](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact) if the item is not listed in this guide. It's recommended that you get an expense pre-approved if the cost is over $1,000.
+[Contact Canada Life](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact) if the item is not listed in this guide. It's recommended that you get an expense pre-approved if the cost is over $1,000.
 
 ### What's covered by your extended health plan
 
@@ -103,8 +103,8 @@ The following is a list of expenses eligible for reimbursement under the extende
 | Breast prosthetics | See the 'Mastectomy forms and bras' section of this table for more information. |
 | Chiropractor | Chiropractic treatments performed by a chiropractor registered with the College of Chiropractors of British Columbia. See the 'Paramedical services' section of this table for information about reasonable and customary limits. Coverage is $500/year/person. **X-rays taken by a chiropractor are not eligible for reimbursement.** |
 | Contraceptives | Please contact Canada Life or log into [My Canada Life at Work](https://my.canadalife.com/sign-in) and enter the product DIN to confirm if the prescribed contraceptive is covered. |
-| Counselling (registered clinical counsellor, registered clinical psychologist, recognized social worker) | Out-of-hospital treatment by a registered psychologist, qualified social worker, qualified psychotherapist, qualified therapist or qualified counsellor payable to a maximum of $1,000/year/covered individual. A claim for an item or service purchased from a provider that is not approved by Canada Life may be declined. Contact Canada Life at 1-855-644-0538 to confirm provider eligibility. Visit Careers & MyHR for information about [short-term counselling available](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/counselling-support) through the Health and Well-being program. |
-| Drugs and medicines | Covered drugs and medicines purchased from a licensed pharmacy, which are dispensed by a pharmacist, physician or dentist subject to PharmaCare’s policies including reference-based pricing and lowest cost alternative. Drugs and medicines include: - Injectables provided by a medical practitioner and drugs used by a medical practitioner when providing services under circumstances whereby the drug is not otherwise provided - Insulin preparations, testing supplies, needles and syringes for diabetes - Vitamin B12 for the treatment of pernicious anemia - Allergy serums when administered by a physician - Other drugs and medicines that require a prescription from a medical provider who's legally authorized to do so **Reimbursement of eligible drugs and medicines** will be based on a maximum dispensing fee of $7.60 and a maximum mark-up of 7% over the manufacturer’s list price. **All plan members must sign up for [PharmaCare](http://www2.gov.bc.ca/gov/content/health/health-drug-coverage/pharmacare-for-bc-residents)****** to assist with prescription coverage, limiting the impact on your lifetime maximum. **Unless medical evidence is provided** to Canada Life that indicates why a drug is **not** to be substituted, Canada Life can limit the covered expense to the cost of the lowest priced interchangeable drug. **Prior authorization:** Canada Life requires prior authorization to provide appropriate drug treatment and to ensure the drugs prescribed are considered reasonable treatment for the condition. For brand name drugs, your physician will have to complete a Request for Brand Name form to provide medical evidence that the generic version has adverse side effects. For more information regarding prior authorization and specialty drug processes, sign in to [My Canada Life at Work](https://my.canadalife.com/sign-in) and click on **Info centre > Benefits information sheet**,**** or see the '[Prior authorization and specialty drugs](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits/bargaining-benefits-health-dental#prior-authorization)' section. No benefits will be paid for: - Any drug that does not have a drug identification number (DIN) - Any single purchase of a drug that would not reasonably be consumed within 100 days - Drugs administered during treatment in a hospital - Preventative immunizations vaccines and toxoids - Non-injectable allergy extracts - Drugs that are considered cosmetic whether they are prescribed for a medical reason or not - Drugs used to treat erectile dysfunction |
+| Counselling (registered clinical counsellor, registered clinical psychologist, recognized social worker) | Out-of-hospital treatment by a registered psychologist, qualified social worker, qualified psychotherapist, qualified therapist or qualified counsellor payable to a maximum of $1,000/year/covered individual. A claim for an item or service purchased from a provider that is not approved by Canada Life may be declined. Contact Canada Life at 1-855-644-0538 to confirm provider eligibility. Visit Careers & MyHR for information about [short-term counselling available](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/counselling-support) through the Health and Well-being program. |
+| Drugs and medicines | Covered drugs and medicines purchased from a licensed pharmacy, which are dispensed by a pharmacist, physician or dentist subject to PharmaCare’s policies including reference-based pricing and lowest cost alternative. Drugs and medicines include: - Injectables provided by a medical practitioner and drugs used by a medical practitioner when providing services under circumstances whereby the drug is not otherwise provided - Insulin preparations, testing supplies, needles and syringes for diabetes - Vitamin B12 for the treatment of pernicious anemia - Allergy serums when administered by a physician - Other drugs and medicines that require a prescription from a medical provider who's legally authorized to do so **Reimbursement of eligible drugs and medicines** will be based on a maximum dispensing fee of $7.60 and a maximum mark-up of 7% over the manufacturer’s list price. **All plan members must sign up for [PharmaCare](http://www2.gov.bc.ca/gov/content/health/health-drug-coverage/pharmacare-for-bc-residents)****** to assist with prescription coverage, limiting the impact on your lifetime maximum. **Unless medical evidence is provided** to Canada Life that indicates why a drug is **not** to be substituted, Canada Life can limit the covered expense to the cost of the lowest priced interchangeable drug. **Prior authorization:** Canada Life requires prior authorization to provide appropriate drug treatment and to ensure the drugs prescribed are considered reasonable treatment for the condition. For brand name drugs, your physician will have to complete a Request for Brand Name form to provide medical evidence that the generic version has adverse side effects. For more information regarding prior authorization and specialty drug processes, sign in to [My Canada Life at Work](https://my.canadalife.com/sign-in) and click on **Info centre > Benefits information sheet**,**** or see the '[Prior authorization and specialty drugs](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits/bargaining-benefits-health-dental#prior-authorization)' section. No benefits will be paid for: - Any drug that does not have a drug identification number (DIN) - Any single purchase of a drug that would not reasonably be consumed within 100 days - Drugs administered during treatment in a hospital - Preventative immunizations vaccines and toxoids - Non-injectable allergy extracts - Drugs that are considered cosmetic whether they are prescribed for a medical reason or not - Drugs used to treat erectile dysfunction |
 | Emergency ambulance services | Emergency transportation by licensed ambulance to the nearest Canadian hospital equipped to provide medical treatment essential to the patient. Air transport when time is critical, and the patient’s physical condition prevents the use of another means of transport. Doctor’s note may be required. Emergency transport from one hospital to another only when the original hospital has inadequate facilities. Charges for an attendant when medically necessary. |
 | Examinations: medical | Medical examinations rendered by a physician, required by a statute or regulation of the provincial and/or federal government for employment purposes, for you and all your registered dependants, provided such charges are **not** otherwise covered. |
 | Examinations: vision | Fees for routine eye examinations to a maximum of $100/24 months/person for adults who are age 19 or older, when performed by a physician or optometrist. **Exams for persons under age 19 and over age 64 are covered under the Medical Services Plan.** The balance not covered by the Medical Services Plan for individuals over age 64 is eligible for reimbursement under this extended health plan to plan maximum. |
@@ -367,9 +367,9 @@ If you don't register, your deductible will be set at the maximum of $10,000, wh
 
 #### What if I haven't registered with Fair PharmaCare?
 
-If the eligible drug costs for you and your dependant(s) reach a certain amount in a calendar year, Canada Life will notify you to register for Fair PharmaCare or your drug claims will be temporarily suspended until Canada Life gets confirmation that you’ve registered. Learn more about [Fair PharmaCare](/gov/content/health/health-drug-coverage/pharmacare-for-bc-residents/who-we-cover/fair-pharmacare-plan).
+If the eligible drug costs for you and your dependant(s) reach a certain amount in a calendar year, Canada Life will notify you to register for Fair PharmaCare or your drug claims will be temporarily suspended until Canada Life gets confirmation that you’ve registered. Learn more about [Fair PharmaCare](https://www2.gov.bc.ca/gov/content/health/health-drug-coverage/pharmacare-for-bc-residents/who-we-cover/fair-pharmacare-plan).
 
-In addition to coordinating drug costs with BC PharmaCare, the drug plan for BC Public Service employees follows BC PharmaCare’s pricing policies which include the [Low Cost Alternative (LCA) Program](/gov/content/health/practitioner-professional-resources/pharmacare/programs/how-pharmacare-covers-drugs-in-the-low-cost-alternative-lca-program) and the [Reference Drug Program (RDP)](/gov/content/health/practitioner-professional-resources/pharmacare/programs/reference-drug-program).
+In addition to coordinating drug costs with BC PharmaCare, the drug plan for BC Public Service employees follows BC PharmaCare’s pricing policies which include the [Low Cost Alternative (LCA) Program](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/pharmacare/programs/how-pharmacare-covers-drugs-in-the-low-cost-alternative-lca-program) and the [Reference Drug Program (RDP)](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/pharmacare/programs/reference-drug-program).
 
 #### What's the Low-Cost Alternative (LCA) program?
 
@@ -414,7 +414,7 @@ If your doctor thinks it's medically necessary for you to take a non-reference d
 
 Once approved, you can send in the form to Canada Life to get a pricing exception and full coverage, to plan limits, for your non-reference RDP drug.
 
-For any additional information regarding the Reference Drug Program, please refer to the [PharmaCare](/gov/content/health/practitioner-professional-resources/pharmacare/programs/reference-drug-program) website.
+For any additional information regarding the Reference Drug Program, please refer to the [PharmaCare](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/pharmacare/programs/reference-drug-program) website.
 
 #### What if I'm already at the pharmacy and realize that my doctor prescribed a non-reference drug? What can I do to get the drug changed to a fully covered drug?
 
@@ -424,7 +424,7 @@ Under very limited conditions, pharmacists in British Columbia can change certai
 
 #### BC PharmaCare’s Special Authority drugs
 
-In addition, some drugs may be eligible for coordination with BC PharmaCare’s [Special Authority (SA) program](/gov/content/health/practitioner-professional-resources/pharmacare/programs/special-authority).
+In addition, some drugs may be eligible for coordination with BC PharmaCare’s [Special Authority (SA) program](https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/pharmacare/programs/special-authority).
 
 If you're claiming a drug included in the SA program, you may be eligible for coverage under the government plan.
 
@@ -481,7 +481,7 @@ You're responsible for any fees that exceed reasonable and customary limits and 
 
 You'll be reimbursed 100% to plan limits for the cost of the basic dental services outlined below. **If** **services are performed by a specialist, the fee is equal to that of the general practitioner, plus 10%.**
 
-**It's your responsibility to verify that an item or service is covered prior to treatment**. **A claim for a service or supply that was purchased from a provider that is not approved by Canada Life may be declined.** [Contact Canada Life](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact) if the item is not listed in this guide.
+**It's your responsibility to verify that an item or service is covered prior to treatment**. **A claim for a service or supply that was purchased from a provider that is not approved by Canada Life may be declined.** [Contact Canada Life](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact) if the item is not listed in this guide.
 
 ### Basic services
 
@@ -530,7 +530,7 @@ Treatment of diseases of the soft tissue (gum) and bones surrounding and support
 #### Replacement and repairs
 
 - The repair of fixed appliances and the rebase or reline of removable appliances (may be done by a dentist or by a licensed dental mechanic). Relines will only be covered once per 24-month period
-- With crowns, restoration for wear, acid erosion, vertical dimension and/or restoring occlusion is not covered. Check with [Canada Life](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact) before proceeding
+- With crowns, restoration for wear, acid erosion, vertical dimension and/or restoring occlusion is not covered. Check with [Canada Life](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact) before proceeding
 - Temporary procedures (for example: while awaiting repair of an appliance) are not covered
 
 #### Recall check-up schedule
@@ -647,7 +647,7 @@ You will need the policy number and ID number to register for access to [My Cana
 
 Please allow 3 to 5 business days after your benefits are in effect to register. You can also download the My Canada Life at Work Mobile app to your devices.
 
-If you have problems registering for [My Canada Life at Work](https://my.canadalife.com/sign-in), please call [Canada Life](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact).
+If you have problems registering for [My Canada Life at Work](https://my.canadalife.com/sign-in), please call [Canada Life](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#contact).
 
 Most claims can be submitted online, but there are some claims that require members to complete a specific claim form. These paper claim forms and receipts can be uploaded on [My Canada Life at Work](https://my.canadalife.com/sign-in) so members don't have to mail them to Canada Life.
 
@@ -696,15 +696,15 @@ If your service provider has signed up, simply provide them with your policy and
 
 To make a claim for reimbursement, you can submit a paper or electronic claim.
 
-- Find the paper claim form on the [Careers & MyHR forms and tools index](/gov/content/careers-myhr/forms-tools/index) page** **or [My Canada Life at Work](https://my.canadalife.com/sign-in), and follow the submission instructions carefully. Make a photocopy of your expense receipt because the originals will not be returned to you
+- Find the paper claim form on the [Careers & MyHR forms and tools index](https://www2.gov.bc.ca/gov/content/careers-myhr/forms-tools/index) page** **or [My Canada Life at Work](https://my.canadalife.com/sign-in), and follow the submission instructions carefully. Make a photocopy of your expense receipt because the originals will not be returned to you
 - Submit eClaims on [My Canada Life at Work](https://my.canadalife.com/sign-in)** **for prescription drugs, vision care, chiropractic, physiotherapy, podiatry, psychology, acupuncture, massage therapy and naturopathy
 - Keep your original expense receipts in case you're asked to submit them
 
 Once a claim is processed, you’ll receive a direct deposit if you’ve provided your banking information to Canada Life through [My Canada Life at Work](https://my.canadalife.com/sign-in), otherwise you will receive a cheque in the mail.
 
-**All plan members are required to sign up for [PharmaCare](/gov/content/health/health-drug-coverage/pharmacare-for-bc-residents)** to assist with prescription drug coverage, limiting the impact on your lifetime maximum. In addition, some high-cost drugs will require you to apply for PharmaCare special authority before you can be reimbursed.
+**All plan members are required to sign up for [PharmaCare](https://www2.gov.bc.ca/gov/content/health/health-drug-coverage/pharmacare-for-bc-residents)** to assist with prescription drug coverage, limiting the impact on your lifetime maximum. In addition, some high-cost drugs will require you to apply for PharmaCare special authority before you can be reimbursed.
 
-For information regarding drugs and medicines, please refer to the [Extended health plan](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits/bargaining-benefits-health-dental#health) section.
+For information regarding drugs and medicines, please refer to the [Extended health plan](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits/bargaining-benefits-health-dental#health) section.
 
 #### Out of country emergency medical travel claims
 
@@ -716,7 +716,7 @@ Most dental offices will bill Canada Life directly when you provide your policy 
 
 If your dentist cannot bill Canada Life directly (meaning you have to pay the full cost at the dental office), you can submit a paper claim
 
-Find the paper claim form on the [Careers & MyHR forms and tools index](/gov/content/careers-myhr/forms-tools/index) page, or [My Canada Life at Work](https://my.canadalife.com/sign-in), and follow the submission instructions carefully. Make a photocopy of the expense receipt because the originals will not be returned to you.
+Find the paper claim form on the [Careers & MyHR forms and tools index](https://www2.gov.bc.ca/gov/content/careers-myhr/forms-tools/index) page, or [My Canada Life at Work](https://my.canadalife.com/sign-in), and follow the submission instructions carefully. Make a photocopy of the expense receipt because the originals will not be returned to you.
 
 Monthly orthodontic claims may be claimed through [My Canada Life at Work](https://my.canadalife.com/sign-in).
 
@@ -746,7 +746,7 @@ Insurance companies follow the guidelines below to determine which plan pays fir
 
 **If you and your spouse have coordinated benefits** and you're both covered under Canada Life, you can submit to both plans at the same time by filing an eClaim through [My Canada Life at Work](https://my.canadalife.com/sign-in).
 
-If not, you can submit an extended health claim form or a dental plan claim form which you can find on the [Forms and tools](/gov/content/careers-myhr/forms-tools/all-employees#Pay) page or [My Canada Life at Work](https://my.canadalife.com/climsMyLogin).
+If not, you can submit an extended health claim form or a dental plan claim form which you can find on the [Forms and tools](https://www2.gov.bc.ca/gov/content/careers-myhr/forms-tools/all-employees#Pay) page or [My Canada Life at Work](https://my.canadalife.com/climsMyLogin).
 
 **When coordinating benefits**, please ensure the same names are being used on both plans (for example: legal names) so there are no delays with the coordination of benefits with the carrier. If the names don't match, there may be a delay in payment or payment may be missed.
 

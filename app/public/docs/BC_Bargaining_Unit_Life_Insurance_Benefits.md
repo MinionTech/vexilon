@@ -115,7 +115,7 @@ Any increase or addition to your coverage must be approved by Canada Life. Theyâ
 
 #### Converting to an individual plan
 
-If your employment ends or you reach age 65, you can apply to convert to an individual life insurance plan. Refer to the [When does coverage end?](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#converting-plans) section for more information.
+If your employment ends or you reach age 65, you can apply to convert to an individual life insurance plan. Refer to the [When does coverage end?](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#converting-plans) section for more information.
 
 ### Employee Basic Life Insurance (to age 65)
 
@@ -131,7 +131,7 @@ The amount of your Employee Basic Life insurance will be adjusted automatically 
 
 **For nurses hired before May 1, 1990**
 
-Coverage equals 2 times annual salary rounded up to the nearest $1,000, with an employer-paid minimum of $40,000 unless the plan member elected the higher level of coverage (outlined above). For more information, refer to articles 25.04 and 27.17 of the [BCNU Collective Agreement](/gov/content/careers-myhr/managers-supervisors/employee-labour-relations/conditions-agreements/collective-agreements#bcnu_collective_agreement).
+Coverage equals 2 times annual salary rounded up to the nearest $1,000, with an employer-paid minimum of $40,000 unless the plan member elected the higher level of coverage (outlined above). For more information, refer to articles 25.04 and 27.17 of the [BCNU Collective Agreement](https://www2.gov.bc.ca/gov/content/careers-myhr/managers-supervisors/employee-labour-relations/conditions-agreements/collective-agreements#bcnu_collective_agreement).
 
 **For employees working past age 65**
 
@@ -139,7 +139,7 @@ Employee Life Insurance (and Long-Term Disability) will cease at the end of the 
 
 Employees have the option to convert their group life insurance plan to an individual plan.
 
-See '[When does coverage end?](/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#end)' for more information and important application deadlines.
+See '[When does coverage end?](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/pay-benefits/benefits/bargaining-benefits#end)' for more information and important application deadlines.
 
 **For employees who retire before age 65**
 
@@ -188,7 +188,7 @@ Forms and instructions will be forwarded for you and your physician to complete.
 
 If you're suffering from a terminal illness with a life expectancy of 24 months or less, you may be eligible to receive an advance payment of up to $50,000 or 50% of your Employee Basic Life Insurance, whichever is less. This payment is non-taxable.
 
-Contact [the BC Public Service Agency](/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice) to make a claim and provide them with the following information:
+Contact [the BC Public Service Agency](https://www2.gov.bc.ca/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice) to make a claim and provide them with the following information:
 
 - Full name
 - Social insurance number
@@ -207,7 +207,7 @@ This does not apply if the estate or a minor child has been designated as the be
 
 The balance of the Employee Basic Life Insurance will be paid once the beneficiary has submitted the claim.
 
-To apply for the funeral advance, the beneficiary should contact [the BC Public Service Agency](/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice) and provide the following information:
+To apply for the funeral advance, the beneficiary should contact [the BC Public Service Agency](https://www2.gov.bc.ca/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice) and provide the following information:
 
 - Name of deceased person
 - Date of birth of deceased person
@@ -373,7 +373,7 @@ If benefits are payable under this plan for a covered accident, there may be oth
 - Expenses incurred must be within 365 days of the accident
 - Maximum amount payable for all home and vehicle modifications combined is $10,000
 
-For more information on the limitations and specifications related to these additional benefits, please contact [the BC Public Service Agency](/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice) or submit an [AskMyHR](https://launcher.myapps.microsoft.com/api/signin/604e0574-b937-452b-ab86-cdb084187dfc?tenantId=6fdb5200-3d0d-4a8a-b036-d3685e359adc) (IDIR restricted) service request. Use the categories Myself (or) My Team or Organization > Benefits > Bargaining Unit Employee Plan Inquiries and Issues.
+For more information on the limitations and specifications related to these additional benefits, please contact [the BC Public Service Agency](https://www2.gov.bc.ca/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice) or submit an [AskMyHR](https://launcher.myapps.microsoft.com/api/signin/604e0574-b937-452b-ab86-cdb084187dfc?tenantId=6fdb5200-3d0d-4a8a-b036-d3685e359adc) (IDIR restricted) service request. Use the categories Myself (or) My Team or Organization > Benefits > Bargaining Unit Employee Plan Inquiries and Issues.
 
 ### Accidental Dismemberment & Loss of Sight coverage and Optional Accidental Death & Dismemberment coverage limitations
 
@@ -393,7 +393,7 @@ No benefits will be paid for loss resulting from or associated with the followin
 
 This section provides you with the methods to make a life insurance claim.
 
-To initiate a claim for any of the life insurance products, you, your supervisor or your designated beneficiary can contact [the BC Public Service Agency](/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice).
+To initiate a claim for any of the life insurance products, you, your supervisor or your designated beneficiary can contact [the BC Public Service Agency](https://www2.gov.bc.ca/gov/content/careers-myhr/bcpsa/get-hr-support-and-advice).
 
 To submit an [AskMyHR](https://launcher.myapps.microsoft.com/api/signin/604e0574-b937-452b-ab86-cdb084187dfc?tenantId=6fdb5200-3d0d-4a8a-b036-d3685e359adc) (IDIR restricted) service request, use the categories Myself (or) My Team or Organization > Benefits > Bargaining Unit Employee Plan Inquiries and Issues.
 

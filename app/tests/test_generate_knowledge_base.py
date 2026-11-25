@@ -11,6 +11,7 @@ from scripts.generate_knowledge_base import (
     update_knowledge_base_files,
     main,
     _is_pdf_url,
+    _resolve_relative_markdown_links,
 )
 
 
@@ -429,3 +430,46 @@ def test_generate_manifest_invokes_update_knowledge_base_files(tmp_path):
     with patch("scripts.generate_knowledge_base.update_knowledge_base_files") as mock_update_kb:
         generate_manifest(data_dir=data_dir)
         mock_update_kb.assert_called_once_with(data_dir=data_dir)
+
+
+def test_resolve_relative_markdown_links():
+    text = (
+        "See [Health](/gov/content/foo), [Anchor](#section), "
+        "[External](https://other.example/x), [Mail](mailto:a@b.c), "
+        "and [Proto](//cdn.example/x)."
+    )
+    resolved = _resolve_relative_markdown_links(
+        text, "https://www2.gov.bc.ca/gov/content/page"
+    )
+    assert resolved == (
+        "See [Health](https://www2.gov.bc.ca/gov/content/foo), [Anchor](#section), "
+        "[External](https://other.example/x), [Mail](mailto:a@b.c), "
+        "and [Proto](//cdn.example/x)."
+    )
+
+
+def test_resolve_document_link_normalizes_relative_links_in_public_copy(tmp_path):
+    public_docs = tmp_path / "public" / "docs"
+    public_docs.mkdir(parents=True)
+    data_dir = tmp_path / "data"
+    res_dir = data_dir / "03_resources"
+    res_dir.mkdir(parents=True)
+
+    original = "Read [EFAS](/gov/content/efas) or [anchor](#top).\n"
+    source_file = res_dir / "BC_Test_Guide.md"
+    source_file.write_text(original, encoding="utf-8")
+
+    link = resolve_document_link(
+        "BC_Test_Guide",
+        "03_resources/BC_Test_Guide.md",
+        public_docs,
+        data_dir,
+        create_public_files=True,
+        source_url="https://www2.gov.bc.ca/gov/content/page",
+    )
+    assert link == "/public/docs/BC_Test_Guide.md"
+    published = public_docs / "BC_Test_Guide.md"
+    assert published.read_text(encoding="utf-8") == (
+        "Read [EFAS](https://www2.gov.bc.ca/gov/content/efas) or [anchor](#top).\n"
+    )
+    assert source_file.read_text(encoding="utf-8") == original

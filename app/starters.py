@@ -42,7 +42,7 @@ STARTER_SPECS: tuple[StarterSpec, ...] = (
     ),
     StarterSpec(
         label="Benefits",
-        message="What are my benefits for critical illness?",
+        message="What extended health and dental benefits are covered under my plan?",
         target_persona="Lookup",
     ),
     StarterSpec(

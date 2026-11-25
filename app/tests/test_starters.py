@@ -45,7 +45,7 @@ def test_lookup_starters_use_high_traffic_examples():
 
 def test_benefits_starter_targets_lookup():
     benefits = next(s for s in starters.STARTER_SPECS if s.label == "Benefits")
-    assert benefits.message == "What are my benefits for critical illness?"
+    assert benefits.message == "What extended health and dental benefits are covered under my plan?"
     assert benefits.target_persona == "Lookup"
     assert benefits.informational is False
     assert benefits.starts_wizard is False

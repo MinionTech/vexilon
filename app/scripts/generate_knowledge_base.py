@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -82,6 +83,17 @@ def _is_pdf_url(url: str | None) -> bool:
     if not url:
         return False
     return urlsplit(url.strip()).path.lower().endswith(".pdf")
+
+
+def _resolve_relative_markdown_links(text: str, source_url: str | None) -> str:
+    """Resolve root-relative Markdown link targets against the upstream source origin."""
+    if not source_url:
+        return text
+    parts = urlsplit(source_url.strip())
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        return text
+    origin = f"{parts.scheme}://{parts.netloc}"
+    return re.sub(r"\]\((\/(?!\/)[^)\s]+)\)", rf"]({origin}\1)", text)
 
 
 def _source_fingerprint(source: Path) -> str:
@@ -245,6 +257,7 @@ def resolve_document_link(
     data_dir: Path,
     create_public_files: bool = True,
     pdf_url: str | None = None,
+    source_url: str | None = None,
 ) -> str | None:
     """Resolve the best public URL for a document.
 
@@ -289,7 +302,15 @@ def resolve_document_link(
             target_file = public_docs_dir / f"{base_stem}{suffix}"
             if create_public_files:
                 target_file.parent.mkdir(parents=True, exist_ok=True)
-                if not target_file.exists() or target_file.stat().st_mtime < source_file.stat().st_mtime:
+                if source_file.suffix.lower() == ".md" and source_url:
+                    normalized = _resolve_relative_markdown_links(
+                        source_file.read_text(encoding="utf-8"),
+                        source_url,
+                    )
+                    if not target_file.exists() or target_file.read_text(encoding="utf-8") != normalized:
+                        target_file.write_text(normalized, encoding="utf-8")
+                        logger.info(f"Published document: {target_file}")
+                elif not target_file.exists() or target_file.stat().st_mtime < source_file.stat().st_mtime:
                     try:
                         shutil.copy2(source_file, target_file)
                         logger.info(f"Published document: {target_file}")
@@ -339,6 +360,7 @@ def generate_knowledge_base_markdown(
     # path is the bot's markdown. A PDF url on the same entry is the human document.
     category_map: dict[str, str] = {}
     pdf_url_map: dict[str, str] = {}
+    source_url_map: dict[str, str] = {}
     try:
         for s in _registry_sources(data_dir):
             cat = s.get("category", "")
@@ -348,10 +370,13 @@ def generate_knowledge_base_markdown(
                 category_map[stem] = cat.lower()
                 category_map[get_base_stem(stem)] = cat.lower()
             url = s.get("url")
-            if p and _is_pdf_url(url):
+            if p and url:
                 stem = Path(p).stem
-                pdf_url_map[stem] = url
-                pdf_url_map[get_base_stem(stem)] = url
+                source_url_map[stem] = url
+                source_url_map[get_base_stem(stem)] = url
+                if _is_pdf_url(url):
+                    pdf_url_map[stem] = url
+                    pdf_url_map[get_base_stem(stem)] = url
     except Exception as e:
         logger.error("Failed to parse registry %s: %s", data_dir / "sources.yaml", e)
         raise
@@ -401,6 +426,7 @@ def generate_knowledge_base_markdown(
             data_dir,
             create_public_files,
             pdf_url=pdf_url_map.get(stem),
+            source_url=source_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -420,6 +446,7 @@ def generate_knowledge_base_markdown(
             data_dir,
             create_public_files,
             pdf_url=pdf_url_map.get(stem),
+            source_url=source_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -443,6 +470,7 @@ def generate_knowledge_base_markdown(
             data_dir,
             create_public_files,
             pdf_url=pdf_url_map.get(stem),
+            source_url=source_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)
@@ -462,6 +490,7 @@ def generate_knowledge_base_markdown(
             data_dir,
             create_public_files,
             pdf_url=pdf_url_map.get(stem),
+            source_url=source_url_map.get(stem),
         )
         if link:
             title = clean_title_from_stem(stem)

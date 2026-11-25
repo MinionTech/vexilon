@@ -18,12 +18,12 @@ EFAS includes a range of services provided by the BC Public Service Agency (the 
 
 Services include:
 
-- [Career support services](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/career-services)
-- [Counselling Support](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/counselling-support)
-- [Family support services](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/family-support-services)
-- [Financial and legal services](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/financial-legal)
-- [Healthy living services](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/healthy-living-services)
-- [People leader advice line](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/people-leader-advice-line)
+- [Career support services](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/career-services)
+- [Counselling Support](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/counselling-support)
+- [Family support services](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/family-support-services)
+- [Financial and legal services](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/financial-legal)
+- [Healthy living services](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/healthy-living-services)
+- [People leader advice line](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/health/efas/people-leader-advice-line)
 
 EFAS is available to all employees from their first day of employment. These are voluntary services available to everyone, including:
 
@@ -134,7 +134,7 @@ A Care Navigator is available 24 hours per day, seven days a week by calling tol
 - Select one of the following options:
 - Option 1 for individual urgent or crisis assistance
 - Option 2 for standard appointment booking or re-booking
-- Option 3 for [Critical Incident Response](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/workplace/critical-incident-response) (Groups)
+- Option 3 for [Critical Incident Response](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources/workplace/critical-incident-response) (Groups)
 - You'll be asked a series of questions for the purposes of required reporting, matching your situation to the right service and security/privacy assurance (such as your mother’s maiden name or date of birth)
 - For safety reasons, every caller will be asked a question assessing the possible risk of harm to themselves or others at the beginning of the call
 - Counselling is available in multiple forms, including:
@@ -180,10 +180,10 @@ To provide feedback about Employee and Family Assistance Services:
 - [EFAS Session in a Box: Facilitator's Guide and Agenda (PDF, 302KB)](https://www2.gov.bc.ca/assets/gov/careers/all-employees/health-well-being-and-safety/health-well-being-safety/efas_session_in_a_box_facilitators_guide_and_agenda.pdf)
 - [EFAS Session in a Box: Fillable Digital Invitation (PDF, 96KB)](https://www2.gov.bc.ca/assets/gov/careers/all-employees/health-well-being-and-safety/health-well-being-safety/efas_session_in_a_box_fillable_digital_invitation.pdf)
 - [EFAS Session in a Box: Resource Sheet (PDF, 119KB)](https://www2.gov.bc.ca/assets/gov/careers/all-employees/health-well-being-and-safety/health-well-being-safety/efas_session_in_a_box_two_page_resource_sheet.pdf)
-- [People leader guide](/gov/content/careers-myhr/managers-supervisors/people-leader-guide)
+- [People leader guide](https://www2.gov.bc.ca/gov/content/careers-myhr/managers-supervisors/people-leader-guide)
 
 ## Health, safety and sick leave resources
 
 The BC Public Service is committed to a culture that supports employee safety and health.
 
-Whether you're managing your own health, or looking for information to support your team, we have the [resources and supports](/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources) you're looking for.
+Whether you're managing your own health, or looking for information to support your team, we have the [resources and supports](https://www2.gov.bc.ca/gov/content/careers-myhr/all-employees/health-safety-and-sick-leave-resources) you're looking for.
