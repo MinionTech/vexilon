@@ -23,7 +23,6 @@ ALLOWED_EVENT_PATHS = {
     "event/chat-submit",
     "event/persona-lookup",
     "event/persona-grieve",
-    "event/persona-manage",
     "event/knowledge-base-open",
     "event/session-save",
     "event/error-ui",
@@ -187,7 +186,7 @@ def test_goatcounter_feature_events_knowledge_base_and_personas(page: Page, app_
     expect(dialog).not_to_be_visible()
 
     # Persona changes via #chat-profiles emit persona events.
-    for persona in ("Grieve", "Manage", "Lookup"):
+    for persona in ("Grieve", "Lookup"):
         profiles.click()
         page.get_by_role("option", name=persona).click()
         _wait_for_event_path(page, f"event/persona-{persona.lower()}")
@@ -197,7 +196,6 @@ def test_goatcounter_feature_events_knowledge_base_and_personas(page: Page, app_
     profile_paths = [ev["path"] for ev in profile_events]
     assert "event/knowledge-base-open" in profile_paths
     assert "event/persona-grieve" in profile_paths
-    assert "event/persona-manage" in profile_paths
     assert "event/persona-lookup" in profile_paths
 
     # Persona selection via Chat Settings modal emits persona event on Confirm.
@@ -206,13 +204,13 @@ def test_goatcounter_feature_events_knowledge_base_and_personas(page: Page, app_
     settings_dialog = page.locator("#chat-settings")
     settings_dialog.wait_for(state="visible", timeout=5000)
     settings_dialog.locator("#Persona").click()
-    page.get_by_role("option", name="Manage").click()
+    page.get_by_role("option", name="Grieve").click()
     settings_dialog.locator("#confirm").click()
     expect(settings_dialog).not_to_be_visible()
-    _wait_for_event_path(page, "event/persona-manage")
+    _wait_for_event_path(page, "event/persona-grieve")
 
     settings_events = _recorded_events(page)
-    assert [ev["path"] for ev in settings_events] == ["event/persona-manage"]
+    assert [ev["path"] for ev in settings_events] == ["event/persona-grieve"]
     _assert_pipa_safe_events(settings_events, forbidden_substrings=(first_doc_text, ".pdf", ".md"))
     assert all(_is_goatcounter_request(url) for url in blocked)
 
@@ -270,23 +268,23 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     _wait_for_goatcounter_state(page, "on")
     wait_for_custom_js(page)
 
-    # Informational Manage starter switches backend persona to Manage without changing #chat-profiles.
-    starter = page.locator("#starter-management-guide")
+    # Informational Grieve starter switches backend persona to Grieve without changing #chat-profiles.
+    starter = page.locator("#starter-grievance-builder")
     starter.wait_for(state="visible", timeout=15000)
     starter.click()
     _wait_for_event_path(page, "event/chat-submit")
-    _wait_for_event_path(page, "event/persona-manage")
+    _wait_for_event_path(page, "event/persona-grieve")
 
-    # Wait for informational reply, then verify a normal submit inherits Manage instead of Lookup.
-    page.get_by_text("Management Guide", exact=False).first.wait_for(state="visible", timeout=15000)
+    # Wait for informational reply, then verify a normal submit inherits Grieve instead of Lookup.
+    page.get_by_text("Grievance Builder", exact=False).first.wait_for(state="visible", timeout=15000)
     page.locator("textarea").wait_for(state="visible", timeout=15000)
     page.evaluate("() => { window.__gcEvents = []; }")
     textarea = page.locator("textarea")
-    textarea.press_sequentially("Follow up management question", delay=10)
+    textarea.press_sequentially("Follow up grievance question", delay=10)
     page.wait_for_selector("#chat-submit:not([disabled])", timeout=15000)
     submit_chat_with_enter(page, textarea)
     _wait_for_event_path(page, "event/chat-submit")
-    _wait_for_event_path(page, "event/persona-manage")
+    _wait_for_event_path(page, "event/persona-grieve")
 
     stop_button = page.locator("#stop-button")
     try:
@@ -299,7 +297,7 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     followup_events = _recorded_events(page)
     assert [ev["path"] for ev in followup_events] == [
         "event/chat-submit",
-        "event/persona-manage",
+        "event/persona-grieve",
     ]
 
     # Require a strictly new error-ui event after injecting the sensitive toast.
@@ -324,8 +322,8 @@ def test_goatcounter_starter_and_error_toast_events(page: Page, app_url: str):
     _assert_pipa_safe_events(
         events,
         forbidden_substrings=(
-            "Management Guide",
-            "Follow up management question",
+            "Grievance Builder",
+            "Follow up grievance question",
             "SECRET_ERROR_DETAIL",
             "grievance_123.pdf",
         ),

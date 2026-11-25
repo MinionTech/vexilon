@@ -264,7 +264,6 @@
         "event/chat-submit": "Chat submit",
         "event/persona-lookup": "Persona: Lookup",
         "event/persona-grieve": "Persona: Grieve",
-        "event/persona-manage": "Persona: Manage",
         "event/knowledge-base-open": "Knowledge Base open",
         "event/session-save": "Session save",
         "event/error-ui": "UI error",
@@ -272,13 +271,11 @@
     const PERSONA_EVENTS = {
         lookup: "event/persona-lookup",
         grieve: "event/persona-grieve",
-        manage: "event/persona-manage",
     };
     const STARTER_PERSONAS = {
         "starter-discipline-just-cause": "lookup",
         "starter-steward-rights": "lookup",
         "starter-grievance-builder": "grieve",
-        "starter-management-guide": "manage",
     };
 
     let lastChatProfile = null;

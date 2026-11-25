@@ -16,7 +16,6 @@ def test_starter_specs_shape():
         "Discipline Just Cause",
         "Steward Rights",
         "Grievance Builder",
-        "Management Guide",
     ]
 
 
@@ -31,14 +30,6 @@ def test_grievance_builder_is_not_legacy_example_question():
 def test_grievance_builder_starter_starts_wizard():
     grievance = next(s for s in starters.STARTER_SPECS if s.label == "Grievance Builder")
     assert grievance.starts_wizard is True
-
-
-def test_management_guide_targets_manage():
-    guide = next(s for s in starters.STARTER_SPECS if s.label == "Management Guide")
-    assert guide.target_persona == "Manage"
-    assert guide.informational is True
-    assert guide.assistant_reply
-    assert "paperwork" in guide.assistant_reply.lower() or "forms" in guide.assistant_reply.lower()
 
 
 def test_lookup_starters_use_high_traffic_examples():
@@ -117,9 +108,9 @@ async def test_apply_starter_persona_unknown_message_is_noop(monkeypatch):
 
 
 def test_build_persona_settings_uses_personas_list():
-    settings = starters.build_persona_settings(PERSONAS.index("Manage"))
+    settings = starters.build_persona_settings(PERSONAS.index("Grieve"))
     assert len(settings.inputs) == 1
     widget = settings.inputs[0]
     assert widget.id == "Persona"
     assert widget.values == PERSONAS
-    assert widget.initial_index == PERSONAS.index("Manage")
+    assert widget.initial_index == PERSONAS.index("Grieve")

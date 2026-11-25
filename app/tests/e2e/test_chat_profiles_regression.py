@@ -7,13 +7,13 @@ and hiding #chat-profiles plus starter chips on the welcome screen.
 
 from playwright.sync_api import Page, Playwright, expect
 
-EXPECTED_PERSONAS = ("Lookup", "Grieve", "Manage")
+EXPECTED_PERSONAS = ("Lookup", "Grieve")
 
 
 def test_project_settings_exposes_registered_chat_profiles(
     playwright: Playwright, app_url: str
 ) -> None:
-    """Running app must serve Lookup, Grieve, and Manage from /project/settings."""
+    """Running app must serve Lookup and Grieve from /project/settings."""
     request_context = playwright.request.new_context()
     try:
         response = request_context.get(f"{app_url}/project/settings")
@@ -48,7 +48,7 @@ def test_welcome_screen_chat_profiles_control_visible(page: Page, app_url: str) 
 
 
 def test_welcome_screen_chat_profiles_lists_personas(page: Page, app_url: str) -> None:
-    """Persona picker must offer Lookup, Grieve, and Manage by name."""
+    """Persona picker must offer Lookup and Grieve by name."""
     page.goto(app_url, wait_until="domcontentloaded")
     profiles_control = page.locator("#chat-profiles")
     profiles_control.wait_for(state="visible", timeout=15000)

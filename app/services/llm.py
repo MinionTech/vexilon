@@ -111,23 +111,10 @@ UNION_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (UNION) ---
    - [Grievance - C - Steward Case](/public/docs/forms/Grievance_-_C_-_Steward_Case.pdf)
 """
 
-MANAGER_MANDATORY_RULES = """--- MANDATORY OPERATIONAL RULES (MANAGEMENT) ---
-1. ANSWER FROM EXCERPTS ONLY: Base your answer strictly on the provided excerpts.
-2. STRICT CITATIONS: Every claim MUST be supported by a verbatim quote followed by its citation.
-   EXAMPLE: > "verbatim text" [Document Name, Page X]
-3. STRUCTURE: Use clear headings, bullet points, and numbered lists to organize complex answers.
-4. COMPLIANCE AUDIT: Proactively identify operational risks, policy gaps, and compliance failures.
-5. INADVERTENT BENEFIT WARNING: If a manager suggests a "Nuclear Option" (Suspension/Firing) for a minor variance, you MUST warn them that skipping Progressive Discipline (Article 14) is a "Low-ROI Strategy" that often results in "Remedial Back-Pay Awards".
-6. NO UNION ADVICE: Do NOT provide guidance on grievance filing or member advocacy.
-"""
-
 def get_persona_prompt(persona_key: str, *, grieve_draft: bool = False) -> str:
     """Return the combined mandatory rules and persona guidelines."""
-    if persona_key == "Manage":
-        rules = MANAGER_MANDATORY_RULES
-        persona = "You are a Senior Strategic Management Consultant focusing on compliance and risk mitigation within the Operational Framework. Provide precise, fact-based answers using the provided context."
-    elif persona_key == "Grieve":
-        rules = UNION_MANDATORY_RULES
+    rules = UNION_MANDATORY_RULES
+    if persona_key == "Grieve":
         if grieve_draft:
             builder = get_case_builder_instructions()
             persona = builder or (
@@ -136,14 +123,7 @@ def get_persona_prompt(persona_key: str, *, grieve_draft: bool = False) -> str:
             )
         else:
             persona = GRIEVE_FREEFORM_PERSONA
-    elif persona_key == "Train":
-        rules = UNION_MANDATORY_RULES
-        persona = (
-            "You are an expert in labor relations training. Explain the concepts in the context using a helpful, educational tone.\n"
-            "Focus on empowering the user with knowledge and clear explanations."
-        )
     else:
-        rules = UNION_MANDATORY_RULES
         persona = (
             "You are a forensic labor law expert. Your goal is to provide precise, fact-based answers using the provided context.\n"
             "If asked for grievance forms or how to file a grievance, assist the user by providing the official form links listed in the rules."
@@ -769,13 +749,12 @@ async def rag_review_stream(
 
         base_persona = get_persona_prompt(persona_mode, grieve_draft=grieve_draft)
         audit_rules = ""
-        if persona_mode in ("Grieve", "Manage"):
-            registry = _get_active_test_registry()
-            matched_tests = registry.find_matches(message + " " + queries[0])
-            for test in matched_tests:
-                audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
-                audit_rules += f"This case involves potential issues related to {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern (Explain the principle, ask the relevant Question, Apply it to the facts, and Cite the source).\n"
-                audit_rules += f"Criteria:\n{test.content}\n"
+        registry = _get_active_test_registry()
+        matched_tests = registry.find_matches(message + " " + queries[0])
+        for test in matched_tests:
+            audit_rules += f"\n\n--- MANDATORY LOGIC CHECK: {test.name.upper()} ---\n"
+            audit_rules += f"This case involves potential issues related to {test.name}. You MUST follow the EXPLAIN/QUESTION/APPLY/CITE pattern (Explain the principle, ask the relevant Question, Apply it to the facts, and Cite the source).\n"
+            audit_rules += f"Criteria:\n{test.content}\n"
 
         master_rules = get_system_prompt().format(manifest="", verify_message="")
         system = (
