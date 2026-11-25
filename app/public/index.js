@@ -275,11 +275,12 @@
     const STARTER_PERSONAS = {
         "starter-discipline-just-cause": "lookup",
         "starter-steward-rights": "lookup",
+        "starter-benefits": "lookup",
         "starter-grievance-builder": "lookup",
     };
 
     let lastChatProfile = null;
-    let currentPersona = null;
+    let currentPersona = "lookup";
 
     function setGoatCounterState(state) {
         document.documentElement.dataset.goatcounter = state;

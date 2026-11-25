@@ -15,6 +15,7 @@ def test_starter_specs_shape():
     assert labels == [
         "Discipline Just Cause",
         "Steward Rights",
+        "Benefits",
         "Grievance Builder",
     ]
 
@@ -40,6 +41,14 @@ def test_lookup_starters_use_high_traffic_examples():
     assert just_cause.target_persona == "Lookup"
     assert steward.target_persona == "Lookup"
     assert just_cause.informational is False
+
+
+def test_benefits_starter_targets_lookup():
+    benefits = next(s for s in starters.STARTER_SPECS if s.label == "Benefits")
+    assert benefits.message == "What extended health and dental benefits are covered under my plan?"
+    assert benefits.target_persona == "Lookup"
+    assert benefits.informational is False
+    assert benefits.starts_wizard is False
 
 
 def test_chainlit_starters_match_specs():
