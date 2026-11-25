@@ -43,7 +43,6 @@ def test_welcome_screen_axe_light_and_dark(page: Page, app_url: str):
     for theme in ("light", "dark"):
         set_chainlit_theme(page, theme)
         wait_for_knowledge_base_button(page)
-        wait_for_aria_label(page, "#chat-settings-open-modal", "Open chat settings")
         wait_for_aria_label(page, "#upload-button", "Attach file")
         wait_for_aria_label(page, "#chat-submit", "Send message")
         page.wait_for_function(
@@ -59,59 +58,6 @@ def test_welcome_screen_axe_light_and_dark(page: Page, app_url: str):
         assert violations == [], (
             f"{theme} theme axe violations:\n{format_axe_violations(violations)}"
         )
-
-
-def test_settings_dialog_axe_and_primary_button_contrast(page: Page, app_url: str):
-    """Settings dialog passes WCAG 2.1 A/AA axe and Confirm meets 4.5:1 AA."""
-    page.goto(app_url, wait_until="domcontentloaded")
-    wait_for_custom_js(page)
-
-    for theme in ("light", "dark"):
-        set_chainlit_theme(page, theme)
-        page.locator("#chat-settings-open-modal").click()
-        confirm = page.locator("#confirm")
-        confirm.wait_for(timeout=8000)
-        _wait_for_settled(page)
-
-        results = run_axe(page, context_selector="[role='dialog']")
-        violations = axe_violations(results)
-        assert violations == [], (
-            f"{theme} settings dialog axe violations:\n{format_axe_violations(violations)}"
-        )
-
-        result = page.evaluate(
-            """() => {
-                function luminance(r, g, b) {
-                    const [rs, gs, bs] = [r, g, b].map((c) => {
-                        c = c / 255;
-                        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-                    });
-                    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-                }
-                function contrast(fg, bg) {
-                    const l1 = luminance(...fg);
-                    const l2 = luminance(...bg);
-                    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-                }
-                function parseRgb(rgb) {
-                    const m = rgb.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
-                    return m ? [+m[1], +m[2], +m[3]] : null;
-                }
-                const btn = document.querySelector("#confirm");
-                if (!btn) return { error: "Confirm button not found" };
-                const span = btn.querySelector("span") || btn;
-                const fg = parseRgb(getComputedStyle(span).color);
-                const bg = parseRgb(getComputedStyle(btn).backgroundColor);
-                if (!fg || !bg) return { error: "could not parse Confirm colours" };
-                return { ratio: contrast(fg, bg), fg, bg };
-            }"""
-        )
-        assert "error" not in result, result.get("error")
-        assert result["ratio"] >= WCAG_AA_CONTRAST_MIN, (
-            f"{theme} Confirm contrast {result['ratio']:.2f} < {WCAG_AA_CONTRAST_MIN} "
-            f"(fg={result['fg']}, bg={result['bg']})"
-        )
-        page.keyboard.press("Escape")
 
 
 def test_knowledge_base_drawer_axe_light_and_dark(page: Page, app_url: str):

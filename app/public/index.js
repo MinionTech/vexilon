@@ -275,7 +275,7 @@
     const STARTER_PERSONAS = {
         "starter-discipline-just-cause": "lookup",
         "starter-steward-rights": "lookup",
-        "starter-grievance-builder": "grieve",
+        "starter-grievance-builder": "lookup",
     };
 
     let lastChatProfile = null;

@@ -29,12 +29,12 @@ To reduce the "Information Gap" for union stewards by providing a mobile-first, 
 
 ---
 
-## 4. Persona Modes (Direct Advice)
+## 4. Mode & Grievance Builder Workflow
 
-Agreement Navigator features two operational personas that adapt the AI's "brain" to the steward's current situation:
+Agreement Navigator uses a single **Lookup** mode for forensic contract research, with **Grievance Builder** available as an in-chat workflow:
 
-1. **Lookup (Default):** The "Forensic Navigator." Focuses on literal interpretation, clause-finding, and cross-referencing.
-2. **Grieve (Grievance Builder):** Step-by-step intake wizard that produces **editable, partially filled BCGEU grievance PDFs** (Forms A, B when applicable, C) plus contract-backed analysis. Acts as a Senior Staff Rep assistant; downloads are drafts for human review—not ready to file without steward and staff rep sign-off. If draft generation fails, intake facts are retained; stewards can type **retry draft**, **restart**, or **exit wizard** to continue.
+1. **Lookup (Default):** The "Forensic Navigator." Focuses on literal interpretation, clause-finding, cross-referencing, and doctrinal logic checks (`Millhaven`, OHS, WCA).
+2. **Grievance Builder (Workflow):** Triggered from the **Grievance Builder** starter chip or by asking to start the grievance builder. Step-by-step intake wizard that produces **editable, partially filled BCGEU grievance PDFs** (Forms A, B when applicable, C) plus contract-backed analysis. Downloads are drafts for human review—not ready to file without steward and staff rep sign-off. If draft generation fails, intake facts are retained; stewards can type **retry draft**, **restart**, or **exit wizard** to continue.
 
 ---
 

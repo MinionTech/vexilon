@@ -23,8 +23,8 @@ class StarterSpec:
 
 
 GRIEVANCE_BUILDER_GUIDE = (
-    "You selected **Grievance Builder**. You're now in **Grieve** mode for strategic "
-    "grievance guidance and forensic auditing—not a generic lookup.\n\n"
+    "You selected **Grievance Builder** for strategic grievance guidance and "
+    "forensic auditing—not a generic lookup.\n\n"
     "Describe what happened, which agreement articles may apply, and the remedy you "
     "are seeking."
 )
@@ -43,7 +43,7 @@ STARTER_SPECS: tuple[StarterSpec, ...] = (
     StarterSpec(
         label="Grievance Builder",
         message="Grievance Builder",
-        target_persona="Grieve",
+        target_persona="Lookup",
         informational=True,
         assistant_reply=GRIEVANCE_BUILDER_GUIDE,
         starts_wizard=True,
@@ -57,25 +57,12 @@ for _spec in STARTER_SPECS:
         )
     if _spec.informational and not (_spec.assistant_reply or "").strip():
         raise ValueError(f"Informational starter '{_spec.label}' requires assistant_reply")
-    if _spec.starts_wizard and (not _spec.informational or _spec.target_persona != "Grieve"):
+    if _spec.starts_wizard and not _spec.informational:
         raise ValueError(
-            f"Starter '{_spec.label}' starts a wizard but is not informational/Grieve"
+            f"Starter '{_spec.label}' starts a wizard but is not informational"
         )
 
 STARTER_BY_MESSAGE: dict[str, StarterSpec] = {spec.message: spec for spec in STARTER_SPECS}
-
-
-def build_persona_settings(initial_index: int = 0) -> cl.ChatSettings:
-    return cl.ChatSettings(
-        [
-            cl.input_widget.Select(
-                id="Persona",
-                label="Navigator Persona",
-                values=PERSONAS,
-                initial_index=initial_index,
-            ),
-        ]
-    )
 
 
 def chainlit_starters() -> list[cl.Starter]:
@@ -87,21 +74,5 @@ def resolve_starter(message: str) -> StarterSpec | None:
 
 
 async def apply_starter_persona(message: str) -> StarterSpec | None:
-    """If message matches a starter chip, switch persona when needed."""
-    spec = resolve_starter(message)
-    if not spec:
-        return None
-
-    current = cl.user_session.get("persona") or "Lookup"
-    if spec.target_persona != current:
-        try:
-            await _sync_persona_selector(spec.target_persona)
-        except Exception as exc:
-            logger.warning("[starters] persona sync failed for '%s': %s", spec.label, exc)
-            cl.user_session.set("persona", spec.target_persona)
-    return spec
-
-
-async def _sync_persona_selector(persona: str) -> None:
-    cl.user_session.set("persona", persona)
-    await build_persona_settings(PERSONAS.index(persona)).refresh()
+    """If message matches a starter chip, return its StarterSpec."""
+    return resolve_starter(message)
