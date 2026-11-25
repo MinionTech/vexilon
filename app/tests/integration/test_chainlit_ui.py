@@ -43,6 +43,7 @@ async def test_set_starters_returns_all_starters():
     expected_labels = [
         "Discipline Just Cause",
         "Steward Rights",
+        "Benefits",
         "Grievance Builder",
     ]
     assert len(result) == len(expected_labels)

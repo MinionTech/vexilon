@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T22:01:40.203826+00:00",
+  "generated_at": "2026-11-25T06:06:00.628819+00:00",
   "version": "1.0",
   "sources": {
     "01_primary/BCGEU_20th_Main_Agreement.md": {
@@ -218,9 +218,37 @@
       "hash": "73f1e7ca9982dcab4fbb5dbb58917c6e500afb1486732166d36bbd7840d2e295",
       "size_bytes": 84819
     },
+    "03_resources/BC_Bargaining_Unit_Benefits_Glossary.md": {
+      "hash": "1e87e86a534c583af6b85312ec65977fa032f6bbad46a36b56b24c3e7c11a75d",
+      "size_bytes": 12478
+    },
+    "03_resources/BC_Bargaining_Unit_Benefits_Overview.md": {
+      "hash": "f7e3689957a1bf2ea2c557ed1df6fa65b3a7f9b98019efb5ad400f9482c06d61",
+      "size_bytes": 52987
+    },
+    "03_resources/BC_Bargaining_Unit_Health_and_Dental_Benefits.md": {
+      "hash": "5d7ef44b1fb243c0b2dc9673e80d5239015be83aa8073b21eb1497aa2b28f4ea",
+      "size_bytes": 69901
+    },
+    "03_resources/BC_Bargaining_Unit_Life_Insurance_Benefits.md": {
+      "hash": "9a42c0d6aef3f010b54791895479deeee14eb3236f65580904d946c4b358f0cc",
+      "size_bytes": 24396
+    },
+    "03_resources/BC_Benefits_While_on_Leave.md": {
+      "hash": "44793698e59b3f7d23616e6240813d1d16cbe648c68e060e4335e221e88f422f",
+      "size_bytes": 8618
+    },
     "03_resources/BC_Criminal_Notification_Procedures.md": {
       "hash": "6694c67e26d01c374e11ffb4ade3671b042be5775bd124b29affc70ada225daa",
       "size_bytes": 2921
+    },
+    "03_resources/BC_Employee_and_Family_Assistance_Services.md": {
+      "hash": "f7beb9a4b33185e96fc6006635ed4066390fa1db789fc71da7d25eb8dd21afff",
+      "size_bytes": 12903
+    },
+    "03_resources/BC_Group_Aviation_Accident_Insurance.md": {
+      "hash": "379c9af3e6ec5887472c825249235a56e7dc7476b8b9743e3420eed77d7dbb85",
+      "size_bytes": 1474
     },
     "03_resources/BC_Social_Media_Guidance_for_Public_Service_Employees.md": {
       "hash": "f27116574c4e6eb56804176666af965b8ffe1b9e1641bce126bd543d5122fbfb",

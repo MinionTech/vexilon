@@ -275,6 +275,7 @@
     const STARTER_PERSONAS = {
         "starter-discipline-just-cause": "lookup",
         "starter-steward-rights": "lookup",
+        "starter-benefits": "lookup",
         "starter-grievance-builder": "lookup",
     };
 

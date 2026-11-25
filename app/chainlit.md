@@ -28,6 +28,13 @@ For more information about our zero-storage model, see our [Privacy Policy](http
 * [BC Social Media Guidance for Public Service Employees](/public/docs/BC_Social_Media_Guidance_for_Public_Service_Employees.pdf)
 * [Nexus Test and Off-Duty Conduct](/public/docs/Nexus_Test_and_Off-Duty_Conduct.pdf)
 * [BCGEU Steward Resources](/public/docs/BCGEU_Steward_Resources.pdf)
+* [BC Bargaining Unit Benefits Glossary](/public/docs/BC_Bargaining_Unit_Benefits_Glossary.md)
+* [BC Bargaining Unit Benefits Overview](/public/docs/BC_Bargaining_Unit_Benefits_Overview.md)
+* [BC Bargaining Unit Health and Dental Benefits](/public/docs/BC_Bargaining_Unit_Health_and_Dental_Benefits.md)
+* [BC Bargaining Unit Life Insurance Benefits](/public/docs/BC_Bargaining_Unit_Life_Insurance_Benefits.md)
+* [BC Benefits While on Leave](/public/docs/BC_Benefits_While_on_Leave.md)
+* [BC Employee and Family Assistance Services](/public/docs/BC_Employee_and_Family_Assistance_Services.md)
+* [BC Group Aviation Accident Insurance](/public/docs/BC_Group_Aviation_Accident_Insurance.md)
 
 ### Forms
 
