@@ -97,7 +97,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "TEST Deployment Failure: Vexilon"
-          labels: "failure,deployment,test"
 
   deploy-prod:
     name: Deploy to HF PROD
@@ -166,7 +165,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "PROD Deployment Failure: Agreement Navigator (AgNav)"
-          labels: "critical,deployment,prod"
 
   notify-cancelled:
     name: Notify on Timeout or Cancellation
@@ -185,4 +183,3 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "${{ needs.deploy-test.result == 'cancelled' && 'TEST' || 'PROD' }} Deployment Timed Out or Cancelled: Agreement Navigator (AgNav)"
-          labels: "failure,deployment,${{ needs.deploy-test.result == 'cancelled' && 'test' || 'prod' }}"
